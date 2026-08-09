@@ -133,6 +133,7 @@ select throws_ok(
   'even a signed-in owner cannot read the counter table, so the throttle state cannot be inspected or reasoned about from a client session'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 select * from finish();

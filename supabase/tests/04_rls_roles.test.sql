@@ -56,6 +56,7 @@ select throws_ok(
   'the partner projection is equally unreachable without a session, so the referral view is not a public endpoint'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -153,6 +154,7 @@ select lives_ok(
   'a homeowner can still ask a question on their own claim, so the restriction shapes the channel rather than closing it'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -239,6 +241,7 @@ select is(
   'the contractor cannot read the audit trail'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -311,6 +314,7 @@ select throws_ok(
   'nor can the assistant create a settlement record on a claim that has none, which would otherwise be a way to introduce a figure without ever reading one'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 select is(
@@ -364,6 +368,7 @@ select is(
   'the assigned adjuster can advance their own claim, so the refusals above are about authority rather than about the update path being broken for everyone'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 select is(
@@ -438,6 +443,7 @@ select isnt_empty(
   'the owner is the one role that can read the audit trail, so the record of who did what has exactly one audience'
 );
 
+select set_config('request.jwt.claims', '', true);
 reset role;
 
 select * from finish();

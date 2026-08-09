@@ -12,6 +12,48 @@ revoke all on schema private from public;
 grant usage on schema private to postgres, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
+-- "Is this the application's own server, rather than a user session?"
+-- ---------------------------------------------------------------------------
+
+-- Every guard in this file that has to let CMG's own server through used to ask
+-- `auth.uid() is null` — "no JWT subject means service role". That is true of a bare
+-- service-role connection, of migrations and of the seed, and it was the whole test. It
+-- is not true of a service-role *JWT*, which is a signed token like any other and carries
+-- whatever `sub` its issuer put in it — Supabase's own service key does, and so does any
+-- token minted server-side that keeps the acting staff member's subject for attribution.
+-- Such a caller has a non-null auth.uid() and was therefore judged as an ordinary user
+-- session by every guard below. Each one fails closed, so nothing leaked; what they closed
+-- on was the application itself. The §6 intake re-parent, the historical-import path in
+-- public.claims_before_insert(), partner re-attribution on accept, out-of-band consent
+-- correction and the invite flow's role assignment would each have been refused at launch
+-- for a reason that has nothing to do with authority.
+--
+-- The `role` claim is exactly as trustworthy as `sub`, and for the same reason: both are
+-- read from request.jwt.claims, which PostgREST sets from the verified JWT and which no
+-- client can write. It is in fact the more load-bearing of the two — PostgREST issues its
+-- `set role` from it, so a token asserting service_role has already been handed a role
+-- with BYPASSRLS before any of this code runs. Trusting it here concedes nothing that was
+-- not already conceded one layer up.
+--
+-- The coalesce is not decoration. auth.role() returns NULL when request.jwt.claims is
+-- unset, so an uncoalesced `auth.role() = 'service_role'` is NULL rather than false, and a
+-- NULL reaching a plpgsql `if not <guard>` makes that guard admit precisely the callers it
+-- was written to refuse — the same three-valued trap the private.* helpers in the RLS
+-- migration were made total to close. This function returns true or false and never NULL.
+create or replace function private.is_service_context()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $fn$
+  select coalesce((select auth.role()) = 'service_role', false)
+      or (select auth.uid()) is null;
+$fn$;
+
+revoke all on function private.is_service_context() from public, anon;
+grant execute on function private.is_service_context() to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- Enums
 -- ---------------------------------------------------------------------------
 
@@ -130,7 +172,19 @@ create table if not exists public.profiles (
   first_name text,
   last_name text,
   phone text,
-  partner_company_id uuid references public.partner_companies (id) on delete set null,
+  -- `on delete restrict`, not `set null`. `set null` collided head-on with
+  -- profiles_partner_requires_company below: deleting a company that still had reps made
+  -- Postgres run its own `update profiles set partner_company_id = null`, the CHECK then
+  -- refused that update, and the DELETE failed for *everyone* — owner and service role
+  -- alike — with "new row for relation profiles violates check constraint", naming a table
+  -- the caller never mentioned and a constraint that has nothing to do with what they
+  -- asked for. §9 gives owners companies CRUD, so the operation is legitimate and only the
+  -- error surface was wrong. restrict states the rule structurally; the BEFORE DELETE
+  -- guard public.guard_partner_company_delete() turns it into a message that says what to
+  -- do about it. Ending a partner relationship is `status = 'inactive'`, which already
+  -- revokes every rep through private.current_partner_company_id() — deletion is for
+  -- companies that should never have existed, and those have no reps to strand.
+  partner_company_id uuid references public.partner_companies (id) on delete restrict,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -202,7 +256,16 @@ create table if not exists public.claims (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
-  constraint claims_prior_outcome_required check (not prior_roof_claim or prior_outcome is not null)
+  constraint claims_prior_outcome_required check (not prior_roof_claim or prior_outcome is not null),
+  -- claims_before_insert() only generates a reference when the caller leaves the column
+  -- blank, so a caller who supplies one keeps it verbatim — and until now anything at all
+  -- was accepted, including 'not-a-cmg-ref' from an owner session. claim_ref is the
+  -- display identity of a claim in every email, portal header and partner summary (§4:
+  -- "claim_ref is display-only"), so a malformed or spoofed one is a correspondence
+  -- problem, not just an untidy row: two claims can be made to look like the same file, or
+  -- like a file from another year. The shape is the same one public.next_claim_ref()
+  -- produces, which is what makes generated and supplied references indistinguishable.
+  constraint claims_claim_ref_shape check (claim_ref ~ '^CMG-\d{4}-\d{4}$')
 );
 
 -- Money lives apart from claims: RLS is row-level, not column-level, so the only
@@ -272,6 +335,38 @@ create table if not exists public.documents (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint documents_size_bytes_range check (size_bytes > 0 and size_bytes <= 26214400),
+  -- The row and the object it names have to agree about which claim they belong to.
+  -- Nothing else tied them: an adjuster could file a perfectly legal documents row on
+  -- their own claim while pointing storage_path at another claim's prefix. No read
+  -- follows storage_path today — private.can_read_claim_object() authorises by looking
+  -- the path back up in this table, and §7.5 routes every download through a server-side
+  -- authz check — so it is a latent hole rather than a live one. It is also exactly the
+  -- kind that opens the day some future caller trusts the path instead of the row, and
+  -- both of the paths §4 defines are already structured enough to state as a rule. The
+  -- `intake/%` arm is the pre-accept prefix, which by definition has no claim yet; the
+  -- re-parent on accept moves a row from that arm to the first one.
+  --
+  -- The intake arm cannot be tied to the claim, and that is a property of the flow rather
+  -- than an omission here. The bytes land in the bucket during the §6 intake submission,
+  -- before the service-role transaction that creates the claim runs, so the folder is
+  -- named for an intake uuid minted while no claim id exists yet. Nothing on the row or in
+  -- the schema relates the two: `claims` has no intake_uuid column, and a CHECK cannot
+  -- consult another table even if it did. Tying them would mean carrying the intake uuid
+  -- onto `claims` and matching against it — an app and schema change to close a hole that
+  -- is latent in the first place, since no read follows storage_path
+  -- (private.can_read_claim_object() looks the path back up in this table, and §7.5 routes
+  -- every download through a server-side authz check).
+  --
+  -- What the arm CAN state is the shape §4 gives it, and it now does: exactly
+  -- `intake/{uuid}/{one path segment}`. That does not bind the object to a claim, but it
+  -- does close the arm to everything that is not a real intake path — free-form prefixes,
+  -- extra nesting, and `intake/`-prefixed strings aimed at some other part of the bucket
+  -- were all accepted by the bare `like 'intake/%'`, and none of them can be produced by
+  -- the flow the arm exists for.
+  constraint documents_storage_path_matches_claim check (
+    storage_path like 'claims/' || claim_id::text || '/%'
+    or storage_path ~ '^intake/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[^/]+$'
+  ),
   constraint documents_mime_allowlist check (
     mime in (
       'application/pdf',
@@ -422,6 +517,25 @@ create table if not exists public.storage_cleanup_queue (
 -- claim_ref: CMG-YYYY-NNNN from a per-year counter
 -- ---------------------------------------------------------------------------
 
+-- Two known, deliberately unfixed properties of this function, both reviewed and kept
+-- because the cure costs more than the disease at CMG's volume:
+--
+--   * lpad() pads, it does not truncate, so the 10,000th claim of a year produces
+--     'CMG-2026-10000' — five digits — which claims_claim_ref_shape then refuses, and the
+--     intake fails rather than silently colliding. CMG files on the order of hundreds of
+--     claims a year; 9,999 is roughly two orders of magnitude of headroom. Widening the
+--     format is a display change that reaches every email template, portal header and
+--     partner summary, and the failure mode if the day ever comes is a loud refusal at
+--     insert time, not a duplicate reference. Uniqueness beats throughput here, and it
+--     beats elegance too.
+--
+--   * the `on conflict do update` takes a row lock on the year's counter and holds it to
+--     the end of the calling transaction, so concurrent intakes serialise on this one row.
+--     That is exactly what makes the sequence gapless and collision-free, which a real
+--     Postgres sequence would not be. The window is a single UPDATE inside a transaction
+--     that is already writing a claim, its claimants and its consents; at a few claims a
+--     day the contention is unobservable. A gapless human reference is worth more to a
+--     public-adjusting file than concurrency CMG will never generate.
 create or replace function public.next_claim_ref()
 returns text
 language plpgsql
@@ -452,8 +566,6 @@ language plpgsql
 security definer
 set search_path = ''
 as $fn$
-declare
-  v_uid uuid := (select auth.uid());
 begin
   if new.claim_ref is null or length(btrim(new.claim_ref)) = 0 then
     new.claim_ref := public.next_claim_ref();
@@ -462,10 +574,11 @@ begin
   -- A claim may not be born mid-lifecycle. The transition trigger only fires on
   -- UPDATE, so without this an INSERT could seat a claim directly at `settled` or
   -- `closed` and skip every gate the machine exists to impose (including the signed
-  -- LOR requirement). Service-role/migration contexts (no JWT subject) keep the
-  -- ability to import historical records at their true stage, exactly as
-  -- public.guard_profile_privileges() treats them.
-  if v_uid is not null and new.status is distinct from 'new_intake' then
+  -- LOR requirement). Service-role and migration contexts keep the ability to import
+  -- historical records at their true stage, exactly as public.guard_profile_privileges()
+  -- treats them — see private.is_service_context() for why that is asked as a question
+  -- about the role claim and not about the presence of a subject.
+  if not private.is_service_context() and new.status is distinct from 'new_intake' then
     raise exception 'a claim created from a user session must start at new_intake, not %', new.status
       using errcode = '23514';
   end if;
@@ -508,13 +621,34 @@ set search_path = ''
 as $fn$
 declare
   v_uid uuid := (select auth.uid());
+  v_service boolean := private.is_service_context();
   v_actor_role public.app_role;
 begin
   if new.loss_date is distinct from old.loss_date then
     perform public.assert_claim_loss_date(new.loss_date);
   end if;
 
-  if new.partner_company_id is distinct from old.partner_company_id and v_uid is not null then
+  -- claims_claim_ref_shape pins the format; nothing pinned the identity. The two are not
+  -- the same guarantee: 'CMG-2026-0002' is a perfectly well-formed reference, and writing
+  -- it onto claim 1 makes two files answer to one name — or, one statement later, swaps
+  -- the names of two claims outright. claim_ref is what §7.3 calls display-only, which is
+  -- exactly why it must not move: it is the string on every email, portal header and
+  -- partner summary, so it is the handle by which a homeowner, a carrier and a referring
+  -- contractor each identify the file. An owner or assigned adjuster reaches this column
+  -- through claims_update_manage like any other, and the reference is generated once at
+  -- insert and never legitimately edited afterwards.
+  --
+  -- The service role is exempt, as it is from public.guard_consent_immutable(), for the
+  -- same reason: it is CMG's own server, it already holds BYPASSRLS and `grant all` on
+  -- every table in this schema including audit_log, and pretending to constrain it here
+  -- would be theatre that costs a real data-correction path. The actors this guard is
+  -- about are the ones holding a user session.
+  if new.claim_ref is distinct from old.claim_ref and not v_service then
+    raise exception 'claim_ref is the display identity of a claim and cannot be changed once assigned'
+      using errcode = '42501';
+  end if;
+
+  if new.partner_company_id is distinct from old.partner_company_id and not v_service then
     select p.role into v_actor_role
       from public.profiles p
      where p.id = v_uid and p.is_active;
@@ -675,7 +809,13 @@ begin
     v_row := to_jsonb(new);
   end if;
 
-  v_entity_id := nullif(v_row ->> 'id', '')::uuid;
+  -- Falls back to claim_id for the one audited relation that has no `id`:
+  -- public.claim_financials is keyed on claim_id, so without this its entries landed in
+  -- the trail with entity_id null and dropped straight out of audit_log_entity_idx —
+  -- present in the log, invisible to the owner's audit viewer filtered by entity id. Every
+  -- other audited table has a non-null id, so coalesce never reaches the second arm for
+  -- them and their entries are unchanged.
+  v_entity_id := coalesce(nullif(v_row ->> 'id', ''), nullif(v_row ->> 'claim_id', ''))::uuid;
   v_meta := jsonb_build_object('op', tg_op);
 
   if tg_op = 'UPDATE' then
@@ -736,6 +876,36 @@ create trigger audit_consents
   after insert or update or delete on public.consents
   for each row execute function public.audit_row_change();
 
+-- settlement_amount and fee_percent are the highest-value fields in this schema — the
+-- number CMG pays out on and the number CMG is paid — and until now they were the only
+-- ones with no record of who moved them. They appeared neither in this trigger set nor in
+-- §7.7's list of app-level audit writes, so an owner or an assigned adjuster could change
+-- a settlement figure and leave nothing behind: claim_financials is a separate relation
+-- precisely so money is not visible through public.claims, which also means the claims
+-- audit trigger never sees it. The projection trigger fires on the same events and
+-- rewrites what a partner reads, so the change is not even silent downstream — only
+-- unattributed. §4 puts this table in the owner/assigned-adjuster row, which is a small
+-- and trusted audience; a small audience is an argument for a short suspect list, not for
+-- keeping no list at all.
+drop trigger if exists audit_claim_financials on public.claim_financials;
+create trigger audit_claim_financials
+  after insert or update or delete on public.claim_financials
+  for each row execute function public.audit_row_change();
+
+-- claimants carries an access-control edge, not just contact details: `user_id` is the
+-- link private.is_claim_customer() reads to decide who may see a claim, its documents and
+-- its feed, and `email` is the address the §6 invite is sent to — so writing either one
+-- decides who gets into the portal for a file. That is the same class of fact as a status
+-- change or a document appearing, and it was equally untracked. Added for the reason
+-- claim_financials is: the trail should answer "who attached this person to this claim".
+--
+-- public.consents already had a trigger (immediately above) and needs no second one; that
+-- gap was closed in an earlier round for the same evidentiary reason.
+drop trigger if exists audit_claimants on public.claimants;
+create trigger audit_claimants
+  after insert or update or delete on public.claimants
+  for each row execute function public.audit_row_change();
+
 -- ---------------------------------------------------------------------------
 -- Consent snapshots are evidence: append, withdraw, never rewrite
 -- ---------------------------------------------------------------------------
@@ -780,6 +950,18 @@ create trigger consents_guard_subject
 -- Detaching loses the link, not the evidence: email, phone, kind, consent_text,
 -- granted_at and ip stay immutable and still identify whose consent it was, and every
 -- detachment is written to audit_log by the consents audit trigger.
+--
+-- The detach is further conditioned on the subject actually being gone. Permitting it
+-- unconditionally was wider than the foreign key needed: it also let an owner cut a LIVE
+-- claim loose from its consent in one statement — and a customer or an assigned adjuster
+-- null the lead_id on a consent carrying both — leaving the claim standing with nothing
+-- on it to show consent was ever collected, which is the precise evidentiary link a TCPA
+-- dispute turns on. `not exists` is what distinguishes the two: the FK's own action runs
+-- after the parent row is deleted, in a later command, so by the time this trigger looks
+-- the row is genuinely absent and the detachment passes; a hand-written UPDATE against a
+-- claim or lead that still exists finds it and is refused. The lookup is unfiltered by
+-- RLS because this function is SECURITY DEFINER, which is what the test requires: whether
+-- the subject exists must not depend on whether this caller can see it.
 create or replace function public.guard_consent_immutable()
 returns trigger
 language plpgsql
@@ -789,14 +971,22 @@ as $fn$
 declare
   v_column text;
 begin
-  if (select auth.uid()) is null then
+  -- The "service role retains the ability to correct records out-of-band" exemption
+  -- promised in the comment above. It asks private.is_service_context() rather than
+  -- `auth.uid() is null` so that it actually holds for a service-role JWT, which carries
+  -- a subject and was therefore being judged as a user session — see that function.
+  if private.is_service_context() then
     return new;
   end if;
 
   v_column := case
     when new.id           is distinct from old.id           then 'id'
-    when new.claim_id is distinct from old.claim_id and new.claim_id is not null then 'claim_id'
-    when new.lead_id  is distinct from old.lead_id  and new.lead_id  is not null then 'lead_id'
+    when new.claim_id is distinct from old.claim_id
+         and (new.claim_id is not null
+              or exists (select 1 from public.claims c where c.id = old.claim_id)) then 'claim_id'
+    when new.lead_id is distinct from old.lead_id
+         and (new.lead_id is not null
+              or exists (select 1 from public.leads l where l.id = old.lead_id)) then 'lead_id'
     when new.email        is distinct from old.email        then 'email'
     when new.phone        is distinct from old.phone        then 'phone'
     when new.kind         is distinct from old.kind         then 'kind'
@@ -838,7 +1028,35 @@ begin
       using errcode = '42501';
   end if;
 
-  if new.storage_path is distinct from old.storage_path then
+  -- storage_path is pinned for every JWT-bearing caller, and pinned for the service role
+  -- too except for the one move §4 and §6 require: an intake upload landing at
+  -- `intake/{intake_uuid}/…` before the claim is accepted, then re-parented to
+  -- `claims/{claim_id}/…` on accept. Refusing that unconditionally left the flow with no
+  -- legal implementation at all — not even for the service role that owns it. The only
+  -- alternative was delete + re-insert, which fires tg_enqueue_storage_cleanup and queues
+  -- the OLD intake path for deletion in a race with the bucket move, loses the
+  -- documents.id every claim_events/audit reference is keyed on, and records a delete
+  -- followed by a create where the trail should show one re-parent.
+  --
+  -- The escape is as narrow as the flow: service context only, only out of `intake/`, and
+  -- only into this row's own claim prefix — old.claim_id, which the branch above has
+  -- already pinned, so the destination cannot name another claim. Arbitrary re-pointing
+  -- therefore stays shut for everyone, and so does the hole this guard exists for: a
+  -- signed LOR cannot be moved onto a claim that never had one.
+  --
+  -- The service-context test is private.is_service_context(), not `auth.uid() is null`.
+  -- The latter recognised a bare service-role connection and nothing else, so the moment
+  -- the accept flow ran under a service-role JWT — which carries a `sub` like any signed
+  -- token — this escape closed and the §6 re-parent had no legal implementation again, in
+  -- production only, for a reason invisible to a test suite that connects without a JWT.
+  -- That test is total (never NULL), so the `not (...)` below stays two-valued and this
+  -- guard cannot fall through the way a three-valued predicate would.
+  if new.storage_path is distinct from old.storage_path
+     and not (
+       private.is_service_context()
+       and old.storage_path like 'intake/%'
+       and new.storage_path like 'claims/' || old.claim_id::text || '/%'
+     ) then
     raise exception 'a document cannot be repointed at a different stored object'
       using errcode = '42501';
   end if;
@@ -1033,8 +1251,11 @@ begin
     return new;
   end if;
 
-  -- No JWT subject means service role / migration / seed context.
-  if v_uid is null then
+  -- Service role / migration / seed context. This is the invite flow's own path — §4 says
+  -- role "is written only by service-role/invite flow" — so asking `auth.uid() is null`
+  -- here meant that the instant that flow ran under a service-role JWT it could no longer
+  -- assign the role it exists to assign. See private.is_service_context().
+  if private.is_service_context() then
     return new;
   end if;
 
@@ -1080,6 +1301,56 @@ drop trigger if exists claimants_normalize_email on public.claimants;
 create trigger claimants_normalize_email
   before insert or update on public.claimants
   for each row execute function public.normalize_claimant_email();
+
+-- ---------------------------------------------------------------------------
+-- Deleting a partner company says what is in the way
+-- ---------------------------------------------------------------------------
+
+-- §9 gives owners CRUD over companies, and DELETE was the one letter of it that did not
+-- work whenever the company had reps. profiles.partner_company_id is now `on delete
+-- restrict` (see the column), which stops the corrupt state structurally but reports it as
+-- a foreign-key violation naming a constraint the caller never heard of. This runs first,
+-- as a BEFORE DELETE row trigger, so the message the owner actually gets names the company,
+-- counts what is blocking the delete, and says what to do instead — which for an ended
+-- relationship is `status = 'inactive'`, already enough to revoke every rep through
+-- private.current_partner_company_id().
+--
+-- This cannot block a flow that works today: before restrict, this same delete failed for
+-- every caller including the service role, on the profiles_partner_requires_company CHECK.
+-- A company with no reps deletes exactly as it always did.
+--
+-- SECURITY DEFINER so the count is the true one. A caller who cannot see a rep's profiles
+-- row must still be told it is there — otherwise the guard's answer depends on the
+-- caller's visibility and the delete would proceed straight into the FK's refusal, which
+-- is the confusing error this exists to replace.
+create or replace function public.guard_partner_company_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_reps integer;
+begin
+  select count(*) into v_reps
+    from public.profiles p
+   where p.partner_company_id = old.id;
+
+  if v_reps > 0 then
+    raise exception
+      'partner company "%" still has % linked rep profile(s) and cannot be deleted; re-point or remove them first, or set the company inactive to end the relationship',
+      old.name, v_reps
+      using errcode = '23503';
+  end if;
+
+  return old;
+end;
+$fn$;
+
+drop trigger if exists partner_companies_guard_delete on public.partner_companies;
+create trigger partner_companies_guard_delete
+  before delete on public.partner_companies
+  for each row execute function public.guard_partner_company_delete();
 
 -- updated_at maintenance
 drop trigger if exists partner_companies_set_updated_at on public.partner_companies;

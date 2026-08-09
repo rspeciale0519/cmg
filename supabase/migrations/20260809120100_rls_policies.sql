@@ -10,6 +10,20 @@ set check_function_bodies = off;
 -- the caller's role without recursing through its own RLS. Each one is scoped
 -- to (select auth.uid()) internally, so it can only ever answer questions about
 -- the caller — which is exactly what the policy already reveals.
+--
+-- Every predicate below is wrapped in coalesce(..., false) so it returns a two-valued
+-- answer. private.current_app_role() filters on is_active, so it returns NULL — not a
+-- role — for a deactivated account and for a uid with no profiles row at all. Left
+-- unwrapped, `current_app_role() = 'owner'` is then NULL rather than false, and that NULL
+-- propagates: NULL or NULL is NULL, and `not NULL` is NULL. Inside an RLS policy that is
+-- harmless, because Postgres admits a row only on TRUE and NULL denies exactly as false
+-- does — which is why the whole helper set could carry three-valued logic unnoticed. It
+-- is not harmless anywhere else. A plpgsql `if not private.can_manage_claim(...) then
+-- raise` never fires on NULL, so a guard written in the obvious way admits precisely the
+-- callers it was written to refuse; public.reassign_claim() was exactly that guard.
+-- Making the helpers total closes the trap for every present and future non-RLS consumer
+-- rather than patching the one that tripped it, and cannot loosen any policy, since the
+-- only value that changes is NULL → false and both deny.
 -- ---------------------------------------------------------------------------
 
 create or replace function private.current_app_role()
@@ -32,7 +46,7 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select private.current_app_role() = 'owner';
+  select coalesce(private.current_app_role() = 'owner', false);
 $fn$;
 
 create or replace function private.is_staff()
@@ -42,7 +56,7 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select private.current_app_role() in ('owner', 'adjuster', 'assistant');
+  select coalesce(private.current_app_role() in ('owner', 'adjuster', 'assistant'), false);
 $fn$;
 
 -- Joined to partner_companies so that deactivating a company actually revokes its
@@ -71,12 +85,15 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select exists (
-    select 1
-      from public.claims c
-     where c.id = p_claim_id
-       and c.assigned_adjuster_id = (select auth.uid())
-  ) and private.current_app_role() = 'adjuster';
+  select coalesce(
+    exists (
+      select 1
+        from public.claims c
+       where c.id = p_claim_id
+         and c.assigned_adjuster_id = (select auth.uid())
+    ) and private.current_app_role() = 'adjuster',
+    false
+  );
 $fn$;
 
 -- Staff *with a reason to be on this claim*: the owner and the assistant carry the
@@ -91,9 +108,12 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select private.is_owner()
+  select coalesce(
+    private.is_owner()
       or private.current_app_role() = 'assistant'
-      or private.is_assigned_adjuster(p_claim_id);
+      or private.is_assigned_adjuster(p_claim_id),
+    false
+  );
 $fn$;
 
 -- Owner, or the adjuster this claim is assigned to: the only roles that may
@@ -105,7 +125,7 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select private.is_owner() or private.is_assigned_adjuster(p_claim_id);
+  select coalesce(private.is_owner() or private.is_assigned_adjuster(p_claim_id), false);
 $fn$;
 
 -- Joined to profiles for is_active, as every other identity helper here is. Matching
@@ -119,13 +139,91 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select exists (
-    select 1
-      from public.claimants cl
-      join public.profiles p on p.id = cl.user_id
-     where cl.claim_id = p_claim_id
-       and cl.user_id = (select auth.uid())
-       and p.is_active
+  select coalesce(
+    exists (
+      select 1
+        from public.claimants cl
+        join public.profiles p on p.id = cl.user_id
+       where cl.claim_id = p_claim_id
+         and cl.user_id = (select auth.uid())
+         and p.is_active
+    ),
+    false
+  );
+$fn$;
+
+-- "Has this claim already been through the lor_sent → lor_signed gate?" Asked by
+-- documents_delete, which has to distinguish a signed LOR that is still just a file on an
+-- unstarted claim from one that is the evidence a completed transition rests on.
+--
+-- Stated as an explicit status list rather than `status > 'lor_sent'` on the enum. The
+-- ordinal comparison reads well and is wrong twice over: it sweeps in `rejected`, which
+-- sorts last but is reachable only from new_intake/under_review/lor_sent and so names a
+-- claim that never passed the gate, and it silently changes meaning the day anyone adds a
+-- value to public.claim_status. `lor_signed_at is not null` is wrong differently — a
+-- historical record imported by the service role directly at `filed` never had it stamped.
+create or replace function private.claim_past_lor_gate(p_claim_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select coalesce(
+    exists (
+      select 1
+        from public.claims c
+       where c.id = p_claim_id
+         and c.status in (
+           'lor_signed', 'documenting', 'filed', 'negotiating',
+           'settlement_offered', 'settled', 'closed', 'denied', 'reopened'
+         )
+    ),
+    false
+  );
+$fn$;
+
+-- "Is this consent row about the caller?" — as opposed to merely about a claim the caller
+-- is on. A consent snapshot carries the subject's own email, phone and originating IP, and
+-- withdrawn_at on it is a statement made in that person's name.
+--
+-- Two ways to own an address, because a homeowner has two and they need not be the same
+-- string: the one on their auth account, and the one on the claimants row that links them
+-- to the claim (which is what the §6 intake collected the consent under, and what the
+-- invite was sent to). Matching on only one of them would lock a real homeowner out of the
+-- consent view/withdraw §10 promises them, which is a worse failure than the one being
+-- fixed. Compared case-insensitively and trimmed: claimants.email is normalised by
+-- public.normalize_claimant_email() but consents.email is not, so they are not guaranteed
+-- to agree byte for byte.
+--
+-- SECURITY DEFINER because it must answer about auth.users and about claimants rows the
+-- caller may not be able to select; scoped internally to (select auth.uid()), so it can
+-- only ever answer about the caller. coalesce for the reason the whole helper set has it.
+create or replace function private.is_consent_subject(p_email text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select coalesce(
+    exists (
+      select 1
+        from auth.users u
+        join public.profiles p on p.id = u.id
+       where u.id = (select auth.uid())
+         and p.is_active
+         and lower(btrim(u.email)) = lower(btrim(p_email))
+    )
+    or exists (
+      select 1
+        from public.claimants cl
+        join public.profiles p on p.id = cl.user_id
+       where cl.user_id = (select auth.uid())
+         and p.is_active
+         and lower(btrim(cl.email)) = lower(btrim(p_email))
+    ),
+    false
   );
 $fn$;
 
@@ -136,12 +234,15 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select exists (
-    select 1
-      from public.claims c
-     where c.id = p_claim_id
-       and c.partner_company_id is not null
-       and c.partner_company_id = private.current_partner_company_id()
+  select coalesce(
+    exists (
+      select 1
+        from public.claims c
+       where c.id = p_claim_id
+         and c.partner_company_id is not null
+         and c.partner_company_id = private.current_partner_company_id()
+    ),
+    false
   );
 $fn$;
 
@@ -180,6 +281,28 @@ alter table public.storage_cleanup_queue   enable row level security;
 -- which is the last relation that kept answering after claims, documents, events and
 -- claimants had all gone dark. Staff keep an unconditional read: administering a
 -- deactivated account requires being able to see it.
+--
+-- DELIBERATE DEVIATION FROM §4, reviewed and kept — the same shape as the one recorded on
+-- partner_companies_select below. The staff branch is private.is_staff(), so an adjuster
+-- and an assistant read every profiles row in the business, not only those on claims they
+-- are assigned. §4's matrix puts profile administration in the owner-only row, and
+-- "assigned only" is the rule everywhere else an adjuster touches claim-scoped data.
+--
+-- It is kept because assignment is displayed, not just enforced. Every staff surface that
+-- names a person — the claims table's adjuster column, the claim detail header, the
+-- assignee picker public.reassign_claim() is driven from, the author of a feed entry, the
+-- uploader of a document — resolves a uuid to a name through this table, and an adjuster
+-- handing a claim off has to see the colleague they are handing it to, who by definition
+-- is not on the claim yet. Narrowing to assigned-only would leave those names to be
+-- fetched by a service-role call on pages the caller is already authorised to see, which
+-- trades a real read boundary for a decorative one.
+--
+-- What the deviation exposes is bounded: profiles holds name, phone, role,
+-- partner_company_id and is_active — the staff directory — and no claim data, no financial
+-- data and no consent evidence. Writes are unaffected and stay where §4 puts them:
+-- profiles_update_self for a caller's own row, profiles_update_owner for anyone else's,
+-- with public.guard_profile_privileges() refusing role / partner_company_id / is_active
+-- changes underneath both.
 drop policy if exists profiles_select_self_or_staff on public.profiles;
 create policy profiles_select_self_or_staff on public.profiles
   for select to authenticated
@@ -348,7 +471,16 @@ begin
   end if;
 
   -- Evaluated before the write, so it is the current assignment that decides.
-  if not private.can_manage_claim(p_claim_id) then
+  --
+  -- coalesce, even though private.can_manage_claim() is now total: this guard is the
+  -- only thing standing between an arbitrary caller and a SECURITY DEFINER UPDATE that
+  -- runs with BYPASSRLS, and `not NULL` is NULL, which is not TRUE, so an IF written
+  -- without it does not fire and control simply falls through to the write. That is how
+  -- every deactivated account — customer, partner, assistant, owner — and every uid with
+  -- no profiles row could reassign any claim in the business while reading zero rows from
+  -- every table in it. The helper is fixed at source; this stays as the local invariant,
+  -- so the property does not depend on a function three files away keeping it.
+  if not coalesce(private.can_manage_claim(p_claim_id), false) then
     raise exception 'only an owner or the assigned adjuster may change the assignment of a claim'
       using errcode = '42501';
   end if;
@@ -370,8 +502,18 @@ begin
      set assigned_adjuster_id = p_new_adjuster
    where id = p_claim_id;
 
+  -- Same refusal as the authorisation branch, deliberately. A distinct "claim % does not
+  -- exist" / 23503 told the caller which of the two it was, and that is an existence
+  -- oracle over the whole claims table (spec §7.9: "generic 404s for unauthorized ids —
+  -- no existence oracle"). It leaked the claim id namespace to anyone who could reach the
+  -- RPC, and the id is not the secret — the difference between "there is no such claim"
+  -- and "there is one and it is not yours" is. Collapsing both onto 42501 with one message
+  -- makes the two indistinguishable from outside. Nothing legitimate depended on telling
+  -- them apart: an owner sees every claim through claims_select and an adjuster sees the
+  -- ones they can act on, so a caller entitled to know a claim exists already knows.
   if not found then
-    raise exception 'claim % does not exist', p_claim_id using errcode = '23503';
+    raise exception 'only an owner or the assigned adjuster may change the assignment of a claim'
+      using errcode = '42501';
   end if;
 end;
 $fn$;
@@ -574,16 +716,51 @@ create policy documents_update_staff on public.documents
     and (kind not in ('lor_unsigned', 'lor_signed') or private.can_manage_claim(claim_id))
   );
 
+-- documents_update_staff (above) stops an assistant stripping the evidence off a claim
+-- that has already passed the lor_signed gate. DELETE reached the same end by a shorter
+-- route and nothing stood in the way: private.can_manage_claim() is exactly the assigned
+-- adjuster and the owner, so the adjuster on a claim sitting at settlement_offered could
+-- delete its lor_signed document and leave the file with zero — the claim still asserting
+-- that CMG holds a signed letter of representation over the homeowner, with nothing behind
+-- the assertion. public.enforce_claim_status_transition() only consults that document on
+-- the way through the gate, so nothing downstream ever notices it has gone.
+--
+-- Deletion of a signed LOR is therefore refused once the claim has advanced past lor_sent.
+-- Before that point it is still an ordinary file on an unstarted claim — a wrong upload,
+-- a superseded draft — and deleting it is a legitimate correction, so the block is keyed
+-- to the gate rather than to the kind alone. `kind` is NOT NULL and
+-- private.claim_past_lor_gate() never returns NULL, so this predicate is two-valued.
+--
+-- Only JWT-bearing callers are affected: this is a policy, not a trigger, and service_role
+-- holds BYPASSRLS, so the §6 accept, the PandaDoc webhook and any out-of-band correction
+-- run exactly as before. The cascade from claims_delete_owner is likewise unaffected —
+-- Postgres runs referential actions with the referenced table's rights, not through this
+-- policy — so an owner deleting a whole claim still takes its documents with it.
 drop policy if exists documents_delete on public.documents;
 create policy documents_delete on public.documents
   for delete to authenticated
-  using (private.can_manage_claim(claim_id));
+  using (
+    private.can_manage_claim(claim_id)
+    and (kind <> 'lor_signed' or not private.claim_past_lor_gate(claim_id))
+  );
 
 -- ---------------------------------------------------------------------------
 -- consents — staff read; the claim's customer may read and withdraw their own.
 -- UPDATE is granted at row level because RLS cannot grant a single column, so the
 -- column-level rule ("withdrawn_at and nothing else") is enforced one level down by
 -- public.guard_consent_immutable(), and every change is written to audit_log.
+--
+-- The customer branches are scoped to the party, not merely to the claim. They used to
+-- ask only private.is_claim_customer(claim_id), and a claim routinely has more than one
+-- claimant — §4 provides for a second homeowner and the intake form collects one. Every
+-- co-claimant with a portal account therefore read every consent snapshot on the file:
+-- the other party's email, phone and the IP address they submitted from, none of which is
+-- theirs. Worse on the UPDATE side, where the same branch let them set withdrawn_at on
+-- somebody else's consent — revoking a stranger's permission to be contacted, in the one
+-- table that exists to prove what that person actually agreed to. `and
+-- private.is_consent_subject(email)` narrows both branches to rows carrying an address the
+-- caller owns; staff branches are untouched, since reading consent across a claim is
+-- exactly the evidentiary job §7.7 gives them.
 -- ---------------------------------------------------------------------------
 
 drop policy if exists consents_select on public.consents;
@@ -593,7 +770,11 @@ create policy consents_select on public.consents
     (select private.is_owner())
     or (select private.current_app_role()) = 'assistant'
     or (claim_id is not null and private.is_assigned_adjuster(claim_id))
-    or (claim_id is not null and private.is_claim_customer(claim_id))
+    or (
+      claim_id is not null
+      and private.is_claim_customer(claim_id)
+      and private.is_consent_subject(email)
+    )
   );
 
 drop policy if exists consents_insert_staff on public.consents;
@@ -601,18 +782,29 @@ create policy consents_insert_staff on public.consents
   for insert to authenticated
   with check ((select private.is_owner()) or (claim_id is not null and private.can_manage_claim(claim_id)));
 
+-- `email` in WITH CHECK resolves to the post-update value, but that is the same value
+-- USING saw: public.guard_consent_immutable() is a BEFORE trigger and pins email for every
+-- JWT-bearing caller, so a row whose subject changed never reaches this test.
 drop policy if exists consents_update on public.consents;
 create policy consents_update on public.consents
   for update to authenticated
   using (
     (select private.is_owner())
     or (claim_id is not null and private.can_manage_claim(claim_id))
-    or (claim_id is not null and private.is_claim_customer(claim_id))
+    or (
+      claim_id is not null
+      and private.is_claim_customer(claim_id)
+      and private.is_consent_subject(email)
+    )
   )
   with check (
     (select private.is_owner())
     or (claim_id is not null and private.can_manage_claim(claim_id))
-    or (claim_id is not null and private.is_claim_customer(claim_id))
+    or (
+      claim_id is not null
+      and private.is_claim_customer(claim_id)
+      and private.is_consent_subject(email)
+    )
   );
 
 -- ---------------------------------------------------------------------------

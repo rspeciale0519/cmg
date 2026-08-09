@@ -5,6 +5,44 @@ Live log for the autonomous build. Newest first. Roadmap:
 
 ---
 
+## Phase 1 — Local Supabase + schema ✅
+
+**Shipped**
+- 18 tables, 13 enums, `claim_ref` per-year sequence (`CMG-YYYY-NNNN`), status-transition
+  trigger enforcing the §5 lifecycle including the `lor_signed`-requires-a-document gate,
+  `check_rate_limit()`, audit triggers, the partner projection table, and a private
+  `claim-docs` bucket. RLS deny-by-default on every table.
+- Deterministic seed: one user per role, a partner company, two demo claims at different
+  lifecycle stages.
+- **429 pgTAP assertions across 9 files**, all green on a clean `supabase db reset`.
+
+**Schema review gate — 4 independent rounds, 14 majors found and fixed**
+
+Every round used a fresh-context reviewer that never saw the builder's reasoning. The builder's
+own verification had declared round 1's schema sound; the reviewer reproduced nine real holes
+against the live database.
+
+| Round | Majors | Notable finds |
+|---|---|---|
+| 1 | 9 | Adjusters read every unassigned claim's PII/documents; customers could rewrite their own consent snapshots; rate-limit budgets defeated by window collision; client-direct storage bypassed the audited signed-URL path; adjusters could re-attribute a claim to any partner company |
+| 2 | 3 | *All introduced by round 1's fixes.* Owner could never delete a consent-bearing claim (failed only for real users — passed under service-role testing); a deactivated owner could re-enable themselves |
+| 3 | 2 | Three-valued-logic bypass in `reassign_claim`: `if not can_manage_claim(...)` where the helper returns NULL for deactivated accounts, so `NOT NULL` isn't TRUE and control fell through to the UPDATE — proven end-to-end over HTTP with a deactivated account |
+| 4 | **0** | Gate converged. 10 genuine minors, fixed in a cleanup pass |
+
+The pattern worth recording: rounds 2 and 3 found defects *created by the previous round's
+fixes*, and two of them passed service-role testing while failing for real users. A single
+review pass would have shipped all of them.
+
+**Recovered after a session disconnect** — the round-4 cleanup had landed its test file and
+rewritten comments but not the one-line FK change they described (`profiles.partner_company_id`
+still `on delete set null` where the test asserted `on delete restrict`). The failing assertion
+named the discrepancy precisely, which is what a non-vacuous suite buys.
+
+**Checks** — `supabase db reset` clean, `supabase test db` 429/429, plus `type-check`, `lint`,
+`test`, `build` all exit 0.
+
+---
+
 ## Phase 0 — Repo bootstrap ✅
 
 **Shipped**

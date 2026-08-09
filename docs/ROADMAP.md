@@ -14,13 +14,13 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] `docs/ROADMAP.md`, `docs/temp/PROGRESS.md`, GitHub Actions CI workflow
 
 ## Phase 1 — Local Supabase + schema
-- [ ] `supabase start` healthy
-- [ ] Migration: all tables, enums, `claim_ref` sequence, status trigger, `check_rate_limit()`, audit triggers, RLS deny-by-default, private `claim-docs` bucket
-- [ ] `supabase db reset` clean
-- [ ] Seed: 5 roles + partner company + 2 demo claims
-- [ ] pgTAP harness green via `supabase test db`
-- [ ] Design tokens in `@theme` match prototype `:root` exactly
-- [ ] SCHEMA REVIEW GATE converged
+- [x] `supabase start` healthy
+- [x] Migration: all tables, enums, `claim_ref` sequence, status trigger, `check_rate_limit()`, audit triggers, RLS deny-by-default, private `claim-docs` bucket
+- [x] `supabase db reset` clean
+- [x] Seed: 5 roles + partner company + 2 demo claims
+- [x] pgTAP harness green via `supabase test db` (429 assertions, 9 files)
+- [x] Design tokens in `@theme` match prototype `:root` exactly
+- [x] SCHEMA REVIEW GATE converged (4 rounds: 9 → 3 → 2 → 0 majors)
 
 ## Phase 2 — Marketing site + public intake
 - [ ] 6 pages ported with header/mobile menu/footer
