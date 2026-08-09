@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# testing
+coverage/
+
+# production media sources (large originals; transcoded outputs live in public/videos)
+temp/media/
+
+# env
+.env
+.env.local
+.env*.local
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
