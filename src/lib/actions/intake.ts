@@ -73,7 +73,12 @@ export async function submitIntake(
     email: text("email"),
     phone: text("phone"),
     initials: text("initials"),
-    hasSecondPolicyholder: text("hasSecondPolicyholder") || "no",
+    /* No `|| "no"` fallback. Both yes/no questions are required and start
+       unanswered, so an absent value means the homeowner did not answer — and
+       a Letter of Representation is drafted from these answers. Defaulting
+       would have the server assert "no second policyholder" and "no prior roof
+       claim" on their behalf, and would make the required rule unreachable. */
+    hasSecondPolicyholder: text("hasSecondPolicyholder"),
     secondFirstName: text("secondFirstName"),
     secondLastName: text("secondLastName"),
     secondEmail: text("secondEmail"),
@@ -81,7 +86,7 @@ export async function submitIntake(
     carrier: text("carrier"),
     policyNumber: text("policyNumber"),
     carrierTenure: text("carrierTenure"),
-    priorRoofClaim: text("priorRoofClaim") || "no",
+    priorRoofClaim: text("priorRoofClaim"),
     priorOutcome: text("priorOutcome"),
     claimNumber: text("claimNumber"),
     lossDate: text("lossDate"),

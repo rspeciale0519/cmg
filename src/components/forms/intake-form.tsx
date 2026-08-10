@@ -71,8 +71,15 @@ function IntakeSection({
 
 export function IntakeForm() {
   const [state, formAction, pending] = useActionState(submitIntake, idleState);
-  const [hasSecond, setHasSecond] = useState("no");
-  const [priorClaim, setPriorClaim] = useState("no");
+  /* Both start unanswered. These two answers are drafted into the Letter of
+     Representation, so a pre-selected "No" would have the form state, on the
+     homeowner's behalf, that nobody else is on the policy and that the roof has
+     never been claimed — neither of which they were asked to read. It also made
+     `required` unreachable and kept the `priorOutcome` follow-up from ever
+     surfacing. Same call already taken on `lossTime` and the `cause` /
+     `carrierTenure` selects. */
+  const [hasSecond, setHasSecond] = useState("");
+  const [priorClaim, setPriorClaim] = useState("");
 
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);

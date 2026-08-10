@@ -35,11 +35,14 @@ export function SiteFooter() {
       <Container className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-10 pb-10 pt-[clamp(48px,5vw,72px)]">
         <div>
           <div className="flex w-max flex-col items-center gap-[7px]">
+            {/* Rendered width: 56 × 573/513 = 62.55px. Same reason as the
+                header's — see the note there. */}
             <Image
               src="/images/logo-cmg-mark.png"
               alt={site.name}
               width={573}
               height={513}
+              sizes="63px"
               className="h-14 w-auto"
             />
             {/* Stated, not inherited, so it stays paired with the header's

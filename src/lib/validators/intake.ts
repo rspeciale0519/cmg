@@ -103,7 +103,20 @@ const requestedAdjuster = z.enum(ADJUSTER_VALUES, {
   error: "Choose which adjuster you are working with.",
 });
 
-const yesNo = z.enum(["no", "yes"]);
+/* Both yes/no questions on the intake start unanswered, so `""` is a
+   reachable submitted value here exactly as it is for the selects above —
+   which means each needs its own sentence rather than a shared fallback.
+   A Letter of Representation is drafted from these two answers: a pre-checked
+   "No" would have the form assert, on the homeowner's behalf, that there is no
+   second policyholder and no prior roof claim. */
+const YES_NO_VALUES = ["no", "yes"] as const;
+
+const hasSecondPolicyholder = z.enum(YES_NO_VALUES, {
+  error: "Tell us whether a second person is on the policy.",
+});
+const priorRoofClaim = z.enum(YES_NO_VALUES, {
+  error: "Tell us whether a roof claim has been filed at this property.",
+});
 
 const initials = z
   .string()
@@ -155,7 +168,7 @@ export const intakeSchema = z
     phone: requiredPhone,
     initials,
 
-    hasSecondPolicyholder: yesNo,
+    hasSecondPolicyholder,
     secondFirstName: optionalText(80),
     secondLastName: optionalText(80),
     secondEmail: optionalEmail,
@@ -164,7 +177,7 @@ export const intakeSchema = z
     carrier: z.string().trim().min(1, "Insurance company is required.").max(120),
     policyNumber: z.string().trim().min(1, "Policy number is required.").max(80),
     carrierTenure,
-    priorRoofClaim: yesNo,
+    priorRoofClaim,
     priorOutcome: priorOutcome.optional().or(z.literal("").transform(() => undefined)),
     claimNumber: optionalText(80),
 

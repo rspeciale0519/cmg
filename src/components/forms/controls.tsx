@@ -179,6 +179,8 @@ export function RadioField({
   onValueChange,
 }: Shared & {
   options: ReadonlyArray<{ value: string; label: string }>;
+  /** `""` is a group with no answer yet — no radio is `checked`, which is what
+   *  an unanswered required question has to look like. */
   value: string;
   onValueChange: (value: string) => void;
 }) {
@@ -211,6 +213,10 @@ export function RadioField({
               name={name}
               value={option.value}
               checked={value === option.value}
+              /* Carried by every radio in the group, which is how HTML marks a
+                 radio *group* required — the legend's asterisk was the only
+                 statement of it before, and an asterisk is not a semantic. */
+              required={required}
               onChange={() => onValueChange(option.value)}
               /* Covers the whole label rather than collapsing to zero size, so
                  the real control is the hit target at its full 44px. */

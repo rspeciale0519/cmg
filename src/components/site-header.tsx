@@ -19,6 +19,7 @@ export function SiteHeader() {
   const [renderedPath, setRenderedPath] = useState(pathname);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const onClaimPage = isActiveRoute(pathname, claimHref);
 
   // Navigating dismisses the menu. Adjusting during render rather than in an
   // effect keeps the closed panel from painting for a frame after the route
@@ -173,11 +174,18 @@ export function SiteHeader() {
                 stretch is not, so this renders 64.8×58. The 4px under the
                 wordmark is the prototype's own: it sits the visible ink
                 slightly above the row's optical centre. */}
+            {/* `sizes` is the rendered width (58 × 573/513 = 64.78px), not a
+                second opinion about layout — the box is still the class's.
+                Without it `next/image` builds the srcset from the *intrinsic*
+                573px as `640w 1x, 1200w 2x`, so a 1.75 DPR phone preloaded the
+                1200px candidate — 34 KB for 65 CSS pixels. Stating the real
+                width lets the browser take the 128px candidate instead. */}
             <Image
               src="/images/logo-cmg-mark.png"
               alt=""
               width={573}
               height={513}
+              sizes="65px"
               priority
               className="h-[58px] w-auto"
             />
@@ -230,7 +238,17 @@ export function SiteHeader() {
             >
               {site.phone}
             </a>
-            <Button href={claimHref} size="sm">
+            {/* The header CTA is a link like any other in this row, so on the
+                page it points at it says so — in the a11y tree with
+                `aria-current`, and on screen with the prototype's 14% accent
+                fill, which `File.dc.html` carries on this button and no other
+                page does. */}
+            <Button
+              href={claimHref}
+              size="sm"
+              variant={onClaimPage ? "current" : "primary"}
+              aria-current={onClaimPage ? "page" : undefined}
+            >
               File a claim
             </Button>
           </div>

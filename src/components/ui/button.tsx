@@ -19,6 +19,23 @@ const BASE =
 
 const VARIANT = {
   primary: "border-accent text-accent hover:bg-accent/12 active:bg-accent/22",
+  /* The primary wearing a "you are here" fill: the header CTA on the page it
+     points at. `File.dc.html` is the one prototype that gives this button an
+     inline `background: color-mix(in srgb, var(--color-accent) 14%,
+     transparent)`, and `bg-accent/14` is what that translation has meant
+     everywhere else on this site (the prototype's 12% hover is `bg-accent/12`
+     directly above).
+
+     A whole variant rather than a fill appended to `primary` at the call site,
+     for the reason this file already documents about sizes: `bg-accent/14`
+     beside `hover:bg-accent/12` is an equal-specificity pair, so the emitted
+     sheet would decide which paints — and if the hover won, the pointer would
+     make the current-page button *dimmer* than at rest. The ramp is restated
+     from the fill instead of around it, so the button still answers the
+     pointer and only ever travels up, which is the same rule the current nav
+     link follows. */
+  current:
+    "border-accent text-accent bg-accent/14 hover:bg-accent/22 active:bg-accent/30",
   secondary: "border-ink/16 text-ink hover:bg-ink/7 active:bg-ink/14",
 } as const;
 

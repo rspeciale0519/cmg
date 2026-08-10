@@ -18,6 +18,15 @@
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > src/types/database.ts"
   },
+  "browserslist": [
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 128",
+    "safari >= 16.4",
+    "ios_saf >= 16.4",
+    "and_chr >= 111",
+    "samsung >= 23"
+  ],
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",

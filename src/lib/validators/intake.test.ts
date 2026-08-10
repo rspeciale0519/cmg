@@ -122,6 +122,33 @@ describe("intakeSchema — happy paths", () => {
   });
 });
 
+/* Both questions render with no radio checked, so `""` is what an unanswered
+   group actually submits. The schema is the only thing standing between that
+   and a Letter of Representation drafted from an answer nobody gave — the
+   action no longer substitutes "no" for an absent value. */
+describe("intakeSchema — the two yes/no questions are answerable, not assumed", () => {
+  it("rejects an unanswered second-policyholder question", () => {
+    const issue = errorFor({ ...valid, hasSecondPolicyholder: "" }, "hasSecondPolicyholder");
+    expect(issue?.message).toBe("Tell us whether a second person is on the policy.");
+  });
+
+  it("rejects an unanswered prior-roof-claim question", () => {
+    const issue = errorFor({ ...valid, priorRoofClaim: "" }, "priorRoofClaim");
+    expect(issue?.message).toBe(
+      "Tell us whether a roof claim has been filed at this property.",
+    );
+  });
+
+  it("still accepts an explicit no for both", () => {
+    const result = intakeSchema.safeParse({
+      ...valid,
+      hasSecondPolicyholder: "no",
+      priorRoofClaim: "no",
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("intakeSchema — homeowner branch", () => {
   it("rejects a missing first name", () => {
     expect(errorFor({ ...valid, firstName: "" }, "firstName")).toBeDefined();
