@@ -5,6 +5,66 @@ Live log for the autonomous build. Newest first. Roadmap:
 
 ---
 
+## Phase 2 — Marketing site + public intake ✅ (perf gate: see below)
+
+**Shipped**
+- All six routes ported from the prototypes, copy verbatim, every route prerendering static.
+  Sticky blurred header with a mobile drawer (transition, scrim, scroll lock with scrollbar
+  compensation, `inert`, focus trap, hamburger morph), footer, hero with three crossfading
+  clips, `ImageSlot` placeholders, SEO (per-page metadata, sitemap, robots, LocalBusiness
+  JSON-LD), and a branded 404.
+- Public form pipeline proven end to end against the local stack: Turnstile verified
+  server-side and failing closed, per-IP **and** per-email rate limits through the database
+  limiter, zod validation shared client/server, private-bucket uploads with UUID filenames,
+  a transactional intake with compensating rollback, and an email outbox that degrades
+  gracefully with no Resend key. Verified by creating a real claim (`CMG-2026-0003`) with
+  claimants, consents and a stored document, plus reproduced rate-limit, Turnstile and
+  file-type/size rejections.
+- Assets: three hero clips transcoded 47MB/4K → 2.33MB total; favicon 35KB → 4.7KB.
+
+**The two design gates — 10 rounds, ~20 independent critics**
+
+Every round used fresh-context critics that never saw the builder's reasoning, comparing
+real rendered pages: Lens A against the prototypes, Lens B against live screenshots of
+Stripe, Linear and Vercel.
+
+| | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Lens A** majors | 4 | 2 | 2 | 0 | 1 | 1 | 1 | 1 | **0** | **0** |
+| **Lens B** rank / majors | 4th, major | 4th, major | 4th, major | 4th, major | 3rd, **none** | 3rd, **none** | — | — | — | — |
+
+Both converged: Lens A on two consecutive clean rounds, Lens B on two consecutive rounds
+with no major gap, ranked 3rd of 4 — ahead of Vercel.
+
+**What the gates actually caught** — findings no amount of self-review would have produced:
+- **The invalid form-field border never rendered.** `INVALID_CLASS` and `border-ink/16` had
+  identical specificity and `cx()` is a bare join with no tailwind-merge, so stylesheet emit
+  order won. A user failing validation on the 25-field intake saw no field-level signal at
+  all. The same audit found three more silently-dead overrides.
+- **The intake shipped two required questions pre-answered "No"**, including "Have you ever
+  filed a claim for the roof at this property?" — on a Letter of Representation intake, where
+  `required` could never fire and the conditional follow-up never surfaced.
+- **The header sat off the content spine.** No `max-width`, so the same logo component rendered
+  at x=56 in the header and x=88.5 in the footer, drifting unboundedly to ~272px at 1920.
+- **The interior page glow was missing from two of five routes** — a seam between two agents
+  that built those pages in the same wave.
+- Two text tiers below WCAG AA; the LCP element absent from the prerendered HTML entirely.
+
+**Three conflicts had to be arbitrated** where fidelity and craft genuinely disagreed. The
+testimonial measure went to craft (the prototype's `30ch` sat on a figure where `ch` resolved
+against a 15px size nothing in it renders at — a mockup bug, not an editorial choice). The
+closing-CTA alignment and the `/about` region grid went to fidelity. Each is documented in
+code with a one-line revert.
+
+**Checks** — `type-check`, `lint`, `test` (132), `build` all exit 0; `supabase test db` 429/429;
+six routes static; no console errors; no horizontal overflow at 390.
+
+**Performance gate** — accessibility **100** on Home (≥95 required ✅). Performance did not
+reach 85 on this machine; see `docs/temp/BLOCKERS.md` for the measured numbers, the calibrated
+controls, and the honest split between host contention and real remaining work.
+
+---
+
 ## Phase 1 — Local Supabase + schema ✅
 
 **Shipped**

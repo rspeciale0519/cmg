@@ -23,15 +23,16 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] SCHEMA REVIEW GATE converged (4 rounds: 9 → 3 → 2 → 0 majors)
 
 ## Phase 2 — Marketing site + public intake
-- [ ] 6 pages ported with header/mobile menu/footer
-- [ ] Hero video rotator (3 transcoded clips, crossfade, reduced-motion fallback)
-- [ ] ImageSlot placeholders
-- [ ] SEO: metadata, sitemap, robots, LocalBusiness JSON-LD
-- [ ] Contact + intake forms end-to-end (Turnstile, rate limit, storage, DB rows)
-- [ ] Outbox + 3 public email templates
-- [ ] BRAND-FIDELITY GATE converged (1440px + 390px)
-- [ ] CRAFT GATE converged (marketing)
-- [ ] Lighthouse: performance ≥ 85, a11y ≥ 95
+- [x] 6 pages ported with header/mobile menu/footer (+ branded 404)
+- [x] Hero video rotator (3 transcoded clips, crossfade, reduced-motion fallback)
+- [x] ImageSlot placeholders
+- [x] SEO: metadata, sitemap, robots, LocalBusiness JSON-LD
+- [x] Contact + intake forms end-to-end (Turnstile, rate limit, storage, DB rows)
+- [x] Outbox + 4 public email templates
+- [x] BRAND-FIDELITY GATE converged — rounds 9 & 10 consecutive NO MAJORS
+- [x] CRAFT GATE converged — rounds 5 & 6 no major gap, ranked 3rd of 4 vs Stripe/Linear/Vercel
+- [x] Lighthouse a11y ≥ 95 → **100** on Home
+- [ ] Lighthouse performance ≥ 85 → see `docs/temp/BLOCKERS.md` (host-contended measurement)
 
 ## Phase 3 — Auth core
 - [ ] Invites, login, staff TOTP MFA, `proxy.ts` gating, authz helpers
