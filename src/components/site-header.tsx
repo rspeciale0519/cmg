@@ -222,7 +222,11 @@ export function SiteHeader() {
           <div className="col-start-3 hidden items-center gap-[14px] justify-self-end min-[1025px]:flex">
             <a
               href={telHref}
-              className="flex min-h-[44px] items-center whitespace-nowrap text-sm font-semibold text-ink no-underline transition-colors duration-200 hover:text-accent-300"
+              /* `leading-[1.55]` for the same reason the nav links carry it:
+                 `text-sm` ships a 20px pair, and the prototype's 14px header
+                 items all take the body's 1.55 (21.7px). This was the one
+                 header item still on the Tailwind default. */
+              className="flex min-h-[44px] items-center whitespace-nowrap text-sm leading-[1.55] font-semibold text-ink no-underline transition-colors duration-200 hover:text-accent-300"
             >
               {site.phone}
             </a>

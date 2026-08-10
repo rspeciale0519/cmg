@@ -218,6 +218,7 @@ export function IntakeForm() {
             name="description"
             label={'Description of the loss (e.g. "roof damage with leaks inside the home")'}
             required
+            size="sm"
             rows={4}
             error={errors.description}
           />

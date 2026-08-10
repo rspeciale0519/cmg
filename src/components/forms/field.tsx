@@ -18,34 +18,60 @@ export const DANGER = "#E08C6A";
  *  specificity and is therefore order-independent. The hover and focus pairs
  *  are spelled out for the same reason: `hover:border-ink/45` and
  *  `focus-visible:border-accent` would otherwise tie with it. */
-/** Everything about the control except its padding.
+/** Everything about the control except its padding and its min-height.
  *
- *  Padding is held out because the file input needs its own (the prototype
- *  gives it `12px` where the text control gets `6px 10px`) and a `p-*`
- *  utility cannot beat a `px-*`/`py-*` one: they are equal specificity and
- *  Tailwind emits the axis utilities last, so a `p-[12px]` appended beside
- *  this string would be silently inert.
+ *  Both are held out for the same reason: the variants differ (the file input
+ *  takes the prototype's `12px` where the text control takes `6px 10px`; the
+ *  two textareas take the prototype's own 130px and 110px where every other
+ *  control takes 46px) and neither can be overridden by appending a utility.
+ *  `p-*` vs `px-*`/`py-*` and one `min-h-*` vs another are equal-specificity
+ *  single-class selectors, so the emitted sheet decides and the appended
+ *  utility is silently inert — which is exactly how the two textareas lost
+ *  their heights and fell back to this string's 46px.
+ *
+ *  `leading-[1.55]` is the prototype's: `.input` sets `font: inherit` before
+ *  its own `font-size: 14px`, so it inherits the body's 1.55 line-height as a
+ *  unitless number and resolves it against 14px — 21.7px, not the 21px a flat
+ *  1.5 gives.
  *
  *  `opacity` is inside the transition list, not outside it: `disabled:` and
  *  the border states change together when a submit starts, and a border that
  *  eases while the fill snaps reads as two separate events. 200ms is the
- *  site's one navigational duration. */
+ *  site's one navigational duration.
+ *
+ *  `aria-invalid:focus-visible:outline-[#E08C6A]` re-colours the global gold
+ *  focus ring on an invalid control. A failed submit focuses the first
+ *  invalid field, and with the base `:focus-visible` gold outline sitting
+ *  outside the 1px ember border, the one field the form just sent the user to
+ *  read *calmer* than its unfocused invalid neighbours. */
 const INPUT_BASE =
-  "w-full min-h-[46px] rounded-md border border-ink/16 bg-surface text-[14px] leading-[1.5] text-ink caret-accent " +
+  "w-full rounded-md border border-ink/16 bg-surface text-[14px] leading-[1.55] text-ink caret-accent " +
   "transition-[color,background-color,border-color,opacity] duration-200 " +
   "placeholder:text-ink/35 hover:border-ink/45 focus-visible:border-accent focus-visible:outline-offset-0 " +
   "disabled:cursor-not-allowed disabled:opacity-55 " +
-  "aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A]";
+  "aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A] " +
+  "aria-invalid:focus-visible:outline-[#E08C6A]";
 
 /** Prototype `.input`: 14px on `6px 10px`. The 46px min-height these two
  *  pages set inline is what gives the box its size, so the padding is free to
  *  be the prototype's — 15px on `11px 14px` was a second, larger control
  *  wearing the same name. */
-export const INPUT_CLASS = `${INPUT_BASE} px-[10px] py-[6px]`;
+export const INPUT_CLASS = `${INPUT_BASE} min-h-[46px] px-[10px] py-[6px]`;
 
 /** The prototype's file control, which overrides `.input`'s padding to 12px
  *  so the native "Choose files" button has room to sit in. */
-export const FILE_INPUT_CLASS = `${INPUT_BASE} p-[12px]`;
+export const FILE_INPUT_CLASS = `${INPUT_BASE} min-h-[46px] p-[12px]`;
+
+/** The two textareas the prototypes size themselves: Contact's "What
+ *  happened?" at 130px and the intake's "Description of the loss" at 110px.
+ *  Written out as whole strings rather than a `min-h-*` appended at the call
+ *  site, for the reason `INPUT_BASE` documents. */
+export const TEXTAREA_CLASS = {
+  sm: `${INPUT_BASE} min-h-[110px] px-[10px] py-[6px]`,
+  md: `${INPUT_BASE} min-h-[130px] px-[10px] py-[6px]`,
+} as const;
+
+export type TextAreaSize = keyof typeof TEXTAREA_CLASS;
 
 /* 12px on the body's inherited 1.55 (18.6px), which is what the prototype's
    `.field > label` takes. `leading-[1.4]` closed it to 16.8px. */

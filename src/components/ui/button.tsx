@@ -4,10 +4,18 @@ import { cx } from "@/lib/cx";
 
 /* `opacity` is in the transition list beside the colours: a submit button
    dims and loses its hover fill in the same instant, and animating one while
-   the other snaps reads as two events. */
+   the other snaps reads as two events.
+
+   `disabled:hover:bg-transparent` because `:hover` still matches a disabled
+   <button> in Chrome. Without it, a submit that has just been pressed lights
+   up with its live hover fill for the whole in-flight second while the cursor
+   over it reads `not-allowed` — the fill says press me, the cursor says you
+   cannot. Two variants, so it outranks the single-variant hover fill however
+   the sheet is ordered. */
 const BASE =
   "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border font-medium leading-[1.2] no-underline " +
-  "transition-[color,background-color,border-color,opacity] duration-200 disabled:cursor-not-allowed disabled:opacity-45";
+  "transition-[color,background-color,border-color,opacity] duration-200 " +
+  "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent";
 
 const VARIANT = {
   primary: "border-accent text-accent hover:bg-accent/12 active:bg-accent/22",

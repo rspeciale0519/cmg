@@ -35,26 +35,19 @@ export function Testimonial({
           The figcaption keeps the prototype's own 14px and, released from the
           284px cap, stops breaking mid-attribution ("R. DELGADO ·" /
           "HOMEOWNER, ORLANDO"). */}
-      {/* Two anchors, not one. At 813px the quote alone still leaves the
-          right half of the band as bare colour, so the attribution is pushed
-          to the field's right edge and the band resolves between them — the
-          same device `closing-cta` uses to settle its own row. Below 1360px
-          the attribution no longer fits beside a 30ch quote without wrapping,
-          so it returns to sitting under it, as the prototype has it. */}
-      <figure className="min-[1360px]:flex min-[1360px]:items-end min-[1360px]:justify-between min-[1360px]:gap-x-16">
+      {/* The measure is the only thing that moves. The composition around it
+          is the prototype's, unchanged: a plain block figure, the caption
+          directly beneath the quote on the same left spine, at the
+          prototype's own `margin: 40px 0 0` and 14px, with no rule above it.
+          An earlier pass pushed the caption to the field's right edge and
+          gave it a 40px accent hairline; both were workarounds for the old
+          284px quote leaving the band four fifths empty, and at 813px the
+          band no longer needs either. */}
+      <figure>
         <blockquote className="max-w-[30ch] text-display-5 font-medium leading-[1.25] tracking-[-0.028em]">
           &ldquo;{quote}&rdquo;
         </blockquote>
-        {/* The 40px accent rule is the same mark the section kickers use,
-            which ties the attribution back into the page's structural
-            vocabulary instead of leaving it free-floating. The 5px sets the
-            attribution's baseline on the quote's last line: above 1360px the
-            quote is always at its 42px cap, so the offset is a constant. */}
-        <figcaption className="mt-10 text-sm uppercase leading-[1.55] tracking-[0.1em] text-ink/85 min-[1360px]:mt-0 min-[1360px]:shrink-0 min-[1360px]:pb-[5px] min-[1360px]:text-right">
-          <span
-            aria-hidden="true"
-            className="mb-5 block h-px w-10 bg-accent min-[1360px]:ml-auto"
-          />
+        <figcaption className="mt-10 text-sm uppercase leading-[1.55] tracking-[0.1em] text-ink/85">
           {attribution}
         </figcaption>
       </figure>

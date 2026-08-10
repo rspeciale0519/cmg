@@ -90,6 +90,7 @@ export function ContactForm() {
         name="message"
         label="What happened?"
         className="mt-5"
+        size="md"
         rows={5}
         placeholder="When the damage occurred, what was affected, and whether you've already filed or heard from your carrier."
         error={errors.message}

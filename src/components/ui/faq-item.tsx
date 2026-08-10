@@ -15,12 +15,21 @@ export function FaqItem({ question, className, children }: FaqItemProps) {
       {/* The prototype's `padding: 24px 0` and its inherited 1.55 leading —
           the question is body-tier ink, not a heading, and setting it tighter
           than the answer below it made the two read as different voices. */}
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-6 py-6 text-[19px] font-medium leading-[1.55] tracking-[-0.015em] [&::-webkit-details-marker]:hidden">
+      {/* The row was the site's one interactive surface with no pointer
+          response — the cursor was the whole of the feedback. It answers on
+          the same 200ms ramp every other link uses. The chevron reads the
+          summary's own hover, not the `<details>` group's: hovering an open
+          answer is not hovering its control. */}
+      <summary className="group/summary flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-6 py-6 text-[19px] font-medium leading-[1.55] tracking-[-0.015em] transition-colors duration-200 hover:text-accent-300 [&::-webkit-details-marker]:hidden">
         <span>{question}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 16 16"
-          className="size-4 flex-none text-accent transition-transform duration-200 group-open:rotate-180"
+          /* `rotate`, not `transform`: Tailwind v4's `rotate-180` sets the
+             individual `rotate` property, which a `transition-transform`
+             list does not cover — naming `transform` here would let the
+             chevron snap through 180° in one frame. */
+          className="size-4 flex-none text-accent transition-[rotate,color] duration-200 group-open:rotate-180 group-hover/summary:text-accent-300"
         >
           <path
             d="M3 6l5 5 5-5"

@@ -224,6 +224,37 @@ select:has(option[value=""]:checked) {
   color: color-mix(in srgb, var(--color-ink) 35%, transparent);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   `<details>` opens at the speed its own chevron turns.
+
+   The chevron rotates over 200ms while the panel it belongs to appeared
+   instantly — one interaction running at two speeds. `interpolate-size`
+   makes the `0 → auto` height animatable and `::details-content` is the
+   panel box; `content-visibility` needs `allow-discrete` to hold the content
+   painted for the length of the close.
+
+   Progressive enhancement in both directions: a browser without
+   `::details-content` drops the whole rule and the panel snaps open as
+   before, and one without `interpolate-size` still resolves `auto` on open —
+   it just gets there in one frame. The reduced-motion block below neutralises
+   the duration.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  interpolate-size: allow-keywords;
+}
+
+details::details-content {
+  height: 0;
+  overflow: hidden;
+  transition:
+    height 200ms ease,
+    content-visibility 200ms ease allow-discrete;
+}
+
+details[open]::details-content {
+  height: auto;
+}
+
 /* Hero atmosphere — keyframes ported from the prototype hero. */
 @keyframes drift-a {
   0% {
@@ -281,7 +312,8 @@ select:has(option[value=""]:checked) {
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
-  *::after {
+  *::after,
+  details::details-content {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }

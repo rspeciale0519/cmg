@@ -11,6 +11,8 @@ import {
   fieldIds,
   FILE_INPUT_CLASS,
   INPUT_CLASS,
+  TEXTAREA_CLASS,
+  type TextAreaSize,
 } from "./field";
 
 type Shared = {
@@ -60,8 +62,14 @@ export function TextAreaField({
   hint,
   required,
   className,
+  size = "md",
   ...textarea
-}: Shared & Omit<ComponentPropsWithoutRef<"textarea">, "name" | "className">) {
+}: Shared &
+  Omit<ComponentPropsWithoutRef<"textarea">, "name" | "className" | "size"> & {
+    /** The prototype's own min-height for this box: `md` = 130px (Contact),
+     *  `sm` = 110px (intake). */
+    size?: TextAreaSize;
+  }) {
   const ids = fieldIds(name);
 
   return (
@@ -76,7 +84,7 @@ export function TextAreaField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
-        className={cx("mt-[6px] resize-y", INPUT_CLASS)}
+        className={cx("mt-[6px] resize-y", TEXTAREA_CLASS[size])}
       />
       {hint ? <FieldHint id={ids.hintId}>{hint}</FieldHint> : null}
       <FieldError id={ids.errorId}>{error}</FieldError>
@@ -250,7 +258,11 @@ export function CheckboxField({
     <div className={cx("min-w-0", className)}>
       <label
         htmlFor={ids.inputId}
-        className="flex max-w-[66ch] cursor-pointer items-start gap-[14px] text-[15px] leading-[1.7] text-ink/78"
+        /* `group` and `relative` for the same reason `RadioField`'s label
+           carries them: the real control covers the label and is invisible,
+           and the drawn box reads hover off the label rather than off a
+           control it cannot see. */
+        className="group relative flex max-w-[66ch] cursor-pointer items-start gap-[14px] text-[15px] leading-[1.7] text-ink/78"
       >
         <input
           id={ids.inputId}
@@ -259,8 +271,44 @@ export function CheckboxField({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(Boolean(error), false, ids)}
-          className="mt-[6px] size-[18px] flex-none accent-[var(--color-accent)]"
+          /* Native, drawn over the whole label. `accent-color` on the stock
+             box could tint the checked fill but nothing else: on an empty
+             submit this control went `aria-invalid` alongside sixteen others
+             and was the only one that could not show it, because Chrome's
+             `appearance: auto` square takes no border. */
+          className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
+        <span
+          aria-hidden="true"
+          className={cx(
+            /* 16px, the size the radios on this same page draw. The 6px the
+               stock 18px box took centred it on nothing in particular; 5px
+               sets a 16px box on the optical centre of a 25.5px first line. */
+            "mt-[5px] size-4 flex-none rounded-sm border-[1.5px] border-ink/16",
+            "transition-[color,background-color,border-color] duration-200",
+            "group-hover:border-accent",
+            "peer-checked:border-accent peer-checked:bg-accent",
+            /* The tick is a child of this box, not a sibling of the input, so
+               it cannot be reached by `peer-checked:` on its own. */
+            "peer-checked:[&>svg]:opacity-100",
+            "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent",
+            "peer-aria-invalid:border-[#E08C6A]",
+          )}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            className="size-full text-canvas opacity-0 transition-opacity duration-200"
+          >
+            <path
+              d="M3.5 8.4 6.6 11.5 12.5 5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
         <span>{children}</span>
       </label>
       <FieldError id={ids.errorId}>{error}</FieldError>
@@ -290,7 +338,14 @@ export function FileField({
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
         className={cx(
           "mt-[6px] cursor-pointer text-ink/72",
-          "file:mr-4 file:cursor-pointer file:rounded-sm file:border file:border-accent/45 file:bg-transparent file:px-4 file:py-[7px] file:text-[13px] file:font-medium file:text-accent file:transition-colors file:duration-200 hover:file:bg-accent/12",
+          /* The button takes the height Chrome's own "Choose files" button
+             takes in the prototype — 22px — so the control's box comes out at
+             the prototype's 48px (22 + the 12px padding either side + the
+             1px border either side). It was 61.5px on `py-[7px]`, which put a
+             single file field 13.5px taller than the prototype and taller
+             than any other control on the page. The accent skin stays; only
+             its box matches. */
+          "file:mr-4 file:h-[22px] file:cursor-pointer file:rounded-sm file:border file:border-accent/45 file:bg-transparent file:px-[10px] file:py-0 file:text-[13px] file:leading-[1.4] file:font-medium file:text-accent file:transition-colors file:duration-200 hover:file:bg-accent/12",
           FILE_INPUT_CLASS,
         )}
       />

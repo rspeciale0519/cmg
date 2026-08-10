@@ -30,7 +30,14 @@ const CARD = {
     bodyGap: "mt-[14px]",
   },
   xl: {
-    box: "min-h-[300px] p-[clamp(28px,3vw,44px)]",
+    /* The 300px floor equalises three columns. Stacked at 390 each card is
+       its own grid row, so the floor stops equalising anything and only
+       injects slack: the body carries `flex-1`, so a card one line shorter
+       than its neighbour pushes 25.5px of empty canvas in front of its
+       action instead of ending. `min-h-0` below the two-column threshold
+       lets each card end where its content does; above it the grid's own
+       stretch keeps the row square whether the floor binds or not. */
+    box: "min-h-[300px] max-[767px]:min-h-0 p-[clamp(28px,3vw,44px)]",
     title: "text-card-lg",
     titleGap: "mt-[22px]",
     bodyGap: "mt-[14px]",
@@ -114,11 +121,17 @@ export function Card({
         </p>
       ) : null}
       {action ? (
-        <span className="mt-6 inline-flex items-center gap-1.5 text-sm leading-[1.55] text-accent">
-          {action}
+        /* One text run with an ordinary space, as the prototype sets it —
+           `inline-flex` with `gap-1.5` put a 6px box between the label and
+           the glyph and widened "What we do →" from 94.75px to 99.73px. The
+           glyph keeps its hover travel: `inline-block` gives it something to
+           translate without giving it any width the space did not already
+           have. */
+        <span className="mt-6 text-sm leading-[1.55] text-accent">
+          {action}{" "}
           <span
             aria-hidden="true"
-            className="transition-transform duration-200 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
+            className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
           >
             &rarr;
           </span>
