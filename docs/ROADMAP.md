@@ -34,10 +34,10 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] Lighthouse a11y ≥ 95 → **100** on Home
 - [ ] Lighthouse performance ≥ 85 → see `docs/temp/BLOCKERS.md` (host-contended measurement)
 
-## Phase 3 — Auth core
-- [ ] Invites, login, staff TOTP MFA, `proxy.ts` gating, authz helpers
-- [ ] pgTAP role suite green (anon/customer/partner/assistant/adjuster isolation)
-- [ ] Browser evidence of invite → portal and `/admin` MFA gate
+## Phase 3 — Auth core ✅
+- [x] Invites, login, staff TOTP MFA, `proxy.ts` gating, authz helpers
+- [x] pgTAP role suite green — 483 assertions (anon/customer/partner/assistant/adjuster isolation)
+- [x] Browser evidence of invite → portal, `/admin` MFA gate, cross-surface refusal, bad tokens
 
 ## Phase 4 — Admin + PandaDoc
 - [ ] Intake queue, leads inbox, claims table + detail tabs

@@ -5,6 +5,41 @@ Live log for the autonomous build. Newest first. Roadmap:
 
 ---
 
+## Phase 3 — Auth core ✅
+
+**Shipped** — Next 16 `proxy` gating (`/admin` needs staff role **and** aal2; `/portal` customer;
+`/partner` partner), `requireUser/requireRole/requireStaff/requireClaimAccess` server guards,
+invite issuance and acceptance, login/logout, staff TOTP enrolment and challenge, HIBP
+leaked-password checking, rate limits on auth paths, and minimal authenticated shells for the
+three portals.
+
+**Invite lifecycle** — 32-byte token, only its SHA-256 digest stored, 72h single-use. Unknown,
+redeemed, expired and malformed tokens all collapse to one generic response (no enumeration).
+Role comes from the invite row, never the form. An invite mailed to an address that already has
+an account links the role and burns the token but does **not** set a password — otherwise any
+invitation becomes a takeover of whatever address it was sent to.
+
+**Three defects worth recording:**
+- **`proxy.ts` at the repo root is silently ignored when the app lives in `src/`.** The spec said
+  root; it 404'd on nested paths instead of redirecting. Found by probing a nested route rather
+  than trusting that the file was picked up.
+- **`config.toml` had TOTP enrol and verify disabled**, so `mfa.enroll()` returned 422 and no
+  staff account could ever reach aal2. The MFA gate would have passed its own test by locking
+  the building.
+- **The existing isolation tests were partly vacuous.** The seed had exactly one customer and one
+  partner company, so every "sees only their own" assertion was equally satisfied by
+  `using (true)`. A second homeowner with a portal account and a second partner company with its
+  own rep were added, and isolation is now asserted in both directions.
+
+**Invite burn ordering** — compare-and-set on `accepted_at` executed *before* account creation.
+The reverse order can mint two accounts from one invitation, and nothing undoes that.
+
+**Checks** — `type-check`, `lint`, `test` (132), `build` all exit 0 with `ƒ Proxy` registered;
+`supabase test db` **483/483**; six marketing routes still static; the service-role key appears
+in zero files under `.next`.
+
+---
+
 ## Phase 2 — Marketing site + public intake ✅ (perf gate: see below)
 
 **Shipped**
