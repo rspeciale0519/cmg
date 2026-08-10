@@ -869,6 +869,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_user_directory: {
+        Args: never
+        Returns: {
+          email: string
+          last_sign_in_at: string
+          mfa_confirmed_at: string
+          mfa_enrolled: boolean
+          user_id: string
+        }[]
+      }
       allowed_claim_transitions: {
         Args: { p_from: Database["public"]["Enums"]["claim_status"] }
         Returns: Database["public"]["Enums"]["claim_status"][]

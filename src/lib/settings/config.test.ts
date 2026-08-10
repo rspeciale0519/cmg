@@ -1,0 +1,256 @@
+import { describe, expect, it } from "vitest";
+import type { ESignCapabilities } from "@/lib/esign/provider";
+import {
+  buildIntegrations,
+  classifyTurnstileKey,
+  type IntegrationEnvironment,
+  type SupabaseProbe,
+} from "./config";
+
+const HEALTHY_DB: SupabaseProbe = {
+  ok: true,
+  latencyMs: 4,
+  origin: "127.0.0.1:54321",
+  local: true,
+  error: null,
+};
+
+const MANUAL_ESIGN: ESignCapabilities = {
+  mode: "manual",
+  canSendElectronically: false,
+  ready: true,
+  templateConfigured: false,
+  webhookConfigured: true,
+  blocker: null,
+};
+
+function environment(overrides: Partial<IntegrationEnvironment> = {}): IntegrationEnvironment {
+  return {
+    supabase: HEALTHY_DB,
+    resendApiKey: null,
+    emailFrom: "CMG <claims@cmgpropertysolutions.net>",
+    turnstileSiteKey: "1x00000000000000000000AA",
+    turnstileSecretKey: "1x0000000000000000000000000000000AA",
+    esign: MANUAL_ESIGN,
+    ...overrides,
+  };
+}
+
+function pick(env: IntegrationEnvironment, key: string) {
+  const found = buildIntegrations(env).find((integration) => integration.key === key);
+  if (!found) throw new Error(`no integration named ${key}`);
+  return found;
+}
+
+describe("classifyTurnstileKey", () => {
+  it("recognises Cloudflare's documented site keys by behaviour digit", () => {
+    expect(classifyTurnstileKey("1x00000000000000000000AA")).toBe("test-pass");
+    expect(classifyTurnstileKey("2x00000000000000000000AB")).toBe("test-block");
+    expect(classifyTurnstileKey("3x00000000000000000000FF")).toBe("test-challenge");
+  });
+
+  it("recognises the invisible-widget variants too", () => {
+    // Matched on shape, not against a list of literals — the `…BB` pair would
+    // be missed by an equality check and reported as a live key.
+    expect(classifyTurnstileKey("1x00000000000000000000BB")).toBe("test-pass");
+    expect(classifyTurnstileKey("2x00000000000000000000BB")).toBe("test-block");
+  });
+
+  it("recognises the longer secret keys", () => {
+    expect(classifyTurnstileKey("1x0000000000000000000000000000000AA")).toBe("test-pass");
+    expect(classifyTurnstileKey("2x0000000000000000000000000000000AA")).toBe("test-block");
+    expect(classifyTurnstileKey("3x0000000000000000000000000000000AA")).toBe(
+      "test-challenge",
+    );
+  });
+
+  it("does not mistake a real key for a test key", () => {
+    // Live keys carry entropy straight after the prefix; the detector demands at
+    // least eighteen zeros there. A false positive would report a protected
+    // production site as unprotected and send someone rotating keys for nothing.
+    expect(classifyTurnstileKey("0x4AAAAAAABkMYinukE8nzYd")).toBe("live");
+    expect(classifyTurnstileKey("0x4AAAAAAA0000000000000000")).toBe("live");
+    expect(classifyTurnstileKey("1x000AA")).toBe("live");
+  });
+
+  it("treats absent and blank as absent", () => {
+    expect(classifyTurnstileKey(null)).toBe("absent");
+    expect(classifyTurnstileKey("")).toBe("absent");
+  });
+
+  it("tolerates surrounding whitespace from a copied .env value", () => {
+    expect(classifyTurnstileKey("  1x00000000000000000000AA  ")).toBe("test-pass");
+  });
+});
+
+describe("buildIntegrations — Turnstile", () => {
+  it("flags test keys for attention and says the forms are unprotected", () => {
+    const turnstile = pick(environment(), "turnstile");
+    expect(turnstile.state).toBe("attention");
+    expect(turnstile.headline).toMatch(/test keys/i);
+    expect(turnstile.facts).toContainEqual({
+      label: "Site key",
+      value: "test key — always passes",
+      quiet: false,
+    });
+  });
+
+  it("flags a half-configured pair as refusing every submission", () => {
+    // Verification fails closed, so a missing secret rejects real homeowners
+    // rather than letting bots through — the opposite failure from the one the
+    // wording would otherwise imply.
+    const turnstile = pick(
+      environment({ turnstileSecretKey: null }),
+      "turnstile",
+    );
+    expect(turnstile.state).toBe("attention");
+    expect(turnstile.headline).toMatch(/refuse every submission/i);
+  });
+
+  it("reports a live pair as ready", () => {
+    const turnstile = pick(
+      environment({
+        turnstileSiteKey: "0x4AAAAAAABkMYinukE8nzYd",
+        turnstileSecretKey: "0x4AAAAAAABkMYinukE8nzYdSECRETVALUE",
+      }),
+      "turnstile",
+    );
+    expect(turnstile.state).toBe("ready");
+  });
+
+  it("catches a live site key paired with a leftover test secret", () => {
+    const turnstile = pick(
+      environment({ turnstileSiteKey: "0x4AAAAAAABkMYinukE8nzYd" }),
+      "turnstile",
+    );
+    expect(turnstile.state).toBe("attention");
+  });
+});
+
+describe("buildIntegrations — Resend", () => {
+  it("reports an absent key as mail queued but not delivered", () => {
+    const resend = pick(environment(), "resend");
+    expect(resend.state).toBe("absent");
+    expect(resend.detail).toMatch(/nothing is lost/i);
+  });
+
+  it("reports a configured key as delivering", () => {
+    const resend = pick(environment({ resendApiKey: "re_live_key" }), "resend");
+    expect(resend.state).toBe("ready");
+  });
+});
+
+describe("buildIntegrations — Supabase", () => {
+  it("reports a healthy local stack with its measured round trip", () => {
+    const supabase = pick(environment(), "supabase");
+    expect(supabase.state).toBe("ready");
+    expect(supabase.headline).toMatch(/local Docker stack/);
+    expect(supabase.facts).toContainEqual({
+      label: "Round trip",
+      value: "4 ms",
+      quiet: false,
+    });
+  });
+
+  it("distinguishes a hosted project from the local stack", () => {
+    const supabase = pick(
+      environment({
+        supabase: { ...HEALTHY_DB, local: false, origin: "abc.supabase.co" },
+      }),
+      "supabase",
+    );
+    expect(supabase.headline).toMatch(/hosted project/);
+  });
+
+  it("surfaces the failure reason when the database does not answer", () => {
+    const supabase = pick(
+      environment({
+        supabase: {
+          ok: false,
+          latencyMs: null,
+          origin: "127.0.0.1:54321",
+          local: true,
+          error: "The database could not be reached: fetch failed",
+        },
+      }),
+      "supabase",
+    );
+    expect(supabase.state).toBe("attention");
+    expect(supabase.detail).toMatch(/fetch failed/);
+  });
+});
+
+describe("buildIntegrations — e-signature", () => {
+  it("reports manual mode as a working fallback rather than a fault", () => {
+    const esign = pick(environment(), "esign");
+    expect(esign.state).toBe("absent");
+    expect(esign.headline).toMatch(/Manual mode/);
+    expect(esign.detail).toMatch(/Nothing is blocked/);
+  });
+
+  it("flags a PandaDoc key with no template as blocked, quoting the blocker", () => {
+    const esign = pick(
+      environment({
+        esign: {
+          mode: "pandadoc",
+          canSendElectronically: true,
+          ready: false,
+          templateConfigured: false,
+          webhookConfigured: true,
+          blocker: "No PandaDoc LOR template is configured (PANDADOC_LOR_TEMPLATE_UUID).",
+        },
+      }),
+      "esign",
+    );
+    expect(esign.state).toBe("attention");
+    expect(esign.detail).toMatch(/PANDADOC_LOR_TEMPLATE_UUID/);
+  });
+
+  it("flags a sending-capable PandaDoc with no webhook key", () => {
+    // The subtle half-configured state: letters go out and signatures never come
+    // back, so the claim silently sits in lor_sent forever.
+    const esign = pick(
+      environment({
+        esign: {
+          mode: "pandadoc",
+          canSendElectronically: true,
+          ready: true,
+          templateConfigured: true,
+          webhookConfigured: false,
+          blocker: null,
+        },
+      }),
+      "esign",
+    );
+    expect(esign.state).toBe("attention");
+    expect(esign.headline).toMatch(/will not come back/);
+  });
+
+  it("reports a fully wired PandaDoc as ready", () => {
+    const esign = pick(
+      environment({
+        esign: {
+          mode: "pandadoc",
+          canSendElectronically: true,
+          ready: true,
+          templateConfigured: true,
+          webhookConfigured: true,
+          blocker: null,
+        },
+      }),
+      "esign",
+    );
+    expect(esign.state).toBe("ready");
+  });
+});
+
+describe("buildIntegrations", () => {
+  it("returns every integration in a stable order", () => {
+    expect(buildIntegrations(environment()).map((i) => i.key)).toEqual([
+      "supabase",
+      "resend",
+      "turnstile",
+      "esign",
+    ]);
+  });
+});
