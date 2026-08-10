@@ -15,6 +15,27 @@ export const RATE_LIMITS = {
   contactEmail: { scope: "contact:email", max: 3, window: "1 hour" },
   intakeIp: { scope: "intake:ip", max: 5, window: "1 hour" },
   intakeEmail: { scope: "intake:email", max: 3, window: "1 hour" },
+
+  /* Auth surfaces. Two budgets per attempt, and they answer different attacks:
+     the per-IP one bounds a spray across many accounts from one source, the
+     per-identifier one bounds a guessing run against one account from many
+     sources. Either alone leaves the other wide open.
+
+     15 minutes rather than an hour: a real person mistyping a password twice
+     should not be locked out for the rest of the morning, and the window only
+     has to be long enough to make online guessing pointless — which at 10
+     attempts per quarter hour it already is.
+
+     The invite budgets are tighter because the secret is longer. 43 characters
+     of base64url is not guessable at any rate; what these bound is somebody
+     grinding the accept endpoint to learn which tokens exist, and 20 shape-valid
+     attempts an hour makes that measurement worthless while leaving room for a
+     homeowner who fumbles the password rules a few times. */
+  loginIp: { scope: "login:ip", max: 20, window: "15 minutes" },
+  loginEmail: { scope: "login:email", max: 10, window: "15 minutes" },
+  inviteAcceptIp: { scope: "invite-accept:ip", max: 20, window: "1 hour" },
+  inviteAcceptToken: { scope: "invite-accept:token", max: 10, window: "1 hour" },
+  mfaVerifyUser: { scope: "mfa-verify:user", max: 10, window: "15 minutes" },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

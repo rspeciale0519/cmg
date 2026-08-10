@@ -137,3 +137,51 @@ error paragraph in place of the check and the form cannot be submitted; with no
 secret key, `verifyTurnstile` rejects server-side. So a missing key is a visibly
 broken form, not a silently unprotected one — but a *test* key is the dangerous
 case, because the form looks and behaves normally while accepting everything.
+
+---
+
+## 3. Supabase leaked-password protection + MFA are hosted-plan settings
+
+**Status:** open — owner action at launch (Phase 9). Not blocking Phase 3.
+
+**What is blocked**
+
+Two of the spec §7.2 auth controls have no equivalent in `supabase/config.toml`
+and therefore cannot be switched on by anything in this repository:
+
+| Control | Local state | What the platform needs |
+| --- | --- | --- |
+| Leaked-password protection (HIBP) | no config key exists in the CLI's `[auth]` block | Dashboard → Authentication → Passwords → *Prevent use of leaked passwords* (Pro plan) |
+| MFA (TOTP) | enabled locally via `[auth.mfa.totp]` in `supabase/config.toml` | MFA is a Pro-plan feature on hosted projects; confirm it is available on the plan chosen at launch |
+
+**Why owner-level**
+
+Both are properties of the hosted project, which does not exist yet (§ CURRENT
+STATE: "no CMG project — dev is local Docker only"), and the plan that carries
+them is a paid one. Nothing in code can set them.
+
+**What is already covered in code, so this is a hardening gap and not a hole**
+
+- `src/lib/auth/leaked-password.ts` implements the HIBP range API check
+  (k-anonymity: only the first five characters of the SHA-1 digest are sent) and
+  runs on every invite acceptance. It deliberately fails **open** on network
+  error or non-200, so an HIBP outage cannot make it impossible to set a
+  password; each skip is logged. The platform setting is the belt to this
+  brace, because it also covers password changes made outside this app.
+- `minimum_password_length = 12` and
+  `password_requirements = "lower_upper_letters_digits"` are set in
+  `supabase/config.toml`, so GoTrue itself enforces the §7.2 floor on any path
+  that sets a password. `src/lib/validators/password.ts` mirrors those rules and
+  adds the strength checks (character variety, weak fragments, keyboard runs,
+  repeated units, email-derived passwords).
+
+**Exact unblock step**
+
+1. After the hosted project exists and is on Pro, enable *Prevent use of leaked
+   passwords* in Authentication → Passwords.
+2. Confirm Authentication → Multi-Factor Authentication shows TOTP enabled; the
+   `[auth.mfa.totp]` block in `supabase/config.toml` is pushed by
+   `supabase link` + config push, but the plan gate is separate.
+3. Leave `src/lib/auth/leaked-password.ts` in place — it covers the invite path
+   with a clear message before the account is created, which the platform check
+   cannot do.

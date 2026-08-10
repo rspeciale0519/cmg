@@ -6,6 +6,7 @@ import {
   type IntakeConfirmationPayload,
   type IntakeStaffAlertPayload,
 } from "./templates/intake";
+import { InviteEmail, type InvitePayload } from "./templates/invite";
 import {
   LeadAutoReply,
   LeadStaffAlert,
@@ -17,7 +18,8 @@ export type NotificationMessage =
   | { template: "intake_staff_alert"; payload: IntakeStaffAlertPayload }
   | { template: "intake_confirmation"; payload: IntakeConfirmationPayload }
   | { template: "lead_staff_alert"; payload: LeadStaffAlertPayload }
-  | { template: "lead_auto_reply"; payload: LeadAutoReplyPayload };
+  | { template: "lead_auto_reply"; payload: LeadAutoReplyPayload }
+  | { template: "invite"; payload: InvitePayload };
 
 export type NotificationTemplate = NotificationMessage["template"];
 
@@ -45,6 +47,16 @@ const TEMPLATES: Record<NotificationTemplate, Renderer> = {
   lead_auto_reply: {
     subject: () => "We have your request — CMG Property Solutions",
     element: (payload: LeadAutoReplyPayload) => <LeadAutoReply {...payload} />,
+  },
+  invite: {
+    /* No token in the subject line. The link is the secret and it belongs in
+       exactly one place; a subject is quoted in replies, forwarded, and read
+       aloud by notification previews on a lock screen. */
+    subject: (payload: InvitePayload) =>
+      payload.claimRef
+        ? `Your CMG claim portal — ${payload.claimRef}`
+        : "Your CMG portal invitation",
+    element: (payload: InvitePayload) => <InviteEmail {...payload} />,
   },
 } as Record<NotificationTemplate, Renderer>;
 

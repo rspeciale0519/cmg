@@ -11,6 +11,31 @@ export type FormState = {
 
 export const idleState: FormState = { status: "idle" };
 
+/**
+ * Invite issuance carries one extra field. It lives here rather than beside the
+ * action because a `"use server"` module may export only async functions — a
+ * type or a constant declared there is a build error, not a style preference.
+ */
+export type InviteIssueState = FormState & {
+  /** The raw invite link, returned only when email delivery is not configured. */
+  manualLink?: string;
+};
+
+export const idleInviteIssueState: InviteIssueState = { status: "idle" };
+
+/** TOTP enrolment state, here for the same reason `InviteIssueState` is. */
+export type EnrollmentState = {
+  status: "idle" | "ready" | "error";
+  message?: string;
+  factorId?: string;
+  /** SVG data URI produced by GoTrue; rendered as the scannable code. */
+  qrCode?: string;
+  /** The same secret in text, for authenticator apps that cannot use a camera. */
+  secret?: string;
+};
+
+export const idleEnrollment: EnrollmentState = { status: "idle" };
+
 export const GENERIC_ERROR =
   "We could not submit that just now. Please try again, or call us and we'll take the details over the phone.";
 
