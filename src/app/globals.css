@@ -59,9 +59,18 @@
   --text-display-2: clamp(38px, 6vw, 84px); /* contractors hero h1 */
   --text-display-3: clamp(36px, 5.4vw, 76px); /* page h1 */
   --text-display-4: clamp(28px, 3.6vw, 46px); /* lead section h2 */
-  --text-display-5: clamp(28px, 3.4vw, 42px); /* section h2, pull-quote */
+  --text-display-5: clamp(28px, 3.4vw, 42px); /* section h2 */
   --text-display-6: clamp(26px, 3.2vw, 40px); /* sub-section h2 */
   --text-display-7: clamp(22px, 2.4vw, 30px); /* row heading */
+
+  /* Two elements cap at 42px with the section h2 but floor below it in the
+     prototypes, and folding them into `--text-display-5` raised both on a
+     phone. The floors are the prototypes' own and each keeps its own token:
+     the Services close is the page's quietest heading and floors under a
+     section h2 by design, and the pull-quote is a long single sentence whose
+     42px cap only works on a phone if it drops two steps, not one. */
+  --text-close-md: clamp(26px, 3.4vw, 42px); /* closing-CTA h2, md scale */
+  --text-quote: clamp(24px, 3.2vw, 42px); /* testimonial pull-quote */
 
   /* Card titles. Four raw pixel values (21/23/23/24) sat outside this scale
      and never ramped, so at 390 a fixed 24px `h3` stood 4px under a section
@@ -162,6 +171,10 @@
 
    Chromium marks a datetime sub-field that holds a value with
    `aria-valuenow`, so `:not([aria-valuenow])` is the empty state.
+
+   The 35% these rules and `placeholder:text-ink/35` share is 2.84:1 and is
+   deliberate — see the note above `DANGER` in `src/components/forms/field.tsx`
+   for why it is not raised.
    ───────────────────────────────────────────────────────────────────────── */
 :root {
   /* Renders the native calendar/clock popovers, the select option list and

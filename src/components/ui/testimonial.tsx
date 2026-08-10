@@ -44,7 +44,7 @@ export function Testimonial({
           284px quote leaving the band four fifths empty, and at 813px the
           band no longer needs either. */}
       <figure>
-        <blockquote className="max-w-[30ch] text-display-5 font-medium leading-[1.25] tracking-[-0.028em]">
+        <blockquote className="max-w-[30ch] text-quote font-medium leading-[1.25] tracking-[-0.028em]">
           &ldquo;{quote}&rdquo;
         </blockquote>
         <figcaption className="mt-10 text-sm uppercase leading-[1.55] tracking-[0.1em] text-ink/85">

@@ -24,7 +24,12 @@ import {
   TextAreaField,
   TextField,
 } from "./controls";
-import { FormAlert, SuccessBody, SuccessPanel } from "./form-feedback";
+import {
+  FormAlert,
+  formAlertMessage,
+  SuccessBody,
+  SuccessPanel,
+} from "./form-feedback";
 import { TurnstileWidget } from "./turnstile";
 
 const YES_NO = [
@@ -51,7 +56,12 @@ function IntakeSection({
     <section
       className={`border-t border-ink/13 py-[clamp(28px,3.5vw,44px)] ${last ? "border-b" : ""}`}
     >
-      <h2 className="mb-[26px] text-xs font-normal uppercase leading-none tracking-[0.18em] text-accent">
+      {/* The prototype's step label is a `<p>` that states no line-height, so
+          it takes the body's 1.55 (18.6px at 12px). As an `<h2>` for the
+          landmark it would inherit the 1.12 heading rule, and `leading-none`
+          closed the box a further 6.6px — tightening every step against the
+          fieldset under it. Stated, so the semantics don't cost the spacing. */}
+      <h2 className="mb-[26px] text-xs font-normal uppercase leading-[1.55] tracking-[0.18em] text-accent">
         {step} — {title}
       </h2>
       {children}
@@ -126,7 +136,7 @@ export function IntakeForm() {
        submit button, which is where this copy already lived. */
     <div className="grid gap-x-16 gap-y-[18px] min-[1100px]:grid-cols-[minmax(520px,880px)_minmax(240px,1fr)] min-[1100px]:items-start">
       <form ref={formRef} action={formAction} noValidate className="min-w-0">
-        <FormAlert message={state.fieldErrors ? undefined : state.message} ref={alertRef} />
+        <FormAlert message={formAlertMessage(state)} ref={alertRef} />
 
         <IntakeSection step="01" title="Homeowner">
           <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(180px,1fr))]`}>
@@ -299,7 +309,15 @@ export function IntakeForm() {
           form a second anchor in a 1248px field. A single-column phone has no
           such strip to resolve, so below 1100px the border, the padding and
           the accent rule all drop and this is what the prototype has — a
-          plain paragraph 18px under the submit button. */}
+          plain paragraph 18px under the submit button.
+
+          The rail's box ends far above the form's, so at 1440 there is empty
+          canvas beside the lower two thirds of the fieldsets. That is the
+          architecture working, not a gap to fill: the rail's job is to resolve
+          the strip's *top*, where the form's first sections are, and stickiness
+          means it travels with the reader for the whole 2400px scroll rather
+          than being a column of filler. Adding content to reach the footer
+          would put copy nobody asked for beside the fields. Leave it. */}
       <aside className="min-w-0 min-[1100px]:sticky min-[1100px]:top-[108px]">
         <div className="min-[1100px]:border min-[1100px]:border-ink/13 min-[1100px]:p-6">
           <span

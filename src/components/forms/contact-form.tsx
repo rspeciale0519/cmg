@@ -7,7 +7,12 @@ import { site, telHref } from "@/lib/site";
 import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
 import { TextAreaField, TextField } from "./controls";
-import { FormAlert, SuccessBody, SuccessPanel } from "./form-feedback";
+import {
+  FormAlert,
+  formAlertMessage,
+  SuccessBody,
+  SuccessPanel,
+} from "./form-feedback";
 import { TurnstileWidget } from "./turnstile";
 
 export function ContactForm() {
@@ -56,7 +61,7 @@ export function ContactForm() {
         Request a free review
       </h2>
 
-      <FormAlert message={state.fieldErrors ? undefined : state.message} ref={alertRef} />
+      <FormAlert message={formAlertMessage(state)} ref={alertRef} />
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-5">
         <TextField

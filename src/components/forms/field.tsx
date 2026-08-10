@@ -6,6 +6,20 @@ import { cx } from "@/lib/cx";
  *  border. */
 export const DANGER = "#E08C6A";
 
+/* ── `ink/35`: a decision, not an oversight ──────────────────────────────
+   `placeholder:text-ink/35` here, the `Select…` option and the date/time
+   skeletons in `globals.css` all sit at 2.84:1 and all three stay there.
+
+   They are the empty state, not content: every control on both forms carries
+   a real, permanently visible `<label>` at `ink/72`, so nothing about the
+   field's purpose is being carried at 2.84:1 — WCAG 1.4.3 exempts a
+   placeholder only when the label does that work, and it does. Raising them
+   to a text-tier ratio makes an unanswered field render at the same weight as
+   an answered one, which is precisely the defect the datetime-skeleton and
+   empty-select rules in `globals.css` were added to fix: on a 17-field intake
+   the fastest read of "what is left to do" is the pale ink, and flattening it
+   costs more than it buys. Do not raise these. */
+
 /** Prototype `.input`, with the 46px min-height these two pages set inline.
  *
  *  The invalid state is a variant on this one string, never a second class

@@ -8,7 +8,7 @@ const MEASURE = {
 } as const;
 
 const SCALE = {
-  md: "text-display-5",
+  md: "text-close-md",
   lg: "text-display-4",
 } as const;
 
@@ -55,13 +55,14 @@ export function ClosingCta({
           {intro}
         </p>
       </div>
-      {/* Pushed to the field's right edge once the grid is genuinely two
-          columns, so the band resolves as two anchors — heading at the left
-          edge, actions at the right — instead of leaving the buttons adrift
-          in the middle with nothing in front of them. */}
-      <div className="flex flex-wrap justify-start gap-3 min-[900px]:justify-end">
-        {actions}
-      </div>
+      {/* The prototype's own `display:flex; gap:12px; flex-wrap:wrap` with no
+          `justify-content` — the pair starts at the second column's leading
+          edge, 64px after the copy ends. An earlier pass pushed it to the
+          field's right edge to "anchor" the band; at 1440 that opened a 392px
+          void through the middle of it and detached the buttons from the copy
+          they answer, at the terminal conversion moment. Left alignment is the
+          prototype's and it stays. */}
+      <div className="flex flex-wrap justify-start gap-3">{actions}</div>
     </div>
   );
 }

@@ -1,5 +1,26 @@
 import type { ReactNode, Ref } from "react";
+import type { FormState } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
+
+/**
+ * The one line the form says about itself after a failed submit.
+ *
+ * Field errors used to suppress this entirely, so an empty intake produced 17
+ * inline messages and no global signal at all — the only evidence the submit
+ * had been rejected was the focus jumping to the first field, which says
+ * nothing about scale and nothing at all if you were not watching the caret.
+ * The count is the part no single field message can carry; the fields keep
+ * saying what is wrong with them, and this does not repeat them.
+ */
+export function formAlertMessage(state: FormState): string | undefined {
+  const count = state.fieldErrors ? Object.keys(state.fieldErrors).length : 0;
+
+  if (count === 0) return state.message;
+
+  return count === 1
+    ? "1 field needs your attention. It's marked below."
+    : `${count} fields need your attention. Each one is marked below.`;
+}
 
 /**
  * The prototype's success panel: accent hairline, 45%-accent border, 7%-accent
