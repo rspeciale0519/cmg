@@ -1,8 +1,21 @@
 import { cx } from "@/lib/cx";
 
+/* Both lists ran at `column-gap: normal` — 0px — so a track only ever showed
+   a gap when its label happened to be short, and the rhythm across a row was
+   whatever the words left over. Each track now carries a real 40px column
+   gap, and the track floors are set from the labels each list actually holds.
+
+   `region` — six labels, the longest ("Orlando & Central Florida") 198px. Six
+   tracks plus five 40px gaps only fit a 1248px field if the floor drops to
+   ~174px, which wraps that label; four 282px tracks wrap the list 4+2 instead
+   and leave every label its own column.
+
+   `quad` — eight labels. An auto-fit track lays them out over six columns and
+   leaves a ragged 6+2. Four fixed columns split them 4+4, and the ramp below
+   halves that to 2+2+2+2 before going single-column. */
 const TRACK = {
-  sm: "grid-cols-[repeat(auto-fit,minmax(180px,1fr))]",
-  md: "grid-cols-[repeat(auto-fit,minmax(190px,1fr))]",
+  region: "grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-10",
+  quad: "grid-cols-1 gap-x-10 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-4",
 } as const;
 
 /* Hairline weight and row rhythm both change with the surface: the canvas
@@ -28,7 +41,7 @@ export type RuleListProps = {
 export function RuleList({
   items,
   label,
-  track = "md",
+  track = "quad",
   tone = "canvas",
   className,
 }: RuleListProps) {

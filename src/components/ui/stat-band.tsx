@@ -26,11 +26,12 @@ export function StatBand({
       className={cx(bordered ? "border-b border-ink/9" : null, className)}
     >
       <Container className="py-[clamp(40px,5vw,64px)]">
-        {/* At 390 this wraps to 2×2, so the column gap has to be the wider
-            one — with a 24px column gap under a 36px row gap the four
-            figures read as a table with rows, not as four independent
-            stats. */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-x-10 gap-y-9">
+        {/* The prototype's 24px column gap, but only from the width at which
+            the band is a single row of four. Below that it wraps to 2×2, and
+            a 24px column gap under a 36px row gap makes the four figures read
+            as a table with rows rather than as four independent stats — so
+            the wider gap stays where the wrap actually happens. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-x-10 gap-y-9 md:gap-x-6">
           {stats.map((stat) => (
             <div key={stat.label}>
               <p className="text-figure-md font-medium leading-none tracking-[-0.03em] tabular-nums">

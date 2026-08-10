@@ -54,6 +54,25 @@ export function SiteHeader() {
     };
   }, [open]);
 
+  /* The scrim only dims the page; it does not take it out of the tab order,
+     so Tab from the last menu item used to walk into the blurred content
+     behind. `main` and the footer are siblings rendered by the layout, so the
+     panel cannot nest them — they are marked `inert` directly instead, which
+     removes them from focus, hit-testing and the a11y tree for as long as the
+     menu owns the screen. */
+  useEffect(() => {
+    if (!open) return;
+    const behind = [
+      document.getElementById("main"),
+      document.querySelector("footer"),
+    ].filter((element): element is HTMLElement => element !== null);
+
+    for (const element of behind) element.inert = true;
+    return () => {
+      for (const element of behind) element.inert = false;
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
@@ -149,7 +168,10 @@ export function SiteHeader() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cx(
-                    "flex min-h-[44px] items-center text-sm no-underline transition-colors duration-200",
+                    /* `leading-[1.55]` is the prototype's body leading, which
+                       its 14px nav links inherit (21.7px). Tailwind's
+                       `text-sm` ships a 20px pair. */
+                    "flex min-h-[44px] items-center text-sm leading-[1.55] no-underline transition-colors duration-200",
                     active ? "text-accent" : "text-ink/82 hover:text-ink",
                   )}
                 >

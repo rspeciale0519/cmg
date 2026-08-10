@@ -202,7 +202,7 @@ export function RadioField({
         {options.map((option) => (
           <label
             key={option.value}
-            className="group relative inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-[15px] text-ink/85"
+            className="group relative inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-ink"
           >
             <input
               type="radio"

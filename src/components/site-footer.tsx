@@ -4,8 +4,13 @@ import { Container } from "@/components/ui/section";
 import { footerNav } from "@/lib/nav";
 import { emailHref, site, telHref } from "@/lib/site";
 
+/* The prototype's column headings are `<span>`s and take the body's 1.55
+   line-height (17.05px at 11px). These are `<h2>`s for the landmark labels,
+   which picks up the 1.12 heading rule in `globals.css` and closes the box to
+   12.32px, tightening the gap under each heading by 4.7px. The leading is
+   restated so the semantics don't cost the spacing. */
 const COLUMN_HEADING =
-  "text-[11px] font-normal uppercase tracking-[0.18em] text-ink/45";
+  "text-[11px] font-normal uppercase leading-[1.55] tracking-[0.18em] text-ink/45";
 const LINK =
   "flex min-h-[44px] items-center text-sm text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300";
 /* `break-all` split the address mid-word ("…CMGPropertySolution / s.net").

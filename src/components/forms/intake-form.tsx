@@ -123,7 +123,7 @@ export function IntakeForm() {
        reassurance rail resolves both edges, and sticking the rail keeps that
        true for the whole 2400px scroll. Below 1100px the rail falls under the
        submit button, which is where this copy already lived. */
-    <div className="grid gap-x-16 gap-y-12 min-[1100px]:grid-cols-[minmax(520px,880px)_minmax(240px,1fr)] min-[1100px]:items-start">
+    <div className="grid gap-x-16 gap-y-[18px] min-[1100px]:grid-cols-[minmax(520px,880px)_minmax(240px,1fr)] min-[1100px]:items-start">
       <form ref={formRef} action={formAction} noValidate className="min-w-0">
         <FormAlert message={state.fieldErrors ? undefined : state.message} ref={alertRef} />
 
@@ -209,7 +209,7 @@ export function IntakeForm() {
         <IntakeSection step="03" title="The loss">
           <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(180px,1fr))]`}>
             <TextField name="lossDate" label="Date of loss" required type="date" error={errors.lossDate} />
-            <TextField name="lossTime" label="Approximate time" required type="time" defaultValue="12:00" error={errors.lossTime} />
+            <TextField name="lossTime" label="Approximate time" required type="time" error={errors.lossTime} />
             <SelectField name="cause" label="Cause of loss" required options={CAUSE_OPTIONS} error={errors.cause} />
           </div>
           <TextAreaField
@@ -294,11 +294,20 @@ export function IntakeForm() {
 
       {/* Same copy that used to sit under the submit button, where it was
           read last if at all. In the rail it is in view while the form is
-          being filled, which is when "what happens next" is the question. */}
+          being filled, which is when "what happens next" is the question.
+
+          The rail is a desktop composition only: it exists to give the 880px
+          form a second anchor in a 1248px field. A single-column phone has no
+          such strip to resolve, so below 1100px the border, the padding and
+          the accent rule all drop and this is what the prototype has — a
+          plain paragraph 18px under the submit button. */}
       <aside className="min-w-0 min-[1100px]:sticky min-[1100px]:top-[108px]">
-        <div className="border border-ink/13 p-6">
-          <span aria-hidden="true" className="block h-px w-10 bg-accent" />
-          <p className="mt-5 text-[14px] leading-[1.7] text-ink/62">
+        <div className="min-[1100px]:border min-[1100px]:border-ink/13 min-[1100px]:p-6">
+          <span
+            aria-hidden="true"
+            className="hidden h-px w-10 bg-accent min-[1100px]:block"
+          />
+          <p className="text-[14px] leading-[1.7] text-ink/62 min-[1100px]:mt-5">
             We&apos;ll prepare the Letter of Representation and send it for e-signature.
             Questions? Call{" "}
             <Link href={telHref} className="text-accent hover:text-accent-300">

@@ -133,7 +133,7 @@ export default function AboutPage() {
         <RuleList
           items={SERVICE_AREA}
           label="Service area"
-          track="sm"
+          track="region"
           tone="section"
         />
       </Section>

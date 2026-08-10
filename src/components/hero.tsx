@@ -16,6 +16,16 @@ const HEADLINE = {
 
 export type HeroScale = keyof typeof HEADLINE;
 
+/* Both buttons hug their labels, as they do everywhere else on the site and
+   as the prototype has them — stretching them edge to edge at 390 made the
+   hero the one place a CTA pair ran the full column. They stack below 420px
+   because side by side they no longer fit, and `w-fit` on a column of
+   stretched items sizes the column to the wider label, so the pair comes out
+   equal (~251px) rather than near-equal (251/239), which is the one thing
+   worse than either. */
+const ACTIONS =
+  "flex w-fit flex-col gap-3 min-[420px]:w-auto min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:[&>*]:flex-none";
+
 export type HeroProps = {
   headline: ReactNode;
   kicker?: string;
@@ -64,9 +74,7 @@ export function Hero({
           </p>
         ) : null}
         {actions ? (
-          <div className="mt-9 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap [&>*]:justify-center min-[420px]:[&>*]:flex-none">
-            {actions}
-          </div>
+          <div className={cx("mt-9", ACTIONS)}>{actions}</div>
         ) : null}
       </section>
     );
@@ -126,13 +134,8 @@ export function Hero({
             {body}
           </p>
         ) : null}
-        {/* Stacked full-width below 420px. Side by side these two read as one
-            control at ~250px and ~238px — near-equal is worse than either
-            equal or clearly different, so the narrow case commits to equal. */}
         {actions ? (
-          <div className="mt-[38px] flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap [&>*]:justify-center min-[420px]:[&>*]:flex-none">
-            {actions}
-          </div>
+          <div className={cx("mt-[38px]", ACTIONS)}>{actions}</div>
         ) : null}
       </div>
     </section>

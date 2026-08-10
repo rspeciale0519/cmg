@@ -236,6 +236,12 @@ describe("intakeSchema — loss branch", () => {
     expect(errorFor({ ...valid, lossTime: "25:00" }, "lossTime")).toBeDefined();
   });
 
+  /* The field renders empty — it carries no default — so "" is a state a real
+     submission reaches, not a synthetic one. */
+  it("rejects a missing time", () => {
+    expect(errorFor({ ...valid, lossTime: "" }, "lossTime")).toBeDefined();
+  });
+
   it("rejects an unknown cause", () => {
     expect(errorFor({ ...valid, cause: "fire" }, "cause")).toBeDefined();
   });

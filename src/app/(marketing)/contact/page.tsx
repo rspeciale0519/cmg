@@ -100,11 +100,12 @@ export default function ContactPage() {
 
       <Section space="none" className="pb-[clamp(72px,9vw,120px)]">
         <SectionKicker label="Common questions" className="mb-[34px]" />
-        {/* The rules run the full field rather than stopping at 820px: the
-            row is the structure (question left, chevron right, both edges
-            anchored) and the answer keeps its own 62ch reading measure
-            inside it. An 820px column here drew a 428px dead strip. */}
-        <div>
+        {/* The prototype's 820px, restored. The row is the structure —
+            question at the left edge, chevron at the right — and at the full
+            1248px field those two ends sit ~1050px apart, which stops reading
+            as one control. 820px keeps the chevron within reach of the
+            question and still clears the answer's own 62ch measure. */}
+        <div className="max-w-[820px]">
           <FaqItem question="What does it cost?">
             Nothing up front. Our fee is a fixed percentage of the settlement, agreed in
             writing before we start. If we recover nothing, you owe nothing.
