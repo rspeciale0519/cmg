@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContactForm } from "@/components/forms/contact-form";
+import { ProseLink } from "@/components/marketing/prose-link";
 import { FaqItem } from "@/components/ui/faq-item";
 import { Section } from "@/components/ui/section";
 import { SectionKicker } from "@/components/ui/section-kicker";
@@ -24,8 +25,11 @@ export const metadata: Metadata = {
   },
 };
 
+/* `leading-none` closed the eyebrow's box to its own 11px; the prototype
+   sets no line-height on these and they take the body's 1.55 (17.05px),
+   which is what puts the 10px gap where it lands. */
 const DETAIL_LABEL =
-  "m-0 mb-[10px] text-[11px] uppercase leading-none tracking-[0.18em] text-ink/55";
+  "m-0 mb-[10px] text-[11px] uppercase leading-[1.55] tracking-[0.18em] text-ink/55";
 const DETAIL_BLOCK = "border-t border-ink/11 pt-5";
 
 export default function ContactPage() {
@@ -60,9 +64,13 @@ export default function ContactPage() {
 
           <div className={DETAIL_BLOCK}>
             <p className={DETAIL_LABEL}>Email</p>
+            {/* Not a `ProseLink`: this is a display link in the contact
+                rail, the twin of the phone number above it, and the
+                prototype sets `text-decoration: none` on it. What it was
+                missing is the transition its twin already had. */}
             <Link
               href={emailHref}
-              className="break-words text-[17px] text-accent hover:text-accent-300"
+              className="break-words text-[17px] text-accent transition-colors duration-200 hover:text-accent-300"
             >
               {site.email}
             </Link>
@@ -89,9 +97,7 @@ export default function ContactPage() {
 
           <p className="m-0 text-[15px] leading-[1.7]">
             Ready to move?{" "}
-            <Link href={claimHref} className="text-accent hover:text-accent-300">
-              Complete the claim intake →
-            </Link>
+            <ProseLink href={claimHref}>Complete the claim intake →</ProseLink>
           </p>
         </div>
 

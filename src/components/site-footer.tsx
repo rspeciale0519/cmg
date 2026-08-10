@@ -38,7 +38,9 @@ export function SiteFooter() {
               height={513}
               className="h-14 w-auto"
             />
-            <span className="whitespace-nowrap text-[11px] uppercase tracking-[0.24em] text-accent">
+            {/* Stated, not inherited, so it stays paired with the header's
+                wordmark if either box ever changes. */}
+            <span className="whitespace-nowrap text-[11px] uppercase leading-[1.55] tracking-[0.24em] text-accent">
               Property Solutions
             </span>
           </div>

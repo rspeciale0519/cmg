@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { submitContact } from "@/lib/actions/contact";
 import { idleState } from "@/lib/actions/types";
 import { site, telHref } from "@/lib/site";
+import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
 import { TextAreaField, TextField } from "./controls";
 import { FormAlert, SuccessBody, SuccessPanel } from "./form-feedback";
@@ -37,10 +37,7 @@ export function ContactForm() {
         <SuccessBody>
           An adjuster will call you within one business day. If the damage is urgent —
           water still coming in, structure unsafe — call{" "}
-          <Link href={telHref} className="text-accent hover:text-accent-300">
-            {site.phone}
-          </Link>{" "}
-          now.
+          <ProseLink href={telHref}>{site.phone}</ProseLink> now.
         </SuccessBody>
       </SuccessPanel>
     );

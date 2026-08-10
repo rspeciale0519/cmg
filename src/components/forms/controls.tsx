@@ -9,6 +9,7 @@ import {
   FieldHint,
   FieldLabel,
   fieldIds,
+  FILE_INPUT_CLASS,
   INPUT_CLASS,
 } from "./field";
 
@@ -181,7 +182,7 @@ export function RadioField({
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
     >
-      <legend className="block text-xs leading-[1.4] text-ink/72">
+      <legend className="block text-xs leading-[1.55] text-ink/72">
         {label}
         {required ? (
           <span aria-hidden="true" className="ml-[3px] text-accent">
@@ -193,7 +194,9 @@ export function RadioField({
         {options.map((option) => (
           <label
             key={option.value}
-            className="group relative inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-ink"
+            /* `text-sm` ships a 20px leading pair; the prototype's `.radio`
+               sets none and takes the body's 1.55 (21.7px). */
+            className="group relative inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-sm leading-[1.55] text-ink"
           >
             <input
               type="radio"
@@ -208,7 +211,11 @@ export function RadioField({
             <span
               aria-hidden="true"
               className={cx(
-                "size-4 flex-none rounded-full border-[1.5px] border-ink/16 transition-colors duration-150",
+                /* The checked state is drawn with an inset box-shadow, so
+                   `transition-colors` alone left the dot's fill easing while
+                   its centre punched in instantly. */
+                "size-4 flex-none rounded-full border-[1.5px] border-ink/16",
+                "transition-[color,background-color,border-color,box-shadow] duration-200",
                 "group-hover:border-accent",
                 "peer-checked:border-accent peer-checked:bg-accent peer-checked:shadow-[inset_0_0_0_4px_var(--color-canvas)]",
                 "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent",
@@ -282,9 +289,9 @@ export function FileField({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
         className={cx(
-          "mt-[6px] cursor-pointer p-[11px] text-[14px] text-ink/72",
-          "file:mr-4 file:cursor-pointer file:rounded-sm file:border file:border-accent/45 file:bg-transparent file:px-4 file:py-[7px] file:text-[13px] file:font-medium file:text-accent file:transition-colors hover:file:bg-accent/12",
-          INPUT_CLASS,
+          "mt-[6px] cursor-pointer text-ink/72",
+          "file:mr-4 file:cursor-pointer file:rounded-sm file:border file:border-accent/45 file:bg-transparent file:px-4 file:py-[7px] file:text-[13px] file:font-medium file:text-accent file:transition-colors file:duration-200 hover:file:bg-accent/12",
+          FILE_INPUT_CLASS,
         )}
       />
       {hint ? <FieldHint id={ids.hintId}>{hint}</FieldHint> : null}

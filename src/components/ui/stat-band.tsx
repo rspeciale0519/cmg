@@ -39,9 +39,11 @@ export function StatBand({
                   <span className="text-accent">{stat.suffix}</span>
                 ) : null}
               </p>
-              {/* 14px under a 46px figure was tighter than the type could
-                  carry; 18px binds the pair without loosening it. */}
-              <p className="mt-[18px] text-xs uppercase leading-[1.55] tracking-[0.14em] text-ink/55">
+              {/* The prototype's 14px. The figure sets on `leading-none`, so
+                  its box ends at the numeral and the 14px is all optical
+                  space — 18px read as a gap between two things rather than
+                  one label under one number. */}
+              <p className="mt-[14px] text-xs uppercase leading-[1.55] tracking-[0.14em] text-ink/55">
                 {stat.label}
               </p>
             </div>

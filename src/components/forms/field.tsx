@@ -18,14 +18,39 @@ export const DANGER = "#E08C6A";
  *  specificity and is therefore order-independent. The hover and focus pairs
  *  are spelled out for the same reason: `hover:border-ink/45` and
  *  `focus-visible:border-accent` would otherwise tie with it. */
-export const INPUT_CLASS =
-  "w-full min-h-[46px] rounded-md border border-ink/16 bg-surface px-[14px] py-[11px] text-[15px] leading-[1.5] text-ink caret-accent transition-colors duration-150 " +
+/** Everything about the control except its padding.
+ *
+ *  Padding is held out because the file input needs its own (the prototype
+ *  gives it `12px` where the text control gets `6px 10px`) and a `p-*`
+ *  utility cannot beat a `px-*`/`py-*` one: they are equal specificity and
+ *  Tailwind emits the axis utilities last, so a `p-[12px]` appended beside
+ *  this string would be silently inert.
+ *
+ *  `opacity` is inside the transition list, not outside it: `disabled:` and
+ *  the border states change together when a submit starts, and a border that
+ *  eases while the fill snaps reads as two separate events. 200ms is the
+ *  site's one navigational duration. */
+const INPUT_BASE =
+  "w-full min-h-[46px] rounded-md border border-ink/16 bg-surface text-[14px] leading-[1.5] text-ink caret-accent " +
+  "transition-[color,background-color,border-color,opacity] duration-200 " +
   "placeholder:text-ink/35 hover:border-ink/45 focus-visible:border-accent focus-visible:outline-offset-0 " +
   "disabled:cursor-not-allowed disabled:opacity-55 " +
   "aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A]";
 
+/** Prototype `.input`: 14px on `6px 10px`. The 46px min-height these two
+ *  pages set inline is what gives the box its size, so the padding is free to
+ *  be the prototype's — 15px on `11px 14px` was a second, larger control
+ *  wearing the same name. */
+export const INPUT_CLASS = `${INPUT_BASE} px-[10px] py-[6px]`;
+
+/** The prototype's file control, which overrides `.input`'s padding to 12px
+ *  so the native "Choose files" button has room to sit in. */
+export const FILE_INPUT_CLASS = `${INPUT_BASE} p-[12px]`;
+
+/* 12px on the body's inherited 1.55 (18.6px), which is what the prototype's
+   `.field > label` takes. `leading-[1.4]` closed it to 16.8px. */
 export const LABEL_CLASS =
-  "block text-xs leading-[1.4] text-ink/72";
+  "block text-xs leading-[1.55] text-ink/72";
 
 export function fieldIds(name: string) {
   return {

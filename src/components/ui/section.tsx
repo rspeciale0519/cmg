@@ -22,6 +22,12 @@ const CONTAINER = "mx-auto w-full px-[clamp(20px,4vw,56px)]";
 
 export type SectionMeasure = keyof typeof MEASURE;
 
+/* Four steps, but plenty of call sites pass `space="none"` and state their
+   own `pt`/`pb` clamps instead. That is intentional, not drift: the
+   prototypes set asymmetric vertical padding per band (a section that opens
+   under a hero gets a different top than the one that follows it), and the
+   clamps at those call sites are the prototypes' own values. The scale is
+   for bands the prototypes padded symmetrically. */
 const SPACE = {
   none: "",
   sm: "py-[clamp(40px,5vw,64px)]",

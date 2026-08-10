@@ -43,14 +43,25 @@ export function SiteHeader() {
   }, []);
 
   /* The panel overlays the page, so the page must stop moving under it —
-     without this the hero keeps scrolling behind an open menu. */
+     without this the hero keeps scrolling behind an open menu.
+
+     Hiding the overflow also removes the scrollbar, and on a desktop browser
+     with classic (space-taking) scrollbars below the 1025px breakpoint that
+     hands the page ~15px it did not have: everything jumps right as the menu
+     opens. Padding the body by the width the scrollbar was occupying holds
+     the layout still. Overlay scrollbars measure 0, so this is a no-op on
+     the phones the panel is actually for. */
   useEffect(() => {
     if (!open) return;
     const { body } = document;
-    const previous = body.style.overflow;
+    const previousOverflow = body.style.overflow;
+    const previousPadding = body.style.paddingRight;
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
     body.style.overflow = "hidden";
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
     return () => {
-      body.style.overflow = previous;
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPadding;
     };
   }, [open]);
 
@@ -126,18 +137,30 @@ export function SiteHeader() {
         data-testid="site-menu-scrim"
         onClick={() => close(false)}
         className={cx(
-          "fixed inset-x-0 bottom-0 top-[84px] z-30 bg-canvas/70 backdrop-blur-[2px] transition-opacity duration-200 ease-out min-[1025px]:hidden",
+          /* Starts where the header ends: the row floors at 76px but the
+             80.94px lockup sets it, plus the 1px bottom border — 81.94px,
+             rounded up so the scrim never rides over the header edge. */
+          "fixed inset-x-0 bottom-0 top-[82px] z-30 bg-canvas/70 backdrop-blur-[2px] transition-opacity duration-200 ease-out min-[1025px]:hidden",
           open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />
 
       <header className="sticky top-0 z-40 border-b border-ink/9 bg-canvas/82 backdrop-blur-[14px]">
-        {/* 84px, not the prototype's 76px. The lockup is a stacked
-            mark-over-wordmark measuring 81px, so a 76px row does not contain
-            it at all — the prototype's header is really 81px with the lockup
-            flush to both edges. 84px gives it 1.5px of air instead of none,
-            and the nav and CTA still centre against it. */}
-        <div className="grid min-h-[84px] w-full grid-cols-[1fr_auto_1fr] items-center gap-8 px-[clamp(20px,4vw,56px)]">
+        {/* The prototype's own 76px floor. The stacked mark-over-wordmark
+            lockup measures 80.94px, so the row sets to the lockup and the
+            floor never binds — nothing clips, and the 58px mark keeps its
+            size.
+
+            The `max-w-[1360px]` is a deliberate departure from the prototype,
+            whose header row is `width: 100%` with no cap. Full-bleed puts the
+            lockup at the raw gutter while every band below it — including the
+            footer, which renders this same lockup — starts at the 1360px
+            field's inner edge. The gap is `(clientWidth − 1360) / 2`: zero to
+            1360px, 32.5px at 1440, 272.5px at 1920. Sanctioned under "craft
+            may exceed the prototype": the header now sits on the page's
+            content spine at every width. Nav centring is unaffected because
+            the container is itself centred. */}
+        <div className="mx-auto grid min-h-[76px] w-full max-w-[1360px] grid-cols-[1fr_auto_1fr] items-center gap-8 px-[clamp(20px,4vw,56px)]">
           <Link
             href="/"
             aria-label={`${site.name} — home`}
@@ -180,7 +203,14 @@ export function SiteHeader() {
                        its 14px nav links inherit (21.7px). Tailwind's
                        `text-sm` ships a 20px pair. */
                     "flex min-h-[44px] items-center text-sm leading-[1.55] no-underline transition-colors duration-200",
-                    active ? "text-accent" : "text-ink/85 hover:text-ink",
+                    /* The page you are on still has to answer the pointer.
+                       Inactive links resolve toward ink; the current one
+                       stays gold and travels up its own ramp instead, so the
+                       feedback never reads as "this became a different
+                       link". */
+                    active
+                      ? "text-accent hover:text-accent-300 active:text-accent-200"
+                      : "text-ink/85 hover:text-ink active:text-ink/70",
                   )}
                 >
                   {item.label}
@@ -208,11 +238,34 @@ export function SiteHeader() {
             aria-controls={PANEL_ID}
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => (open ? close(false) : setOpen(true))}
-            className="col-start-3 flex size-11 flex-col items-center justify-center gap-[5px] justify-self-end rounded-md border border-ink/16 text-ink transition-colors duration-200 hover:bg-ink/7 min-[1025px]:hidden"
+            className="col-start-3 flex size-11 flex-col items-center justify-center gap-[5px] justify-self-end rounded-md border border-ink/16 text-ink transition-colors duration-200 hover:bg-ink/7 active:bg-ink/12 min-[1025px]:hidden"
           >
-            <span aria-hidden="true" className="block h-px w-[18px] bg-current" />
-            <span aria-hidden="true" className="block h-px w-[18px] bg-current" />
-            <span aria-hidden="true" className="block h-px w-[18px] bg-current" />
+            {/* The bars are 1px on a 5px gap, so their centres are 6px apart:
+                the outer two travel that 6px to meet on the middle line and
+                cross there, and the middle bar leaves. `aria-label` was
+                carrying the open/closed state on its own — this is the same
+                state, said in the glyph. */}
+            <span
+              aria-hidden="true"
+              className={cx(
+                "block h-px w-[18px] bg-current transition-transform duration-200 ease-out",
+                open ? "translate-y-[6px] rotate-45" : "",
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cx(
+                "block h-px w-[18px] bg-current transition-opacity duration-200 ease-out",
+                open ? "opacity-0" : "opacity-100",
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cx(
+                "block h-px w-[18px] bg-current transition-transform duration-200 ease-out",
+                open ? "-translate-y-[6px] -rotate-45" : "",
+              )}
+            />
           </button>
         </div>
 
@@ -240,9 +293,13 @@ export function SiteHeader() {
                       aria-current={active ? "page" : undefined}
                       className={cx(
                         "-mx-3 flex min-h-[48px] items-center rounded-md px-3 py-[13px] text-[17px] no-underline transition-colors duration-200",
+                        /* Same surface feedback for both states — only the
+                           ink differs, so tapping the current page is not a
+                           dead press. */
+                        "hover:bg-ink/7 active:bg-ink/12",
                         active
-                          ? "text-accent"
-                          : "text-ink hover:bg-ink/7 hover:text-accent-300 active:bg-ink/12",
+                          ? "text-accent hover:text-accent-300"
+                          : "text-ink hover:text-accent-300",
                       )}
                     >
                       {item.label}

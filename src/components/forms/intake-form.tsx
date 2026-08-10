@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
 import { submitIntake } from "@/lib/actions/intake";
 import { idleState } from "@/lib/actions/types";
@@ -80,8 +80,12 @@ export function IntakeForm() {
       '[aria-invalid="true"]',
     );
     (firstInvalid ?? alertRef.current)?.focus();
+    /* The CSS guard only resets `html { scroll-behavior }`; an explicit
+       `behavior: "smooth"` here outranks it, so the reduced-motion request
+       has to be read and honoured in JS. */
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     (firstInvalid ?? alertRef.current)?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduced ? "auto" : "smooth",
       block: "center",
     });
   }, [state]);
@@ -98,10 +102,7 @@ export function IntakeForm() {
           We&apos;ll prepare the Letter of Representation and email it for signature to
           every party on the policy. Once all parties have signed, the claim moves to your
           adjuster — and the referring rep, if any, gets a copy. Questions in the meantime:{" "}
-          <Link href={telHref} className="text-accent hover:text-accent-300">
-            {site.phone}
-          </Link>
-          .
+          <ProseLink href={telHref}>{site.phone}</ProseLink>.
         </SuccessBody>
         {state.reference ? (
           <p className="mt-7 border-t border-accent/25 pt-5 text-[13px] uppercase leading-[1.6] tracking-[0.18em] text-ink/55">
@@ -264,10 +265,7 @@ export function IntakeForm() {
           />
           <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/55">
             You can also email copies to{" "}
-            <Link href={emailHref} className="text-accent hover:text-accent-300">
-              {site.email}
-            </Link>
-            .
+            <ProseLink href={emailHref}>{site.email}</ProseLink>.
           </p>
         </IntakeSection>
 
@@ -309,11 +307,7 @@ export function IntakeForm() {
           />
           <p className="text-[14px] leading-[1.7] text-ink/62 min-[1100px]:mt-5">
             We&apos;ll prepare the Letter of Representation and send it for e-signature.
-            Questions? Call{" "}
-            <Link href={telHref} className="text-accent hover:text-accent-300">
-              {site.phone}
-            </Link>
-            .
+            Questions? Call <ProseLink href={telHref}>{site.phone}</ProseLink>.
           </p>
         </div>
       </aside>

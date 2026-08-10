@@ -102,7 +102,6 @@ export default function ServicesPage() {
         heading="The numbers favor representation."
         intro="Florida's legislative research office studied Citizens Property Insurance claims and found policyholders who used a public adjuster recovered far more than those who negotiated alone."
         points={OPPAGA_POINTS}
-        measure="wide"
         source="Source: OPPAGA Report 10-06, Florida Legislature, January 2010."
       />
 

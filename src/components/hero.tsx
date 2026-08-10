@@ -108,6 +108,10 @@ export function Hero({
         aria-hidden="true"
         className="absolute inset-0 z-[-2] animate-[rain_0.85s_linear_infinite] opacity-[0.16] [background-image:repeating-linear-gradient(74deg,rgba(243,237,224,0.5)_0_1px,transparent_1px_7px)] [background-size:260px_900px]"
       />
+      {/* Kept as designed. The `flash` keyframes fire two pulses inside a
+          4.5s window of a 13s loop — well under WCAG 2.3.1's three-per-second
+          threshold — and the reduced-motion block in `globals.css` stops the
+          animation outright, so the layer holds at `opacity: 0`. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-[-2] animate-[flash_13s_ease-out_infinite] bg-[#F5EBD2] mix-blend-overlay"

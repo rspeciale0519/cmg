@@ -145,7 +145,14 @@ export function Card({
              gap lines instead of displacing the card by a border width. */
           "after:pointer-events-none after:absolute after:inset-0 after:transition-shadow after:duration-200",
           "hover:after:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-ink)_22%,transparent)]",
-          "focus-visible:after:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-ink)_22%,transparent)]",
+          /* Focus is not hover. The keyboard already gets the global 2px gold
+             outline around the card; repeating the ink hover ring inside it
+             put two rings on one card and made the inner one read as a
+             pointer that was not there. The inset ring goes gold instead, so
+             the two rings are one statement — outer outline, inner echo — and
+             the ink ring stays the pointer's alone. */
+          "focus-visible:after:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-accent)_55%,transparent)]",
+          "focus-visible:bg-[color-mix(in_srgb,var(--color-accent)_5%,var(--color-canvas))]",
         )}
       >
         {body}

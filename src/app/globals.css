@@ -68,7 +68,13 @@
      `h2` already floored at 28px — against a 22px step on the desktop the
      scale was designed around. The desktop caps are the prototypes' own
      (Services 21, About/Contractors 23, Home 24); the floors are new, and all
-     three reach their cap at the same 1000px viewport. */
+     three reach their cap at the same 1000px viewport.
+
+     These four floors are a deliberate, retained deviation: below ~1000px
+     they clamp under the prototypes' fixed sizes. The prototypes fix these
+     headings at one size at every width, which inverts the hierarchy on a
+     phone; the floors restore the step and are kept under "craft may exceed
+     the prototype". Do not revert them to the fixed caps. */
   --text-card-sm: clamp(19px, 2.1vw, 21px); /* four-step process card */
   --text-card-md: clamp(20px, 2.3vw, 23px); /* values / benefits card */
   --text-card-lg: clamp(20px, 2.4vw, 24px); /* home feature card */
@@ -110,6 +116,15 @@
   body {
     background: var(--color-canvas);
     color: var(--color-ink);
+    /* The prototypes' own body leading, and the value every element that
+       sets no line-height of its own inherits there. Tailwind's Preflight
+       puts 1.5 on `html`, which is close enough to look right and wrong
+       everywhere: an 11px eyebrow came out at 16.5px against the
+       prototype's 17.05px, a 32px phone number at 48px against 49.6px.
+       Setting it once here is the root fix; call sites that need a
+       different leading still state it. `line-height: 1.5` appears nowhere
+       in any prototype. */
+    line-height: 1.55;
     text-wrap: pretty;
     overflow-x: clip;
   }
