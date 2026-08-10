@@ -1,6 +1,16 @@
 import { render } from "@react-email/components";
 import type { ReactElement } from "react";
 import {
+  ESignStaffAlert,
+  LorSigned,
+  type ESignStaffAlertPayload,
+  type LorSignedPayload,
+} from "./templates/esign";
+import {
+  ClaimStatusUpdate,
+  type ClaimStatusUpdatePayload,
+} from "./templates/claim-status";
+import {
   IntakeConfirmation,
   IntakeStaffAlert,
   type IntakeConfirmationPayload,
@@ -19,7 +29,10 @@ export type NotificationMessage =
   | { template: "intake_confirmation"; payload: IntakeConfirmationPayload }
   | { template: "lead_staff_alert"; payload: LeadStaffAlertPayload }
   | { template: "lead_auto_reply"; payload: LeadAutoReplyPayload }
-  | { template: "invite"; payload: InvitePayload };
+  | { template: "invite"; payload: InvitePayload }
+  | { template: "claim_status_update"; payload: ClaimStatusUpdatePayload }
+  | { template: "lor_signed"; payload: LorSignedPayload }
+  | { template: "esign_staff_alert"; payload: ESignStaffAlertPayload };
 
 export type NotificationTemplate = NotificationMessage["template"];
 
@@ -57,6 +70,21 @@ const TEMPLATES: Record<NotificationTemplate, Renderer> = {
         ? `Your CMG claim portal — ${payload.claimRef}`
         : "Your CMG portal invitation",
     element: (payload: InvitePayload) => <InviteEmail {...payload} />,
+  },
+  claim_status_update: {
+    subject: (payload: ClaimStatusUpdatePayload) =>
+      `${payload.claimRef} — ${payload.statusLabel}`,
+    element: (payload: ClaimStatusUpdatePayload) => <ClaimStatusUpdate {...payload} />,
+  },
+  lor_signed: {
+    subject: (payload: LorSignedPayload) =>
+      `Your Letter of Representation is signed — ${payload.claimRef}`,
+    element: (payload: LorSignedPayload) => <LorSigned {...payload} />,
+  },
+  esign_staff_alert: {
+    subject: (payload: ESignStaffAlertPayload) =>
+      `${payload.claimRef} — ${payload.headline}`,
+    element: (payload: ESignStaffAlertPayload) => <ESignStaffAlert {...payload} />,
   },
 } as Record<NotificationTemplate, Renderer>;
 

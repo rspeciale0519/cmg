@@ -1,56 +1,73 @@
-import type { Metadata } from "next";
-import { PortalCard, PortalShell } from "@/components/auth/portal-shell";
+import Link from "next/link";
+import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
+import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
+import { PipelineLadder, type StatusCounts } from "@/components/admin/pipeline-ladder";
+import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
+import { isClaimStatus } from "@/lib/claims/status";
 import { requireStaff } from "@/lib/authz";
+import { formatAddressLine, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { InvitePanel, type InvitableClaimant } from "./invite-panel";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Admin",
-  robots: { index: false, follow: false },
+const LEDE: Record<string, string> = {
+  owner: "Every claim in the business, and the queues that need a decision today.",
+  adjuster: "Your caseload. The stage counts below are your claims, not the firm's.",
+  assistant: "Every claim in the business, read-only. Notes and documents are yours to add.",
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  owner: "Owner",
-  adjuster: "Adjuster",
-  assistant: "Assistant",
-};
-
-export default async function AdminPage() {
-  // Role *and* aal2 in one call. Reaching this line means the proxy let the
-  // request through and the page agreed independently — the two checks are
-  // deliberately redundant, because the proxy decides on a path prefix and this
-  // one decides on the session.
+export default async function AdminDashboard() {
   const session = await requireStaff("/admin");
   const supabase = await createClient();
 
-  const [claims, leads, claimants, profile] = await Promise.all([
-    supabase.from("claims").select("id, status", { count: "exact", head: true }),
-    supabase.from("leads").select("id", { count: "exact", head: true }),
+  const [statuses, intake, questions, recent, uninvited] = await Promise.all([
+    // One narrow column for every claim the caller may see, tallied below.
+    // PostgREST has no GROUP BY without a view, and at CMG's volume — hundreds
+    // of claims a year — an enum-per-row is cheaper than the round trips a
+    // count-per-status would cost. If the table ever reaches six figures this
+    // is the query to replace with a view.
+    supabase.from("claims").select("status"),
+    supabase
+      .from("claims")
+      .select(
+        "id, claim_ref, created_at, property_street, property_city, property_state, property_zip, referrer_name, claimants(first_name, last_name, is_primary)",
+      )
+      .eq("status", "new_intake")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("claim_events")
+      .select("id, body, created_at, claim_id, claims!claim_events_claim_id_fkey(claim_ref)")
+      .eq("type", "question")
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("claims")
+      .select("id, claim_ref, status, updated_at, property_street, property_city, claimants(first_name, last_name, is_primary)")
+      .neq("status", "rejected")
+      .order("updated_at", { ascending: false })
+      .limit(6),
     supabase
       .from("claimants")
-      .select("id, first_name, last_name, email, user_id, claims!inner(claim_ref)")
+      .select("id, first_name, last_name, email, claims!inner(claim_ref, status)")
       .is("user_id", null)
+      .neq("claims.status", "new_intake")
+      .neq("claims.status", "rejected")
       .order("created_at", { ascending: false })
-      .limit(25),
-    supabase
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("id", session.userId)
-      .maybeSingle(),
+      .limit(6),
   ]);
 
-  const name = [profile.data?.first_name, profile.data?.last_name]
-    .filter(Boolean)
-    .join(" ");
+  const counts: StatusCounts = {};
+  for (const row of statuses.data ?? []) {
+    if (isClaimStatus(row.status)) {
+      counts[row.status] = (counts[row.status] ?? 0) + 1;
+    }
+  }
 
-  // Only owners and assigned adjusters may issue an invitation; the action
-  // enforces it, and hiding the control from an assistant keeps the UI from
-  // offering a button that will always be refused.
-  const canInvite = session.role === "owner" || session.role === "adjuster";
+  const total = (statuses.data ?? []).length;
 
-  const invitable: InvitableClaimant[] = (claimants.data ?? []).map((row) => ({
+  const invitable: InvitableClaimant[] = (uninvited.data ?? []).map((row) => ({
     id: row.id,
     name: `${row.first_name} ${row.last_name}`.trim(),
     email: row.email,
@@ -58,33 +75,182 @@ export default async function AdminPage() {
   }));
 
   return (
-    <PortalShell
-      surface="Admin"
-      heading="Claims desk."
-      intro="The queue, claims, documents and financials arrive here in the next phase. What is live now is the access layer: who is signed in, what they may reach, and who has been invited to a portal."
-      identity={{ name: name || (session.email ?? "Staff"), role: ROLE_LABELS[session.role] ?? session.role }}
-    >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <PortalCard title={String(claims.count ?? 0)} meta="Claims visible to you" />
-        <PortalCard title={String(leads.count ?? 0)} meta="Leads in the inbox" />
-        <PortalCard title={String(invitable.length)} meta="Awaiting invitation" />
+    <>
+      <PageHeader
+        eyebrow={`${total} claim${total === 1 ? "" : "s"} in view`}
+        title="Claims desk."
+        lede={LEDE[session.role]}
+      />
+
+      <PipelineLadder counts={counts} />
+
+      <div className="mt-[clamp(28px,3.4vw,44px)] grid gap-4 lg:grid-cols-[3fr_2fr]">
+        <Panel
+          title="Waiting on triage"
+          meta={
+            (counts.new_intake ?? 0) > 0 ? (
+              <Link
+                href="/admin/intake"
+                className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+              >
+                Open the queue
+              </Link>
+            ) : undefined
+          }
+        >
+          {(intake.data ?? []).length === 0 ? (
+            <EmptyState headline="Nothing waiting.">
+              New submissions from the public claim form land here for a decision.
+            </EmptyState>
+          ) : (
+            <ul className="divide-y divide-ink/8">
+              {(intake.data ?? []).map((claim) => {
+                const primary =
+                  claim.claimants?.find((person) => person.is_primary) ??
+                  claim.claimants?.[0];
+
+                return (
+                  <li key={claim.id}>
+                    <Link
+                      href={`/admin/intake#${claim.id}`}
+                      className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 px-[clamp(14px,1.6vw,20px)] py-[12px] no-underline transition-colors duration-150 hover:bg-ink/[0.045]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[13px] leading-[1.45] text-ink/88">
+                          {primary
+                            ? `${primary.first_name} ${primary.last_name}`.trim()
+                            : "Unnamed homeowner"}
+                        </span>
+                        <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/42">
+                          {formatAddressLine({
+                            street: claim.property_street,
+                            city: claim.property_city,
+                            state: claim.property_state,
+                            zip: claim.property_zip,
+                          })}
+                        </span>
+                      </span>
+                      <span className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/42">
+                        <ClaimRef value={claim.claim_ref} className="text-ink/62" />
+                        {formatRelative(claim.created_at)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title="Questions from homeowners">
+          {(questions.data ?? []).length === 0 ? (
+            <EmptyState headline="No open questions.">
+              Anything a homeowner asks from their portal arrives here and on the
+              claim&rsquo;s activity tab.
+            </EmptyState>
+          ) : (
+            <ul className="divide-y divide-ink/8">
+              {(questions.data ?? []).map((event) => (
+                <li key={event.id}>
+                  <Link
+                    href={`/admin/claims/${event.claim_id}/activity`}
+                    className="block px-[clamp(14px,1.6vw,20px)] py-[12px] no-underline transition-colors duration-150 hover:bg-ink/[0.045]"
+                  >
+                    <span className="line-clamp-2 block text-[13px] leading-[1.5] text-ink/82">
+                      {event.body}
+                    </span>
+                    <span className="mt-[5px] flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/42">
+                      <ClaimRef
+                        value={event.claims?.claim_ref ?? "—"}
+                        className="text-ink/58"
+                      />
+                      {formatRelative(event.created_at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
 
-      <div className="mt-4">
-        {canInvite ? (
+      <div className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
+        <Panel
+          title="Recently touched"
+          meta={
+            <Link
+              href="/admin/claims"
+              className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+            >
+              All claims
+            </Link>
+          }
+        >
+          {(recent.data ?? []).length === 0 ? (
+            <EmptyState headline="No claims yet.">
+              Accepted intakes appear here as they move through the pipeline.
+            </EmptyState>
+          ) : (
+            <DataTable
+              caption="Recently updated claims"
+              head={
+                <>
+                  <Th className="w-[132px]">Reference</Th>
+                  <Th>Homeowner</Th>
+                  <Th className="w-[150px]">Status</Th>
+                  <Th className="w-[92px]" align="right">
+                    Updated
+                  </Th>
+                </>
+              }
+            >
+              {(recent.data ?? []).map((claim) => {
+                const primary =
+                  claim.claimants?.find((person) => person.is_primary) ??
+                  claim.claimants?.[0];
+
+                return (
+                  <Tr key={claim.id}>
+                    <Td>
+                      <Link
+                        href={`/admin/claims/${claim.id}`}
+                        className="text-ink no-underline hover:text-accent"
+                      >
+                        <ClaimRef value={claim.claim_ref} />
+                      </Link>
+                    </Td>
+                    <Td className="max-w-0">
+                      <span className="block truncate">
+                        {primary
+                          ? `${primary.first_name} ${primary.last_name}`.trim()
+                          : "—"}
+                      </span>
+                      <CellMeta>
+                        {claim.property_street}, {claim.property_city}
+                      </CellMeta>
+                    </Td>
+                    <Td>
+                      {isClaimStatus(claim.status) ? (
+                        <StatusPill status={claim.status} />
+                      ) : null}
+                    </Td>
+                    <Td align="right" className="tabular-nums text-ink/50">
+                      {formatRelative(claim.updated_at)}
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </DataTable>
+          )}
+        </Panel>
+
+        <Panel
+          title="Awaiting portal access"
+          meta={invitable.length > 0 ? `${invitable.length} to send` : undefined}
+        >
           <InvitePanel claimants={invitable} />
-        ) : (
-          <section className="border border-ink/13 bg-surface/55 p-[clamp(20px,2.4vw,28px)]">
-            <h2 className="text-[20px] font-medium leading-[1.25] tracking-[-0.02em]">
-              Portal invitations
-            </h2>
-            <p className="mt-[10px] max-w-[64ch] text-[15px] leading-[1.7] text-ink/72">
-              Invitations are issued by the owner or by the adjuster a claim is
-              assigned to.
-            </p>
-          </section>
-        )}
+        </Panel>
       </div>
-    </PortalShell>
+    </>
   );
 }

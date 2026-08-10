@@ -1,0 +1,195 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { STATUS_LABEL } from "@/lib/claims/status";
+import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
+import { STATUS_FILTER_OPTIONS } from "@/lib/claims/search";
+import { cx } from "@/lib/cx";
+import { AdminSelect } from "./form-controls";
+
+/**
+ * Filters live in the URL, not in component state. A filtered claims list is
+ * something an adjuster sends to a colleague ("the three denied ones") and
+ * comes back to after opening a file, and both of those need the view to be a
+ * link. It also means the server component does the filtering, so there is no
+ * second copy of the predicate on the client.
+ *
+ * The text box is debounced and the selects are not: a select is one deliberate
+ * choice and should act immediately, while typing produces a keystroke of
+ * intent every 80ms and navigating on each one would fight the caret.
+ */
+export function ClaimFilters({
+  adjusters,
+  partners,
+  resultCount,
+}: {
+  adjusters: AdjusterOption[];
+  partners: PartnerOption[];
+  resultCount: number;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const [term, setTerm] = useState(params.get("q") ?? "");
+  const firstRender = useRef(true);
+
+  function withParam(key: string, value: string): string {
+    const next = new URLSearchParams(params.toString());
+    if (value) next.set(key, value);
+    else next.delete(key);
+    const query = next.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
+  // Debounced push for the text box. `replace` rather than `push` so a search
+  // does not stack twenty history entries between the list and the file the
+  // adjuster opens from it.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      startTransition(() => {
+        router.replace(withParam("q", term.trim()), { scroll: false });
+      });
+    }, 260);
+
+    return () => clearTimeout(timer);
+    // `withParam` closes over `params`, which changes on every navigation; the
+    // effect must run on the term and on nothing else, or each push schedules
+    // the next one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [term]);
+
+  const active =
+    params.get("status") || params.get("adjuster") || params.get("partner") || term;
+
+  return (
+    <div className="flex flex-wrap items-end gap-3 pb-[clamp(14px,1.6vw,20px)]">
+      <div className="min-w-[200px] flex-1 sm:max-w-[320px]">
+        <label
+          htmlFor="claim-search"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+        >
+          Search
+        </label>
+        <input
+          id="claim-search"
+          type="search"
+          value={term}
+          onChange={(event) => setTerm(event.target.value)}
+          placeholder="Reference, homeowner, address, carrier"
+          className={cx(
+            "min-h-[34px] w-full rounded-md border border-ink/15 bg-canvas/70 px-[9px] py-[6px] text-[13px] leading-[1.5] text-ink caret-accent",
+            "transition-colors duration-150 placeholder:text-ink/32 hover:border-ink/40 focus-visible:border-accent focus-visible:outline-offset-0",
+          )}
+        />
+      </div>
+
+      <div className="min-w-[150px]">
+        <label
+          htmlFor="admin-status"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+        >
+          Status
+        </label>
+        <AdminSelect
+          name="status"
+          value={params.get("status") ?? ""}
+          onChange={(event) =>
+            startTransition(() =>
+              router.replace(withParam("status", event.target.value), { scroll: false }),
+            )
+          }
+        >
+          <option value="">Any status</option>
+          {STATUS_FILTER_OPTIONS.map((status) => (
+            <option key={status} value={status}>
+              {STATUS_LABEL[status]}
+            </option>
+          ))}
+        </AdminSelect>
+      </div>
+
+      <div className="min-w-[150px]">
+        <label
+          htmlFor="admin-adjuster"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+        >
+          Adjuster
+        </label>
+        <AdminSelect
+          name="adjuster"
+          value={params.get("adjuster") ?? ""}
+          onChange={(event) =>
+            startTransition(() =>
+              router.replace(withParam("adjuster", event.target.value), { scroll: false }),
+            )
+          }
+        >
+          <option value="">Anyone</option>
+          <option value="unassigned">Unassigned</option>
+          {adjusters.map((adjuster) => (
+            <option key={adjuster.id} value={adjuster.id}>
+              {adjuster.name}
+            </option>
+          ))}
+        </AdminSelect>
+      </div>
+
+      <div className="min-w-[150px]">
+        <label
+          htmlFor="admin-partner"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+        >
+          Referred by
+        </label>
+        <AdminSelect
+          name="partner"
+          value={params.get("partner") ?? ""}
+          onChange={(event) =>
+            startTransition(() =>
+              router.replace(withParam("partner", event.target.value), { scroll: false }),
+            )
+          }
+        >
+          <option value="">Any source</option>
+          <option value="none">Direct</option>
+          {partners.map((partner) => (
+            <option key={partner.id} value={partner.id}>
+              {partner.name}
+            </option>
+          ))}
+        </AdminSelect>
+      </div>
+
+      <p
+        aria-live="polite"
+        className={cx(
+          "ml-auto pb-[8px] text-[12px] leading-[1.4] transition-opacity duration-150",
+          isPending ? "text-ink/30" : "text-ink/45",
+        )}
+      >
+        <span className="tabular-nums">{resultCount}</span>{" "}
+        {resultCount === 1 ? "claim" : "claims"}
+        {active ? (
+          <>
+            {" · "}
+            <Link
+              href={pathname}
+              className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+            >
+              Clear
+            </Link>
+          </>
+        ) : null}
+      </p>
+    </div>
+  );
+}

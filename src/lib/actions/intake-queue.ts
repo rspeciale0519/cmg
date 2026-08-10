@@ -1,0 +1,375 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { writeAudit } from "@/lib/audit";
+import { requireStaff } from "@/lib/authz";
+import { claimCapabilities } from "@/lib/claims/capabilities";
+import { recordTransition } from "@/lib/claims/record-transition";
+import { isClaimStatus } from "@/lib/claims/status";
+import { issueInvite } from "@/lib/invites";
+import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { GENERIC_ERROR, type FormState } from "./types";
+
+const NOT_IN_QUEUE =
+  "That intake is no longer in the queue — someone may have already worked it.";
+
+const NOT_YOURS =
+  "Accepting an intake assigns it and advances it, which is the owner's move. An unassigned claim has no adjuster to act on it.";
+
+type QueueClaim = {
+  id: string;
+  claim_ref: string;
+  status: string;
+  assigned_adjuster_id: string | null;
+  referrer_name: string | null;
+  referrer_email: string | null;
+};
+
+async function loadQueuedClaim(
+  claimId: string,
+): Promise<{ claim: QueueClaim } | { error: FormState }> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claimId)) {
+    return { error: { status: "error", message: NOT_IN_QUEUE } };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("claims")
+    .select("id, claim_ref, status, assigned_adjuster_id, referrer_name, referrer_email")
+    .eq("id", claimId)
+    .maybeSingle();
+
+  if (error || !data) return { error: { status: "error", message: NOT_IN_QUEUE } };
+  if (data.status !== "new_intake") {
+    return { error: { status: "error", message: NOT_IN_QUEUE } };
+  }
+
+  return { claim: data };
+}
+
+/**
+ * ACCEPT — the one flow in the admin that touches five relations, an external
+ * mail queue and the auth system.
+ *
+ * There is no client-side transaction to wrap it in: supabase-js issues one
+ * PostgREST request per statement and each commits on its own. What is
+ * available is *ordering*, and the order below is chosen so that every partial
+ * failure leaves the intake in a state a second attempt can correct, with a
+ * single atomic statement as the commit point.
+ *
+ *   1. Partner company created, if the operator chose to create one.
+ *      Failure: nothing else has happened; the claim is still queued.
+ *   2. Adjuster assigned, through `reassign_claim()`.
+ *      Failure: still queued. Assignment is idempotent, so a retry is clean.
+ *   3. ► COMMIT POINT — one UPDATE setting `partner_company_id` and `status`
+ *      together. One statement is one transaction, so the claim never exists in
+ *      a state where it has been accepted but not attributed, or attributed but
+ *      not accepted. After this the intake leaves the queue and a second accept
+ *      is refused by the `new_intake` check above, which is what makes the
+ *      remaining steps safe to be non-transactional.
+ *   4. History row, feed entry, homeowner email. Best-effort and *reported*:
+ *      the `audit_claims` trigger has already recorded the state change with
+ *      its actor, so the record of what happened cannot be lost here — only its
+ *      presentation can, and any failure is returned as a sentence.
+ *   5. Invites, last, because an email is the only step that cannot be undone.
+ *      A failure here leaves an accepted claim whose claimants have no portal
+ *      yet, which the Claimants tab fixes with one click.
+ *
+ * Steps 1–3 are refused outright for anyone but the owner, and not by a check
+ * written here: `partner_companies_insert_owner`, `public.guard_claim_update()`
+ * and `claims_update_manage` on a claim with no assigned adjuster each reduce
+ * to `is_owner()`. The capability test below exists to say so in a sentence
+ * before the write, not instead of it.
+ */
+export async function acceptIntake(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const session = await requireStaff("/admin");
+  const claimId = String(formData.get("claimId") ?? "").trim();
+  const adjusterId = String(formData.get("adjusterId") ?? "").trim();
+  const partnerChoice = String(formData.get("partnerChoice") ?? "none");
+  const partnerCompanyId = String(formData.get("partnerCompanyId") ?? "").trim();
+  const newPartnerName = String(formData.get("newPartnerName") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  const loaded = await loadQueuedClaim(claimId);
+  if ("error" in loaded) return loaded.error;
+  const { claim } = loaded;
+
+  const can = claimCapabilities(
+    { userId: session.userId, role: session.role },
+    { assignedAdjusterId: claim.assigned_adjuster_id },
+  );
+
+  if (!can.canManage) return { status: "error", message: NOT_YOURS };
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adjusterId)) {
+    return {
+      status: "error",
+      fieldErrors: { adjusterId: "Choose the adjuster who will carry this claim." },
+      message: "Check the highlighted fields and accept again.",
+    };
+  }
+
+  const supabase = await createClient();
+
+  // ── 1. Partner company ────────────────────────────────────────────────
+  let linkedPartnerId: string | null = null;
+
+  if (partnerChoice === "existing") {
+    if (!partnerCompanyId) {
+      return {
+        status: "error",
+        fieldErrors: { partnerCompanyId: "Pick the referring company." },
+        message: "Check the highlighted fields and accept again.",
+      };
+    }
+    linkedPartnerId = partnerCompanyId;
+  } else if (partnerChoice === "new") {
+    if (newPartnerName.length === 0) {
+      return {
+        status: "error",
+        fieldErrors: { newPartnerName: "Name the referring company." },
+        message: "Check the highlighted fields and accept again.",
+      };
+    }
+
+    const { data: created, error: companyError } = await supabase
+      .from("partner_companies")
+      .insert({
+        name: newPartnerName,
+        contact_name: claim.referrer_name,
+        contact_email: claim.referrer_email,
+      })
+      .select("id");
+
+    if (companyError) {
+      console.error("[intake] partner company insert failed", companyError.message);
+      return { status: "error", message: GENERIC_ERROR };
+    }
+
+    if ((created?.length ?? 0) === 0) {
+      return {
+        status: "error",
+        message: "Partner companies are created by the owner.",
+      };
+    }
+
+    linkedPartnerId = created![0].id;
+  }
+
+  // ── 2. Assignment ─────────────────────────────────────────────────────
+  const { error: assignError } = await supabase.rpc("reassign_claim", {
+    p_claim_id: claimId,
+    p_new_adjuster: adjusterId,
+  });
+
+  if (assignError) {
+    if (assignError.code === "42501") return { status: "error", message: NOT_YOURS };
+    if (assignError.code === "23514") {
+      return {
+        status: "error",
+        fieldErrors: { adjusterId: "That is not an active adjuster." },
+        message: "Check the highlighted fields and accept again.",
+      };
+    }
+    console.error("[intake] assignment failed", assignError.message);
+    return { status: "error", message: GENERIC_ERROR };
+  }
+
+  // ── 3. Commit point: attribution and status in one statement ──────────
+  const update: { status: "under_review"; partner_company_id?: string } = {
+    status: "under_review",
+  };
+  if (linkedPartnerId) update.partner_company_id = linkedPartnerId;
+
+  const { data: advanced, error: advanceError } = await supabase
+    .from("claims")
+    .update(update)
+    .eq("id", claimId)
+    // Re-states the precondition inside the statement that depends on it, so two
+    // operators accepting the same intake at once cannot both advance it — the
+    // second matches zero rows instead of racing the read above.
+    .eq("status", "new_intake")
+    .select("id");
+
+  if (advanceError) {
+    console.error("[intake] accept update failed", advanceError.message);
+    return { status: "error", message: GENERIC_ERROR };
+  }
+
+  if ((advanced?.length ?? 0) === 0) {
+    return { status: "error", message: NOT_IN_QUEUE };
+  }
+
+  // ── 4. History, feed, homeowner notification ──────────────────────────
+  const warnings = await recordTransition(supabase, {
+    claimId,
+    claimRef: claim.claim_ref,
+    from: "new_intake",
+    to: "under_review",
+    note,
+    actorId: session.userId,
+  });
+
+  // ── 5. Invites ────────────────────────────────────────────────────────
+  const ip = inetOrNull(clientIpFromHeaders(await headers()));
+  const invited = await inviteClaimants(claimId, claim.claim_ref, session.userId, ip);
+  if (invited.failed > 0) {
+    warnings.push(
+      `${invited.failed} portal invitation${invited.failed === 1 ? "" : "s"} could not be sent. Resend from the Claimants tab.`,
+    );
+  }
+
+  await writeAudit(createAdminClient(), {
+    actorId: session.userId,
+    action: "claim.intake_accepted",
+    entity: "claims",
+    entityId: claimId,
+    meta: {
+      claim_ref: claim.claim_ref,
+      assigned_adjuster_id: adjusterId,
+      partner_company_id: linkedPartnerId,
+      partner_choice: partnerChoice,
+      invites_issued: invited.sent,
+      invites_failed: invited.failed,
+    },
+    ip,
+  });
+
+  revalidatePath("/admin/intake");
+  revalidatePath("/admin/claims");
+  revalidatePath(`/admin/claims/${claimId}`, "layout");
+  revalidatePath("/admin");
+
+  const sentence =
+    invited.sent > 0
+      ? `${claim.claim_ref} accepted and under review. ${invited.sent} portal invitation${invited.sent === 1 ? "" : "s"} issued.`
+      : `${claim.claim_ref} accepted and under review.`;
+
+  return {
+    status: "success",
+    message: warnings.length > 0 ? `${sentence} ${warnings.join(" ")}` : sentence,
+  };
+}
+
+async function inviteClaimants(
+  claimId: string,
+  claimRef: string,
+  invitedBy: string,
+  ip: string | null,
+): Promise<{ sent: number; failed: number }> {
+  const supabase = await createClient();
+  const { data: claimants } = await supabase
+    .from("claimants")
+    .select("id, first_name, email, user_id")
+    .eq("claim_id", claimId)
+    .is("user_id", null);
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const claimant of claimants ?? []) {
+    const result = await issueInvite({
+      email: claimant.email,
+      role: "customer",
+      claimId,
+      invitedBy,
+      firstName: claimant.first_name,
+      claimRef,
+      ip,
+    });
+
+    if (result.ok) sent += 1;
+    else failed += 1;
+  }
+
+  return { sent, failed };
+}
+
+/**
+ * REJECT — spec §5's `rejected` status: the intake is archived and no invite is
+ * ever issued. There is nothing to undo and nothing to send, so this is a
+ * single statement plus its record.
+ *
+ * `recordTransition` writes the feed entry at `internal` visibility for a
+ * rejected claim (see `visibilityForStatus`) and therefore sends no email — the
+ * homeowner never had a portal account, because acceptance is what creates one.
+ */
+export async function rejectIntake(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const session = await requireStaff("/admin");
+  const claimId = String(formData.get("claimId") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  const loaded = await loadQueuedClaim(claimId);
+  if ("error" in loaded) return loaded.error;
+  const { claim } = loaded;
+
+  if (reason.length < 4) {
+    return {
+      status: "error",
+      fieldErrors: { reason: "Say why this intake is being declined." },
+      message: "Check the highlighted fields and try again.",
+    };
+  }
+
+  if (!isClaimStatus(claim.status)) {
+    return { status: "error", message: NOT_IN_QUEUE };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("claims")
+    .update({ status: "rejected" })
+    .eq("id", claimId)
+    .eq("status", "new_intake")
+    .select("id");
+
+  if (error) {
+    console.error("[intake] reject failed", error.message);
+    return { status: "error", message: GENERIC_ERROR };
+  }
+
+  if ((data?.length ?? 0) === 0) {
+    // Zero rows here is either a race with another operator or
+    // `claims_update_manage` declining the write. Both are honest as one
+    // message; separating them would report the policy outcome for a claim the
+    // caller may not be entitled to know the state of.
+    return { status: "error", message: NOT_IN_QUEUE };
+  }
+
+  const warnings = await recordTransition(supabase, {
+    claimId,
+    claimRef: claim.claim_ref,
+    from: "new_intake",
+    to: "rejected",
+    note: reason,
+    actorId: session.userId,
+  });
+
+  await writeAudit(createAdminClient(), {
+    actorId: session.userId,
+    action: "claim.intake_rejected",
+    entity: "claims",
+    entityId: claimId,
+    meta: { claim_ref: claim.claim_ref, reason },
+    ip: inetOrNull(clientIpFromHeaders(await headers())),
+  });
+
+  revalidatePath("/admin/intake");
+  revalidatePath("/admin/claims");
+  revalidatePath("/admin");
+
+  const sentence = `${claim.claim_ref} declined and archived. No invitation was sent.`;
+  return {
+    status: "success",
+    message: warnings.length > 0 ? `${sentence} ${warnings.join(" ")}` : sentence,
+  };
+}

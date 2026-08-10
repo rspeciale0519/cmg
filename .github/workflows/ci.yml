@@ -40,12 +40,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      - run: npm ci
 
       - name: Start local Supabase stack
         run: supabase start
 
       - name: RLS and schema tests (pgTAP)
         run: supabase test db
+
+      # The e-signature suites talk to a real database on purpose: the dedupe
+      # primary key, the lor_signed transition gate and the storage object are
+      # properties of Postgres, and a fake would only agree with itself. They
+      # skip themselves when no stack is reachable — which is the case in the
+      # `verify` job — so this is the run that actually exercises them.
+      - name: E-signature database suites
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+            npx vitest run src/lib/esign src/app/api/pandadoc

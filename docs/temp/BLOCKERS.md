@@ -185,3 +185,73 @@ them is a paid one. Nothing in code can set them.
 3. Leave `src/lib/auth/leaked-password.ts` in place — it covers the invite path
    with a clear message before the account is created, which the platform check
    cannot do.
+
+---
+
+## 4. PandaDoc account, template and webhook subscription (owner-supplied)
+
+**Status:** open — the e-signature layer is complete in code and runs today in
+its `ManualSignProvider` fallback. Nothing else is blocked by this; the claim
+lifecycle, the `lor_signed` gate and the signed-document requirement all work
+without PandaDoc.
+
+**What is blocked**
+
+Four environment values are empty in `.env.local` and have no substitute:
+
+| Variable | Blocks |
+| --- | --- |
+| `PANDADOC_API_KEY` | Selects `PandaDocProvider` over `ManualSignProvider`. Empty ⇒ manual mode. |
+| `PANDADOC_LOR_TEMPLATE_UUID` | The two-signer LOR template. Without it `sendLor()` returns `{ ok: false, code: "not_configured" }`. |
+| `PANDADOC_LOR_TEMPLATE_UUID_SINGLE` | Optional one-signer variant. Absent ⇒ single-claimant claims fall back to the two-signer template, which PandaDoc rejects at creation if `Homeowner2` is a required role. |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | HMAC verification. Absent ⇒ every inbound webhook is refused with 403 (fail-closed, by design). |
+
+Consequently these five things are untested against the real service and can
+only be exercised once the credentials exist:
+
+1. That the LOR template's role names (`Homeowner1`, `Homeowner2`) and token
+   names (`Claim.Ref`, `Claim.Carrier`, `Claim.PolicyNumber`,
+   `Claim.ClaimNumber`, `Claim.LossDate`, `Claim.Cause`, `Property.Address`,
+   `Homeowner1.Name`, `Homeowner2.Name`, `Adjuster.Name`, `Fee.Percent`) match
+   what `src/lib/esign/send-lor.ts` sends. A mismatch surfaces as a
+   `document_creation_failed` webhook carrying `data.error.detail`, which the
+   handler already routes to the staff inbox.
+2. Real draft-poll timing. Creation is asynchronous (3–5 s typically); the poll
+   defaults to 2 s × 20 attempts and is tunable with
+   `PANDADOC_POLL_INTERVAL_MS` / `PANDADOC_POLL_MAX_ATTEMPTS`. Sandbox keys are
+   capped at 10 requests/minute for the whole workspace.
+3. That PandaDoc's live signature really is HMAC-SHA256 hex over the raw body
+   in `?signature=` (verified against the documentation, not against a
+   delivery).
+4. The `/download-protected` response for a real sealed PDF — the suites stub
+   the HTTP download and assert the storage and database work around it.
+5. Sandbox delivery constraints: sandbox can only email recipients on the
+   sender's own domain, and its PDFs are watermarked and prefixed `[DEV]`.
+
+**Exact unblock step**
+
+1. Create the PandaDoc account (Business/Enterprise, or a trial) on a stable
+   admin user — the API key dies with the user that owns it.
+2. Build the LOR template in the PandaDoc editor with roles `Homeowner1` and
+   `Homeowner2` (role names cannot contain underscores), the tokens listed
+   above, and signature/date/initials fields per role, both roles at the same
+   signing order so spouses sign in parallel. Copy the UUID from the template
+   URL. Build the one-signer variant too, or make `Homeowner2` optional.
+3. Generate the **Sandbox** API key in the Developer Dashboard.
+4. Create a webhook subscription pointing at
+   `https://<tunnel-or-domain>/api/pandadoc/webhook` with triggers
+   `document_state_changed`, `recipient_completed`,
+   `document_completed_pdf_ready`, `document_creation_failed`; copy the shared
+   key. For local testing, run a `cloudflared`/`ngrok` tunnel and keep a
+   separate subscription per environment.
+5. Fill the four variables in `.env.local` (and in Vercel at launch — all four
+   are server-only and must never be `NEXT_PUBLIC_*`).
+6. Before launch, a sales conversation for a **production** key; billing is per
+   document created, i.e. roughly one billed document per claim.
+
+**How to tell it worked**
+
+`esignCapabilities()` (exported from `src/lib/esign`) flips to
+`{ mode: "pandadoc", ready: true, webhookConfigured: true, blocker: null }`,
+and the admin UI can render the electronic send controls instead of the manual
+ones.

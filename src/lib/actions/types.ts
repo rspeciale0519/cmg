@@ -23,6 +23,20 @@ export type InviteIssueState = FormState & {
 
 export const idleInviteIssueState: InviteIssueState = { status: "idle" };
 
+/**
+ * A freshly minted signed URL, returned to the caller rather than redirected
+ * to: the browser has to open it in a new tab so the admin page the staff
+ * member is working in stays where it is. Here for the same reason
+ * `InviteIssueState` is.
+ */
+export type DownloadState = FormState & {
+  /** 5-minute signed URL with attachment disposition. Never logged, never stored. */
+  url?: string;
+  filename?: string;
+};
+
+export const idleDownloadState: DownloadState = { status: "idle" };
+
 /** TOTP enrolment state, here for the same reason `InviteIssueState` is. */
 export type EnrollmentState = {
   status: "idle" | "ready" | "error";
