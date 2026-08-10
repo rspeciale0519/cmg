@@ -8,14 +8,18 @@ import { submitIntake } from "@/lib/actions/intake";
 import { idleState } from "@/lib/actions/types";
 import { emailHref, site, telHref } from "@/lib/site";
 import { FILE_ACCEPT_ATTRIBUTE } from "@/lib/validators/files";
+/* Not `@/lib/validators/intake` — that module builds the zod schema, and a
+   client component importing from it ships zod to the browser.
+   `intake-options` holds the same tables with no zod in its import graph. */
 import {
   ADJUSTER_OPTIONS,
   CARRIER_TENURE_OPTIONS,
   CAUSE_OPTIONS,
   INTAKE_CONSENT_TEXT,
   PRIOR_OUTCOME_OPTIONS,
-} from "@/lib/validators/intake";
-import { US_STATES } from "@/lib/validators/shared";
+  US_STATES,
+  YES_NO_OPTIONS,
+} from "@/lib/validators/intake-options";
 import {
   CheckboxField,
   FileField,
@@ -31,11 +35,6 @@ import {
   SuccessPanel,
 } from "./form-feedback";
 import { TurnstileWidget } from "./turnstile";
-
-const YES_NO = [
-  { value: "no", label: "No" },
-  { value: "yes", label: "Yes" },
-] as const;
 
 const STATE_OPTIONS = US_STATES.map((name) => ({ value: name, label: name }));
 
@@ -161,7 +160,7 @@ export function IntakeForm() {
             name="hasSecondPolicyholder"
             label="Is there a second person on the insurance policy?"
             required
-            options={YES_NO}
+            options={YES_NO_OPTIONS}
             value={hasSecond}
             onValueChange={setHasSecond}
             error={errors.hasSecondPolicyholder}
@@ -199,7 +198,7 @@ export function IntakeForm() {
             name="priorRoofClaim"
             label="Have you ever filed a claim for the roof at this property?"
             required
-            options={YES_NO}
+            options={YES_NO_OPTIONS}
             value={priorClaim}
             onValueChange={setPriorClaim}
             error={errors.priorRoofClaim}

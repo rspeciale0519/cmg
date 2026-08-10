@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IntakeForm } from "@/components/forms/intake-form";
+import { PageGlow } from "@/components/marketing/page-glow";
 import { Section } from "@/components/ui/section";
 import { SectionKicker } from "@/components/ui/section-kicker";
 import { site } from "@/lib/site";
@@ -25,6 +26,8 @@ export const metadata: Metadata = {
 export default function FileAClaimPage() {
   return (
     <>
+      <PageGlow />
+
       <Section space="none" className="pt-[clamp(56px,7vw,96px)]">
         <SectionKicker label="File a claim" className="mb-[26px]" />
         <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">

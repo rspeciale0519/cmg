@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContactForm } from "@/components/forms/contact-form";
+import { PageGlow } from "@/components/marketing/page-glow";
 import { ProseLink } from "@/components/marketing/prose-link";
 import { FaqItem } from "@/components/ui/faq-item";
 import { Section } from "@/components/ui/section";
@@ -35,6 +36,8 @@ const DETAIL_BLOCK = "border-t border-ink/11 pt-5";
 export default function ContactPage() {
   return (
     <>
+      <PageGlow />
+
       <Section space="none" className="pt-[clamp(64px,8vw,112px)]">
         <SectionKicker label="Contact" className="mb-[26px]" />
         <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
