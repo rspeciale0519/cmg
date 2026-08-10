@@ -21,18 +21,74 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
+/**
+ * These replace an assertion that codified the defect — the old suite required
+ * `split(",")[0]`, which is the entry the client itself supplied. The header
+ * grows by *appending*, so the trustworthy end is the right one, and the tests
+ * below fix which end is read rather than relaxing what is checked.
+ */
 describe("clientIpFromHeaders", () => {
-  it("takes the first entry of x-forwarded-for", () => {
-    const headers = new Headers({
-      "x-forwarded-for": "203.0.113.9, 70.41.3.18, 150.172.238.178",
-    });
-    expect(clientIpFromHeaders(headers)).toBe("203.0.113.9");
+  const xff = (value: string) => new Headers({ "x-forwarded-for": value });
+
+  it("reads the hop the trusted proxy appended, not the one the client sent", () => {
+    // What a forged header looks like once one trusted proxy has appended the
+    // attacker's real address on the right.
+    const headers = xff("203.0.113.77, 10.0.0.5, 10.0.0.6, 198.51.100.22");
+    expect(clientIpFromHeaders(headers, 1)).toBe("198.51.100.22");
   });
 
-  it("falls back to x-real-ip", () => {
+  it("counts in further when more proxies are trusted", () => {
+    const headers = xff("203.0.113.9, 70.41.3.18, 150.172.238.178");
+    expect(clientIpFromHeaders(headers, 1)).toBe("150.172.238.178");
+    expect(clientIpFromHeaders(headers, 2)).toBe("70.41.3.18");
+    expect(clientIpFromHeaders(headers, 3)).toBe("203.0.113.9");
+  });
+
+  it("gives the same address whatever a client prepends, so the bucket is stable", () => {
+    const first = clientIpFromHeaders(xff("1.2.3.4, 198.51.100.22"), 1);
+    const second = clientIpFromHeaders(xff("5.6.7.8, 9.9.9.9, 198.51.100.22"), 1);
+    expect(first).toBe(second);
+  });
+
+  it("uses the only entry a single-proxy chain produces", () => {
+    expect(clientIpFromHeaders(xff("198.51.100.7"), 1)).toBe("198.51.100.7");
+  });
+
+  it("takes what it can when the chain is shorter than the configuration", () => {
+    expect(clientIpFromHeaders(xff("198.51.100.7"), 3)).toBe("198.51.100.7");
+  });
+
+  it("steps left past an entry that is not an address", () => {
+    expect(clientIpFromHeaders(xff("203.0.113.9, 198.51.100.7, unknown"), 1)).toBe(
+      "198.51.100.7",
+    );
+  });
+
+  it("strips a port and unwraps an IPv4-mapped address", () => {
+    expect(clientIpFromHeaders(xff("198.51.100.7:41234"), 1)).toBe("198.51.100.7");
+    expect(clientIpFromHeaders(xff("[2001:db8::1]:443"), 1)).toBe("2001:db8::1");
+    expect(clientIpFromHeaders(xff("::ffff:198.51.100.7"), 1)).toBe("198.51.100.7");
+  });
+
+  it("refuses a value that is not an address, so the key space stays bounded", () => {
+    expect(clientIpFromHeaders(xff("not-an-ip"), 1)).toBe(UNKNOWN_IP);
+    expect(clientIpFromHeaders(xff("999.1.1.1"), 1)).toBe(UNKNOWN_IP);
+    expect(clientIpFromHeaders(xff("x".repeat(200)), 1)).toBe(UNKNOWN_IP);
+  });
+
+  it("falls back to x-real-ip only when the trusted chain wrote nothing", () => {
     expect(clientIpFromHeaders(new Headers({ "x-real-ip": "198.51.100.7" }))).toBe(
       "198.51.100.7",
     );
+    expect(
+      clientIpFromHeaders(
+        new Headers({
+          "x-forwarded-for": "203.0.113.77, 198.51.100.22",
+          "x-real-ip": "203.0.113.99",
+        }),
+        1,
+      ),
+    ).toBe("198.51.100.22");
   });
 
   it("returns the unknown bucket rather than nothing when no header is present", () => {

@@ -887,6 +887,30 @@ export type Database = {
         Args: { p_loss_date: string }
         Returns: undefined
       }
+      change_staff_privileges: {
+        Args: {
+          p_active?: boolean
+          p_role?: Database["public"]["Enums"]["app_role"]
+          p_target: string
+        }
+        Returns: {
+          created_at: string
+          first_name: string | null
+          id: string
+          is_active: boolean
+          last_name: string | null
+          partner_company_id: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       check_rate_limit: {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean

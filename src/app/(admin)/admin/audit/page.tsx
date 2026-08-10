@@ -139,13 +139,22 @@ export default async function AuditPage({
  * recedes, while the event is what the reader is scanning for and carries the
  * weight. That is a fact the data already encodes — `claims.update` really is a
  * subject and a verb — rather than a decoration applied to it.
+ *
+ * Three columns from `lg` up, and the third one is the density fix. Stacked,
+ * every row spent a whole line on "who", and since the actor is two short
+ * words the line ended at x=749 in a 1345px panel — 47% of the surface empty
+ * on all forty rows, at an average row height of 98px, on the one screen in
+ * the workspace whose job is to be scanned. Who acted is a *different question*
+ * from what happened, so it belongs beside it rather than under it, and the
+ * `meta` — the `field: old → new` detail that is the actual reason §7.7 exists
+ * — keeps the full centre measure it needs to stay readable.
  */
 function AuditRow({ entry }: { entry: AuditEntry }) {
   const { family } = splitAction(entry.action);
   const href = subjectHref(entry);
 
   return (
-    <li className="grid gap-x-5 gap-y-[6px] px-[clamp(14px,1.6vw,20px)] py-[13px] transition-colors duration-150 hover:bg-ink/[0.03] md:grid-cols-[112px_minmax(0,1fr)]">
+    <li className="grid gap-x-5 gap-y-[5px] px-[clamp(14px,1.6vw,20px)] py-[10px] transition-colors duration-150 hover:bg-ink/[0.03] md:grid-cols-[104px_minmax(0,1fr)] lg:grid-cols-[104px_minmax(0,1fr)_minmax(0,232px)]">
       <div className="flex items-baseline gap-x-2 md:block">
         <time
           dateTime={entry.createdAt}
@@ -153,7 +162,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         >
           {clockTime(entry.createdAt)}
         </time>
-        <span className="block text-[11.5px] leading-[1.5] tabular-nums text-ink/38">
+        <span className="block text-[11.5px] leading-[1.45] tabular-nums text-ink/38">
           {dayStamp(entry.createdAt)}
         </span>
       </div>
@@ -174,31 +183,36 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           ) : null}
         </p>
 
-        <p className="mt-[2px] flex flex-wrap items-baseline gap-x-2 text-[12.5px] leading-[1.5]">
-          {entry.actorName ? (
-            <>
-              <span className="text-ink/62">{entry.actorName}</span>
-              <span className="text-[11px] uppercase tracking-[0.13em] text-ink/30">
-                {entry.actorRole}
-              </span>
-            </>
-          ) : entry.actorId ? (
-            /* An id with no profile. `audit_log` holds no foreign key precisely
-               so that deleting a person cannot rewrite history, so this is the
-               expected end state for a departed account — not an error. */
-            <span className="font-mono text-[11.5px] text-ink/38">
-              {entry.actorId}
-            </span>
-          ) : (
-            <span className="text-ink/38">System</span>
-          )}
-          {entry.ip ? (
-            <span className="tabular-nums text-[11.5px] text-ink/28">{entry.ip}</span>
-          ) : null}
-        </p>
-
         <AuditMeta meta={entry.meta} />
       </div>
+
+      {/* Under `lg` this column folds back to the bottom of the entry, so the
+          narrow reading is "what happened, what changed, who did it". The
+          actor is the attribution on the end of a statement rather than a
+          heading over it, which is also how the wide row reads once the
+          right-hand column carries it. */}
+      <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[12.5px] leading-[1.5] lg:justify-end lg:text-right">
+        {entry.actorName ? (
+          <>
+            <span className="truncate text-ink/62">{entry.actorName}</span>
+            <span className="text-[11px] uppercase tracking-[0.13em] text-ink/30">
+              {entry.actorRole}
+            </span>
+          </>
+        ) : entry.actorId ? (
+          /* An id with no profile. `audit_log` holds no foreign key precisely
+             so that deleting a person cannot rewrite history, so this is the
+             expected end state for a departed account — not an error. */
+          <span className="truncate font-mono text-[11.5px] text-ink/38">
+            {entry.actorId}
+          </span>
+        ) : (
+          <span className="text-ink/38">System</span>
+        )}
+        {entry.ip ? (
+          <span className="tabular-nums text-[11.5px] text-ink/28">{entry.ip}</span>
+        ) : null}
+      </p>
     </li>
   );
 }

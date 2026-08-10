@@ -133,7 +133,24 @@ export function PageHeader({
   );
 }
 
-/** A titled region inside a page. Hairline top rule, never a box. */
+/**
+ * A titled region inside a page. Hairline top rule, never a box.
+ *
+ * `min-w-0` is load-bearing, not tidiness. A `Panel` is almost always a grid
+ * item, and a grid item's default `min-width: auto` resolves to its content's
+ * min-content width — which, for a panel containing a `DataTable`, is the
+ * table's 860px floor. The item then refused to be narrower than 860px no
+ * matter what track it sat in: on `/admin` at 390 the chain measured
+ * `main` 390 → grid 358 → `section` 862, so the scroll container inside was
+ * itself 860 wide and never scrolled, and `body { overflow-x: clip }` stopped
+ * the viewport from making up the difference. 488px of the dashboard — the
+ * Status and Updated columns, the "All claims" link, both "Send invite"
+ * buttons — was rendered, painted, and unreachable by any gesture.
+ *
+ * The same cause was visible at 1440 as a 56px kink in the vertical spine:
+ * two rows declaring the identical `lg:grid-cols-[3fr_2fr]` resolved to
+ * 806/538 and 862/482, because only one of them held a table.
+ */
 export function Panel({
   title,
   meta,
@@ -148,7 +165,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={cx("border border-ink/11 bg-surface/38", className)}>
+    <section className={cx("min-w-0 border border-ink/11 bg-surface/38", className)}>
       {title ? (
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-ink/10 px-[clamp(14px,1.6vw,20px)] py-[13px]">
           <h2 className="text-[14px] font-medium leading-[1.3] tracking-[-0.01em]">

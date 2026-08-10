@@ -4,10 +4,29 @@ import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { ClaimFilters } from "@/components/admin/claim-filters";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
+import { pageCursors } from "@/lib/admin/audit-range";
 import { loadAdjusters, loadPartnerCompanies } from "@/lib/claims/queries";
+import {
+  CLAIM_SORT_COLUMN,
+  CLAIM_TIE_BREAK,
+  CLAIMS_PAGE_SIZE,
+  columnSortState,
+  cursorFrom,
+  DEFAULT_CLAIM_SORT,
+  flipDirection,
+  formatClaimCursor,
+  keysetClause,
+  parseClaimCursor,
+  parseClaimSort,
+  sortActionLabel,
+  SORT_LABEL,
+  toggledSort,
+  type ClaimSortKey,
+} from "@/lib/claims/list";
 import { claimSearchClause, hasActiveFilters, parseClaimFilters } from "@/lib/claims/search";
 import { isClaimStatus } from "@/lib/claims/status";
 import { requireStaff } from "@/lib/authz";
+import { cx } from "@/lib/cx";
 import { formatDateOnly, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,7 +37,24 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const PAGE_SIZE = 60;
+/**
+ * The three PostgREST builder methods the filter pass uses, written as methods
+ * so the concrete builder — whose `eq` is keyed to the row's own column union —
+ * still satisfies it. The alternative is spelling the four filters out twice,
+ * once per query, which is exactly how a list and its count start disagreeing.
+ */
+type ClaimQuery<Q> = {
+  eq(column: string, value: string): Q;
+  is(column: string, value: null): Q;
+  or(filter: string): Q;
+};
+
+const SELECT = `id, claim_ref, status, loss_date, updated_at,
+   property_street, property_city, property_state, property_zip,
+   assigned_adjuster_id,
+   adjuster:profiles!claims_assigned_adjuster_id_fkey(first_name, last_name),
+   partner:partner_companies!claims_partner_company_id_fkey(name),
+   claimants(first_name, last_name, is_primary)`;
 
 export default async function ClaimsPage({
   searchParams,
@@ -39,6 +75,20 @@ export default async function ClaimsPage({
     q: first("q"),
   });
 
+  const sort = parseClaimSort(first("sort"), first("dir"));
+
+  // Forward wins if both are present: a URL carrying two cursors is hand-made,
+  // and honouring the one that means "onwards" is the harmless reading.
+  const forward = parseClaimCursor(sort.key, first("next"));
+  const backward = forward ? null : parseClaimCursor(sort.key, first("prev"));
+  const cursor = forward ?? backward;
+
+  // Paging backwards means walking the opposite way from the cursor and
+  // reversing the window, so the reader still sees the sort they asked for.
+  const reversed = backward !== null;
+  const walk = reversed ? flipDirection(sort.direction) : sort.direction;
+  const ascending = walk === "asc";
+
   const supabase = await createClient();
 
   // Claimant names are matched in their own pass. Folding them into the main
@@ -58,59 +108,127 @@ export default async function ClaimsPage({
     claimantMatches = [...new Set((data ?? []).map((row) => row.claim_id))];
   }
 
-  let query = supabase
-    .from("claims")
-    .select(
-      `id, claim_ref, status, loss_date, updated_at,
-       property_street, property_city, property_state, property_zip,
-       assigned_adjuster_id,
-       adjuster:profiles!claims_assigned_adjuster_id_fkey(first_name, last_name),
-       partner:partner_companies!claims_partner_company_id_fkey(name),
-       claimants(first_name, last_name, is_primary)`,
-      { count: "exact" },
-    )
-    .order("updated_at", { ascending: false })
-    .limit(PAGE_SIZE);
+  /**
+   * Everything the reader asked for except where they are in the list, applied
+   * to both the page query and the total-count query so the two can never
+   * disagree about what "matching" means.
+   */
+  function applyFilters<Q extends ClaimQuery<Q>>(query: Q): Q {
+    let next = query;
+    if (filters.status) next = next.eq("status", filters.status);
 
-  if (filters.status) query = query.eq("status", filters.status);
+    if (filters.adjusterId === "unassigned") {
+      next = next.is("assigned_adjuster_id", null);
+    } else if (filters.adjusterId) {
+      next = next.eq("assigned_adjuster_id", filters.adjusterId);
+    }
 
-  if (filters.adjusterId === "unassigned") {
-    query = query.is("assigned_adjuster_id", null);
-  } else if (filters.adjusterId) {
-    query = query.eq("assigned_adjuster_id", filters.adjusterId);
+    if (filters.partnerId === "none") {
+      next = next.is("partner_company_id", null);
+    } else if (filters.partnerId) {
+      next = next.eq("partner_company_id", filters.partnerId);
+    }
+
+    if (filters.search) {
+      next = next.or(claimSearchClause(filters.search, claimantMatches));
+    }
+
+    return next;
   }
 
-  if (filters.partnerId === "none") {
-    query = query.is("partner_company_id", null);
-  } else if (filters.partnerId) {
-    query = query.eq("partner_company_id", filters.partnerId);
+  let query = applyFilters(supabase.from("claims").select(SELECT))
+    .order(CLAIM_SORT_COLUMN[sort.key], { ascending })
+    .limit(CLAIMS_PAGE_SIZE + 1);
+
+  // The tie-break is what makes the cursor safe; ordering on it is what makes
+  // the cursor *match* the order. Sorting on the reference already is it.
+  if (sort.key !== "ref") {
+    query = query.order(CLAIM_TIE_BREAK, { ascending });
   }
 
-  if (filters.search) {
-    query = query.or(claimSearchClause(filters.search, claimantMatches));
+  if (cursor) {
+    query = query.or(keysetClause(sort.key, walk, cursor));
   }
 
-  const { data: claims, count, error } = await query;
+  // The total is counted without the keyset predicate. Folding it into the main
+  // query would make `count` mean "matches on this page and after it", so the
+  // header would count down as the reader paged — the opposite of what a total
+  // is for.
+  const [{ data: claims, error }, { count, error: countError }] = await Promise.all([
+    query,
+    applyFilters(
+      supabase.from("claims").select("id", { count: "exact", head: true }),
+    ),
+  ]);
 
-  if (error) {
-    console.error("[claims] list query failed", error.message);
-  }
+  if (error) console.error("[claims] list query failed", error.message);
+  if (countError) console.error("[claims] count query failed", countError.message);
 
-  const rows = claims ?? [];
+  const fetched = claims ?? [];
+  const hasMore = fetched.length > CLAIMS_PAGE_SIZE;
+  const window = fetched.slice(0, CLAIMS_PAGE_SIZE);
+  const rows = reversed ? [...window].reverse() : window;
+  const total = count ?? rows.length;
+
+  const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
+    ids: rows.map((claim) => formatClaimCursor(cursorFrom(sort.key, claim))),
+    hasMore,
+    ascending: reversed,
+    cameFromCursor: cursor !== null,
+  });
+
   const [adjusters, partners] = await Promise.all([
     loadAdjusters(),
     loadPartnerCompanies(),
   ]);
+
+  /** Rebuilt from the parsed filters, so a junk parameter never survives a click. */
+  function href(extra?: Record<string, string>): string {
+    const params = new URLSearchParams();
+    if (filters.status) params.set("status", filters.status);
+    if (filters.adjusterId) params.set("adjuster", filters.adjusterId);
+    if (filters.partnerId) params.set("partner", filters.partnerId);
+    if (filters.search) params.set("q", filters.search);
+    for (const [key, value] of Object.entries(extra ?? {})) params.set(key, value);
+    const query = params.toString();
+    return query ? `/admin/claims?${query}` : "/admin/claims";
+  }
+
+  function pageHref(cursorParam: "next" | "prev", value: string): string {
+    const carried: Record<string, string> =
+      sort.key === DEFAULT_CLAIM_SORT.key && sort.direction === DEFAULT_CLAIM_SORT.direction
+        ? {}
+        : { sort: sort.key, dir: sort.direction };
+    return href({ ...carried, [cursorParam]: value });
+  }
+
+  function sortFor(column: ClaimSortKey) {
+    const next = toggledSort(sort, column);
+    const isDefault =
+      next.key === DEFAULT_CLAIM_SORT.key &&
+      next.direction === DEFAULT_CLAIM_SORT.direction;
+
+    return {
+      // The cursor is deliberately not carried: a position in one ordering
+      // means nothing in another, and reusing it would open page 4 of a list
+      // the reader has never seen page 1 of.
+      href: isDefault ? href() : href({ sort: next.key, dir: next.direction }),
+      state: columnSortState(sort, column),
+      label: sortActionLabel(sort, column),
+    } as const;
+  }
 
   const scope =
     session.role === "adjuster"
       ? "The claims assigned to you. Reassignment moves a file off this list."
       : "Every claim in the business. Filter by stage, by adjuster, or by the contractor who referred it.";
 
+  const paged = cursor !== null;
+
   return (
     <>
       <PageHeader
-        eyebrow={`${count ?? rows.length} total`}
+        eyebrow={`${total} total`}
         title="Claims."
         lede={scope}
       />
@@ -118,7 +236,7 @@ export default async function ClaimsPage({
       <ClaimFilters
         adjusters={adjusters}
         partners={partners}
-        resultCount={count ?? rows.length}
+        resultCount={total}
       />
 
       <Panel>
@@ -127,6 +245,12 @@ export default async function ClaimsPage({
             <EmptyState headline="Nothing matches those filters.">
               Try a shorter search, or clear the filters to see the whole list.
             </EmptyState>
+          ) : paged ? (
+            <EmptyState headline="You have reached the end of the list.">
+              <Link href={href()} className="text-accent no-underline hover:text-accent-300">
+                Back to the start
+              </Link>
+            </EmptyState>
           ) : (
             <EmptyState headline="No claims yet.">
               Accept an intake and it appears here with its reference and adjuster.
@@ -134,18 +258,23 @@ export default async function ClaimsPage({
           )
         ) : (
           <DataTable
-            caption="Claims"
+            caption={`Claims, sorted by ${SORT_LABEL[sort.key]}`}
+            minWidth={1040}
             head={
               <>
-                <Th className="w-[132px]">Reference</Th>
+                <Th className="w-[132px]" sort={sortFor("ref")}>
+                  Reference
+                </Th>
                 <Th>Homeowner &amp; property</Th>
-                <Th className="w-[150px]">Status</Th>
+                <Th className="w-[150px]" sort={sortFor("status")}>
+                  Status
+                </Th>
                 <Th className="w-[128px]">Adjuster</Th>
                 <Th className="w-[140px]">Referred by</Th>
-                <Th className="w-[104px]" align="right">
+                <Th className="w-[116px]" sort={sortFor("loss")}>
                   Loss date
                 </Th>
-                <Th className="w-[92px]" align="right">
+                <Th className="w-[116px]" sort={sortFor("updated")}>
                   Updated
                 </Th>
               </>
@@ -173,7 +302,7 @@ export default async function ClaimsPage({
                       <ClaimRef value={claim.claim_ref} />
                     </Link>
                   </Td>
-                  <Td className="max-w-0">
+                  <Td>
                     <span className="block truncate">
                       {primary
                         ? `${primary.first_name} ${primary.last_name}`.trim()
@@ -189,22 +318,22 @@ export default async function ClaimsPage({
                       <StatusPill status={claim.status} />
                     ) : null}
                   </Td>
-                  <Td className="text-ink/62">
+                  <Td className="truncate text-ink/62">
                     {adjusterName || (
                       <span className="text-accent/70">Unassigned</span>
                     )}
                   </Td>
-                  <Td className="max-w-0 text-ink/62">
+                  <Td className="text-ink/62">
                     <span className="block truncate">
                       {claim.partner?.name ?? (
                         <span className="text-ink/32">Direct</span>
                       )}
                     </span>
                   </Td>
-                  <Td align="right" className="tabular-nums text-ink/62">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/62">
                     {formatDateOnly(claim.loss_date)}
                   </Td>
-                  <Td align="right" className="tabular-nums text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
                     {formatRelative(claim.updated_at)}
                   </Td>
                 </Tr>
@@ -214,12 +343,102 @@ export default async function ClaimsPage({
         )}
       </Panel>
 
-      {(count ?? 0) > rows.length ? (
-        <p className="mt-3 text-[12px] leading-[1.5] text-ink/42">
-          Showing the {rows.length} most recently updated of {count}. Narrow the
-          filters to reach the rest.
-        </p>
+      {rows.length > 0 ? (
+        <ClaimsPager
+          shown={rows.length}
+          total={total}
+          sortLabel={SORT_LABEL[sort.key]}
+          prevHref={prevCursor ? pageHref("prev", prevCursor) : null}
+          nextHref={nextCursor ? pageHref("next", nextCursor) : null}
+          startHref={paged ? href() : null}
+        />
       ) : null}
     </>
+  );
+}
+
+/**
+ * Says how much of the list is on screen before it offers to move. The old
+ * screen showed sixty rows under a header that counted every claim in the
+ * business, with nothing in between to say the two numbers were different —
+ * so past sixty claims the page quietly stopped being a list of claims and
+ * never mentioned it.
+ */
+function ClaimsPager({
+  shown,
+  total,
+  sortLabel,
+  prevHref,
+  nextHref,
+  startHref,
+}: {
+  shown: number;
+  total: number;
+  sortLabel: string;
+  prevHref: string | null;
+  nextHref: string | null;
+  startHref: string | null;
+}) {
+  const complete = shown >= total && !prevHref && !nextHref;
+
+  return (
+    <nav
+      aria-label="Claims pages"
+      className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pt-[clamp(14px,1.6vw,20px)]"
+    >
+      <p className="text-[12px] leading-[1.5] text-ink/45">
+        {complete ? (
+          <>
+            All <span className="tabular-nums">{total}</span>{" "}
+            {total === 1 ? "claim" : "claims"}, by {sortLabel}
+          </>
+        ) : (
+          <>
+            Showing <span className="tabular-nums">{shown}</span> of{" "}
+            <span className="tabular-nums">{total}</span>, by {sortLabel}
+            {startHref ? (
+              <>
+                {" · "}
+                <Link
+                  href={startHref}
+                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+                >
+                  Back to the start
+                </Link>
+              </>
+            ) : null}
+          </>
+        )}
+      </p>
+
+      {prevHref || nextHref ? (
+        <span className="flex items-center gap-2">
+          <PageLink href={prevHref}>← Previous</PageLink>
+          <PageLink href={nextHref}>Next →</PageLink>
+        </span>
+      ) : null}
+    </nav>
+  );
+}
+
+function PageLink({ href, children }: { href: string | null; children: React.ReactNode }) {
+  if (!href) {
+    return (
+      <span aria-hidden="true" className="px-3 text-[12.5px] leading-[1.4] text-ink/20">
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cx(
+        "min-h-[34px] rounded-md border border-ink/16 px-3 py-[7px] text-[12.5px] leading-[1.4] text-ink/78 no-underline",
+        "transition-colors duration-150 hover:border-ink/32 hover:text-ink",
+      )}
+    >
+      {children}
+    </Link>
   );
 }

@@ -1,5 +1,6 @@
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { StatusPill } from "@/components/admin/status-pill";
+import { actionLabel } from "@/lib/admin/audit-vocabulary";
 import { loadClaimContext } from "@/lib/claims/queries";
 import { isClaimStatus } from "@/lib/claims/status";
 import { formatTimestamp } from "@/lib/format";
@@ -7,25 +8,18 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const ACTION_LABEL: Record<string, string> = {
-  "claims.update": "Claim changed",
-  "claims.insert": "Claim created",
-  "documents.insert": "Document added",
-  "documents.update": "Document changed",
-  "documents.delete": "Document removed",
-  "claim_status_history.insert": "Status recorded",
-  "claim_financials.insert": "Figures recorded",
-  "claim_financials.update": "Figures changed",
-  "claimants.insert": "Claimant added",
-  "claimants.update": "Claimant changed",
-  "consents.insert": "Consent captured",
-  "consents.update": "Consent changed",
-  "document.signed_url_issued": "Download link issued",
-  "claim.intake_accepted": "Intake accepted",
-  "claim.intake_rejected": "Intake declined",
-  "invite.issued": "Invitation sent",
-  "invite.accepted": "Invitation accepted",
-};
+/*
+ * Action wording comes from `audit-vocabulary.ts` and from nowhere else.
+ *
+ * This file used to keep a private 17-entry map of its own against that
+ * module's 56, so 39 codes fell through to the raw string and the same event
+ * was named two different things on two screens: `/admin/audit` printed
+ * "E-sign state changed" where this panel printed `esign.state_changed`. The
+ * gap was not random — it was the whole LOR path plus every `staff.*` and
+ * `partner_company.*` action, which is to say the codes added after this map
+ * was written. A second copy of a vocabulary does not drift evenly; it drifts
+ * exactly where the product has grown.
+ */
 
 export default async function HistoryPage({
   params,
@@ -119,7 +113,7 @@ export default async function HistoryPage({
                 <li key={entry.id} className="px-[clamp(14px,1.6vw,20px)] py-[11px]">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <p className="text-[12.5px] leading-[1.45] text-ink/78">
-                      {ACTION_LABEL[entry.action] ?? entry.action}
+                      {actionLabel(entry.action)}
                     </p>
                     <time
                       dateTime={entry.created_at}

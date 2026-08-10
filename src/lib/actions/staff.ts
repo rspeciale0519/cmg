@@ -50,6 +50,9 @@ const NOT_FOUND = "That account is not available, or it no longer exists.";
 const REFUSED_BY_DB =
   "The database refused that change. Roles and access are changed by an active owner only.";
 
+/** `change_staff_privileges` raising because the result would strand the workspace. */
+const LAST_OWNER_SQLSTATE = "CMG01";
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function revalidateStaff() {
@@ -130,6 +133,49 @@ function guardOrNull(
     : null;
 }
 
+/**
+ * Every privilege write goes through `public.change_staff_privileges`, which
+ * re-checks "at least one active owner survives" against the *result* of the
+ * update, in the same transaction, with the owner rows locked.
+ *
+ * `strandsWorkspace` above still runs first and is still worth having: it
+ * produces the sentence that explains the rule before anything is attempted,
+ * and it is what disables the controls on the screen. What it cannot do is
+ * hold under concurrency — it reads the roster in one round trip and writes in
+ * another, so two owners demoting each other simultaneously both saw a
+ * surviving owner and both committed, leaving none. Reading and writing in one
+ * statement is the only place that race can be closed; see the migration for
+ * why it is a function and not a trigger.
+ */
+async function applyPrivilegeChange(
+  targetId: string,
+  change: { role?: AppRole; active?: boolean },
+): Promise<FormState | null> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("change_staff_privileges", {
+    p_target: targetId,
+    p_role: change.role ?? undefined,
+    p_active: change.active ?? undefined,
+  });
+
+  if (!error) return null;
+
+  if (error.code === LAST_OWNER_SQLSTATE) {
+    return { status: "error", message: LAST_OWNER_REFUSAL };
+  }
+
+  // 42501 is either `guard_profile_privileges()` refusing or
+  // `profiles_update_owner` returning no row — both of which reach here only
+  // if this action's own owner check and the database's disagree, which is
+  // exactly the case the trigger's `and p.is_active` was added for.
+  if (error.code === "42501") {
+    return { status: "error", message: REFUSED_BY_DB };
+  }
+
+  console.error("[staff] privilege change failed", error.message);
+  return { status: "error", message: GENERIC_ERROR };
+}
+
 export async function changeStaffRole(
   _previous: FormState,
   formData: FormData,
@@ -155,25 +201,8 @@ export async function changeStaffRole(
   const blocked = guardOrNull(roster, { targetId: target.id, nextRole: requested });
   if (blocked) return blocked;
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ role: requested })
-    .eq("id", target.id)
-    .select("id");
-
-  // 42501 is `guard_profile_privileges()` refusing. It reaches here only if this
-  // action's own owner check and the trigger's disagree — which would mean the
-  // caller was deactivated between the two, exactly the case the trigger's
-  // `and p.is_active` was added for.
-  if (error) {
-    if (error.code === "42501") return { status: "error", message: REFUSED_BY_DB };
-    console.error("[staff] role change failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
-  }
-
-  // Zero rows is `profiles_update_owner` declining rather than an error.
-  if ((data?.length ?? 0) === 0) return { status: "error", message: REFUSED_BY_DB };
+  const refused = await applyPrivilegeChange(target.id, { role: requested });
+  if (refused) return refused;
 
   await auditStaff(session.userId, "staff.role_changed", target.id, {
     from: target.role,
@@ -210,20 +239,8 @@ export async function setStaffActive(
   const blocked = guardOrNull(roster, { targetId: target.id, nextActive: requested });
   if (blocked) return blocked;
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ is_active: requested })
-    .eq("id", target.id)
-    .select("id");
-
-  if (error) {
-    if (error.code === "42501") return { status: "error", message: REFUSED_BY_DB };
-    console.error("[staff] activation change failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
-  }
-
-  if ((data?.length ?? 0) === 0) return { status: "error", message: REFUSED_BY_DB };
+  const refused = await applyPrivilegeChange(target.id, { active: requested });
+  if (refused) return refused;
 
   await auditStaff(session.userId, requested ? "staff.reactivated" : "staff.deactivated", target.id, {
     role: target.role,

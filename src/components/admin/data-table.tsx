@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cx } from "@/lib/cx";
 
@@ -8,21 +9,41 @@ import { cx } from "@/lib/cx";
  * that away in several browsers, so the table stays a table and the widths are
  * `table-fixed` plus explicit column classes.
  *
+ * `table-fixed` is stated on the element rather than merely described in this
+ * comment. It was described here and never applied, so the resolved
+ * `table-layout` was `auto` and the `w-[132px]` on a header was a suggestion
+ * the content could outvote — the Reference column measured 133.4px with the
+ * webfont pending and 145px after it loaded, which moved every column to its
+ * right on font swap. With `fixed`, the first row's declared widths are the
+ * whole answer and the layout is decided before a glyph is measured.
+ *
  * The horizontal scroll lives on the wrapper rather than the page: a claims
- * table that pushes the whole document sideways takes the nav with it.
+ * table that pushes the whole document sideways takes the nav with it. See
+ * `scroll-x-edged` in `globals.css` for why the wrapper is not a bare
+ * `overflow-x-auto`.
+ *
+ * `minWidth` is the floor the columns are designed against, and it is a prop
+ * because the tables differ: four percentage columns work at any width, while
+ * the seven-column claims list has 746px of fixed columns before its one
+ * flexible column gets anything at all.
  */
 export function DataTable({
   head,
   children,
   caption,
+  minWidth = 860,
 }: {
   head: ReactNode;
   children: ReactNode;
   caption?: string;
+  minWidth?: number;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[860px] border-collapse text-left">
+    <div className="scroll-x-edged">
+      <table
+        style={{ minWidth: `${minWidth}px` }}
+        className="w-full table-fixed border-collapse text-left"
+      >
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr className="border-b border-ink/10">{head}</tr>
@@ -33,26 +54,88 @@ export function DataTable({
   );
 }
 
+/**
+ * A column that can be ordered on. `state` is this column's *current*
+ * participation in the sort, and `href` is the link that changes it — the
+ * server decides the next direction, so the header never has to hold a second
+ * copy of the toggle rule.
+ */
+export type ColumnSort = {
+  href: string;
+  state: "none" | "asc" | "desc";
+  /** Announced on the link, e.g. "Sort by loss date, oldest first". */
+  label: string;
+};
+
+const ARIA_SORT = {
+  none: "none",
+  asc: "ascending",
+  desc: "descending",
+} as const;
+
 export function Th({
   children,
   className,
   align = "left",
+  sort,
 }: {
   children: ReactNode;
   className?: string;
   align?: "left" | "right";
+  sort?: ColumnSort;
 }) {
   return (
     <th
       scope="col"
+      aria-sort={sort ? ARIA_SORT[sort.state] : undefined}
       className={cx(
         "px-[clamp(10px,1.1vw,14px)] py-[9px] text-[11px] font-medium uppercase leading-[1.4] tracking-[0.13em] text-ink/40",
         align === "right" ? "text-right" : "text-left",
         className,
       )}
     >
-      {children}
+      {sort ? (
+        <Link
+          href={sort.href}
+          aria-label={sort.label}
+          scroll={false}
+          className={cx(
+            "group inline-flex items-center gap-[5px] text-inherit no-underline",
+            "transition-colors duration-150 hover:text-ink/72",
+            align === "right" && "flex-row-reverse",
+            sort.state !== "none" && "text-ink/72",
+          )}
+        >
+          {children}
+          <SortGlyph state={sort.state} />
+        </Link>
+      ) : (
+        children
+      )}
     </th>
+  );
+}
+
+/**
+ * The sorted column shows a solid caret; the others show the same caret at a
+ * whisper, brightening on hover and on keyboard focus. A header row where only
+ * one column is visibly clickable teaches that the others are not.
+ */
+function SortGlyph({ state }: { state: ColumnSort["state"] }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 10 10"
+      className={cx(
+        "size-[9px] shrink-0 transition-[opacity,rotate] duration-150",
+        state === "none"
+          ? "opacity-0 group-hover:opacity-45 group-focus-visible:opacity-45"
+          : "text-accent opacity-100",
+        state === "asc" && "rotate-180",
+      )}
+    >
+      <path d="M5 8L1 3h8z" fill="currentColor" />
+    </svg>
   );
 }
 
@@ -61,6 +144,14 @@ export function Th({
  * striping on a dark surface at this density reads as two different kinds of
  * row; the hover fill says "this one" without implying anything about the
  * others.
+ *
+ * The fill is `ink/8.5`, and the number is the point. At `ink/4.5` the hovered
+ * row was 1.12:1 against the panel while the hairline that merely separates
+ * two rows was 1.25:1 — so the incidental rule was louder than the deliberate
+ * pointer, and on a 13" screen the hover simply did not register. `8.5%` puts
+ * the fill at 1.27:1, just past the rule it has to out-argue. The rule stays
+ * visible inside a hovered row because the border composites over the fill
+ * rather than replacing it.
  */
 export function Tr({
   children,
@@ -72,11 +163,11 @@ export function Tr({
   return (
     <tr
       className={cx(
-        "border-b border-ink/8 transition-colors duration-150 last:border-b-0 hover:bg-ink/[0.045]",
+        "border-b border-ink/8 transition-colors duration-150 last:border-b-0 hover:bg-ink/[0.085]",
         // `focus-within` matters as much as hover: the row link is what a
         // keyboard lands on, and without this the only feedback is the link's
         // own focus ring floating in an unmarked row.
-        "focus-within:bg-ink/[0.045]",
+        "focus-within:bg-ink/[0.085]",
         className,
       )}
     >
@@ -85,6 +176,16 @@ export function Tr({
   );
 }
 
+/**
+ * `align` is for *quantities* — a column of counts or money is read by
+ * comparing magnitudes, and that needs a common right edge. Dates are not
+ * quantities: these cells render words ("3d ago", "Aug 10, 2026", "Never"), and
+ * right-aligning strings of unequal length just leaves a ragged left edge for
+ * the eye to hunt along. Dates are therefore left-aligned everywhere in this
+ * workspace, with `tabular-nums` so the digits inside them still line up. The
+ * two claims tables used to right-align theirs and the three partner/staff
+ * tables did not; this is the convention they were reconciled to.
+ */
 export function Td({
   children,
   className,

@@ -125,6 +125,15 @@ export default async function LeadsPage({
                       </time>
                     </div>
 
+                    {/* `min-w-0` on the address, and wrapping rather than
+                        truncation. These are flex items, so their default
+                        `min-width: auto` is their whole content width: an
+                        address longer than the column pushed the row wider than
+                        the phone could show instead of wrapping, and the tail
+                        of it was clipped by `body { overflow-x: clip }`. Half an
+                        email address is worse than none — it looks like an
+                        address and cannot be used as one — so it breaks across
+                        lines instead. */}
                     <p className="mt-[5px] flex flex-wrap gap-x-4 text-[12.5px] leading-[1.5] text-ink/58">
                       <a
                         href={`tel:${lead.phone.replace(/[^\d+]/g, "")}`}
@@ -135,7 +144,7 @@ export default async function LeadsPage({
                       {lead.email ? (
                         <a
                           href={`mailto:${lead.email}`}
-                          className="text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                          className="min-w-0 [overflow-wrap:anywhere] text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                         >
                           {lead.email}
                         </a>

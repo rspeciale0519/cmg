@@ -41,6 +41,13 @@ export function ClaimFilters({
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
     else next.delete(key);
+    // A page cursor is a position in one particular result set. Narrowing the
+    // filters produces a different one, and carrying the cursor across would
+    // open somewhere in the middle of a list the reader has not seen the start
+    // of — or, more often, on nothing at all. The sort is kept: that is a
+    // preference about how to read, not a place in the reading.
+    next.delete("next");
+    next.delete("prev");
     const query = next.toString();
     return query ? `${pathname}?${query}` : pathname;
   }
@@ -69,6 +76,13 @@ export function ClaimFilters({
 
   const active =
     params.get("status") || params.get("adjuster") || params.get("partner") || term;
+
+  // Clearing the filters clears the filters. The chosen ordering is a way of
+  // reading the list rather than a restriction on it, so it survives.
+  const cleared = new URLSearchParams();
+  if (params.get("sort")) cleared.set("sort", params.get("sort") as string);
+  if (params.get("dir")) cleared.set("dir", params.get("dir") as string);
+  const clearHref = cleared.toString() ? `${pathname}?${cleared}` : pathname;
 
   return (
     <div className="flex flex-wrap items-end gap-3 pb-[clamp(14px,1.6vw,20px)]">
@@ -182,7 +196,7 @@ export function ClaimFilters({
           <>
             {" · "}
             <Link
-              href={pathname}
+              href={clearHref}
               className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
             >
               Clear

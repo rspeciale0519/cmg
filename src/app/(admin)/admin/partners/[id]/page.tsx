@@ -18,8 +18,30 @@ import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { loadPartnerDetail } from "@/lib/admin/partners";
 import { requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The tab title only, resolved without throwing — see the same note on
+ * `claims/[id]/layout.tsx`. `loadPartnerDetail` calls `notFound()` for a
+ * missing id, which is correct for the page and wrong for metadata: it
+ * abandoned title resolution and left the tab blank, so one 404 produced three
+ * different titles across the workspace. The page below still refuses; this
+ * only decides what the tab says while it does.
+ */
+async function companyNameForTitle(id: string): Promise<string | null> {
+  if (!UUID.test(id)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("partner_companies")
+    .select("name")
+    .eq("id", id)
+    .maybeSingle();
+  return data?.name ?? null;
+}
 
 export async function generateMetadata({
   params,
@@ -28,9 +50,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   await requireRole("owner");
   const { id } = await params;
-  const { company } = await loadPartnerDetail(id);
 
-  return { title: company.name, robots: { index: false, follow: false } };
+  return {
+    title: (await companyNameForTitle(id)) ?? "Page not found",
+    robots: { index: false, follow: false },
+  };
 }
 
 /**
@@ -128,13 +152,13 @@ export default async function PartnerDetailPage({
             >
               {reps.map((rep) => (
                 <Tr key={rep.id}>
-                  <Td className="max-w-0">
+                  <Td>
                     <span className="block truncate font-medium text-ink">
                       {rep.name}
                     </span>
                     {rep.isActive ? null : <CellMeta>Deactivated</CellMeta>}
                   </Td>
-                  <Td className="max-w-0">
+                  <Td>
                     {rep.email ? (
                       <a
                         href={`mailto:${rep.email}`}
@@ -147,7 +171,7 @@ export default async function PartnerDetailPage({
                     )}
                   </Td>
                   <Td className="tabular-nums">{rep.phone ?? "—"}</Td>
-                  <Td className="whitespace-nowrap text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
                     {rep.lastSignInAt ? formatRelative(rep.lastSignInAt) : "Never"}
                   </Td>
                 </Tr>
@@ -215,14 +239,14 @@ export default async function PartnerDetailPage({
                       <ClaimRef value={claim.claimRef} />
                     </Link>
                   </Td>
-                  <Td className="max-w-0">
+                  <Td>
                     <span className="block truncate">{claim.street}</span>
                     <CellMeta>{claim.city}</CellMeta>
                   </Td>
                   <Td>
                     <StatusPill status={claim.status} />
                   </Td>
-                  <Td className="whitespace-nowrap text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
                     {formatDateStamp(claim.createdAt)}
                   </Td>
                 </Tr>

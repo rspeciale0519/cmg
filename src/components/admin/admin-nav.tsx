@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/lib/cx";
 import { isAdminRouteActive, type AdminNavItem } from "./nav";
@@ -58,6 +58,7 @@ export function AdminNav({
                 >
                   {item.label}
                   {item.badge ? <NavCount count={count} tone={item.badge} /> : null}
+                  <NavPending />
                 </Link>
               </li>
             );
@@ -65,6 +66,33 @@ export function AdminNav({
         </ul>
       </div>
     </nav>
+  );
+}
+
+/**
+ * The clicked destination, while its page is still being built.
+ *
+ * `useLinkStatus` reports the pending state of the enclosing `Link`, so the
+ * feedback belongs to the item that was actually clicked rather than to a piece
+ * of state that has to guess which one it was. It answers the first question a
+ * click asks — *did that land?* — while `loading.tsx` answers the second, in
+ * the body, about what is arriving. Without it a slow route left the reader
+ * looking at the old page with no mark anywhere on the screen.
+ *
+ * The mark is the same 2px rule the active state uses, drawn in a dimmed accent
+ * and travelling: the destination is adopting the marker the current page still
+ * holds. Nothing moves in the layout, so the rail cannot reflow under a thumb
+ * mid-tap.
+ */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute inset-x-2 -bottom-px h-[2px] animate-pulse bg-accent/55"
+    />
   );
 }
 

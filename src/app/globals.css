@@ -112,6 +112,11 @@
   --color-text: var(--color-ink);
   --color-divider: color-mix(in srgb, var(--color-ink) 16%, transparent);
   --font-heading-weight: 500;
+
+  /* The colour a `Panel` actually paints — `bg-surface/38` composited over the
+     canvas. Named because the scroll-fade below has to *match* it opaquely:
+     a fade to a translucent colour fades to nothing. */
+  --panel-fill: color-mix(in srgb, var(--color-surface) 38%, var(--color-canvas));
 }
 
 /* Element defaults live in `base` so that Tailwind's `utilities` layer wins.
@@ -149,6 +154,28 @@
     letter-spacing: -0.015em;
   }
 
+  /* Tailwind v4's Preflight dropped `button { cursor: pointer }`, and nothing
+     replaced it — so every link in this product got a hand and every action
+     got an arrow. That is the affordance exactly backwards: navigation is the
+     reversible thing and actions are the ones that change something. Stated
+     here in `base` so a call site's own `cursor-*` utility still wins, which is
+     what `disabled:cursor-not-allowed` on the workspace buttons relies on.
+
+     `summary` is included for the same reason: Chromium ships it as `default`,
+     and the workspace's disclosures ("Invite a colleague", "Add a company")
+     are buttons in every respect but the tag name. */
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
@@ -157,6 +184,60 @@
   ::selection {
     background: color-mix(in srgb, var(--color-accent) 30%, transparent);
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   A sideways-scrolling region that says so.
+
+   Seven columns of claim really are wider than a 390px phone, so the tables
+   scroll — but a bare `overflow-x: auto` gives no sign of it. The cut-off
+   status pill on `/admin/claims` just ended, and on a trackpad there is no
+   scrollbar to contradict that reading.
+
+   Four gradients, in two pairs. The outer pair fades the content into the
+   panel's own fill and is attached `local`, so it travels with the content
+   and sits at the *content's* edge. The inner pair is a hairline attached
+   `scroll`, so it stays pinned to the container's edge. At the start of the
+   scroll the local cover is parked exactly over the scroll hairline and
+   cancels it; scroll away and the hairline emerges. The affordance is
+   therefore present only in the directions there is actually more to see,
+   with no JavaScript and no scroll listener.
+
+   `--panel-fill` has to be the opaque composite rather than `bg-surface/38`:
+   a cover that is itself translucent fades the text to a veil, not away.
+
+   `scrollbar-width: thin` is the third signal and matches the pipeline
+   ladder, which is the one place in the workspace that already had it.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility scroll-x-edged {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 20%, transparent) transparent;
+  background-image:
+    linear-gradient(to right, var(--panel-fill) 32%, transparent),
+    linear-gradient(to left, var(--panel-fill) 32%, transparent),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-ink) 20%, transparent),
+      transparent
+    ),
+    linear-gradient(
+      to left,
+      color-mix(in srgb, var(--color-ink) 20%, transparent),
+      transparent
+    );
+  background-position:
+    0 0,
+    100% 0,
+    0 0,
+    100% 0;
+  background-repeat: no-repeat;
+  background-size:
+    36px 100%,
+    36px 100%,
+    10px 100%,
+    10px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

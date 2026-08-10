@@ -14,6 +14,13 @@ export const metadata: Metadata = {
 const NOTICES: Record<string, string> = {
   "invite-accepted":
     "Your invitation is accepted. You already have an account with this address — sign in with your existing password.",
+  /* The invitation asked for one kind of access and the address already held
+     another — a contractor with a partner login who has also filed a claim of
+     his own, most often. His account is not rewritten to match the invitation,
+     so what he needs to know is that nothing about his sign-in has changed and
+     the new claim is attached to it. */
+  "invite-linked":
+    "Your invitation is accepted and attached to the account you already have. Nothing about your sign-in has changed — use your existing password.",
 };
 
 export default async function LoginPage({

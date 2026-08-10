@@ -10,11 +10,25 @@ import { STATUS_LABEL, STATUS_TONE, type ClaimStatus, type StatusTone } from "@/
  *
  * No dot, no icon: the label is the content, and a coloured disc beside a
  * coloured word is the same fact twice.
+ *
+ * `resolved` is deliberately the darkest of the four, and that is the fix for
+ * the one real weakness in this system. It used to be `bronze-300` (#d9c3a8)
+ * against `attention`'s `accent-300` (#ebdaaf) — ΔE00 7.9, by some distance
+ * the closest pair here, where every other pairing sits between 10.9 and 20.2.
+ * It was also the pair the reader meets *adjacent*: "Settlement offered" is
+ * followed by "Settled", so the two colours that had to be told apart at a
+ * glance were the two that were nearly the same light tan.
+ *
+ * Dropping to `bronze-400` on a deeper `bronze-700` wash separates them on
+ * lightness rather than on hue, which keeps the palette entirely inside the
+ * brand's gold/bronze ramp and adds no fifth colour. It also says the right
+ * thing: a settled or closed claim is finished, and finished work should sit
+ * back from a table of live ones rather than glow next to them.
  */
 const TONE_CLASS: Record<StatusTone, string> = {
   attention: "border-accent/40 bg-accent/12 text-accent-300",
   active: "border-ink/16 bg-ink/6 text-ink/78",
-  resolved: "border-bronze-400/38 bg-bronze-500/12 text-bronze-300",
+  resolved: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
   halted: "border-[#E08C6A]/40 bg-[#E08C6A]/10 text-[#E8A98D]",
 };
 
@@ -38,10 +52,11 @@ export function StatusPill({
   );
 }
 
+/** The same four tones one surface along — `converted` tracks `resolved`. */
 const LEAD_TONE: Record<string, string> = {
   new: "border-accent/40 bg-accent/12 text-accent-300",
   contacted: "border-ink/16 bg-ink/6 text-ink/78",
-  converted: "border-bronze-400/38 bg-bronze-500/12 text-bronze-300",
+  converted: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
   dismissed: "border-ink/12 bg-transparent text-ink/42",
 };
 

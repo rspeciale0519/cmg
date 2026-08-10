@@ -1,318 +1,112 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { writeAudit } from "@/lib/audit";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
-import type { Database } from "@/types/database";
-import { createESignProvider } from "./provider";
-import {
-  ESignError,
-  type ESignMode,
-  type ESignProvider,
-  type LorRole,
-  type LorSigner,
-  type LorToken,
-} from "./types";
+import { requireStaff } from "@/lib/authz";
+import { claimCapabilities } from "@/lib/claims/capabilities";
+import { createClient } from "@/lib/supabase/server";
+import { dispatchLorForClaim, type SendLorDeps, type SendLorResult } from "./lor-dispatch";
 
-type Admin = SupabaseClient<Database>;
+export type {
+  SendLorDeps,
+  SendLorFailure,
+  SendLorFailureCode,
+  SendLorInput,
+  SendLorResult,
+  SendLorSuccess,
+} from "./lor-dispatch";
 
-export type SendLorInput = {
+/**
+ * Everything the caller supplies. `actorId` is deliberately not on it: the
+ * actor is whoever is signed in, and letting a caller name someone else would
+ * make the audit row — the one record of who put a homeowner's signature
+ * request out — a field the caller fills in.
+ */
+export type SendLorRequest = {
   claimId: string;
-  /** Staff profile id — feed author and audit actor. */
-  actorId?: string | null;
   /** Contingency fee stamped into the letter; falls back to claim_financials. */
   feePercent?: number | null;
   /** Overrides the covering message in the provider's notification email. */
   message?: string | null;
 };
 
-export type SendLorSuccess = {
-  ok: true;
-  mode: ESignMode;
-  claimId: string;
-  claimRef: string;
-  providerDocumentId: string | null;
-  esignStatus: string;
-  /** False when the claim was already at `lor_sent` and this was a re-send. */
-  transitioned: boolean;
-  /** False in manual mode: staff still have to deliver the letter. */
-  deliveredByProvider: boolean;
-  recipients: string[];
-};
-
-export type SendLorFailureCode =
-  | "claim_not_found"
-  | "invalid_status"
-  | "no_claimants"
-  | "not_configured"
-  | "provider_error"
-  | "persist_failed";
-
-export type SendLorFailure = { ok: false; code: SendLorFailureCode; message: string };
-
-export type SendLorResult = SendLorSuccess | SendLorFailure;
-
-export type SendLorDeps = {
-  admin?: Admin;
-  provider?: ESignProvider;
-};
-
-const ROLES: LorRole[] = ["Homeowner1", "Homeowner2"];
-
-const causeLabel = (value: string) =>
-  CAUSE_OPTIONS.find((option) => option.value === value)?.label ?? value;
-
-function tokensFor(
-  claim: ClaimRow,
-  signers: LorSigner[],
-  adjusterName: string | null,
-  feePercent: number | null,
-): LorToken[] {
-  const address = [
-    claim.property_street,
-    claim.property_street2,
-    `${claim.property_city}, ${claim.property_state} ${claim.property_zip}`,
-  ]
-    .filter((part): part is string => Boolean(part))
-    .join(", ");
-
-  const nameFor = (role: LorRole) => {
-    const signer = signers.find((candidate) => candidate.role === role);
-    return signer ? `${signer.firstName} ${signer.lastName}` : "";
-  };
-
-  return [
-    { name: "Claim.Ref", value: claim.claim_ref },
-    { name: "Claim.Carrier", value: claim.carrier },
-    { name: "Claim.PolicyNumber", value: claim.policy_number },
-    { name: "Claim.ClaimNumber", value: claim.claim_number ?? "" },
-    { name: "Claim.LossDate", value: claim.loss_date },
-    { name: "Claim.Cause", value: causeLabel(claim.cause) },
-    { name: "Property.Address", value: address },
-    { name: "Homeowner1.Name", value: nameFor("Homeowner1") },
-    { name: "Homeowner2.Name", value: nameFor("Homeowner2") },
-    { name: "Adjuster.Name", value: adjusterName ?? "" },
-    { name: "Fee.Percent", value: feePercent === null ? "" : String(feePercent) },
-  ];
-}
-
-const CLAIM_COLUMNS =
-  "id, claim_ref, status, carrier, policy_number, claim_number, loss_date, cause, " +
-  "property_street, property_street2, property_city, property_state, property_zip, " +
-  "assigned_adjuster_id, pandadoc_document_id, esign_status";
-
-type ClaimRow = Pick<
-  Database["public"]["Tables"]["claims"]["Row"],
-  | "id"
-  | "claim_ref"
-  | "status"
-  | "carrier"
-  | "policy_number"
-  | "claim_number"
-  | "loss_date"
-  | "cause"
-  | "property_street"
-  | "property_street2"
-  | "property_city"
-  | "property_state"
-  | "property_zip"
-  | "assigned_adjuster_id"
-  | "pandadoc_document_id"
-  | "esign_status"
->;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Puts the Letter of Representation in front of the claimants and records that
- * it happened (blueprint §"sendLor implementation steps", spec §6 "LOR").
+ * One answer for "no such claim", "a claim you cannot see" and "a claim you
+ * may see but not manage" — the same rule `issueClaimantInvite` follows, and
+ * for the same reason (spec §7.9). An assistant can read every claim through
+ * `claims_select` but may manage none, so a distinct "not authorised" here
+ * would confirm a row exists to a caller who is not allowed to act on it: the
+ * read boundary and the write boundary are in different places and the error
+ * must not measure the gap between them.
+ */
+const REFUSED =
+  "That claim is not available to send a Letter of Representation on.";
+
+/**
+ * The only authorized way to send a Letter of Representation, and the only
+ * thing `./index` exports.
  *
- * Provider-agnostic on purpose: the transport differs between PandaDoc and
- * manual sending, but the claim record does not. Both paths persist
- * `esign_status`, advance `under_review → lor_sent`, write a history row, post
- * a shared feed entry and leave an audit trail.
+ * The mechanism it delegates to reads and writes any claim by id through the
+ * service-role client with no check of its own. That was not exploitable while
+ * no user-reachable caller existed — the send button is still unwired — but it
+ * was one server action away from being a claim-id IDOR, where posting a
+ * stranger's uuid would put CMG's letter in front of that stranger's
+ * homeowners and advance their claim to `lor_sent`. Authorization belongs in
+ * the same function as the privileged write, not in whatever calls it next.
  *
- * Never throws for an expected condition — the admin UI gets a discriminated
- * result it can render. Re-sending from `lor_sent` is allowed and does not
- * re-transition.
+ * Two checks, and they answer different questions:
+ *
+ *   * `requireStaff()` — is this a staff member with a second factor? A
+ *     homeowner or a partner rep never gets past it, and it throws rather than
+ *     returning, so a caller cannot ignore the result.
+ *   * `claimCapabilities().canManage` — the TypeScript reading of
+ *     `private.can_manage_claim()`: owner, or the adjuster this claim is
+ *     assigned to. An assistant is staff and is refused; §4 gives them notes
+ *     and documents, not the lifecycle.
+ *
+ * The claim is looked up through the *user's* client, so `claims_select`
+ * decides visibility. A claim an adjuster may not see returns zero rows and is
+ * refused before the assignment is even read.
  */
 export async function sendLor(
-  input: SendLorInput,
+  request: SendLorRequest,
   deps: SendLorDeps = {},
 ): Promise<SendLorResult> {
-  const admin = deps.admin ?? createAdminClient();
-  const provider = deps.provider ?? createESignProvider();
+  const session = await requireStaff();
 
-  const { data: claim, error: claimError } = await admin
+  // A malformed id reaches Postgres as a uuid cast error rather than an empty
+  // result — a different response shape, and therefore its own small oracle.
+  if (!UUID.test(request.claimId)) {
+    return { ok: false, code: "not_authorized", message: REFUSED };
+  }
+
+  const supabase = await createClient();
+  const { data: claim } = await supabase
     .from("claims")
-    .select(CLAIM_COLUMNS)
-    .eq("id", input.claimId)
-    .maybeSingle<ClaimRow>();
+    .select("id, assigned_adjuster_id")
+    .eq("id", request.claimId)
+    .maybeSingle();
 
-  if (claimError || !claim) {
-    return {
-      ok: false,
-      code: "claim_not_found",
-      message: `No claim ${input.claimId}`,
-    };
+  if (!claim) {
+    return { ok: false, code: "not_authorized", message: REFUSED };
   }
 
-  if (claim.status !== "under_review" && claim.status !== "lor_sent") {
-    return {
-      ok: false,
-      code: "invalid_status",
-      message: `A Letter of Representation is sent from under_review; this claim is ${claim.status}.`,
-    };
+  const { canManage } = claimCapabilities(
+    { userId: session.userId, role: session.role },
+    { assignedAdjusterId: claim.assigned_adjuster_id },
+  );
+
+  if (!canManage) {
+    return { ok: false, code: "not_authorized", message: REFUSED };
   }
 
-  const { data: claimants } = await admin
-    .from("claimants")
-    .select("first_name, last_name, email, is_primary, created_at")
-    .eq("claim_id", claim.id)
-    .order("is_primary", { ascending: false })
-    .order("created_at", { ascending: true });
-
-  if (!claimants || claimants.length === 0) {
-    return {
-      ok: false,
-      code: "no_claimants",
-      message: "This claim has no claimants to sign the letter.",
-    };
-  }
-
-  const signers: LorSigner[] = claimants.slice(0, ROLES.length).map((claimant, index) => ({
-    email: claimant.email,
-    firstName: claimant.first_name,
-    lastName: claimant.last_name,
-    role: ROLES[index],
-  }));
-
-  let feePercent = input.feePercent ?? null;
-  if (feePercent === null) {
-    const { data: financials } = await admin
-      .from("claim_financials")
-      .select("fee_percent")
-      .eq("claim_id", claim.id)
-      .maybeSingle();
-    feePercent = financials?.fee_percent ?? null;
-  }
-
-  let adjusterName: string | null = null;
-  if (claim.assigned_adjuster_id) {
-    const { data: adjuster } = await admin
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("id", claim.assigned_adjuster_id)
-      .maybeSingle();
-    adjusterName = adjuster
-      ? [adjuster.first_name, adjuster.last_name].filter(Boolean).join(" ") || null
-      : null;
-  }
-
-  let dispatch;
-  try {
-    dispatch = await provider.dispatchLor({
+  return dispatchLorForClaim(
+    {
       claimId: claim.id,
-      claimRef: claim.claim_ref,
-      documentName: `LOR — ${claim.claim_ref}`,
-      signers,
-      tokens: tokensFor(claim, signers, adjusterName, feePercent),
-      message: input.message ?? null,
-    });
-  } catch (error) {
-    const code: SendLorFailureCode =
-      error instanceof ESignError && error.code === "not_configured"
-        ? "not_configured"
-        : "provider_error";
-    const message =
-      error instanceof Error ? error.message : "The e-signature provider failed.";
-
-    console.error("[esign] sendLor dispatch failed", {
-      claimId: claim.id,
-      mode: provider.kind,
-      message,
-    });
-    await writeAudit(admin, {
-      actorId: input.actorId ?? null,
-      action: "esign.lor_send_failed",
-      entity: "claims",
-      entityId: claim.id,
-      meta: { mode: provider.kind, code, message },
-    });
-
-    return { ok: false, code, message };
-  }
-
-  const transitioned = claim.status === "under_review";
-
-  const { error: updateError } = await admin
-    .from("claims")
-    .update({
-      ...(transitioned ? { status: "lor_sent" as const } : {}),
-      esign_status: dispatch.esignStatus,
-      pandadoc_document_id: dispatch.providerDocumentId ?? claim.pandadoc_document_id,
-    })
-    .eq("id", claim.id);
-
-  if (updateError) {
-    console.error("[esign] sendLor persist failed", {
-      claimId: claim.id,
-      message: updateError.message,
-    });
-    return {
-      ok: false,
-      code: "persist_failed",
-      message: "The letter was sent but the claim could not be updated.",
-    };
-  }
-
-  if (transitioned) {
-    await admin.from("claim_status_history").insert({
-      claim_id: claim.id,
-      from_status: "under_review",
-      to_status: "lor_sent",
-      changed_by: input.actorId ?? null,
-      note:
-        provider.kind === "pandadoc"
-          ? "Letter of Representation sent for signature via PandaDoc."
-          : "Letter of Representation marked as sent (manual signing).",
-    });
-  }
-
-  await admin.from("claim_events").insert({
-    claim_id: claim.id,
-    type: "status",
-    visibility: "shared",
-    author_id: input.actorId ?? null,
-    body: dispatch.deliveredByProvider
-      ? `Letter of Representation sent for signature to ${signers
-          .map((signer) => signer.email)
-          .join(" and ")}.`
-      : "Letter of Representation marked as sent. Staff are delivering it outside the system.",
-  });
-
-  await writeAudit(admin, {
-    actorId: input.actorId ?? null,
-    action: "esign.lor_sent",
-    entity: "claims",
-    entityId: claim.id,
-    meta: {
-      mode: provider.kind,
-      provider_document_id: dispatch.providerDocumentId,
-      esign_status: dispatch.esignStatus,
-      recipients: signers.map((signer) => signer.email),
-      transitioned,
+      feePercent: request.feePercent ?? null,
+      message: request.message ?? null,
+      actorId: session.userId,
     },
-  });
-
-  return {
-    ok: true,
-    mode: provider.kind,
-    claimId: claim.id,
-    claimRef: claim.claim_ref,
-    providerDocumentId: dispatch.providerDocumentId,
-    esignStatus: dispatch.esignStatus,
-    transitioned,
-    deliveredByProvider: dispatch.deliveredByProvider,
-    recipients: signers.map((signer) => signer.email),
-  };
+    deps,
+  );
 }

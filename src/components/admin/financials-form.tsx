@@ -30,13 +30,26 @@ export function FinancialsForm({
 
   const parsedAmount = Number(amount.replace(/[$,\s]/g, ""));
   const parsedFee = Number(fee.replace(/[%\s]/g, ""));
-  const derivable =
-    Number.isFinite(parsedAmount) &&
-    Number.isFinite(parsedFee) &&
-    amount.trim() !== "" &&
-    fee.trim() !== "" &&
-    parsedAmount >= 0 &&
-    parsedFee >= 0;
+
+  const bothEntered = amount.trim() !== "" && fee.trim() !== "";
+  const amountValid = Number.isFinite(parsedAmount) && parsedAmount >= 0;
+  /* The upper bound is `claim_financials_fee_percent_range` and the server
+     action's own message ("Enter a percentage between 0 and 100"), and it has
+     to be checked here too. Without it, typing 250 produced a correctly
+     flagged field *and* a live row reading "CMG fee $103,125 / To the
+     homeowner -$61,875" — arithmetic on a number the product had just refused,
+     rendered in the same weight as a real figure, next to a homeowner. */
+  const feeValid = Number.isFinite(parsedFee) && parsedFee >= 0 && parsedFee <= 100;
+  const rejected = Boolean(
+    state.fieldErrors?.settlementAmount || state.fieldErrors?.feePercent,
+  );
+
+  const derivable = bothEntered && amountValid && feeValid && !rejected;
+  /* Neutralised rather than removed. The row vanishing on the keystroke that
+     makes the input invalid moves the Notes field and the Save button up under
+     the cursor, and says nothing about why. Holding the row with em-dashes
+     keeps the layout still and lets the reason sit where the figures were. */
+  const showDerived = bothEntered || derivable;
 
   return (
     <form action={formAction}>
@@ -77,21 +90,44 @@ export function FinancialsForm({
         </AdminField>
       </div>
 
-      {derivable ? (
-        <dl className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2 border-t border-ink/9 pt-4 text-[13px] leading-[1.5]">
-          <div className="flex justify-between">
-            <dt className="text-ink/50">CMG fee</dt>
-            <dd className="tabular-nums text-ink/85">
-              {formatMoney((parsedAmount * parsedFee) / 100)}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-ink/50">To the homeowner</dt>
-            <dd className="tabular-nums text-ink/85">
-              {formatMoney(parsedAmount - (parsedAmount * parsedFee) / 100)}
-            </dd>
-          </div>
-        </dl>
+      {showDerived ? (
+        <div className="mt-4 border-t border-ink/9 pt-4">
+          <dl
+            aria-live="polite"
+            className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px] leading-[1.5]"
+          >
+            <div className="flex justify-between">
+              <dt className="text-ink/50">CMG fee</dt>
+              <dd
+                className={
+                  derivable ? "tabular-nums text-ink/85" : "tabular-nums text-ink/28"
+                }
+              >
+                {derivable ? formatMoney((parsedAmount * parsedFee) / 100) : "—"}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-ink/50">To the homeowner</dt>
+              <dd
+                className={
+                  derivable ? "tabular-nums text-ink/85" : "tabular-nums text-ink/28"
+                }
+              >
+                {derivable
+                  ? formatMoney(parsedAmount - (parsedAmount * parsedFee) / 100)
+                  : "—"}
+              </dd>
+            </div>
+          </dl>
+
+          {derivable ? null : (
+            <p className="mt-[7px] text-[12px] leading-[1.5] text-ink/42">
+              {feeValid
+                ? "Enter a settlement amount of 0 or more to see the split."
+                : "The split appears once the fee is a percentage between 0 and 100."}
+            </p>
+          )}
+        </div>
       ) : null}
 
       <AdminField name="notes" label="Notes" className="mt-4">

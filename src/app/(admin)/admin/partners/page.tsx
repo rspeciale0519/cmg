@@ -111,22 +111,22 @@ export default async function PartnersPage({
             caption="Partner companies with their rep and claim counts"
             head={
               <>
-                <Th className="w-[34%]">Company</Th>
+                <Th className="w-[31%]">Company</Th>
                 <Th className="w-[14%]">Status</Th>
-                <Th className="w-[12%]" align="right">
+                <Th className="w-[10%]" align="right">
                   Reps
                 </Th>
-                <Th className="w-[12%]" align="right">
+                <Th className="w-[10%]" align="right">
                   Claims
                 </Th>
-                <Th className="w-[16%]">Contact</Th>
-                <Th className="w-[12%]">Added</Th>
+                <Th className="w-[20%]">Contact</Th>
+                <Th className="w-[15%]">Added</Th>
               </>
             }
           >
             {companies.map((company) => (
               <Tr key={company.id}>
-                <Td className="max-w-0">
+                <Td>
                   <Link
                     href={`/admin/partners/${company.id}`}
                     className="block truncate font-medium text-ink no-underline transition-colors duration-150 hover:text-accent"
@@ -146,7 +146,7 @@ export default async function PartnersPage({
                 <Td align="right">
                   <CountCell value={company.claimCount} />
                 </Td>
-                <Td className="max-w-0">
+                <Td>
                   {company.contactEmail ? (
                     <a
                       href={`mailto:${company.contactEmail}`}
@@ -162,7 +162,7 @@ export default async function PartnersPage({
                     <span className="text-ink/28">—</span>
                   )}
                 </Td>
-                <Td className="whitespace-nowrap text-ink/50">
+                <Td className="whitespace-nowrap tabular-nums text-ink/50">
                   {formatDateStamp(company.createdAt)}
                 </Td>
               </Tr>

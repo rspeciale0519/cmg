@@ -198,9 +198,7 @@ export default async function AdminDashboard() {
                   <Th className="w-[132px]">Reference</Th>
                   <Th>Homeowner</Th>
                   <Th className="w-[150px]">Status</Th>
-                  <Th className="w-[92px]" align="right">
-                    Updated
-                  </Th>
+                  <Th className="w-[116px]">Updated</Th>
                 </>
               }
             >
@@ -219,7 +217,7 @@ export default async function AdminDashboard() {
                         <ClaimRef value={claim.claim_ref} />
                       </Link>
                     </Td>
-                    <Td className="max-w-0">
+                    <Td>
                       <span className="block truncate">
                         {primary
                           ? `${primary.first_name} ${primary.last_name}`.trim()
@@ -234,7 +232,7 @@ export default async function AdminDashboard() {
                         <StatusPill status={claim.status} />
                       ) : null}
                     </Td>
-                    <Td align="right" className="tabular-nums text-ink/50">
+                    <Td className="whitespace-nowrap tabular-nums text-ink/50">
                       {formatRelative(claim.updated_at)}
                     </Td>
                   </Tr>

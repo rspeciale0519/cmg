@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { hashInviteToken } from "@/lib/auth/invite-token";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
-import { landingPathFor } from "@/lib/auth/roles";
+import { isAppRole, landingPathFor } from "@/lib/auth/roles";
 import { requireStaff } from "@/lib/authz";
 import {
   burnInvite,
@@ -123,7 +123,7 @@ export async function issueClaimantInvite(
 
 type AcceptOutcome =
   | { kind: "signed_in"; destination: string }
-  | { kind: "existing_account"; destination: string }
+  | { kind: "existing_account"; destination: string; notice?: string }
   | { kind: "failed"; state: FormState };
 
 async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
@@ -218,24 +218,67 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
 
   await stampInviteAcceptedBy(admin, invite.id, userId);
 
-  // Role comes from the invite row and from nowhere else. It is never read from
-  // the form, from user_metadata, or from anything else the invitee controls
-  // (spec §4). `guard_profile_privileges()` refuses this write for any caller
-  // that is not the service role or an active owner.
-  const { error: profileError } = await admin
-    .from("profiles")
-    .update({
-      role: invite.role,
-      partner_company_id: invite.partner_company_id,
-      first_name: firstName,
-      last_name: lastName,
-    })
-    .eq("id", userId);
+  const isNewAccount = Boolean(created?.user);
 
-  if (profileError) {
-    console.error("[invite] role assignment failed", profileError.message);
-    await restoreInvite(admin, invite.id);
-    return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
+  /* Provisioning happens only for an account this acceptance just created.
+   *
+   * The other branch is where the hole was. Reaching it means the address
+   * already had an account, which means the person redeeming the token has
+   * proved nothing about it — no password, no session, no second factor — and
+   * yet `role`, `partner_company_id` and the submitted `first_name` /
+   * `last_name` were all written onto it anyway. `acceptIntake` auto-issues a
+   * `customer` invitation to every claimant, so a contractor with a `partner`
+   * account who files a claim on his own house was sent one addressed to the
+   * account he already had: accepting it set his role to `customer`, nulled
+   * his `partner_company_id` — which is what
+   * `private.current_partner_company_id()` joins through, so his firm's whole
+   * portal went with it — and let whoever held the link retype his name. The
+   * same shape applies to a staff address. No privilege is gained, but a
+   * silent demotion by bearer token is not something an invitation is allowed
+   * to do.
+   *
+   * So an existing account keeps everything it has, and the invitation is
+   * honoured by the one act that is purely additive: linking the claimant row
+   * to the user, below. Being a claimant is what
+   * `private.is_claim_customer()` reads, and it does not consult the role — so
+   * the claim access the invitation was for is granted without the account
+   * being rewritten to get it.
+   *
+   * Role still comes from the invite row and from nowhere else. It is never
+   * read from the form, from user_metadata, or from anything else the invitee
+   * controls (spec §4). `guard_profile_privileges()` refuses this write for
+   * any caller that is not the service role or an active owner.
+   */
+  let keptExistingRole: string | null = null;
+
+  if (isNewAccount) {
+    const { error: profileError } = await admin
+      .from("profiles")
+      .update({
+        role: invite.role,
+        partner_company_id: invite.partner_company_id,
+        first_name: firstName,
+        last_name: lastName,
+      })
+      .eq("id", userId);
+
+    if (profileError) {
+      console.error("[invite] role assignment failed", profileError.message);
+      await restoreInvite(admin, invite.id);
+      return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
+    }
+  } else {
+    const { data: existing } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    // Only worth telling them about when the invitation asked for something
+    // their account is not. An existing homeowner accepting a second customer
+    // invitation has nothing to be told.
+    keptExistingRole =
+      existing && existing.role !== invite.role ? existing.role : null;
   }
 
   if (invite.role === "customer" && invite.claim_id) {
@@ -262,16 +305,28 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
       role: invite.role,
       claim_id: invite.claim_id,
       partner_company_id: invite.partner_company_id,
-      account: created?.user ? "created" : "existing",
+      account: isNewAccount ? "created" : "existing",
+      // Says plainly, in the trail an owner reads, that the invitation was
+      // redeemed and the account was deliberately left as it was.
+      profile_applied: isNewAccount,
+      ...(keptExistingRole ? { kept_existing_role: keptExistingRole } : {}),
     },
     ip: inetOrNull(ip),
   });
 
-  const destination = landingPathFor(invite.role);
-
-  if (!created?.user) {
-    return { kind: "existing_account", destination };
+  if (!isNewAccount) {
+    /* An existing account keeps its own role, so it keeps its own landing
+       page. Sending a partner rep to `/portal` because the invitation said
+       `customer` would answer a correct sign-in with a 404. */
+    const kept = isAppRole(keptExistingRole) ? keptExistingRole : null;
+    return {
+      kind: "existing_account",
+      destination: landingPathFor(kept ?? invite.role),
+      notice: kept ? "invite-linked" : "invite-accepted",
+    };
   }
+
+  const destination = landingPathFor(invite.role);
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -300,8 +355,9 @@ export async function acceptInvite(
   if (outcome.kind === "failed") return outcome.state;
 
   if (outcome.kind === "existing_account") {
+    const notice = outcome.notice ?? "invite-accepted";
     redirect(
-      `/login?next=${encodeURIComponent(outcome.destination)}&notice=invite-accepted`,
+      `/login?next=${encodeURIComponent(outcome.destination)}&notice=${notice}`,
     );
   }
 

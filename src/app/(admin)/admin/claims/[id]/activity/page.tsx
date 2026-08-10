@@ -74,8 +74,18 @@ export default async function ActivityPage({
                     isQuestion && "bg-accent/[0.035]",
                   )}
                 >
-                  <div className="flex items-baseline justify-between gap-x-5 gap-y-1">
-                    <p className="flex flex-wrap items-baseline gap-x-3 text-[12px] leading-[1.4]">
+                  {/* Two facts, one line — but only where a line will hold
+                      them. "Note · Austin Graham · AG" and "CMG only ·
+                      Aug 10, 2026, 4:22 PM" together need about 420px, and the
+                      panel is 313px wide on a phone. As one flex row the left
+                      half was a flex item with `min-width: auto`, so it refused
+                      to shrink, its own `flex-wrap` never fired, and the header
+                      simply grew past the panel. Stacked below `sm` each half
+                      gets the full measure; from `sm` up they sit on one line
+                      as before, and `min-w-0` keeps the left half shrinkable
+                      there too. */}
+                  <div className="flex flex-col gap-y-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-x-5">
+                    <p className="flex min-w-0 flex-wrap items-baseline gap-x-3 text-[12px] leading-[1.4]">
                       <span
                         className={cx(
                           "text-[11px] uppercase tracking-[0.12em]",

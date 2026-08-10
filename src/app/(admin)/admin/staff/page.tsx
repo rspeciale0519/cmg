@@ -93,7 +93,7 @@ export default async function StaffPage() {
 
             return (
               <Tr key={member.id} className={member.isActive ? undefined : "opacity-70"}>
-                <Td className="max-w-0">
+                <Td>
                   <span className="block truncate font-medium text-ink">
                     {member.name}
                     {isSelf ? (
@@ -122,7 +122,7 @@ export default async function StaffPage() {
                   <MfaState enrolled={member.mfaEnrolled} isActive={member.isActive} />
                 </Td>
 
-                <Td className="whitespace-nowrap text-ink/50">
+                <Td className="whitespace-nowrap tabular-nums text-ink/50">
                   {member.lastSignInAt ? formatRelative(member.lastSignInAt) : "Never"}
                 </Td>
 

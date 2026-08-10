@@ -5,8 +5,13 @@ import "server-only";
  * to import.
  *
  *   esignCapabilities()        which provider is live and whether it can send
- *   sendLor(input)             put the Letter of Representation out for signing
+ *   sendLor(request)           put the Letter of Representation out for signing
  *   createESignProvider()      the provider itself, for anything lower-level
+ *
+ * `sendLor` is the *authorized* entry point and the only one exported here.
+ * The mechanism it wraps lives in `./lor-dispatch`, performs no authorization
+ * of its own, and is deliberately not re-exported: a server action reaching
+ * for "the LOR function" must land on the one that asks who is calling.
  *
  * Everything here is server-only. `PANDADOC_API_KEY` and
  * `PANDADOC_WEBHOOK_SHARED_KEY` are read exclusively through `./config`, which
@@ -26,7 +31,7 @@ export {
   sendLor,
   type SendLorFailure,
   type SendLorFailureCode,
-  type SendLorInput,
+  type SendLorRequest,
   type SendLorResult,
   type SendLorSuccess,
 } from "./send-lor";

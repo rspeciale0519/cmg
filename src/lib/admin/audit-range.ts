@@ -100,9 +100,9 @@ export function dayBounds(date: string, timeZone = BUSINESS_TIME_ZONE): DayBound
   return { startIso: new Date(start).toISOString(), endIso: new Date(end).toISOString() };
 }
 
-export type CursorInput = {
+export type CursorInput<T> = {
   /** Ids on the page, already in display order (newest first). */
-  readonly ids: readonly number[];
+  readonly ids: readonly T[];
   /** Whether the query returned one more row than the page holds. */
   readonly hasMore: boolean;
   /** True when the page was walked forwards from an `after` cursor. */
@@ -111,11 +111,11 @@ export type CursorInput = {
   readonly cameFromCursor: boolean;
 };
 
-export type Cursors = {
+export type Cursors<T> = {
   /** Value for `?before=` — null at the end of the log. */
-  olderThan: number | null;
+  olderThan: T | null;
   /** Value for `?after=` — null on the newest page. */
-  newerThan: number | null;
+  newerThan: T | null;
 };
 
 /**
@@ -126,13 +126,17 @@ export type Cursors = {
  * `hasMore` establishes a different fact depending on which way the reader is
  * travelling. Getting it backwards produces a "Newer" link on the newest page —
  * one click to an empty screen, from a log the owner is meant to trust.
+ *
+ * Generic in the cursor's type because the rule is about direction of travel,
+ * not about what a cursor is made of: the audit log pages on an integer
+ * identity, and the claims list pages on a `(sort value, claim_ref)` pair.
  */
-export function pageCursors({
+export function pageCursors<T>({
   ids,
   hasMore,
   ascending,
   cameFromCursor,
-}: CursorInput): Cursors {
+}: CursorInput<T>): Cursors<T> {
   const newest = ids[0] ?? null;
   const oldest = ids[ids.length - 1] ?? null;
 
