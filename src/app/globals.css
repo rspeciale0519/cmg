@@ -66,35 +66,40 @@
   --font-heading-weight: 500;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* Element defaults live in `base` so that Tailwind's `utilities` layer wins.
+   Unlayered rules outrank every layered rule, so an unlayered `h2 {}` here
+   would silently beat `text-[24px]`/`leading-[1.2]` at every call site. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  text-wrap: pretty;
-  overflow-x: clip;
-}
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    text-wrap: pretty;
+    overflow-x: clip;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: var(--font-heading-weight);
-  line-height: 1.12;
-  letter-spacing: -0.015em;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: var(--font-heading-weight);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 
-::selection {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
 }
 
 /* Hero atmosphere — keyframes ported from the prototype hero. */
