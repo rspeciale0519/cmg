@@ -63,6 +63,17 @@
   --text-display-6: clamp(26px, 3.2vw, 40px); /* sub-section h2 */
   --text-display-7: clamp(22px, 2.4vw, 30px); /* row heading */
 
+  /* Card titles. Four raw pixel values (21/23/23/24) sat outside this scale
+     and never ramped, so at 390 a fixed 24px `h3` stood 4px under a section
+     `h2` already floored at 28px — against a 22px step on the desktop the
+     scale was designed around. The desktop caps are the prototypes' own
+     (Services 21, About/Contractors 23, Home 24); the floors are new, and all
+     three reach their cap at the same 1000px viewport. */
+  --text-card-sm: clamp(19px, 2.1vw, 21px); /* four-step process card */
+  --text-card-md: clamp(20px, 2.3vw, 23px); /* values / benefits card */
+  --text-card-lg: clamp(20px, 2.4vw, 24px); /* home feature card */
+  --text-step: clamp(19px, 2.2vw, 22px); /* referral step-list heading */
+
   --text-figure-lg: clamp(44px, 5.4vw, 76px); /* data band numerals */
   --text-figure-md: clamp(32px, 3.4vw, 46px); /* stat band numerals */
   --text-figure-sm: clamp(24px, 2.6vw, 32px); /* phone number */

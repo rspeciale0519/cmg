@@ -69,7 +69,7 @@ export function Hero({
           {headline}
         </h1>
         {body ? (
-          <p className="mt-[28px] max-w-[56ch] text-lede leading-[1.7] text-ink/84">
+          <p className="mt-[28px] max-w-[56ch] text-lede leading-[1.7] text-ink/85">
             {body}
           </p>
         ) : null}
@@ -130,7 +130,7 @@ export function Hero({
           {headline}
         </h1>
         {body ? (
-          <p className="mt-[30px] max-w-[56ch] text-lede-lg leading-[1.65] text-ink/84">
+          <p className="mt-[30px] max-w-[56ch] text-lede-lg leading-[1.65] text-ink/85">
             {body}
           </p>
         ) : null}

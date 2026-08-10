@@ -21,13 +21,13 @@ export function StepList({ steps, className }: StepListProps) {
     >
       {steps.map((step) => (
         <li key={step.title} className="border-t border-ink/22 pt-6">
-          <span className="text-xs uppercase tracking-[0.16em] text-accent-300">
+          <span className="text-xs uppercase leading-[1.55] tracking-[0.16em] text-accent-300">
             {step.label}
           </span>
-          <h3 className="mt-[18px] text-[22px] font-medium leading-[1.2] tracking-[-0.02em]">
+          <h3 className="mt-[18px] text-step font-medium leading-[1.2] tracking-[-0.02em]">
             {step.title}
           </h3>
-          <p className="mt-3 text-[15px] leading-[1.7] text-ink/88">
+          <p className="mt-3 text-[15px] leading-[1.7] text-ink/85">
             {step.body}
           </p>
         </li>

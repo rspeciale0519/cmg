@@ -104,7 +104,7 @@ export function IntakeForm() {
           .
         </SuccessBody>
         {state.reference ? (
-          <p className="mt-7 border-t border-accent/25 pt-5 text-[13px] uppercase leading-[1.6] tracking-[0.18em] text-ink/50">
+          <p className="mt-7 border-t border-accent/25 pt-5 text-[13px] uppercase leading-[1.6] tracking-[0.18em] text-ink/55">
             Your reference
             <span className="mt-1 block text-[19px] tracking-[0.04em] text-accent">
               {state.reference}
@@ -249,7 +249,7 @@ export function IntakeForm() {
             />
             <TextField name="referrerEmail" label="Referring rep's email" type="email" error={errors.referrerEmail} />
           </div>
-          <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/50">
+          <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/55">
             The referring rep receives a copy of the signed Letter of Representation once all
             parties have signed.
           </p>
@@ -262,7 +262,7 @@ export function IntakeForm() {
             accept={FILE_ACCEPT_ATTRIBUTE}
             error={errors.documents}
           />
-          <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/50">
+          <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/55">
             You can also email copies to{" "}
             <Link href={emailHref} className="text-accent hover:text-accent-300">
               {site.email}

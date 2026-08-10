@@ -10,16 +10,18 @@ import { emailHref, site, telHref } from "@/lib/site";
    12.32px, tightening the gap under each heading by 4.7px. The leading is
    restated so the semantics don't cost the spacing. */
 const COLUMN_HEADING =
-  "text-[11px] font-normal uppercase leading-[1.55] tracking-[0.18em] text-ink/45";
+  "text-[11px] font-normal uppercase leading-[1.55] tracking-[0.18em] text-ink/55";
+/* The prototype's footer links set no line-height, so they take the body's
+   1.55 (21.7px at 14px); Tailwind's `text-sm` ships a 20px pair. */
 const LINK =
-  "flex min-h-[44px] items-center text-sm text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300";
+  "flex min-h-[44px] items-center text-sm leading-[1.55] text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300";
 /* `break-all` split the address mid-word ("…CMGPropertySolution / s.net").
    Block layout plus an explicit break opportunity after the `@` gives the
    line a place it *wants* to break, and `anywhere` is only the fallback for
-   viewports too narrow even for the domain. 11px padding on a 22.4px line
+   viewports too narrow even for the domain. 12px padding on the 21.7px line
    keeps the 44px tap target the flex row was providing. */
 const EMAIL_LINK =
-  "block py-[11px] text-sm leading-[1.6] text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300 [overflow-wrap:anywhere]";
+  "block py-3 text-sm leading-[1.55] text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300 [overflow-wrap:anywhere]";
 
 const [EMAIL_LOCAL, EMAIL_DOMAIN] = site.email.split("@");
 
@@ -80,7 +82,7 @@ export function SiteFooter() {
         </div>
       </Container>
 
-      <Container className="border-t border-ink/8 pb-12 pt-6 text-[13px] text-ink/45">
+      <Container className="border-t border-ink/8 pb-12 pt-6 text-[13px] leading-[1.55] text-ink/55">
         &copy; {new Date().getFullYear()} {site.name} &middot; {site.licensee}{" "}
         &middot; License # {site.license}
       </Container>

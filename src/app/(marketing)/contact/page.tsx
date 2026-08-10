@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 const DETAIL_LABEL =
-  "m-0 mb-[10px] text-[11px] uppercase leading-none tracking-[0.18em] text-ink/50";
+  "m-0 mb-[10px] text-[11px] uppercase leading-none tracking-[0.18em] text-ink/55";
 const DETAIL_BLOCK = "border-t border-ink/11 pt-5";
 
 export default function ContactPage() {
@@ -36,7 +36,7 @@ export default function ContactPage() {
         <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
           Start your free claim review.
         </h1>
-        <p className="mt-7 max-w-[56ch] text-lede leading-[1.7] text-ink/84">
+        <p className="mt-7 max-w-[56ch] text-lede leading-[1.7] text-ink/85">
           Tell us what happened and we&apos;ll call you back within one business day. If the
           damage is urgent, call — the line is answered around the clock.
         </p>

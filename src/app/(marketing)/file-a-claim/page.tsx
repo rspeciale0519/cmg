@@ -30,7 +30,7 @@ export default function FileAClaimPage() {
         <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
           Letter of Representation.
         </h1>
-        <p className="mt-7 max-w-[58ch] text-lede leading-[1.7] text-ink/84">
+        <p className="mt-7 max-w-[58ch] text-lede leading-[1.7] text-ink/85">
           Complete this intake and we&apos;ll prepare the Letter of Representation for
           signature by every party on the policy. Most answers are on your policy&apos;s
           declarations page — or one call to your carrier away. Referring reps can fill this

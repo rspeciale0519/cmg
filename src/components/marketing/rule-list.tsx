@@ -1,21 +1,22 @@
 import { cx } from "@/lib/cx";
 
-/* Both lists ran at `column-gap: normal` — 0px — so a track only ever showed
-   a gap when its label happened to be short, and the rhythm across a row was
-   whatever the words left over. Each track now carries a real 40px column
-   gap, and the track floors are set from the labels each list actually holds.
+/* Zero column gap is the point, not an oversight. The row's structure is one
+   unbroken hairline running the full 1248px field, and a column gap cuts that
+   rule into one stub per track — four separated segments on the home list, two
+   orphaned stubs beside ~600px of empty canvas on the region list.
 
-   `region` — six labels, the longest ("Orlando & Central Florida") 198px. Six
-   tracks plus five 40px gaps only fit a 1248px field if the floor drops to
-   ~174px, which wraps that label; four 282px tracks wrap the list 4+2 instead
-   and leave every label its own column.
+   A previous pass widened both floors to open a 10px gap between "Orlando &
+   Central Florida" (198px) and "Tampa Bay", and paid for it with a 4+2 wrap
+   and a broken rule. The tight pair is the smaller fault: the only lever that
+   widens it without a column gap is tighter label tracking, and that is a
+   deviation of its own on a set the prototype specifies at -0.01em. Both
+   floors are therefore the prototype's own values.
 
-   `quad` — eight labels. An auto-fit track lays them out over six columns and
-   leaves a ragged 6+2. Four fixed columns split them 4+4, and the ramp below
-   halves that to 2+2+2+2 before going single-column. */
+   `region` — 180px floor: six tracks of 208px on one row at 1440.
+   `quad`   — 190px floor: six tracks of 208px, eight labels, so 6+2. */
 const TRACK = {
-  region: "grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-10",
-  quad: "grid-cols-1 gap-x-10 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-4",
+  region: "grid-cols-[repeat(auto-fit,minmax(180px,1fr))]",
+  quad: "grid-cols-[repeat(auto-fit,minmax(190px,1fr))]",
 } as const;
 
 /* Hairline weight and row rhythm both change with the surface: the canvas
@@ -53,7 +54,7 @@ export function RuleList({
         <li
           key={item.label}
           className={cx(
-            "border-t text-[17px] tracking-[-0.01em]",
+            "border-t text-[17px] leading-[1.55] tracking-[-0.01em]",
             surface.rule,
             surface.row,
             item.muted ? "text-ink/55" : null,

@@ -152,7 +152,8 @@ export default function HomePage() {
           <Button
             href="/services"
             variant="secondary"
-            className="mt-7 min-h-[46px] px-[22px]"
+            size="compact"
+            className="mt-7"
           >
             See how a claim works
           </Button>

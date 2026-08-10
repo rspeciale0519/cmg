@@ -13,25 +13,25 @@ const TRACK = {
 const CARD = {
   sm: {
     box: "min-h-[230px] p-[clamp(24px,2.6vw,36px)]",
-    title: "text-[21px]",
+    title: "text-card-sm",
     titleGap: "mt-5",
     bodyGap: "mt-3",
   },
   md: {
     box: "min-h-[260px] p-[clamp(26px,2.8vw,40px)]",
-    title: "text-[23px]",
+    title: "text-card-md",
     titleGap: "mt-[22px]",
     bodyGap: "mt-[14px]",
   },
   lg: {
     box: "min-h-[280px] p-[clamp(26px,2.8vw,40px)]",
-    title: "text-[23px]",
+    title: "text-card-md",
     titleGap: "mt-[22px]",
     bodyGap: "mt-[14px]",
   },
   xl: {
     box: "min-h-[300px] p-[clamp(28px,3vw,44px)]",
-    title: "text-[24px]",
+    title: "text-card-lg",
     titleGap: "mt-[22px]",
     bodyGap: "mt-[14px]",
   },
@@ -86,7 +86,7 @@ export function Card({
   const body = (
     <>
       {eyebrow ? (
-        <span className="text-xs uppercase tracking-[0.16em] text-accent tabular-nums">
+        <span className="text-xs uppercase leading-[1.55] tracking-[0.16em] text-accent tabular-nums">
           {eyebrow}
         </span>
       ) : null}
@@ -114,7 +114,7 @@ export function Card({
         </p>
       ) : null}
       {action ? (
-        <span className="mt-6 inline-flex items-center gap-1.5 text-sm text-accent">
+        <span className="mt-6 inline-flex items-center gap-1.5 text-sm leading-[1.55] text-accent">
           {action}
           <span
             aria-hidden="true"

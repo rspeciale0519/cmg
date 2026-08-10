@@ -50,7 +50,7 @@ export function DataBand({
         {heading}
       </Heading>
       {intro ? (
-        <p className="mt-[22px] max-w-[56ch] text-base leading-[1.7] text-ink/88">
+        <p className="mt-[22px] max-w-[56ch] text-base leading-[1.7] text-ink/85">
           {intro}
         </p>
       ) : null}
@@ -71,8 +71,16 @@ export function DataBand({
           </div>
         ))}
       </div>
+      {/* The band's second anchor. Two `max-content` figure columns leave the
+          last ink at x=669 in a 1248px field — 668px of bare colour down the
+          full 700px height of the largest saturated block on the site, and
+          `section.tsx` makes closing both edges the rule. The source line is
+          already a full-width block carrying short ink, so aligning it right
+          costs nothing and runs the composition corner to corner. Below
+          1100px the field is narrow enough that the figures reach it on their
+          own, and the citation returns under them. */}
       {source ? (
-        <p className="mt-[clamp(40px,5vw,64px)] text-[13px] leading-[1.7] text-ink/82">
+        <p className="mt-[clamp(40px,5vw,64px)] text-[13px] leading-[1.7] text-ink/85 min-[1100px]:text-right">
           {source}
         </p>
       ) : null}

@@ -50,7 +50,7 @@ export function SuccessPanel({
 
 export function SuccessBody({ children }: { children: ReactNode }) {
   return (
-    <p className="mt-[18px] text-base leading-[1.75] text-ink/76">{children}</p>
+    <p className="mt-[18px] text-base leading-[1.75] text-ink/78">{children}</p>
   );
 }
 

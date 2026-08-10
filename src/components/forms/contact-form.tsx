@@ -113,7 +113,7 @@ export function ContactForm() {
         {pending ? "Sending your request…" : "Request my free review"}
       </Button>
 
-      <p className="mt-4 text-[13px] leading-[1.7] text-ink/50">
+      <p className="mt-4 text-[13px] leading-[1.7] text-ink/55">
         No fee unless we recover. We reply within one business day.
       </p>
     </form>

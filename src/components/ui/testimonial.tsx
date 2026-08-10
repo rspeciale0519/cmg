@@ -50,7 +50,7 @@ export function Testimonial({
             vocabulary instead of leaving it free-floating. The 5px sets the
             attribution's baseline on the quote's last line: above 1360px the
             quote is always at its 42px cap, so the offset is a constant. */}
-        <figcaption className="mt-10 text-sm uppercase leading-[1.6] tracking-[0.1em] text-ink/85 min-[1360px]:mt-0 min-[1360px]:shrink-0 min-[1360px]:pb-[5px] min-[1360px]:text-right">
+        <figcaption className="mt-10 text-sm uppercase leading-[1.55] tracking-[0.1em] text-ink/85 min-[1360px]:mt-0 min-[1360px]:shrink-0 min-[1360px]:pb-[5px] min-[1360px]:text-right">
           <span
             aria-hidden="true"
             className="mb-5 block h-px w-10 bg-accent min-[1360px]:ml-auto"

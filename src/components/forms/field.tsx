@@ -6,16 +6,26 @@ import { cx } from "@/lib/cx";
  *  border. */
 export const DANGER = "#E08C6A";
 
-/** Prototype `.input`, with the 46px min-height these two pages set inline. */
+/** Prototype `.input`, with the 46px min-height these two pages set inline.
+ *
+ *  The invalid state is a variant on this one string, never a second class
+ *  appended beside it. `border-ink/16` and a bare `border-[#E08C6A]` are both
+ *  single-class selectors — equal specificity — so which one paints is decided
+ *  by stylesheet emit order, not by the order they appear in `class`. Tailwind
+ *  emitted the danger utility ~133 rules ahead of `border-ink/16`, so the
+ *  resting border won and the error border never rendered. `aria-invalid:`
+ *  compiles to `[aria-invalid="true"]`, which outranks the resting border on
+ *  specificity and is therefore order-independent. The hover and focus pairs
+ *  are spelled out for the same reason: `hover:border-ink/45` and
+ *  `focus-visible:border-accent` would otherwise tie with it. */
 export const INPUT_CLASS =
   "w-full min-h-[46px] rounded-md border border-ink/16 bg-surface px-[14px] py-[11px] text-[15px] leading-[1.5] text-ink caret-accent transition-colors duration-150 " +
   "placeholder:text-ink/35 hover:border-ink/45 focus-visible:border-accent focus-visible:outline-offset-0 " +
-  "disabled:cursor-not-allowed disabled:opacity-55";
-
-export const INVALID_CLASS = "border-[#E08C6A] hover:border-[#E08C6A]";
+  "disabled:cursor-not-allowed disabled:opacity-55 " +
+  "aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A]";
 
 export const LABEL_CLASS =
-  "block text-xs leading-[1.4] text-ink/70";
+  "block text-xs leading-[1.4] text-ink/72";
 
 export function fieldIds(name: string) {
   return {
@@ -85,7 +95,7 @@ export function FieldError({ id, children }: { id: string; children?: string }) 
 
 export function FieldHint({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p id={id} className="mt-[6px] text-[13px] leading-[1.6] text-ink/50">
+    <p id={id} className="mt-[6px] text-[13px] leading-[1.6] text-ink/55">
       {children}
     </p>
   );

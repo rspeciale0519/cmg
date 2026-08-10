@@ -26,12 +26,11 @@ export function StatBand({
       className={cx(bordered ? "border-b border-ink/9" : null, className)}
     >
       <Container className="py-[clamp(40px,5vw,64px)]">
-        {/* The prototype's 24px column gap, but only from the width at which
-            the band is a single row of four. Below that it wraps to 2×2, and
-            a 24px column gap under a 36px row gap makes the four figures read
-            as a table with rows rather than as four independent stats — so
-            the wider gap stays where the wrap actually happens. */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-x-10 gap-y-9 md:gap-x-6">
+        {/* The prototype's 24px column gap at every width. A previous pass
+            widened it to 40px below `md` so the wrapped 2×2 would not read as
+            a table; it cost 8px off each track (155px vs the prototype's
+            163px) and the phone is where those labels are tightest. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-x-6 gap-y-9">
           {stats.map((stat) => (
             <div key={stat.label}>
               <p className="text-figure-md font-medium leading-none tracking-[-0.03em] tabular-nums">
@@ -42,7 +41,7 @@ export function StatBand({
               </p>
               {/* 14px under a 46px figure was tighter than the type could
                   carry; 18px binds the pair without loosening it. */}
-              <p className="mt-[18px] text-xs uppercase tracking-[0.14em] text-ink/55">
+              <p className="mt-[18px] text-xs uppercase leading-[1.55] tracking-[0.14em] text-ink/55">
                 {stat.label}
               </p>
             </div>

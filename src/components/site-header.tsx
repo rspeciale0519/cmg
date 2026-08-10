@@ -132,25 +132,33 @@ export function SiteHeader() {
       />
 
       <header className="sticky top-0 z-40 border-b border-ink/9 bg-canvas/82 backdrop-blur-[14px]">
-        {/* 84px, not 76px: the lockup is a stacked mark-over-wordmark, so at
-            76px it cleared the row by 5px top and bottom and read cramped and
-            optically high against the nav baseline. The extra 8px is air, and
-            the mark grows with it so the lockup keeps its weight. */}
+        {/* 84px, not the prototype's 76px. The lockup is a stacked
+            mark-over-wordmark measuring 81px, so a 76px row does not contain
+            it at all — the prototype's header is really 81px with the lockup
+            flush to both edges. 84px gives it 1.5px of air instead of none,
+            and the nav and CTA still centre against it. */}
         <div className="grid min-h-[84px] w-full grid-cols-[1fr_auto_1fr] items-center gap-8 px-[clamp(20px,4vw,56px)]">
           <Link
             href="/"
             aria-label={`${site.name} — home`}
-            className="col-start-1 flex flex-col items-center gap-[6px] justify-self-start text-inherit no-underline"
+            className="col-start-1 flex flex-col items-center gap-[5px] justify-self-start text-inherit no-underline"
           >
+            {/* 58px is the prototype's header mark, and it is deliberately
+                larger than the footer's 56px — the header lockup leads. The
+                prototype reaches 58px by stretching the asset to 71×58
+                against its true 1.117 aspect; the height is kept and the
+                stretch is not, so this renders 64.8×58. The 4px under the
+                wordmark is the prototype's own: it sits the visible ink
+                slightly above the row's optical centre. */}
             <Image
               src="/images/logo-cmg-mark.png"
               alt=""
               width={573}
               height={513}
               priority
-              className="h-[50px] w-auto"
+              className="h-[58px] w-auto"
             />
-            <span className="whitespace-nowrap text-[10px] uppercase leading-none tracking-[0.24em] text-accent">
+            <span className="whitespace-nowrap pb-1 text-[9px] uppercase leading-[1.55] tracking-[0.24em] text-accent">
               Property Solutions
             </span>
           </Link>
@@ -172,7 +180,7 @@ export function SiteHeader() {
                        its 14px nav links inherit (21.7px). Tailwind's
                        `text-sm` ships a 20px pair. */
                     "flex min-h-[44px] items-center text-sm leading-[1.55] no-underline transition-colors duration-200",
-                    active ? "text-accent" : "text-ink/82 hover:text-ink",
+                    active ? "text-accent" : "text-ink/85 hover:text-ink",
                   )}
                 >
                   {item.label}

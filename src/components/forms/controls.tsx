@@ -10,7 +10,6 @@ import {
   FieldLabel,
   fieldIds,
   INPUT_CLASS,
-  INVALID_CLASS,
 } from "./field";
 
 type Shared = {
@@ -45,7 +44,7 @@ export function TextField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
-        className={cx("mt-[6px]", INPUT_CLASS, error && INVALID_CLASS)}
+        className={cx("mt-[6px]", INPUT_CLASS)}
       />
       {hint ? <FieldHint id={ids.hintId}>{hint}</FieldHint> : null}
       <FieldError id={ids.errorId}>{error}</FieldError>
@@ -76,11 +75,7 @@ export function TextAreaField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
-        className={cx(
-          "mt-[6px] resize-y",
-          INPUT_CLASS,
-          error && INVALID_CLASS,
-        )}
+        className={cx("mt-[6px] resize-y", INPUT_CLASS)}
       />
       {hint ? <FieldHint id={ids.hintId}>{hint}</FieldHint> : null}
       <FieldError id={ids.errorId}>{error}</FieldError>
@@ -130,11 +125,7 @@ export function SelectField({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
-          className={cx(
-            "appearance-none pr-11",
-            INPUT_CLASS,
-            error && INVALID_CLASS,
-          )}
+          className={cx("appearance-none pr-11", INPUT_CLASS)}
         >
           {showPlaceholder ? (
             <option value="" disabled>
@@ -190,7 +181,7 @@ export function RadioField({
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
     >
-      <legend className="block text-xs leading-[1.4] text-ink/70">
+      <legend className="block text-xs leading-[1.4] text-ink/72">
         {label}
         {required ? (
           <span aria-hidden="true" className="ml-[3px] text-accent">
@@ -252,7 +243,7 @@ export function CheckboxField({
     <div className={cx("min-w-0", className)}>
       <label
         htmlFor={ids.inputId}
-        className="flex max-w-[66ch] cursor-pointer items-start gap-[14px] text-[15px] leading-[1.7] text-ink/76"
+        className="flex max-w-[66ch] cursor-pointer items-start gap-[14px] text-[15px] leading-[1.7] text-ink/78"
       >
         <input
           id={ids.inputId}
@@ -291,10 +282,9 @@ export function FileField({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(Boolean(error), Boolean(hint), ids)}
         className={cx(
-          "mt-[6px] cursor-pointer p-[11px] text-[14px] text-ink/70",
+          "mt-[6px] cursor-pointer p-[11px] text-[14px] text-ink/72",
           "file:mr-4 file:cursor-pointer file:rounded-sm file:border file:border-accent/45 file:bg-transparent file:px-4 file:py-[7px] file:text-[13px] file:font-medium file:text-accent file:transition-colors hover:file:bg-accent/12",
           INPUT_CLASS,
-          error && INVALID_CLASS,
         )}
       />
       {hint ? <FieldHint id={ids.hintId}>{hint}</FieldHint> : null}

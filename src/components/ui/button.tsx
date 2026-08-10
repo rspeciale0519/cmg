@@ -10,8 +10,14 @@ const VARIANT = {
   secondary: "border-ink/16 text-ink hover:bg-ink/7 active:bg-ink/14",
 } as const;
 
+/* Sizes are keys here, never a `className` override at the call site. A
+   caller passing `min-h-[46px] px-[22px]` alongside `md`'s own
+   `min-h-[50px] px-[26px]` ties on specificity — both are single-class
+   selectors — so the emitted sheet decides, and `md` won: the override was
+   inert. `compact` is the prototype's own 46px/22px secondary button. */
 const SIZE = {
   sm: "px-[18px] py-[10px] text-sm",
+  compact: "min-h-[46px] px-[22px] text-[15px]",
   md: "min-h-[50px] px-[26px] text-[15px]",
   lg: "min-h-[52px] px-[34px] text-[15px]",
 } as const;
