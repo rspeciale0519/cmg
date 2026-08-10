@@ -280,3 +280,38 @@ describe("intakeSchema — referral and consent", () => {
     expect(errorFor({ ...valid, turnstileToken: "" }, "turnstileToken")).toBeDefined();
   });
 });
+
+/* The cause, carrier-tenure and adjuster selects now start on an empty
+   option rather than pre-answering themselves, so `""` is a value a real
+   submission can carry and it has to be rejected with a message the field
+   can show. */
+describe("intakeSchema — selects that start empty", () => {
+  it.each([
+    ["cause", "Choose the cause of loss."],
+    ["carrierTenure", "Tell us how long you have been with this carrier."],
+    ["requestedAdjuster", "Choose which adjuster you are working with."],
+  ])("rejects an unanswered %s", (field, message) => {
+    const issue = errorFor({ ...valid, [field]: "" }, field);
+    expect(issue).toBeDefined();
+    expect(issue?.message).toBe(message);
+  });
+
+  it("rejects an unanswered prior outcome once a prior claim is declared", () => {
+    const issue = errorFor(
+      { ...valid, priorRoofClaim: "yes", priorOutcome: "" },
+      "priorOutcome",
+    );
+    expect(issue?.message).toBe("Tell us the outcome of the prior roof claim.");
+  });
+
+  it("still accepts every real option value", () => {
+    for (const option of CAUSE_OPTIONS) {
+      expect(intakeSchema.safeParse({ ...valid, cause: option.value }).success).toBe(true);
+    }
+    for (const option of ADJUSTER_OPTIONS) {
+      expect(
+        intakeSchema.safeParse({ ...valid, requestedAdjuster: option.value }).success,
+      ).toBe(true);
+    }
+  });
+});

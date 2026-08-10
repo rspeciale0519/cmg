@@ -73,12 +73,12 @@ export default function ServicesPage() {
         <div>
           <ServiceRow index="01" title="Public adjusting">
             Full claim management, start to settlement. We inspect and document
-            the damage, read the policy&rsquo;s fine print, prepare and file the
+            the damage, read the policy&apos;s fine print, prepare and file the
             claim, and handle every carrier meeting, inspection and negotiation
             on your behalf.
           </ServiceRow>
           <ServiceRow index="02" title="Appraisal & umpire">
-            When a claim we didn&rsquo;t prepare comes back denied or underpaid,
+            When a claim we didn&apos;t prepare comes back denied or underpaid,
             we re-examine the damage and issue an independent appraisal &mdash; a
             second expert opinion for your negotiation, or for the appraisal
             clause in your policy.
@@ -91,7 +91,7 @@ export default function ServicesPage() {
           <ServiceRow index="04" title="Free claim review">
             A no-obligation review of your policy and damage &mdash; new, denied
             or settled. We tell you plainly what your claim is worth pursuing and
-            what we&rsquo;d do next.{" "}
+            what we&apos;d do next.{" "}
             <ProseLink href={claimHref}>Request one</ProseLink>.
           </ServiceRow>
         </div>
@@ -102,6 +102,7 @@ export default function ServicesPage() {
         heading="The numbers favor representation."
         intro="Florida's legislative research office studied Citizens Property Insurance claims and found policyholders who used a public adjuster recovered far more than those who negotiated alone."
         points={OPPAGA_POINTS}
+        measure="wide"
         source="Source: OPPAGA Report 10-06, Florida Legislature, January 2010."
       />
 
@@ -110,7 +111,7 @@ export default function ServicesPage() {
         containerClassName="pb-[clamp(48px,6vw,80px)] pt-[clamp(72px,9vw,120px)]"
       >
         <SectionKicker label="How a claim works" className="mb-[26px]" />
-        <h2 className="mb-[clamp(40px,5vw,64px)] max-w-[18ch] text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.12] tracking-[-0.03em]">
+        <h2 className="mb-[clamp(40px,5vw,64px)] max-w-[18ch] text-display-6 font-medium leading-[1.12] tracking-[-0.03em]">
           Four steps, and we carry all of them.
         </h2>
         <CardGrid track="sm">

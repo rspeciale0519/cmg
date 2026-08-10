@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContactForm } from "@/components/forms/contact-form";
-import { Button } from "@/components/ui/button";
 import { FaqItem } from "@/components/ui/faq-item";
 import { Section } from "@/components/ui/section";
 import { SectionKicker } from "@/components/ui/section-kicker";
@@ -34,10 +33,10 @@ export default function ContactPage() {
     <>
       <Section space="none" className="pt-[clamp(64px,8vw,112px)]">
         <SectionKicker label="Contact" className="mb-[26px]" />
-        <h1 className="m-0 max-w-[16ch] text-[clamp(36px,5.4vw,76px)] font-medium leading-[1.05] tracking-[-0.035em]">
+        <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
           Start your free claim review.
         </h1>
-        <p className="mt-7 max-w-[56ch] text-[clamp(16px,1.5vw,18px)] leading-[1.7] text-ink/84">
+        <p className="mt-7 max-w-[56ch] text-lede leading-[1.7] text-ink/84">
           Tell us what happened and we&apos;ll call you back within one business day. If the
           damage is urgent, call — the line is answered around the clock.
         </p>
@@ -53,7 +52,7 @@ export default function ContactPage() {
             <p className={DETAIL_LABEL}>Call 24/7</p>
             <Link
               href={telHref}
-              className="text-[clamp(24px,2.6vw,32px)] font-medium tracking-[-0.025em] text-accent hover:text-accent-300"
+              className="text-figure-sm font-medium tracking-[-0.025em] text-accent transition-colors duration-200 hover:text-accent-300"
             >
               {site.phone}
             </Link>
@@ -101,7 +100,11 @@ export default function ContactPage() {
 
       <Section space="none" className="pb-[clamp(72px,9vw,120px)]">
         <SectionKicker label="Common questions" className="mb-[34px]" />
-        <div className="max-w-[820px]">
+        {/* The rules run the full field rather than stopping at 820px: the
+            row is the structure (question left, chevron right, both edges
+            anchored) and the answer keeps its own 62ch reading measure
+            inside it. An 820px column here drew a 428px dead strip. */}
+        <div>
           <FaqItem question="What does it cost?">
             Nothing up front. Our fee is a fixed percentage of the settlement, agreed in
             writing before we start. If we recover nothing, you owe nothing.
@@ -119,13 +122,6 @@ export default function ContactPage() {
             No. Once you appoint us, we handle the carrier&apos;s calls, inspections and
             paperwork. Your job is to approve the settlement.
           </FaqItem>
-        </div>
-
-        <div className="mt-12 flex flex-wrap gap-3">
-          <Button href={claimHref}>File a claim</Button>
-          <Button href={telHref} variant="secondary">
-            Call {site.phone}
-          </Button>
         </div>
       </Section>
     </>

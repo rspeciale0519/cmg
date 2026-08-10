@@ -88,6 +88,11 @@ export function TextAreaField({
   );
 }
 
+/** Shown by a select that has no answer yet. Styled as a placeholder by the
+ *  `select:has(option[value=""]:checked)` rule in globals.css, so an
+ *  unanswered select reads the same weight as an unanswered text field. */
+const SELECT_PLACEHOLDER = "Select…";
+
 export function SelectField({
   name,
   label,
@@ -96,12 +101,20 @@ export function SelectField({
   required,
   className,
   options,
+  placeholder = true,
   ...select
 }: Shared &
   Omit<ComponentPropsWithoutRef<"select">, "name" | "className"> & {
     options: ReadonlyArray<{ value: string; label: string }>;
+    /** Set false where a real default is intended (e.g. State = Florida). */
+    placeholder?: boolean;
   }) {
   const ids = fieldIds(name);
+  /* A select with a value is answered by definition, so it cannot also carry
+     an empty first option — otherwise the browser would have nothing to
+     select and would silently fall back to the first real option. */
+  const showPlaceholder =
+    placeholder && select.defaultValue === undefined && select.value === undefined;
 
   return (
     <Field className={className}>
@@ -111,6 +124,7 @@ export function SelectField({
       <div className="relative mt-[6px]">
         <select
           {...select}
+          defaultValue={showPlaceholder ? "" : select.defaultValue}
           id={ids.inputId}
           name={name}
           required={required}
@@ -122,6 +136,11 @@ export function SelectField({
             error && INVALID_CLASS,
           )}
         >
+          {showPlaceholder ? (
+            <option value="" disabled>
+              {SELECT_PLACEHOLDER}
+            </option>
+          ) : null}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

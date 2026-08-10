@@ -8,7 +8,15 @@ const COLUMN_HEADING =
   "text-[11px] font-normal uppercase tracking-[0.18em] text-ink/45";
 const LINK =
   "flex min-h-[44px] items-center text-sm text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300";
-const EMAIL_LINK = `${LINK} break-all`;
+/* `break-all` split the address mid-word ("…CMGPropertySolution / s.net").
+   Block layout plus an explicit break opportunity after the `@` gives the
+   line a place it *wants* to break, and `anywhere` is only the fallback for
+   viewports too narrow even for the domain. 11px padding on a 22.4px line
+   keeps the 44px tap target the flex row was providing. */
+const EMAIL_LINK =
+  "block py-[11px] text-sm leading-[1.6] text-ink/78 no-underline transition-colors duration-200 hover:text-accent-300 [overflow-wrap:anywhere]";
+
+const [EMAIL_LOCAL, EMAIL_DOMAIN] = site.email.split("@");
 
 export function SiteFooter() {
   return (
@@ -52,8 +60,11 @@ export function SiteFooter() {
             <a href={telHref} className={LINK}>
               {site.phone}
             </a>
-            <a href={emailHref} className={EMAIL_LINK}>
-              {site.email}
+            {/* The <wbr> serialises into the computed accessible name as a
+                space, so the name is given explicitly instead. */}
+            <a href={emailHref} aria-label={site.email} className={EMAIL_LINK}>
+              {EMAIL_LOCAL}@<wbr />
+              {EMAIL_DOMAIN}
             </a>
             <span className="py-2 text-sm leading-[1.6] text-ink/62">
               {site.city}

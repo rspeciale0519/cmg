@@ -48,6 +48,28 @@
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
+  /* ── Type scale ────────────────────────────────────────────────────────
+     One clamp per step. Every desktop cap is the size the prototype renders
+     at 1440; the mobile floor is what the prototypes left un-systematised —
+     the same cap was reached from three different floors, so the hierarchy
+     silently reordered itself below ~900px. Headings and figures ramp
+     separately on purpose: a numeral has to stay a numeral on a phone, so
+     the figure steps floor higher than the heading steps they cap with. */
+  --text-display-1: clamp(40px, 7vw, 92px); /* home hero h1 */
+  --text-display-2: clamp(38px, 6vw, 84px); /* contractors hero h1 */
+  --text-display-3: clamp(36px, 5.4vw, 76px); /* page h1 */
+  --text-display-4: clamp(28px, 3.6vw, 46px); /* lead section h2 */
+  --text-display-5: clamp(28px, 3.4vw, 42px); /* section h2, pull-quote */
+  --text-display-6: clamp(26px, 3.2vw, 40px); /* sub-section h2 */
+  --text-display-7: clamp(22px, 2.4vw, 30px); /* row heading */
+
+  --text-figure-lg: clamp(44px, 5.4vw, 76px); /* data band numerals */
+  --text-figure-md: clamp(32px, 3.4vw, 46px); /* stat band numerals */
+  --text-figure-sm: clamp(24px, 2.6vw, 32px); /* phone number */
+
+  --text-lede: clamp(16px, 1.5vw, 18px);
+  --text-lede-lg: clamp(16px, 1.6vw, 19px);
+
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 14px;
@@ -100,6 +122,80 @@
   ::selection {
     background: color-mix(in srgb, var(--color-accent) 30%, transparent);
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Native date & time editors.
+
+   The field system says an unanswered field is `ink/35` (INPUT_CLASS's
+   placeholder colour) and an answered one is full ink. `input[type=date]`
+   and `input[type=time]` break that contract twice: the shadow-DOM editor
+   inherits the input's own colour, so the "mm/dd/yyyy" and "--:-- --"
+   skeletons render at full ink and read as real answers; and the picker
+   button ships Chromium's white glyph next to our gold select chevron.
+
+   Chromium marks a datetime sub-field that holds a value with
+   `aria-valuenow`, so `:not([aria-valuenow])` is the empty state.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Renders the native calendar/clock popovers, the select option list and
+     the scrollbars against the dark canvas instead of a white sheet. */
+  color-scheme: dark;
+}
+
+::-webkit-datetime-edit-year-field:not([aria-valuenow]),
+::-webkit-datetime-edit-month-field:not([aria-valuenow]),
+::-webkit-datetime-edit-day-field:not([aria-valuenow]),
+::-webkit-datetime-edit-hour-field:not([aria-valuenow]),
+::-webkit-datetime-edit-minute-field:not([aria-valuenow]),
+::-webkit-datetime-edit-second-field:not([aria-valuenow]),
+::-webkit-datetime-edit-millisecond-field:not([aria-valuenow]),
+::-webkit-datetime-edit-ampm-field:not([aria-valuenow]) {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+/* The separators ("/", ":") belong to the skeleton, not the answer. */
+::-webkit-datetime-edit-text {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+::-webkit-datetime-edit-year-field:focus,
+::-webkit-datetime-edit-month-field:focus,
+::-webkit-datetime-edit-day-field:focus,
+::-webkit-datetime-edit-hour-field:focus,
+::-webkit-datetime-edit-minute-field:focus,
+::-webkit-datetime-edit-ampm-field:focus {
+  background: color-mix(in srgb, var(--color-accent) 26%, transparent);
+  color: var(--color-ink);
+  outline: none;
+}
+
+/* Replaces Chromium's white glyph with the same chevron and accent colour
+   the custom <select> control draws. */
+::-webkit-calendar-picker-indicator {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: 8px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.75;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%23d4b36a' stroke-width='1.25' stroke-linecap='square'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  transition: opacity 150ms ease;
+}
+
+::-webkit-calendar-picker-indicator:hover,
+::-webkit-calendar-picker-indicator:focus-visible {
+  opacity: 1;
+}
+
+/* A select still showing its empty first option is unanswered, and reads at
+   the same ink/35 as an empty text field and an empty datetime skeleton. */
+select:has(option[value=""]:checked) {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
 }
 
 /* Hero atmosphere — keyframes ported from the prototype hero. */

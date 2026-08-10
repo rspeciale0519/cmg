@@ -93,7 +93,10 @@ export function Card({
       <Title
         className={cx(
           metrics.title,
-          "leading-[1.2] tracking-[-0.02em]",
+          "leading-[1.2] tracking-[-0.02em] transition-colors duration-200",
+          /* Inert unless an ancestor carries `group` — i.e. only on the
+             linked card, never on the static one. */
+          "group-hover:text-accent-100",
           eyebrow ? metrics.titleGap : null,
         )}
       >
@@ -111,8 +114,14 @@ export function Card({
         </p>
       ) : null}
       {action ? (
-        <span className="mt-6 text-sm text-accent">
-          {action} <span aria-hidden="true">&rarr;</span>
+        <span className="mt-6 inline-flex items-center gap-1.5 text-sm text-accent">
+          {action}
+          <span
+            aria-hidden="true"
+            className="transition-transform duration-200 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
+          >
+            &rarr;
+          </span>
         </span>
       ) : null}
     </>
@@ -122,12 +131,21 @@ export function Card({
 
   if (href) {
     return (
+      /* The card is one target, so it moves as one: the ground lifts, the
+         edge steps in from the 1px grid gap, and the arrow leads. Restrained
+         on purpose — no lift, no shadow, no scale. */
       <Link
         href={href}
         className={cx(
           shell,
-          "text-inherit no-underline transition-colors duration-200",
+          "group relative text-inherit no-underline transition-colors duration-200",
           "hover:bg-[color-mix(in_srgb,var(--color-accent)_7%,var(--color-canvas))]",
+          "active:bg-[color-mix(in_srgb,var(--color-accent)_11%,var(--color-canvas))]",
+          /* Drawn as an inset ring so it reads on top of the grid's own 1px
+             gap lines instead of displacing the card by a border width. */
+          "after:pointer-events-none after:absolute after:inset-0 after:transition-shadow after:duration-200",
+          "hover:after:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-ink)_22%,transparent)]",
+          "focus-visible:after:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-ink)_22%,transparent)]",
         )}
       >
         {body}

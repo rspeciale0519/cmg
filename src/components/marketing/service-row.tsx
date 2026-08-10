@@ -27,7 +27,7 @@ export function ServiceRow({
       <span className="text-xs leading-[1.9] tracking-[0.16em] text-accent tabular-nums">
         {index}
       </span>
-      <h2 className="text-[clamp(22px,2.4vw,30px)] font-medium leading-[1.15] tracking-[-0.025em]">
+      <h2 className="text-display-7 font-medium leading-[1.15] tracking-[-0.025em]">
         {title}
       </h2>
       <p className="col-start-2 max-w-[54ch] text-base leading-[1.75] text-ink/72 min-[861px]:col-start-3">

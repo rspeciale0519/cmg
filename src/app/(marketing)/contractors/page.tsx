@@ -74,7 +74,7 @@ export default function ContractorsPage() {
 
       <Hero
         variant="compact"
-        className="[&_h1]:max-w-[15ch] [&_h1]:text-[clamp(38px,6vw,84px)] [&_h1]:leading-[1.04]"
+        scale="lg"
         kicker="For roofing & restoration contractors"
         headline={
           <>
@@ -110,7 +110,7 @@ export default function ContractorsPage() {
       </Section>
 
       <Section tone="section" space="lg" aria-label="How the referral works">
-        <h2 className="mb-[clamp(40px,5vw,64px)] max-w-[18ch] text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.12] tracking-[-0.03em]">
+        <h2 className="mb-[clamp(40px,5vw,64px)] max-w-[18ch] text-display-6 font-medium leading-[1.12] tracking-[-0.03em]">
           How the referral works.
         </h2>
         <StepList steps={REFERRAL_STEPS} />

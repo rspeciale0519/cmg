@@ -27,10 +27,10 @@ export default function FileAClaimPage() {
     <>
       <Section space="none" className="pt-[clamp(56px,7vw,96px)]">
         <SectionKicker label="File a claim" className="mb-[26px]" />
-        <h1 className="m-0 max-w-[16ch] text-[clamp(36px,5.4vw,76px)] font-medium leading-[1.05] tracking-[-0.035em]">
+        <h1 className="m-0 max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
           Letter of Representation.
         </h1>
-        <p className="mt-7 max-w-[58ch] text-[clamp(16px,1.5vw,18px)] leading-[1.7] text-ink/84">
+        <p className="mt-7 max-w-[58ch] text-lede leading-[1.7] text-ink/84">
           Complete this intake and we&apos;ll prepare the Letter of Representation for
           signature by every party on the policy. Most answers are on your policy&apos;s
           declarations page — or one call to your carrier away. Referring reps can fill this
@@ -42,9 +42,7 @@ export default function FileAClaimPage() {
         space="none"
         className="pt-[clamp(40px,5vw,64px)] pb-[clamp(72px,9vw,120px)]"
       >
-        <div className="max-w-[880px]">
-          <IntakeForm />
-        </div>
+        <IntakeForm />
       </Section>
     </>
   );

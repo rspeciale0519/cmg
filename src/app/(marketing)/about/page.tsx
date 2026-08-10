@@ -67,11 +67,11 @@ export default function AboutPage() {
         containerClassName="pb-[clamp(48px,6vw,72px)] pt-[clamp(64px,8vw,112px)]"
       >
         <SectionKicker label="About CMG" className="mb-[26px]" />
-        <h1 className="max-w-[16ch] text-[clamp(36px,5.4vw,76px)] font-medium leading-[1.05] tracking-[-0.035em]">
-          Licensed adjusters on the policyholder&rsquo;s side.
+        <h1 className="max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
+          Licensed adjusters on the policyholder&apos;s side.
         </h1>
         <div className="mt-9 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-x-[clamp(32px,5vw,88px)] gap-y-6">
-          <p className="text-[clamp(16px,1.5vw,18px)] leading-[1.7] text-ink/84">
+          <p className="text-lede leading-[1.7] text-ink/84">
             After a catastrophe, insurance carriers field thousands of claims at
             once &mdash; often with new, hurried adjusters. Things get missed,
             understated or denied. CMG Property Solutions exists to balance that
@@ -80,7 +80,7 @@ export default function AboutPage() {
           </p>
           <p className="text-base leading-[1.75] text-ink/68">
             We are licensed and bonded in every state where we work, bound by
-            each state&rsquo;s code of ethics for public adjusters, and members
+            each state&apos;s code of ethics for public adjusters, and members
             of professional adjusting associations. Se habla espa&ntilde;ol.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function AboutPage() {
       >
         <div>
           <SectionKicker label="The team" className="mb-[22px]" />
-          <h2 className="max-w-[15ch] text-[clamp(28px,3.4vw,42px)] font-medium leading-[1.12] tracking-[-0.03em]">
+          <h2 className="max-w-[15ch] text-display-5 font-medium leading-[1.12] tracking-[-0.03em]">
             Adjusters first, salespeople never.
           </h2>
           <p className="mt-[22px] max-w-[46ch] text-base leading-[1.7] text-ink/72">
@@ -122,13 +122,13 @@ export default function AboutPage() {
       </Section>
 
       <Section tone="section" space="lg">
-        <h2 className="max-w-[18ch] text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.12] tracking-[-0.03em]">
+        <h2 className="max-w-[18ch] text-display-6 font-medium leading-[1.12] tracking-[-0.03em]">
           Where we work.
         </h2>
         <p className="mb-[clamp(40px,5vw,56px)] mt-[22px] max-w-[56ch] text-base leading-[1.7] text-ink/88">
           Headquartered in Orlando and licensed across Florida, with catastrophe
           response statewide. Our service area grows every season &mdash; if
-          you&rsquo;re outside it, ask anyway.
+          you&apos;re outside it, ask anyway.
         </p>
         <RuleList
           items={SERVICE_AREA}
@@ -143,7 +143,7 @@ export default function AboutPage() {
           heading="Talk to an adjuster today."
           intro={
             <>
-              Questions about a loss, a policy or a denial &mdash; we&rsquo;re
+              Questions about a loss, a policy or a denial &mdash; we&apos;re
               happy to talk it through before you commit to anything.
             </>
           }

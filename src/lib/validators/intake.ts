@@ -90,10 +90,18 @@ export const ADJUSTER_OPTIONS = [
   { value: "unsure", label: "Not sure yet" },
 ] as const satisfies Options<typeof ADJUSTER_VALUES>;
 
-const carrierTenure = z.enum(CARRIER_TENURE_VALUES);
-const priorOutcome = z.enum(PRIOR_OUTCOME_VALUES);
-const cause = z.enum(CAUSE_VALUES);
-const requestedAdjuster = z.enum(ADJUSTER_VALUES);
+/* These selects start genuinely empty, so `""` is a reachable submitted value
+   and its message is what the user actually sees — not a fallback. */
+const carrierTenure = z.enum(CARRIER_TENURE_VALUES, {
+  error: "Tell us how long you have been with this carrier.",
+});
+const priorOutcome = z.enum(PRIOR_OUTCOME_VALUES, {
+  error: "Tell us the outcome of the prior roof claim.",
+});
+const cause = z.enum(CAUSE_VALUES, { error: "Choose the cause of loss." });
+const requestedAdjuster = z.enum(ADJUSTER_VALUES, {
+  error: "Choose which adjuster you are working with.",
+});
 
 const yesNo = z.enum(["no", "yes"]);
 

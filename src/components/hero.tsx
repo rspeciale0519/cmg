@@ -5,12 +5,24 @@ import { cx } from "@/lib/cx";
 
 export type HeroVariant = "atmospheric" | "compact";
 
+/* Named steps rather than a per-page arbitrary override. `lg` exists because
+   the Contractors headline is a two-part line the prototype sets one step
+   above the other page h1s; it is a scale, not a one-off. */
+const HEADLINE = {
+  md: { size: "text-display-3", measure: "max-w-[16ch]", leading: "leading-[1.05]" },
+  lg: { size: "text-display-2", measure: "max-w-[15ch]", leading: "leading-[1.04]" },
+  xl: { size: "text-display-1", measure: "max-w-[17ch]", leading: "leading-[1.04]" },
+} as const;
+
+export type HeroScale = keyof typeof HEADLINE;
+
 export type HeroProps = {
   headline: ReactNode;
   kicker?: string;
   body?: ReactNode;
   actions?: ReactNode;
   variant?: HeroVariant;
+  scale?: HeroScale;
   video?: boolean;
   className?: string;
 };
@@ -21,10 +33,13 @@ export function Hero({
   body,
   actions,
   variant = "atmospheric",
+  scale,
   video = false,
   className,
 }: HeroProps) {
   if (variant === "compact") {
+    const step = HEADLINE[scale ?? "md"];
+
     return (
       <section
         className={cx(
@@ -33,20 +48,31 @@ export function Hero({
         )}
       >
         {kicker ? <SectionKicker label={kicker} className="mb-[26px]" /> : null}
-        <h1 className="max-w-[16ch] text-[clamp(36px,5.4vw,76px)] font-medium leading-[1.05] tracking-[-0.035em]">
+        <h1
+          className={cx(
+            "font-medium tracking-[-0.035em]",
+            step.size,
+            step.measure,
+            step.leading,
+          )}
+        >
           {headline}
         </h1>
         {body ? (
-          <p className="mt-[28px] max-w-[56ch] text-[clamp(16px,1.5vw,18px)] leading-[1.7] text-ink/84">
+          <p className="mt-[28px] max-w-[56ch] text-lede leading-[1.7] text-ink/84">
             {body}
           </p>
         ) : null}
         {actions ? (
-          <div className="mt-9 flex flex-wrap gap-3">{actions}</div>
+          <div className="mt-9 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap [&>*]:justify-center min-[420px]:[&>*]:flex-none">
+            {actions}
+          </div>
         ) : null}
       </section>
     );
   }
+
+  const step = HEADLINE[scale ?? "xl"];
 
   return (
     <section
@@ -85,16 +111,28 @@ export function Hero({
 
       <div className="relative mx-auto w-full max-w-[1360px] px-[clamp(20px,4vw,56px)] pb-[clamp(56px,7vh,84px)] pt-[clamp(120px,18vh,200px)]">
         {kicker ? <SectionKicker label={kicker} className="mb-[26px]" /> : null}
-        <h1 className="max-w-[17ch] text-[clamp(40px,7vw,92px)] font-medium leading-[1.04] tracking-[-0.035em]">
+        <h1
+          className={cx(
+            "font-medium tracking-[-0.035em]",
+            step.size,
+            step.measure,
+            step.leading,
+          )}
+        >
           {headline}
         </h1>
         {body ? (
-          <p className="mt-[30px] max-w-[56ch] text-[clamp(16px,1.6vw,19px)] leading-[1.65] text-ink/84">
+          <p className="mt-[30px] max-w-[56ch] text-lede-lg leading-[1.65] text-ink/84">
             {body}
           </p>
         ) : null}
+        {/* Stacked full-width below 420px. Side by side these two read as one
+            control at ~250px and ~238px — near-equal is worse than either
+            equal or clearly different, so the narrow case commits to equal. */}
         {actions ? (
-          <div className="mt-[38px] flex flex-wrap gap-3">{actions}</div>
+          <div className="mt-[38px] flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap [&>*]:justify-center min-[420px]:[&>*]:flex-none">
+            {actions}
+          </div>
         ) : null}
       </div>
     </section>

@@ -83,12 +83,12 @@ export default function HomePage() {
         <div className="mb-[clamp(40px,5vw,64px)] grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-end gap-x-12 gap-y-5">
           <div>
             <SectionKicker label="Who we represent" className="mb-[22px]" />
-            <h2 className="max-w-[16ch] text-[clamp(28px,3.6vw,46px)] font-medium leading-[1.1] tracking-[-0.03em]">
+            <h2 className="max-w-[16ch] text-display-4 font-medium leading-[1.1] tracking-[-0.03em]">
               Three ways we take the claim off your desk.
             </h2>
           </div>
           <p className="max-w-[46ch] text-base leading-[1.7] text-ink/72">
-            Whether it&rsquo;s a house, a portfolio or a client you referred, the
+            Whether it&apos;s a house, a portfolio or a client you referred, the
             work is the same: document everything, price it correctly, and hold
             the carrier to the policy.
           </p>
@@ -114,7 +114,7 @@ export default function HomePage() {
             action="What we do"
           >
             Larger losses, harder policies. Property and business-interruption
-            claims documented so thoroughly the carrier can&rsquo;t dismiss them.
+            claims documented so thoroughly the carrier can&apos;t dismiss them.
           </Card>
           <Card
             size="xl"
@@ -141,12 +141,12 @@ export default function HomePage() {
       <Section containerClassName="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-center gap-x-[clamp(32px,5vw,88px)] gap-y-10">
         <div>
           <SectionKicker label="On your side" className="mb-[22px]" />
-          <h2 className="max-w-[15ch] text-[clamp(28px,3.4vw,42px)] font-medium leading-[1.12] tracking-[-0.03em]">
-            We work the file so you don&rsquo;t have to.
+          <h2 className="max-w-[15ch] text-display-5 font-medium leading-[1.12] tracking-[-0.03em]">
+            We work the file so you don&apos;t have to.
           </h2>
           <p className="mt-[22px] max-w-[46ch] text-base leading-[1.7] text-ink/72">
             Every claim gets a full inspection, a line-by-line damage estimate
-            and a documented demand. Your carrier&rsquo;s adjuster works for the
+            and a documented demand. Your carrier&apos;s adjuster works for the
             insurance company. We work for you.
           </p>
           <Button
@@ -171,7 +171,7 @@ export default function HomePage() {
           intro={
             <>
               Send your policy and a few photos, or ask for an inspection.
-              We&rsquo;ll tell you plainly whether your claim is worth pursuing
+              We&apos;ll tell you plainly whether your claim is worth pursuing
               &mdash; no cost, no obligation.
             </>
           }

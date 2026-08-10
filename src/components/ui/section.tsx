@@ -1,7 +1,26 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cx } from "@/lib/cx";
 
-const CONTAINER = "mx-auto w-full max-w-[1360px] px-[clamp(20px,4vw,56px)]";
+/* Two field widths. `wide` is the prototype's 1360px and is the page's left
+   spine: every band on every route starts its ink at the same x, and that
+   alignment is load-bearing.
+
+   `narrow` exists for a band that has to stand apart from that spine —
+   a standalone text page, a legal or confirmation view. Reach for it only
+   when the band is genuinely not part of the spine, because a centred
+   narrower container shifts the left edge inward and a reader reads that
+   as a mistake. A band that merely strands its right edge is a composition
+   problem, not a width problem: give it a second anchor instead (see
+   `closing-cta`, the `/file-a-claim` rail, and the full-width `/contact`
+   FAQ rows). */
+const MEASURE = {
+  wide: "max-w-[1360px]",
+  narrow: "max-w-[1120px]",
+} as const;
+
+const CONTAINER = "mx-auto w-full px-[clamp(20px,4vw,56px)]";
+
+export type SectionMeasure = keyof typeof MEASURE;
 
 const SPACE = {
   none: "",
@@ -21,13 +40,17 @@ export type SectionSpace = keyof typeof SPACE;
 export type SectionTone = keyof typeof TONE;
 
 export function Container({
+  measure = "wide",
   className,
   children,
 }: {
+  measure?: SectionMeasure;
   className?: string;
   children: ReactNode;
 }) {
-  return <div className={cx(CONTAINER, className)}>{children}</div>;
+  return (
+    <div className={cx(CONTAINER, MEASURE[measure], className)}>{children}</div>
+  );
 }
 
 export type SectionProps = Omit<
@@ -36,6 +59,7 @@ export type SectionProps = Omit<
 > & {
   space?: SectionSpace;
   tone?: SectionTone;
+  measure?: SectionMeasure;
   bleed?: boolean;
   className?: string;
   containerClassName?: string;
@@ -45,6 +69,7 @@ export type SectionProps = Omit<
 export function Section({
   space = "md",
   tone = "canvas",
+  measure = "wide",
   bleed = false,
   className,
   containerClassName,
@@ -54,7 +79,14 @@ export function Section({
   const inner = bleed ? (
     children
   ) : (
-    <div className={cx(CONTAINER, SPACE[space], containerClassName)}>
+    <div
+      className={cx(
+        CONTAINER,
+        MEASURE[measure],
+        SPACE[space],
+        containerClassName,
+      )}
+    >
       {children}
     </div>
   );

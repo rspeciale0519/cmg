@@ -8,8 +8,8 @@ const MEASURE = {
 } as const;
 
 const SCALE = {
-  md: "text-[clamp(26px,3.4vw,42px)]",
-  lg: "text-[clamp(28px,3.6vw,46px)]",
+  md: "text-display-5",
+  lg: "text-display-4",
 } as const;
 
 export type ClosingCtaProps = {
@@ -55,7 +55,13 @@ export function ClosingCta({
           {intro}
         </p>
       </div>
-      <div className="flex flex-wrap gap-3">{actions}</div>
+      {/* Pushed to the field's right edge once the grid is genuinely two
+          columns, so the band resolves as two anchors — heading at the left
+          edge, actions at the right — instead of leaving the buttons adrift
+          in the middle with nothing in front of them. */}
+      <div className="flex flex-wrap justify-start gap-3 min-[900px]:justify-end">
+        {actions}
+      </div>
     </div>
   );
 }
