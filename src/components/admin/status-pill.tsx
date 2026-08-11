@@ -30,6 +30,14 @@ const TONE_CLASS: Record<StatusTone, string> = {
   active: "border-ink/16 bg-ink/6 text-ink/78",
   resolved: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
   halted: "border-[#E08C6A]/40 bg-[#E08C6A]/10 text-[#E8A98D]",
+  /* `declined` carries `rejected` alone, and it is the only tone here with no
+     fill. See STATUS_TONE for the reasoning — a carrier denial and a CMG intake
+     refusal were wearing the same warm red, so a branch column could not say
+     which of the two had happened without being read word by word. Unfilled and
+     hairline is what `dismissed` already means on the leads table, which is the
+     same decision one surface earlier; matching it keeps a refusal looking like
+     a refusal across the product and adds no colour to the palette. */
+  declined: "border-ink/14 bg-transparent text-ink/58",
 };
 
 export function StatusPill({
@@ -111,22 +119,33 @@ export function VisibilityTag({ visibility }: { visibility: string }) {
  * The claim reference, everywhere it appears. Tabular figures and a fixed
  * tracking so a column of them forms a true vertical edge — `CMG-2026-0011`
  * and `CMG-2026-0002` are the same width only if the digits are.
+ *
+ * `as` exists because this component is the claim detail page's title as well as
+ * a cell in three tables. All six claim tabs measured `h1count = 0` and opened
+ * at `h2` — the reference was styled as a title and marked up as a `<span>` —
+ * while the other eight admin pages carry exactly one `h1`. A screen-reader user
+ * pulling up the heading list on the one screen where the record's identity
+ * matters most found no top-level heading to land on, and the document outline
+ * started mid-level for no reason a reader could infer. It stays a `span` by
+ * default: in a table cell it is data, and a heading there would be false.
  */
 export function ClaimRef({
   value,
   className,
+  as: Tag = "span",
 }: {
   value: string;
   className?: string;
+  as?: "span" | "h1";
 }) {
   return (
-    <span
+    <Tag
       className={cx(
         "whitespace-nowrap font-medium tabular-nums tracking-[0.01em]",
         className,
       )}
     >
       {value}
-    </span>
+    </Tag>
   );
 }

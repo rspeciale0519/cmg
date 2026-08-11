@@ -331,7 +331,7 @@ reset role;
 -- assistant — office authority, no lifecycle authority
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -366,7 +366,7 @@ reset role;
 -- adjuster — assigned claims 1 and 2, and nothing about claim 3
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is_empty(

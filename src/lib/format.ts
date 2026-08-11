@@ -109,14 +109,35 @@ export function formatRelative(
 }
 
 /**
+ * Round to the precision this function is going to display at, before deciding
+ * whether there is anything after the point worth showing.
+ *
+ * The two questions were being asked of different numbers. "Has this got cents?"
+ * was asked of the raw value, and "how do I write it?" was answered at two
+ * decimal places — so a value that is not an integer but rounds to one came out
+ * with `.00` attached. The financials panel derives its figures in floating
+ * point (`amount − amount × fee ÷ 100`), which produces exactly that: a
+ * settlement of 9,999,999,999.99 at 10% left the homeowner 8,999,999,999.991,
+ * which is not an integer, so it printed `$9,000,000,000.00` beside the same
+ * quantity written `$9,000,000,000` elsewhere on the screen. Two spellings of
+ * one number is the kind of thing a person re-reads three times before deciding
+ * which one to trust.
+ */
+function roundToCents(amount: number): number {
+  return Math.round(amount * 100) / 100;
+}
+
+/**
  * Whole dollars. Settlements are five and six figures and the cents are noise
  * at a glance — but a figure that is not round keeps them, because rounding a
  * settlement in the UI is how two systems come to disagree about what was paid.
  */
 export function formatMoney(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
-  const amount = typeof value === "string" ? Number(value) : value;
-  if (!Number.isFinite(amount)) return "—";
+  const raw = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(raw)) return "—";
+
+  const amount = roundToCents(raw);
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -126,10 +147,13 @@ export function formatMoney(value: number | string | null | undefined): string {
   }).format(amount);
 }
 
+/** The same rule as `formatMoney`, for the same reason. */
 export function formatPercent(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
-  const amount = typeof value === "string" ? Number(value) : value;
-  if (!Number.isFinite(amount)) return "—";
+  const raw = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(raw)) return "—";
+
+  const amount = roundToCents(raw);
 
   return `${Number.isInteger(amount) ? amount : amount.toFixed(2)}%`;
 }

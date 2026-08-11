@@ -72,7 +72,7 @@ select is_empty(
 -- An active owner is answered
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select ok(
@@ -111,7 +111,7 @@ values (
   'abandoned setup', 'totp', 'unverified', now(), now(), 'NOTASECRET'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -127,7 +127,7 @@ select set_config('request.jwt.claims', '', true);
 update auth.mfa_factors set status = 'verified', updated_at = now()
  where id = '30000000-0000-4000-a000-000000000001';
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -151,7 +151,7 @@ select set_config('request.jwt.claims', '', true);
 -- Everyone else is refused, by raise
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 select throws_ok(
   $$ select 1 from public.admin_user_directory() $$, '42501'::char(5), null::text,
@@ -160,7 +160,7 @@ select throws_ok(
 reset role;
 select set_config('request.jwt.claims', '', true);
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 select throws_ok(
   $$ select 1 from public.admin_user_directory() $$, '42501'::char(5), null::text,
@@ -191,7 +191,7 @@ reset role;
 update public.profiles set is_active = false
  where id = '00000000-0000-4000-a000-000000000001';
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 select throws_ok(
   $$ select 1 from public.admin_user_directory() $$, '42501'::char(5), null::text,

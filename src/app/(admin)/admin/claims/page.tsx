@@ -325,8 +325,24 @@ export default async function ClaimsPage({
                   </Td>
                   <Td className="text-ink/62">
                     <span className="block truncate">
+                      {/* `ink/55` — 4.87:1 measured on the panel fill, up from
+                          `ink/32` at 2.56:1. "Direct" is a value, not a blank: it
+                          says this claim came in without a referring company,
+                          which is the fact an owner filtering by partner is
+                          looking for, so it has to clear the same bar a company
+                          name does.
+
+                          Chosen to sit under the cell's own colour whichever way
+                          that resolves. The `Td` below carries two `text-ink/*`
+                          utilities — its own default and the one passed here —
+                          and the later rule in the generated stylesheet wins, so
+                          a company name currently renders at `ink/78` rather
+                          than the `ink/62` the call site asks for. `ink/55` is
+                          quieter than both, so the column keeps reading
+                          name-first either before or after that collision is
+                          sorted out. */}
                       {claim.partner?.name ?? (
-                        <span className="text-ink/32">Direct</span>
+                        <span className="text-ink/55">Direct</span>
                       )}
                     </span>
                   </Td>

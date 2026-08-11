@@ -204,7 +204,7 @@ select is(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -287,7 +287,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -301,7 +301,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -353,7 +353,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -366,7 +366,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -390,7 +390,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -462,7 +462,7 @@ select is(
 -- Minor 3 — DELETE was the door left open next to the one that was locked
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -513,7 +513,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -534,7 +534,7 @@ select is(
 -- Minor 5 — claims_claim_ref_shape pinned the format, not the identity
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -547,7 +547,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -631,7 +631,7 @@ select is(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -686,7 +686,7 @@ select throws_ok(
   'deleting a company that still has reps is refused as a foreign-key problem, which is what it is — it used to surface as a CHECK violation on public.profiles, a table the caller never mentioned, because `on delete set null` walked straight into profiles_partner_requires_company'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 -- throws_like, not throws_ok: with profiles.partner_company_id at `on delete restrict` the
@@ -729,7 +729,7 @@ select is(
 -- lifecycle, so an attributable one that names somebody else is worse than none.
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -758,7 +758,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -791,7 +791,7 @@ insert into r4_probe values
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 insert into r4_probe values
   ('adj_write_assigned',   private.can_write_claim_object('claims/20000000-0000-4000-a000-000000000001/a.pdf')),
@@ -809,7 +809,7 @@ insert into r4_probe values
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 insert into r4_probe values
   ('assist_write',  private.can_write_claim_object('claims/20000000-0000-4000-a000-000000000002/a.pdf')),

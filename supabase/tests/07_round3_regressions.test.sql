@@ -106,7 +106,7 @@ update public.profiles set is_active = false
               '00000000-0000-4000-a000-000000000005');
 
 -- ---- deactivated OWNER -----------------------------------------------------
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is_empty(
@@ -139,7 +139,7 @@ select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- ---- deactivated ADJUSTER (the one actually assigned to this claim) --------
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is_empty(
@@ -166,7 +166,7 @@ select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- ---- deactivated ASSISTANT -------------------------------------------------
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is_empty(
@@ -310,7 +310,7 @@ update public.profiles set is_active = true
               '00000000-0000-4000-a000-000000000004',
               '00000000-0000-4000-a000-000000000005');
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -354,7 +354,7 @@ update public.profiles set is_active = true
 -- passes every negative test in this file, which is precisely how MAJOR 2 survived.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -373,7 +373,7 @@ select is(
   'and the hand-off actually landed, so the lives_ok above is a write that happened rather than a statement that matched nothing'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000006","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000006","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -392,7 +392,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -511,7 +511,7 @@ select throws_ok(
   'claim_id itself remains immutable for the service role too — the LOR-planting hole this guard exists for stays shut for every caller without exception'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -532,7 +532,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -560,7 +560,7 @@ delete from public.documents
 -- now conditioned on the subject genuinely being gone.
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -580,7 +580,7 @@ select throws_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 -- Deliberately lead_id and not claim_id. Nulling claim_id is already refused for an
@@ -618,7 +618,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -653,7 +653,7 @@ select is(
 -- day a caller trusts the path instead of the row.
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -705,7 +705,7 @@ delete from public.documents where original_name in ('correctly-parented.pdf', '
 -- malformed or spoofed one is a correspondence problem rather than an untidy row.
 -- ===========================================================================
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(

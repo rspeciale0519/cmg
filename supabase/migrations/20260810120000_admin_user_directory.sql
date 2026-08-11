@@ -71,6 +71,20 @@ security definer
 set search_path = ''
 as $fn$
 begin
+  -- Asked before private.is_owner(), and separately from it, only so the refusal names the
+  -- real reason. is_owner() already goes false at aal1 — the second factor is folded into
+  -- private.current_app_role() — so this branch changes no access decision; without it an
+  -- owner one step short of their own desk would be told they are not an owner.
+  --
+  -- This is the RPC the reviewer's aal1 token used to enumerate every account's sign-in
+  -- address and MFA state, which is a map of exactly which colleague to attack next. It
+  -- returns auth.users data through SECURITY DEFINER, so it is the one function here whose
+  -- gate cannot be delegated to a policy.
+  if not private.has_aal2() then
+    raise exception 'the account directory requires a session that has completed two-step verification'
+      using errcode = '42501';
+  end if;
+
   if not (select private.is_owner()) then
     raise exception 'account directory is readable by an active owner only'
       using errcode = '42501';

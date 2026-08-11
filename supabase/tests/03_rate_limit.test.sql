@@ -7,7 +7,7 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(20);
 
 -- ---------------------------------------------------------------------------
 -- Within the budget
@@ -116,6 +116,51 @@ select throws_ok(
 );
 
 -- ---------------------------------------------------------------------------
+-- The prune can collect a key that is never presented again
+-- ---------------------------------------------------------------------------
+--
+-- BACKEND MINOR 1. `rate_limits.key` is unbounded text and half the primary key, every
+-- caller of checkRateLimit() throttles *before* validating, and the prune was
+-- `where key = p_key`. Put together: a caller who varies the email on each post writes a
+-- row under a key nothing ever presents a second time, so the prune never revisits it and
+-- the table grows one permanent row per value the attacker chose. The cap in
+-- src/lib/rate-limit.ts bounds how wide each row can be; this is the half that stops there
+-- being unboundedly many of them.
+--
+-- 2000 iterations against a 1-in-100 prune: the chance of never firing is 0.99^2000, which
+-- is about two in a billion. Deterministic enough to assert on, and it stays a probe of the
+-- real code path rather than of a rewritten copy of it.
+
+insert into public.rate_limits (key, window_start, count, updated_at)
+values
+  ('prune:abandoned', now() - interval '30 days', 1, now() - interval '30 days'),
+  ('prune:other-scope', now() - interval '2 hours', 1, now() - interval '2 hours'),
+  ('prune:live', now(), 1, now());
+
+select public.check_rate_limit('prune:probe', 100000, interval '1 minute')
+  from generate_series(1, 2000);
+
+select is(
+  (select count(*)::int from public.rate_limits where key = 'prune:abandoned'),
+  0,
+  'a stale row under a key this caller never mentions is collected — before the fix it was immortal, because the delete could only ever match the key it was handed'
+);
+
+select is(
+  (select count(*)::int from public.rate_limits where key = 'prune:other-scope'),
+  1,
+  'while a two-hour-old row under a different scope survives: the unscoped arm''s floor is seven days, two orders of magnitude past the longest window in RATE_LIMITS, so it cannot evict a live bucket and hand a spent budget back'
+);
+
+select is(
+  (select count(*)::int from public.rate_limits where key = 'prune:live'),
+  1,
+  'and a current row survives, which is the whole point of the throttle'
+);
+
+delete from public.rate_limits where key like 'prune:%';
+
+-- ---------------------------------------------------------------------------
 -- The counters themselves stay out of reach
 -- ---------------------------------------------------------------------------
 
@@ -124,7 +169,7 @@ select ok(
   'the anon role cannot call the throttle directly, so it cannot be used to burn another caller''s budget from an unauthenticated session'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(

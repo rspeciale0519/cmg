@@ -192,6 +192,44 @@ export function inetOrNull(ip: string): string | null {
 }
 
 /**
+ * The longest an identifier may contribute to `rate_limits.key`.
+ *
+ * 254 because that is RFC 5321's maximum for an email address, which is the
+ * longest legitimate identifier any caller passes — an IPv6 address with a zone
+ * index is under 50 characters and an invite-token digest is fixed-length hex.
+ * So the cap never truncates real input; it only bounds hostile input.
+ */
+const MAX_IDENTIFIER_LENGTH = 254;
+
+/**
+ * Normalises and *bounds* the caller-supplied half of a rate-limit key.
+ *
+ * Every caller of `checkRateLimit` rate-limits before validating — deliberately,
+ * because validation is work and the limiter exists to stop an attacker making
+ * this process do work. The consequence is that raw form input reaches
+ * `rate_limits.key`, which is unbounded `text` and half of the table's primary
+ * key, and until now nothing capped it. Two failures followed from that:
+ *
+ *   * A key seen once was never collected — see the prune in
+ *     `public.check_rate_limit()`. Verified against this build: a 3007-character
+ *     key was accepted and stored, and an attacker varying the value each post
+ *     grows the table one permanent row at a time.
+ *   * Past roughly 2700 bytes the row no longer fits a btree tuple, so the
+ *     INSERT raises, `checkRateLimit` fails closed as designed, and the login
+ *     form tells the person "too many attempts" for what is actually a malformed
+ *     submission. The advice that follows — wait and try again — never works,
+ *     because the next attempt fails the same way.
+ *
+ * Truncating rather than rejecting: two hostile identifiers sharing a 254-character
+ * prefix collapse into one bucket, which spends one budget instead of two and so
+ * errs towards limiting more, not less. Rejecting here would mean deciding what a
+ * valid identifier looks like in the one place that must not care.
+ */
+export function rateLimitIdentifier(identifier: string): string {
+  return identifier.trim().toLowerCase().slice(0, MAX_IDENTIFIER_LENGTH);
+}
+
+/**
  * Wraps the SECURITY DEFINER `public.check_rate_limit(p_key, p_max, p_window)`.
  * Returns true when the call is within budget. Fails closed: an RPC error
  * counts as "over limit" rather than waving the request through.
@@ -200,7 +238,7 @@ export async function checkRateLimit(
   rule: RateLimitRule,
   identifier: string,
 ): Promise<boolean> {
-  const key = `${rule.scope}:${identifier.trim().toLowerCase()}`;
+  const key = `${rule.scope}:${rateLimitIdentifier(identifier)}`;
   const supabase = createAdminClient();
 
   const { data, error } = await supabase.rpc("check_rate_limit", {

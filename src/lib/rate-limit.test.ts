@@ -173,6 +173,43 @@ describe("checkRateLimit", () => {
     rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
     await expect(checkRateLimit(RATE_LIMITS.contactIp, "203.0.113.9")).resolves.toBe(false);
   });
+
+  /**
+   * Every caller limits *before* validating, so the identifier here is raw form
+   * input and `rate_limits.key` is unbounded `text` in a primary key. A 3007
+   * character key was accepted and stored by this build; past roughly 2700 bytes
+   * the row stops fitting a btree tuple and the insert raises instead, at which
+   * point `checkRateLimit` fails closed and the login form answers a malformed
+   * submission with "too many attempts" — advice that can never come true.
+   */
+  it("caps a hostile identifier so the key cannot outgrow the index", async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    await checkRateLimit(RATE_LIMITS.loginEmail, "A".repeat(3000));
+
+    const { p_key } = rpc.mock.calls[0][1];
+    expect(p_key).toBe(`login:email:${"a".repeat(254)}`);
+    expect(p_key.length).toBeLessThan(300);
+  });
+
+  it("leaves the longest legitimate identifier untouched", async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    // RFC 5321 caps an address at 254 characters, which is where the cap is set,
+    // so no real caller is ever truncated.
+    const longest = `${"a".repeat(242)}@example.com`;
+    expect(longest).toHaveLength(254);
+
+    await checkRateLimit(RATE_LIMITS.loginEmail, longest);
+    expect(rpc.mock.calls[0][1].p_key).toBe(`login:email:${longest}`);
+  });
+
+  it("still trims and lowercases before measuring", async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    await checkRateLimit(RATE_LIMITS.loginEmail, `   ${"B".repeat(260)}   `);
+    expect(rpc.mock.calls[0][1].p_key).toBe(`login:email:${"b".repeat(254)}`);
+  });
 });
 
 describe("checkFormRateLimits", () => {

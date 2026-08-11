@@ -31,7 +31,15 @@ export function AdminShell({
   return (
     <div className="min-h-dvh">
       <header className="border-b border-ink/10">
-        <div className="mx-auto flex min-h-[60px] w-full max-w-[1440px] items-center gap-x-6 gap-y-3 px-[clamp(16px,3vw,40px)] py-3">
+        {/* `flex-wrap`, which `gap-y-3` had been anticipating without it. At 390
+            this row held the mark, the wordmark, the signed-in identity and Sign
+            out on one line, and everything gave way at once: "CLAIMS DESK" broke
+            across two lines and the identity read "Austin" / "Graham OWNER" — a
+            break through the middle of a person's name, which is the one place a
+            name must not break. Letting the row wrap moves the identity group to
+            its own line instead, and the two `whitespace-nowrap` rules below say
+            which units are indivisible when it does. */}
+        <div className="mx-auto flex min-h-[60px] w-full max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-3 px-[clamp(16px,3vw,40px)] py-3">
           <Link
             href="/admin"
             aria-label="CMG claims desk"
@@ -46,15 +54,15 @@ export function AdminShell({
               priority
               className="h-[26px] w-auto"
             />
-            <span className="text-[9px] uppercase leading-[1.55] tracking-[0.24em] text-accent">
+            <span className="whitespace-nowrap text-[9px] uppercase leading-[1.55] tracking-[0.24em] text-accent">
               Claims desk
             </span>
           </Link>
 
           <div className="ml-auto flex items-center gap-4">
             <span className="text-right text-[13px] leading-[1.35] text-ink/78">
-              {identity.name}
-              <span className="ml-2 text-[11px] uppercase tracking-[0.16em] text-ink/42">
+              <span className="whitespace-nowrap">{identity.name}</span>
+              <span className="ml-2 whitespace-nowrap text-[11px] uppercase tracking-[0.16em] text-ink/42">
                 {ROLE_LABEL[identity.role]}
               </span>
             </span>

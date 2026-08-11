@@ -193,6 +193,16 @@ export default async function AdminDashboard() {
           ) : (
             <DataTable
               caption="Recently updated claims"
+              /* The default floor is 860, which is the claims list's number: seven
+                 columns with 746px of fixed width before the flexible one gets
+                 anything. This table has four columns totalling 398px of fixed
+                 width and sits in a 3fr track — 804px at 1440 — so the default
+                 forced a 56px overflow there and 294px at 1024. The visible cost
+                 was the last header rendering as "UPDATI" on the first screen
+                 every staff member sees. 520 leaves the flexible Homeowner column
+                 122px at the floor and measures zero overflow at 1440, 1366, 1280
+                 and 1024 with no cell newly truncated. */
+              minWidth={520}
               head={
                 <>
                   <Th className="w-[132px]">Reference</Th>

@@ -78,11 +78,30 @@ export const ALL_STATUSES: readonly ClaimStatus[] = [
 ] as const;
 
 /**
- * Colour families, kept to four so the table reads at a glance. `attention`
+ * Colour families, kept small so the table reads at a glance. `attention`
  * is the accent gold and is spent only where a human has to act; if more than
  * one status wore it the colour would stop meaning anything.
+ *
+ * A tone is a category and the label is the identity, which is why `settled`
+ * and `closed` share `resolved` without confusing anyone: they are the same
+ * kind of ending and the words tell you which one.
+ *
+ * `denied` and `rejected` were sharing `halted` on that reasoning and it did not
+ * hold, because they are not the same kind of thing at all. A denial is the
+ * carrier refusing a claim CMG represents — an adverse event on a live file,
+ * with a next move (reopen) and a homeowner waiting on it. A rejection is CMG
+ * declining an intake: nothing was ever represented, no invite was sent, and
+ * there is no next move. Reading a queue, the difference decides whether a row
+ * is work or archive, and giving both the same alarm colour made the branch
+ * column say "something went wrong here" about files where nothing had.
+ *
+ * So `declined` is a fifth tone rather than a fifth hue: no fill, a hairline
+ * border and quiet text — the treatment `dismissed` already carries on the leads
+ * table, which is the same act one surface earlier. `halted`'s warm red stays
+ * with `denied` alone, which is now the only status that wears it and therefore
+ * the only one it can mean.
  */
-export type StatusTone = "attention" | "active" | "resolved" | "halted";
+export type StatusTone = "attention" | "active" | "resolved" | "halted" | "declined";
 
 export const STATUS_TONE: Record<ClaimStatus, StatusTone> = {
   new_intake: "attention",
@@ -97,7 +116,7 @@ export const STATUS_TONE: Record<ClaimStatus, StatusTone> = {
   closed: "resolved",
   denied: "halted",
   reopened: "attention",
-  rejected: "halted",
+  rejected: "declined",
 };
 
 /**

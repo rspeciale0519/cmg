@@ -73,6 +73,29 @@ const ARIA_SORT = {
   desc: "descending",
 } as const;
 
+/**
+ * Column headers sit at `ink/40` — 3.19:1 on the panel fill — and that is a
+ * decision rather than an oversight, so it is written down here to stop it being
+ * "fixed" on the next contrast pass.
+ *
+ * A header is not content. It is a persistent label for a column whose values
+ * are the thing being read, it is 11px uppercase at 0.13em tracking so it is
+ * unmistakable as structure, and its meaning is recoverable from the column
+ * itself. Lifting it to the 4.5:1 tier would put it in the same visual register
+ * as the data and make every table read as two competing grids. WCAG's own
+ * carve-out for incidental and decorative text is narrower than this, so it is
+ * being claimed knowingly, not leaned on.
+ *
+ * The em-dash placeholder used across these surfaces (`ink/28`, about 1.91:1) is
+ * the same kind of decision one step further: it is not text at all but a mark
+ * meaning "nothing here", it never carries information a reader needs to
+ * extract, and at full strength it would draw the eye to every empty cell in a
+ * table — the exact opposite of what an absence should do.
+ *
+ * What is *not* covered by either argument is a real value that happens to be
+ * quiet. "Direct" in the REFERRED BY column is a fact about the claim — no
+ * referring company — and it read at 2.56:1, below both. That one was raised.
+ */
 export function Th({
   children,
   className,

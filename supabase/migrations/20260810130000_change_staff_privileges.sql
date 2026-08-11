@@ -127,9 +127,30 @@ begin
       using errcode = '22023';
   end if;
 
+  -- §7.2's second factor, stated here as well as inherited. `profiles_update_owner` is
+  -- private.is_owner(), which now goes false at aal1, so an aal1 caller's UPDATE below
+  -- already matches nothing — but it would then fall into the "that account is not
+  -- available, or it no longer exists" arm, which describes the target when the problem is
+  -- the session. Worth its own sentence on the one control that hands out roles.
+  --
+  -- It also closes the p_target = self case cleanly. `profiles_update_self` admits a caller
+  -- onto their own row on identity alone, so without this the aal1 self-demotion travels
+  -- all the way down to public.guard_profile_privileges() before being refused.
+  if not private.has_aal2() then
+    raise exception 'changing a staff privilege requires a session that has completed two-step verification'
+      using errcode = '42501';
+  end if;
+
   -- Serialises this against any other call. RLS applies to the lock as well: an owner
   -- passes `profiles_update_owner`, and anyone else is refused here rather than after
   -- having already written something.
+  --
+  -- Kept, though public.guard_profile_privileges() now takes pg_advisory_xact_lock() on
+  -- the same invariant and therefore covers this path too. The two do not contend: this
+  -- one is taken first and the advisory lock second, in that order on every caller, and a
+  -- REST-path writer holds only its own row before queueing on the advisory token — so
+  -- there is no cycle for either to wait in. The trigger is what makes the guarantee
+  -- universal; this remains the narrower, earlier refusal for the RPC's own callers.
   perform 1
     from public.profiles p
    where p.role = 'owner' and p.is_active

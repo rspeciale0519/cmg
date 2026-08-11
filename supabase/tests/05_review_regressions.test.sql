@@ -64,7 +64,7 @@ grant all on table review_probe to public;
 -- as postgres. Intake was broken for every real caller.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -196,7 +196,7 @@ select ok(
 -- hold for the rows hanging off a claim as well as for the claim row itself.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -287,7 +287,7 @@ reset role;
 -- M7 — an assistant writes notes, not disclosures to a referring contractor
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -443,7 +443,7 @@ select is(
 -- round-2 MAJOR 1 through: for every JWT-bearing actor this statement raised 42501.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(

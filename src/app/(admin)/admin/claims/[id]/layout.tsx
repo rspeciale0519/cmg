@@ -111,7 +111,11 @@ export default async function ClaimLayout({
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              {/* The claim reference is what this screen is about, so it is the
+                  page's `h1` — the six tabs under it were opening at `h2` with no
+                  top-level heading anywhere in the document. */}
               <ClaimRef
+                as="h1"
                 value={claim.claimRef}
                 className="text-[clamp(20px,2.2vw,26px)] leading-[1.15] tracking-[-0.02em] text-ink"
               />
@@ -154,7 +158,7 @@ export default async function ClaimLayout({
                 Referred by
               </dt>
               <dd className="mt-[4px] text-ink/78">
-                {claim.partnerName ?? <span className="text-ink/32">Direct</span>}
+                {claim.partnerName ?? <span className="text-ink/55">Direct</span>}
               </dd>
             </div>
             <div>

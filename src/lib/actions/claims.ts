@@ -331,10 +331,31 @@ type MoneyFields = {
 };
 
 /**
+ * The largest value `claim_financials.settlement_amount` can hold. The column is
+ * `numeric(12, 2)` — twelve significant digits, two of them after the point — so
+ * ten digits before it, and this is the last one that fits.
+ *
+ * Stated here because the bound existed only in the column's precision. The
+ * validator below checked `>= 0` and nothing else, so `10000000000` passed every
+ * check this process makes, reached Postgres, and came back `numeric field value
+ * out of range`. That is not a shape the action recognises, so it fell to the
+ * generic handler and the staff member was told "We could not submit that just
+ * now… call us and we'll take the details over the phone" — a message written
+ * for a homeowner whose network dropped, shown to a colleague at their desk
+ * about a number they typed, with no `aria-invalid` on the field, nothing beneath
+ * it, and no retry that could ever succeed. The one thing they needed to know —
+ * which field, and what range — was the one thing not said.
+ *
+ * The lower bound has always been here and the upper one belongs beside it.
+ */
+const MAX_SETTLEMENT_AMOUNT = 9_999_999_999.99;
+
+/**
  * Blank means "not recorded yet" and is written as NULL, which is different from
  * zero — a settlement of $0 is a real outcome and must survive a round trip.
- * The CHECK constraints on the table state the same bounds; these produce the
- * message a person can act on.
+ * The table states the same bounds — a CHECK for the floor, the column's own
+ * `numeric(12, 2)` precision for the ceiling — and these produce the message a
+ * person can act on.
  */
 function parseMoneyFields(formData: FormData): MoneyFields | { error: FormState } {
   const rawAmount = String(formData.get("settlementAmount") ?? "").trim();
@@ -344,11 +365,13 @@ function parseMoneyFields(formData: FormData): MoneyFields | { error: FormState 
   let settlementAmount: number | null = null;
   if (rawAmount.length > 0) {
     const value = Number(rawAmount.replace(/[$,\s]/g, ""));
-    if (!Number.isFinite(value) || value < 0) {
+    if (!Number.isFinite(value) || value < 0 || value > MAX_SETTLEMENT_AMOUNT) {
       return {
         error: {
           status: "error",
-          fieldErrors: { settlementAmount: "Enter an amount of 0 or more." },
+          fieldErrors: {
+            settlementAmount: "Enter an amount between $0 and $9,999,999,999.99.",
+          },
           message: "Check the highlighted fields and save again.",
         },
       };

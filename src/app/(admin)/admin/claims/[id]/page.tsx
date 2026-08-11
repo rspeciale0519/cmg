@@ -113,7 +113,7 @@ export default async function ClaimOverviewPage({
             <FactList columns={1}>
               <Fact label="Company">
                 {claim.partnerName ?? (
-                  <span className="text-ink/38">Direct — no referring company</span>
+                  <span className="text-ink/55">Direct — no referring company</span>
                 )}
               </Fact>
               {claim.referrerName ? (

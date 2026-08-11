@@ -54,6 +54,50 @@ revoke all on function private.is_service_context() from public, anon;
 grant execute on function private.is_service_context() to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
+-- "Has this session completed its second factor?"
+-- ---------------------------------------------------------------------------
+
+-- §7.2 requires MFA on every staff account, and until now the entire rule was one
+-- comparison in src/lib/supabase/proxy.ts. That is a routing decision in the Next.js
+-- middleware, and PostgREST is not behind it. NEXT_PUBLIC_SUPABASE_URL and the publishable
+-- key are public by construction — they ship in the browser bundle — so an attacker holding
+-- nothing but a staff *password* signs in against GoTrue directly and speaks to /rest/v1
+-- with an aal1 token, never passing through Next.js at all. Reproduced against this build:
+-- that token read public.profiles, public.claims, public.claim_financials and
+-- public.consents in full, called public.admin_user_directory(), and PATCHed an adjuster to
+-- role 'owner'. MFA was decorative for every caller who declined to use the front door.
+--
+-- So the factor is tested here, beside the other identity facts, and every consumer of
+-- private.current_app_role() inherits it — policies, guards and RPCs alike — rather than
+-- each remembering to ask.
+--
+-- MISSING `aal` IS TREATED AS aal1, i.e. FAIL CLOSED. GoTrue stamps `aal` into every access
+-- token it issues, so a real session always carries one and the coalesce arm is unreachable
+-- from the product; what it decides is the behaviour when the claim is *absent* — an
+-- unset request.jwt.claims, a future GoTrue that renames the field, a proxy that drops it.
+-- Fail-open there would turn any such change into a silent, total loss of MFA enforcement
+-- with nothing visibly wrong. Fail-closed turns the same change into staff being unable to
+-- reach the admin area, which is an outage someone reports within the minute. When a
+-- security predicate has to guess, it should guess in the direction that gets noticed.
+--
+-- The cost of that choice is paid in the pgTAP fixtures: a suite that writes
+-- request.jwt.claims by hand must now include `"aal":"aal2"` wherever it is impersonating
+-- staff. That is not a concession to make the tests pass — it is the fixture becoming
+-- accurate. A staff session at aal1 cannot reach any of the surfaces those suites exercise,
+-- so a blob without the claim was describing a caller who does not exist.
+create or replace function private.has_aal2()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $fn$
+  select coalesce((select auth.jwt()) ->> 'aal', 'aal1') = 'aal2';
+$fn$;
+
+revoke all on function private.has_aal2() from public, anon;
+grant execute on function private.has_aal2() to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- Enums
 -- ---------------------------------------------------------------------------
 
@@ -773,14 +817,39 @@ begin
     do update set count = r.count + 1, updated_at = now()
   returning r.count into v_count;
 
-  -- Opportunistic pruning; cheap enough amortised across calls. Scoped to p_key,
-  -- because the retention interval is derived from *this* caller's window: an
-  -- unscoped delete lets a one-minute limiter evict the rows of a 24-hour limiter
-  -- and hand an exhausted budget straight back to whoever spent it.
+  -- Opportunistic pruning; cheap enough amortised across calls.
+  --
+  -- Two arms, because one alone gets a different thing wrong.
+  --
+  -- The first is the original, and it is scoped to p_key on purpose: its retention
+  -- interval is derived from *this* caller's window, so letting it run unscoped would let
+  -- a fifteen-minute limiter evict the rows of an hour-long one and hand an exhausted
+  -- budget straight back to whoever spent it. That reasoning is right and is kept.
+  --
+  -- What it cannot do is collect a key nobody ever presents again — and that is the shape
+  -- an attacker produces. Every row here is written from request input, so a caller who
+  -- varies the email on each post writes a row under a key that is then never seen a
+  -- second time, and `where key = p_key` never revisits it. The table grows without bound,
+  -- one permanent row per distinct value the attacker chose, in a relation that is written
+  -- to on every form post. Confirmed against this build: keys stored from a single run
+  -- survived every subsequent call.
+  --
+  -- The second arm is therefore unscoped, and safe because its floor is absolute rather
+  -- than derived. The longest window in RATE_LIMITS is `1 hour`; seven days is more than
+  -- two orders of magnitude beyond it, so this can never touch a live bucket of any rule
+  -- the product actually has. It is a garbage collector for abandoned keys, not a retention
+  -- policy — the first arm remains the one that decides when a *live* scope's history stops
+  -- being interesting.
+  --
+  -- If a rule with a window near or beyond seven days is ever added, this constant is what
+  -- has to move; RATE_LIMITS is the list to check it against.
   if random() < 0.01 then
     delete from public.rate_limits
-     where key = p_key
-       and window_start < now() - (v_window_seconds * 10 || ' seconds')::interval;
+     where (
+             key = p_key
+             and window_start < now() - (v_window_seconds * 10 || ' seconds')::interval
+           )
+        or window_start < now() - interval '7 days';
   end if;
 
   return v_count <= p_max;
@@ -1259,6 +1328,24 @@ begin
     return new;
   end if;
 
+  -- The second factor, asked directly rather than through private.current_app_role().
+  --
+  -- The actor lookup below is a bare read of public.profiles, so it sees the stored role
+  -- whatever the session's aal is — the gate added to current_app_role() does not reach it.
+  -- That matters for exactly one path and it is not a hypothetical: `profiles_update_self`
+  -- admits a caller onto their *own* row on identity alone, so an owner holding only a
+  -- password could still PATCH themselves — demoting or deactivating the workspace's last
+  -- administrator — with the rest of the admin surface correctly closed to them. Every
+  -- other privilege write is already refused one layer up, because `profiles_update_owner`
+  -- is private.is_owner() and that now goes false at aal1.
+  --
+  -- 42501 and not CMG01: unlike the floor below, this is a statement about the caller's
+  -- authority, and it is the same refusal /admin would have answered with.
+  if not private.has_aal2() then
+    raise exception 'role, partner assignment and activation may only be changed from a session that has completed two-step verification'
+      using errcode = '42501';
+  end if;
+
   -- `and p.is_active`, as in public.guard_claim_update() and every private.* identity
   -- helper. Without it the actor's own deactivation was invisible to the check that is
   -- supposed to enforce it: profiles_update_self lets a user through RLS onto their own
@@ -1312,14 +1399,44 @@ begin
   -- not belong here.
   if old.role = 'owner' and old.is_active
      and not (new.role = 'owner' and new.is_active)
-     and not exists (
-       select 1
-         from public.profiles p
-        where p.id <> old.id and p.role = 'owner' and p.is_active
-     )
   then
-    raise exception 'this change would leave the workspace with no active owner'
-      using errcode = 'CMG01';
+    -- Serialise the floor check. Without this the `not exists` below is a bare read in
+    -- READ COMMITTED, so two transactions demoting two *different* owners each take a
+    -- snapshot predating the other's write, each see the other still active, and both
+    -- commit. Reproduced over HTTP on the first attempt: two parallel PATCHes returned
+    -- 204/204 and left `select count(*) from profiles where role='owner' and is_active` at
+    -- zero, with no audit row and no way back — public.guard_profile_privileges() needs an
+    -- active owner to change any privilege, so from zero the workspace cannot be repaired
+    -- from inside the product at all. It is the one bug here whose consequence is
+    -- unrecoverable, which is why a race this narrow is worth a lock.
+    --
+    -- public.change_staff_privileges() already closed this with `select … for update`, and
+    -- that fix could not be moved down here: this trigger is *already inside* an UPDATE of
+    -- one candidate row, so having it row-lock the other candidates makes two concurrent
+    -- calls each hold what the other wants — a deadlock in place of a race, which trades a
+    -- rare wrong answer for a rare error on a correct one. An advisory lock is not attached
+    -- to any row, so it has no such interaction, and one constant means every writer queues
+    -- on the same token no matter which profile they are touching. The REST path, the RPC
+    -- and any future caller now serialise together rather than each bringing their own
+    -- interlock.
+    --
+    -- `_xact_` so it is released at commit or rollback without an unlock call — a plain
+    -- pg_advisory_lock() leaked into the pooled session and would eventually wedge the
+    -- pool. The constant is arbitrary but fixed; it names this invariant and nothing else.
+    --
+    -- This function is plpgsql and VOLATILE, so the `not exists` that follows takes a fresh
+    -- snapshot once the lock is granted rather than reusing the one the statement started
+    -- with. That is what makes the second transaction see the first's committed demotion.
+    perform pg_advisory_xact_lock(7715360492001);
+
+    if not exists (
+      select 1
+        from public.profiles p
+       where p.id <> old.id and p.role = 'owner' and p.is_active
+    ) then
+      raise exception 'this change would leave the workspace with no active owner'
+        using errcode = 'CMG01';
+    end if;
   end if;
 
   return new;

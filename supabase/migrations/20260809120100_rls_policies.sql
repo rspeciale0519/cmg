@@ -26,6 +26,25 @@ set check_function_bodies = off;
 -- only value that changes is NULL → false and both deny.
 -- ---------------------------------------------------------------------------
 
+-- The second factor is applied here rather than in each policy, because this is the one
+-- place every consumer already goes through. §7.2 makes "staff" and "staff with a verified
+-- second factor" the same category — there is no state in which a staff member is entitled
+-- to a staff surface at aal1 — so a staff role at aal1 is not a lesser role, it is no role,
+-- and it resolves to NULL exactly as a deactivated account does. Every downstream helper
+-- (is_owner, is_staff, is_staff_for_claim, can_manage_claim) and every policy written as
+-- `current_app_role() in (...)` then refuses without having been told about MFA at all.
+--
+-- Scoped to the three staff roles deliberately. Customers and partners authenticate with a
+-- password and nothing else — §7.2 asks for a second factor from staff only — so gating
+-- them here would lock every homeowner out of their own portal. `p.role in (...)` and not
+-- `private.is_staff()`: this function is what is_staff() is built on, and calling it here
+-- would recurse.
+--
+-- private.is_service_context() exempts the service role, which is the same escape the
+-- privilege guards take. A service-role JWT has already been handed a BYPASSRLS database
+-- role by PostgREST before any of this runs, and it is a server-side key rather than a
+-- person, so there is no second factor for it to have completed. Its `auth.uid() is null`
+-- arm cannot matter here: without a subject the WHERE clause below returns no row anyway.
 create or replace function private.current_app_role()
 returns public.app_role
 language sql
@@ -33,7 +52,13 @@ stable
 security definer
 set search_path = ''
 as $fn$
-  select p.role
+  select case
+           when p.role in ('owner', 'adjuster', 'assistant')
+                and not private.is_service_context()
+                and not private.has_aal2()
+             then null
+           else p.role
+         end
     from public.profiles p
    where p.id = (select auth.uid())
      and p.is_active;

@@ -153,7 +153,7 @@ export default async function IntakeQueuePage() {
                           ) : null}
                         </>
                       ) : (
-                        <span className="text-ink/40">Direct — no referral</span>
+                        <span className="text-ink/55">Direct — no referral</span>
                       )}
                     </Fact>
 

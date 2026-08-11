@@ -248,7 +248,7 @@ reset role;
 -- assistant — Priya Nolan, office support with no financial or status authority
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -327,7 +327,7 @@ select is(
 -- adjuster — Dana Reyes, assigned to claims 1 and 2 only
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select results_eq(
@@ -381,7 +381,7 @@ select is(
 -- owner — Austin Graham, full authority
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(

@@ -67,7 +67,7 @@ grant all on table r2_probe to public;
 update public.profiles set is_active = false
  where id = '00000000-0000-4000-a000-000000000001';
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 with u as (
@@ -110,7 +110,7 @@ select is(
 -- auth.uid() still resolves from the request GUC regardless of the database role. This is
 -- what isolates the trigger fix from the profiles_select_self_or_staff fix: each one has
 -- to hold on its own, because either could be relaxed later without the other.
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 
 select throws_ok(
   $$ update public.profiles set is_active = true
@@ -126,7 +126,7 @@ update public.profiles set is_active = true
 
 -- Control: an owner who is actually active retains the administration authority §4 gives
 -- them. The fix has to disable the disabled, not the role.
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -155,7 +155,7 @@ reset role;
 -- even unassign themselves.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -179,7 +179,7 @@ reset role;
 update public.profiles set is_active = false
  where id = '00000000-0000-4000-a000-000000000006';
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -197,7 +197,7 @@ update public.profiles set is_active = true
  where id = '00000000-0000-4000-a000-000000000006';
 
 -- An assistant is ✖ on assignment in §4, and a customer holds no claim authority at all.
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -222,7 +222,7 @@ select set_config('request.jwt.claims', '', true);
 reset role;
 
 -- The capability itself: the assigned adjuster hands the file to another adjuster.
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -257,7 +257,7 @@ select isnt_empty(
   'the hand-off is in the audit trail and is attributed to the adjuster who performed it, not to the function''s owner: running the write as definer moved the privilege, not the responsibility'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000006","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000006","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select is(
@@ -281,7 +281,7 @@ select is(
 );
 
 -- The owner picks an unassigned claim back up, which is the other half of the queue.
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -380,7 +380,7 @@ reset role;
 -- any claim in the business.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
@@ -431,7 +431,7 @@ select lives_ok(
 select set_config('request.jwt.claims', '', true);
 reset role;
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -579,7 +579,7 @@ drop function public.zz_default_privilege_probe();
 -- partner still reads exactly the one projection they are entitled to.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select lives_ok(
@@ -649,7 +649,7 @@ reset role;
 -- Destructive, so it runs last.
 -- ---------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
 select throws_ok(
