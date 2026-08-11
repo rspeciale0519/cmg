@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { STATUS_LABEL } from "@/lib/claims/status";
 import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
 import { STATUS_FILTER_OPTIONS } from "@/lib/claims/search";
@@ -35,7 +35,6 @@ export function ClaimFilters({
   const [isPending, startTransition] = useTransition();
 
   const [term, setTerm] = useState(params.get("q") ?? "");
-  const firstRender = useRef(true);
 
   function withParam(key: string, value: string): string {
     const next = new URLSearchParams(params.toString());
@@ -56,10 +55,15 @@ export function ClaimFilters({
   // does not stack twenty history entries between the list and the file the
   // adjuster opens from it.
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    // Idempotent rather than "skip the first run". A mount-counting ref is
+    // wrong twice over: StrictMode mounts, unmounts and remounts in
+    // development, so the second mount saw a spent ref and replaced the URL
+    // with the unfiltered path — a deep link to page 2 silently returned
+    // page 1. And any future remount would do the same in production. The
+    // effect now asks whether the URL already says what the box says, which
+    // is true on mount, true after its own replace, and false only when the
+    // operator has actually typed something new.
+    if (term.trim() === (params.get("q") ?? "")) return;
 
     const timer = setTimeout(() => {
       startTransition(() => {
