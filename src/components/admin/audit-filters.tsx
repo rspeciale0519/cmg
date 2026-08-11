@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { hasActiveFilters, readAuditFilters } from "@/lib/admin/audit-query";
 import { AUDIT_ENTITIES } from "@/lib/admin/audit-vocabulary";
 import type { ActorOption } from "@/lib/admin/audit";
 import { cx } from "@/lib/cx";
@@ -40,12 +41,13 @@ export function AuditFilters({ actors }: { actors: ActorOption[] }) {
     });
   }
 
-  const entity = params.get("entity") ?? "";
-  const action = params.get("action") ?? "";
-  const actor = params.get("actor") ?? "";
-  const from = params.get("from") ?? "";
-  const to = params.get("to") ?? "";
-  const filtered = Boolean(entity || action || actor || from || to);
+  // Read through the same validator the page uses, not off the raw query
+  // string. `?from=notadate` is correctly ignored by the query and by every
+  // control below, so offering to clear it was the bar contradicting itself:
+  // "Clear filters" appeared on a page where nothing was filtered.
+  const filters = readAuditFilters(Object.fromEntries(params.entries()));
+  const { entity, action, actor, from, to } = filters;
+  const filtered = hasActiveFilters(filters);
 
   // Narrowing the action list to the chosen subject is what keeps the second
   // select usable: pick "Documents" and the forty actions become four.

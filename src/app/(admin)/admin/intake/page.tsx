@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { Fact, FactList } from "@/components/admin/data-table";
 import { IntakeActions } from "@/components/admin/intake-actions";
+import { ListPager } from "@/components/admin/list-pager";
 import { ClaimRef } from "@/components/admin/status-pill";
+import { pageCursors } from "@/lib/admin/audit-range";
+import {
+  firstParam,
+  formatTimeCursor,
+  pageSlice,
+  parseTimeCursor,
+  timeCursorFrom,
+  timeKeysetClause,
+} from "@/lib/admin/paging";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { loadAdjusters, loadPartnerCompanies } from "@/lib/claims/queries";
 import { requireStaff } from "@/lib/authz";
@@ -23,38 +33,82 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Twenty. A card here is a heading, nine facts and a description, so twenty of
+ * them is already a long screen — and the query had no limit at all, which
+ * means PostgREST's `max_rows` of 1000 was the real one. After a storm this is
+ * the list that grows fastest.
+ */
+const PAGE_SIZE = 20;
+
+/**
  * Cards, not a table. Triage is a judgement made against the whole submission —
  * the loss date beside the carrier tenure, the description beside the address —
  * and a table row cannot hold a paragraph. Newest first, because a storm
  * produces a burst of intakes and the newest are the ones nobody has looked at.
  */
-export default async function IntakeQueuePage() {
+export default async function IntakeQueuePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireStaff("/admin/intake");
+  const raw = await searchParams;
   const supabase = await createClient();
 
-  const [queue, adjusters, partners] = await Promise.all([
+  const forward = parseTimeCursor(firstParam(raw, "next"));
+  const backward = forward ? null : parseTimeCursor(firstParam(raw, "prev"));
+  const cursor = forward ?? backward;
+  const reversed = backward !== null;
+
+  let queueQuery = supabase
+    .from("claims")
+    .select(
+      `id, claim_ref, created_at, assigned_adjuster_id,
+       property_street, property_street2, property_city, property_state, property_zip,
+       carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome,
+       loss_date, loss_time, cause, description,
+       requested_adjuster, referrer_name, referrer_email,
+       claimants(first_name, last_name, email, phone, is_primary)`,
+    )
+    .eq("status", "new_intake")
+    .order("created_at", { ascending: reversed })
+    .order("id", { ascending: reversed })
+    .limit(PAGE_SIZE + 1);
+
+  if (cursor) {
+    queueQuery = queueQuery.or(timeKeysetClause(reversed ? "asc" : "desc", cursor));
+  }
+
+  const [queue, count, adjusters, partners] = await Promise.all([
+    queueQuery,
+    // The same tally the nav badge and the dashboard's pipeline strip print, so
+    // the three numbers on the three screens are one number.
     supabase
       .from("claims")
-      .select(
-        `id, claim_ref, created_at, assigned_adjuster_id,
-         property_street, property_street2, property_city, property_state, property_zip,
-         carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome,
-         loss_date, loss_time, cause, description,
-         requested_adjuster, referrer_name, referrer_email,
-         claimants(first_name, last_name, email, phone, is_primary)`,
-      )
-      .eq("status", "new_intake")
-      .order("created_at", { ascending: false }),
+      .select("id", { count: "exact", head: true })
+      .eq("status", "new_intake"),
     loadAdjusters(),
     loadPartnerCompanies(),
   ]);
 
-  const claims = queue.data ?? [];
+  const page = pageSlice(queue.data ?? [], PAGE_SIZE, reversed);
+  const claims = page.rows;
+  const total = count.count ?? claims.length;
+
+  const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
+    ids: claims.map((claim) => formatTimeCursor(timeCursorFrom(claim))),
+    hasMore: page.hasMore,
+    ascending: reversed,
+    cameFromCursor: cursor !== null,
+  });
+
+  const pageHref = (key: "next" | "prev", value: string) =>
+    `/admin/intake?${key}=${value}`;
 
   return (
     <>
       <PageHeader
-        eyebrow={`${claims.length} waiting`}
+        eyebrow={`${total} waiting`}
         title="Intake queue."
         lede="Submissions from the public claim form, newest first. Accepting assigns an adjuster, moves the claim to under review and invites the homeowner to their portal. Declining archives it and sends nothing."
       />
@@ -67,6 +121,7 @@ export default async function IntakeQueuePage() {
           </EmptyState>
         </Panel>
       ) : (
+        <>
         <div className="grid gap-4">
           {claims.map((claim) => {
             const primary =
@@ -194,6 +249,18 @@ export default async function IntakeQueuePage() {
             );
           })}
         </div>
+
+        <ListPager
+          label="Intake queue pages"
+          noun="submission"
+          pluralNoun="submissions"
+          shown={claims.length}
+          total={total}
+          prevHref={prevCursor ? pageHref("prev", prevCursor) : null}
+          nextHref={nextCursor ? pageHref("next", nextCursor) : null}
+          startHref={cursor ? "/admin/intake" : null}
+        />
+        </>
       )}
     </>
   );

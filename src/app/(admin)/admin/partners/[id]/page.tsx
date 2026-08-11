@@ -7,6 +7,7 @@ import {
   PanelBody,
 } from "@/components/admin/admin-shell";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
+import { ListPager, listMeta } from "@/components/admin/list-pager";
 import {
   PartnerCompanyForm,
   PartnerDeleteForm,
@@ -15,7 +16,18 @@ import {
 } from "@/components/admin/partner-forms";
 import { PartnerStatusPill } from "@/components/admin/partner-status-pill";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
-import { loadPartnerDetail } from "@/lib/admin/partners";
+import { loadPartnerDetail, PARTNER_REPS_PAGE_SIZE } from "@/lib/admin/partners";
+import { pageCursors } from "@/lib/admin/audit-range";
+import {
+  clampPage,
+  firstParam,
+  formatTimeCursor,
+  offsetBounds,
+  parsePageNumber,
+  parseTimeCursor,
+  timeCursorFrom,
+  timeKeysetClause,
+} from "@/lib/admin/paging";
 import { hasRole, NOT_FOUND_TITLE, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -82,14 +94,80 @@ export async function generateMetadata({
  */
 export default async function PartnerDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireRole("owner");
   const { id } = await params;
-  const { company, reps, pendingInvites, claims } = await loadPartnerDetail(id);
+  const raw = await searchParams;
 
-  const activeReps = reps.filter((rep) => rep.isActive).length;
+  const claimsForward = parseTimeCursor(firstParam(raw, "claims"));
+  const claimsBackward = claimsForward
+    ? null
+    : parseTimeCursor(firstParam(raw, "claimsPrev"));
+  const claimsCursor = claimsForward ?? claimsBackward;
+  const claimsReversed = claimsBackward !== null;
+
+  const repsPageAsked = parsePageNumber(firstParam(raw, "reps"));
+  const firstBounds = offsetBounds(1, PARTNER_REPS_PAGE_SIZE);
+
+  const paging = {
+    claimsClause: claimsCursor
+      ? timeKeysetClause(claimsReversed ? "asc" : "desc", claimsCursor)
+      : null,
+    claimsReversed,
+  };
+
+  // The rep window is counted before it is clamped, so a stale `?reps=9` lands
+  // on the last page that exists rather than on an empty table.
+  const firstPass = await loadPartnerDetail(id, {
+    ...paging,
+    repsFrom: firstBounds.from,
+    repsTo: firstBounds.to,
+  });
+  const repsPage = clampPage(repsPageAsked, firstPass.repTotal, PARTNER_REPS_PAGE_SIZE);
+  const repBounds = offsetBounds(repsPage, PARTNER_REPS_PAGE_SIZE);
+  const detail =
+    repsPage === 1
+      ? firstPass
+      : await loadPartnerDetail(id, {
+          ...paging,
+          repsFrom: repBounds.from,
+          repsTo: repBounds.to,
+        });
+
+  const { company, reps, pendingInvites, claims } = detail;
+
+  const { olderThan: claimsNext, newerThan: claimsPrev } = pageCursors({
+    ids: claims.map((claim) =>
+      formatTimeCursor(timeCursorFrom({ id: claim.id, created_at: claim.createdAt })),
+    ),
+    hasMore: detail.claimsHasMore,
+    ascending: claimsReversed,
+    cameFromCursor: claimsCursor !== null,
+  });
+
+  /**
+   * Each list keeps the other's position, so paging the claims does not throw
+   * the rep table back to its first page.
+   */
+  const base = `/admin/partners/${id}`;
+  const repsHeld: [string, string][] = repsPage > 1 ? [["reps", String(repsPage)]] : [];
+  const claimsHeld: [string, string][] = claimsForward
+    ? [["claims", formatTimeCursor(claimsForward)]]
+    : claimsBackward
+      ? [["claimsPrev", formatTimeCursor(claimsBackward)]]
+      : [];
+  const build = (pairs: [string, string][]) => {
+    const query = new URLSearchParams(pairs).toString();
+    return query ? `${base}?${query}` : base;
+  };
+  const repsHref = (target: number) =>
+    build(target > 1 ? [["reps", String(target)], ...claimsHeld] : claimsHeld);
+  const claimsHref = (key: "claims" | "claimsPrev", value: string) =>
+    build([...repsHeld, [key, value]]);
 
   return (
     <>
@@ -136,9 +214,9 @@ export default async function PartnerDetailPage({
         <Panel
           title="Representatives"
           meta={
-            reps.length === 0
+            detail.repTotal === 0
               ? "none yet"
-              : `${activeReps} active of ${reps.length}`
+              : `${detail.activeRepTotal} active of ${detail.repTotal}`
           }
         >
           {reps.length === 0 ? (
@@ -147,6 +225,7 @@ export default async function PartnerDetailPage({
               settlement figure for the claims this company referred.
             </EmptyState>
           ) : (
+            <>
             <DataTable
               caption={`Representatives of ${company.name}`}
               head={
@@ -185,6 +264,23 @@ export default async function PartnerDetailPage({
                 </Tr>
               ))}
             </DataTable>
+
+            <ListPager
+              label="Representative pages"
+              noun="rep"
+              pluralNoun="reps"
+              placement="footer"
+              shown={reps.length}
+              total={detail.repTotal}
+              prevHref={repsPage > 1 ? repsHref(repsPage - 1) : null}
+              nextHref={
+                repBounds.from + reps.length < detail.repTotal
+                  ? repsHref(repsPage + 1)
+                  : null
+              }
+              startHref={repsPage > 1 ? repsHref(1) : null}
+            />
+            </>
           )}
 
           <div className="border-t border-ink/10 px-[clamp(14px,1.6vw,20px)] py-[clamp(14px,1.6vw,18px)]">
@@ -218,7 +314,11 @@ export default async function PartnerDetailPage({
 
         <Panel
           title="Attributed claims"
-          meta={claims.length > 0 ? `${claims.length} shown, newest first` : undefined}
+          meta={
+            detail.claimTotal > 0
+              ? `${listMeta(claims.length, detail.claimTotal, "claim", "claims")}, newest first`
+              : undefined
+          }
         >
           {claims.length === 0 ? (
             <EmptyState headline="No claims are attributed to this company.">
@@ -226,6 +326,7 @@ export default async function PartnerDetailPage({
               rep refers one from their own portal.
             </EmptyState>
           ) : (
+            <>
             <DataTable
               caption={`Claims referred by ${company.name}`}
               head={
@@ -260,6 +361,19 @@ export default async function PartnerDetailPage({
                 </Tr>
               ))}
             </DataTable>
+
+            <ListPager
+              label="Attributed claim pages"
+              noun="claim"
+              pluralNoun="claims"
+              placement="footer"
+              shown={claims.length}
+              total={detail.claimTotal}
+              prevHref={claimsPrev ? claimsHref("claimsPrev", claimsPrev) : null}
+              nextHref={claimsNext ? claimsHref("claims", claimsNext) : null}
+              startHref={claimsCursor ? build(repsHeld) : null}
+            />
+            </>
           )}
         </Panel>
 
@@ -289,7 +403,7 @@ export default async function PartnerDetailPage({
               <PartnerDeleteForm
                 companyId={company.id}
                 companyName={company.name}
-                repCount={reps.length}
+                repCount={detail.repTotal}
               />
             </div>
           </PanelBody>

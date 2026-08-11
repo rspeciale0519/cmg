@@ -18,7 +18,14 @@ export type InvitableClaimant = {
  * — a bounced address, or a claim accepted before this flow existed. It is a
  * repair list, and it is empty on a healthy day.
  */
-export function InvitePanel({ claimants }: { claimants: InvitableClaimant[] }) {
+export function InvitePanel({
+  claimants,
+  total,
+}: {
+  claimants: InvitableClaimant[];
+  /** Everyone the predicate matches, not just the excerpt shown here. */
+  total: number;
+}) {
   const [state, formAction] = useActionState(
     issueClaimantInvite,
     idleInviteIssueState,
@@ -58,7 +65,19 @@ export function InvitePanel({ claimants }: { claimants: InvitableClaimant[] }) {
         ))}
       </ul>
 
-      <div className="px-[clamp(14px,1.6vw,20px)] pb-[14px]">
+      {claimants.length < total ? (
+        /* This panel is the newest few of a longer repair list, and there is no
+           screen that lists the rest — the remainder is reached one claim at a
+           time. Saying so is the difference between an excerpt and a wrong
+           total: sending one of these refills the panel from the same queue. */
+        <p className="border-t border-ink/8 px-[clamp(14px,1.6vw,20px)] py-[10px] text-[12px] leading-[1.55] text-ink/45">
+          The newest {claimants.length} of {total}. Sending one brings the next
+          into view; any homeowner can also be invited from their claim&rsquo;s
+          Claimants tab.
+        </p>
+      ) : null}
+
+      <div className="px-[clamp(14px,1.6vw,20px)] pb-[14px] pt-[10px]">
         <ActionFeedback state={state} />
         {state.manualLink ? (
           <p className="mt-[8px] break-all border-l-2 border-accent py-[2px] pl-[10px] font-mono text-[12px] leading-[1.55] text-accent">

@@ -18,10 +18,29 @@ import { cx } from "@/lib/cx";
  * purpose — neither is broken, and colouring them as work would train the owner
  * to ignore the colour that does mean work.
  */
+/**
+ * `absent` is `ink/40` and not `ink/14`. At 14% the rule composited to 1.52:1
+ * against the panel — under the 3:1 WCAG asks of a non-text graphic, and in
+ * practice invisible, so one of the three documented states rendered as
+ * nothing and "muted" became "missing". 40% measures 3.18:1.
+ *
+ * It stays neutral rather than being made quieter still: the axis that
+ * separates these three states is hue, not weight. Bronze is settled, gold is
+ * work, and grey is a capability that is switched off — a grey that cannot be
+ * seen does not say the third thing, it says nothing.
+ *
+ * `ready` moved with it, from `/45` to `/70`. That was not on anyone's list and
+ * it is a consequence rather than a separate opinion: bronze at 45% measured
+ * 2.33:1, so raising the muted state to a legible 3.18 would have left the
+ * *settled* state as the faintest mark on a panel where all three appear
+ * stacked — "switched off" shouting over "working". At 70% bronze reads 3.61,
+ * which restores the order gold › bronze › grey and puts every state past the
+ * 3:1 floor rather than one of them.
+ */
 const RULE: Record<IntegrationState, string> = {
-  ready: "bg-bronze-400/45",
+  ready: "bg-bronze-400/70",
   attention: "bg-accent",
-  absent: "bg-ink/14",
+  absent: "bg-ink/40",
 };
 
 const HEADLINE: Record<IntegrationState, string> = {

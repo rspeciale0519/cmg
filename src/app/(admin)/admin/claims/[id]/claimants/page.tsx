@@ -1,19 +1,53 @@
 import { EmptyState, Panel } from "@/components/admin/admin-shell";
 import { ClaimantInvite } from "@/components/admin/claimant-invite";
+import { ListPager, listMeta } from "@/components/admin/list-pager";
+import {
+  clampPage,
+  firstParam,
+  offsetBounds,
+  parsePageNumber,
+} from "@/lib/admin/paging";
 import { loadClaimContext } from "@/lib/claims/queries";
 import { formatTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Twenty-five, and paged by offset rather than by cursor.
+ *
+ * Offset is the wrong tool for a feed, because a row arriving at the top shifts
+ * every later row down by one and the row on the page boundary is skipped. This
+ * list is the opposite shape: it opens with the primary claimant and then runs
+ * *oldest first*, so a new claimant appends to the end and nothing already on
+ * screen moves. The failure offset is avoided for cannot occur here, and the
+ * alternative would be a three-part `(is_primary, created_at, id)` cursor to buy
+ * a property the ordering already has.
+ *
+ * The count is still a real `count: "exact"` — the same one the tab-strip badge
+ * reads — because that is what the header was getting wrong.
+ */
+const PAGE_SIZE = 25;
+
 export default async function ClaimantsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
   const { claim, can } = await loadClaimContext(id);
+  const raw = await searchParams;
   const supabase = await createClient();
+
+  const { count: total } = await supabase
+    .from("claimants")
+    .select("id", { count: "exact", head: true })
+    .eq("claim_id", id);
+
+  const page = clampPage(parsePageNumber(firstParam(raw, "page")), total ?? 0, PAGE_SIZE);
+  const { from, to } = offsetBounds(page, PAGE_SIZE);
 
   const [claimants, invites] = await Promise.all([
     supabase
@@ -21,7 +55,9 @@ export default async function ClaimantsPage({
       .select("id, first_name, last_name, email, phone, initials, is_primary, user_id, created_at")
       .eq("claim_id", id)
       .order("is_primary", { ascending: false })
-      .order("created_at", { ascending: true }),
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
     // `invites_all_owner` scopes this table to owners, so an adjuster reads
     // nothing here and the "pending" hint simply does not appear for them. The
     // button still works — issuance is service-role behind an app-level authz
@@ -38,11 +74,16 @@ export default async function ClaimantsPage({
 
   const pending = new Set((invites.data ?? []).map((row) => row.email.toLowerCase()));
   const rows = claimants.data ?? [];
+  const count = total ?? rows.length;
+
+  const base = `/admin/claims/${id}/claimants`;
+  const pageHref = (target: number) =>
+    target <= 1 ? base : `${base}?page=${target}`;
 
   return (
     <Panel
       title="Claimants"
-      meta={`${rows.length} on ${claim.claimRef}`}
+      meta={`${listMeta(rows.length, count, "claimant", "claimants")} on ${claim.claimRef}`}
     >
       {rows.length === 0 ? (
         <EmptyState headline="No claimants on this claim.">
@@ -50,6 +91,7 @@ export default async function ClaimantsPage({
           homeowner who submitted it.
         </EmptyState>
       ) : (
+        <>
         <ul className="divide-y divide-ink/8">
           {rows.map((person) => (
             <li
@@ -107,6 +149,19 @@ export default async function ClaimantsPage({
             </li>
           ))}
         </ul>
+
+        <ListPager
+          label="Claimant pages"
+          noun="claimant"
+          pluralNoun="claimants"
+          placement="footer"
+          shown={rows.length}
+          total={count}
+          prevHref={page > 1 ? pageHref(page - 1) : null}
+          nextHref={from + rows.length < count ? pageHref(page + 1) : null}
+          startHref={page > 1 ? base : null}
+        />
+        </>
       )}
     </Panel>
   );

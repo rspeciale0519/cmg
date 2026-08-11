@@ -5,19 +5,15 @@ import { isAppRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
 import { dayBounds, pageCursors } from "./audit-range";
-import { isKnownAction, isKnownEntity } from "./audit-vocabulary";
+import {
+  hasActiveFilters,
+  readAuditFilters,
+  type AuditFilters,
+} from "./audit-query";
 
-export type AuditFilters = {
-  action: string;
-  entity: string;
-  actor: string;
-  from: string;
-  to: string;
-  /** Keyset cursor: page of entries strictly older than this id. */
-  before: number | null;
-  /** Keyset cursor: page of entries strictly newer than this id. */
-  after: number | null;
-};
+/* Re-exported so the page keeps one import for the whole viewer, while the
+   client filter bar reads the same two functions from the pure module. */
+export { hasActiveFilters, readAuditFilters, type AuditFilters };
 
 export type AuditEntry = {
   id: number;
@@ -46,54 +42,6 @@ export type AuditPage = {
 };
 
 export const AUDIT_PAGE_SIZE = 40;
-
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-
-function intOrNull(raw: string | undefined): number | null {
-  if (!raw) return null;
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
-function single(
-  params: Record<string, string | string[] | undefined>,
-  key: string,
-): string | undefined {
-  const raw = params[key];
-  return Array.isArray(raw) ? raw[0] : raw;
-}
-
-/**
- * Everything the viewer can be asked for, taken from the URL and validated here
- * so the page never handles a raw parameter. Unknown actions, unknown entities
- * and malformed dates are dropped rather than rejected: a stale bookmark should
- * show the log, not an error.
- */
-export function readAuditFilters(
-  params: Record<string, string | string[] | undefined>,
-): AuditFilters {
-  const action = single(params, "action") ?? "";
-  const entity = single(params, "entity") ?? "";
-  const actor = single(params, "actor") ?? "";
-  const from = single(params, "from") ?? "";
-  const to = single(params, "to") ?? "";
-
-  return {
-    action: isKnownAction(action) ? action : "",
-    entity: isKnownEntity(entity) ? entity : "",
-    actor: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actor)
-      ? actor
-      : "",
-    from: DATE_ONLY.test(from) ? from : "",
-    to: DATE_ONLY.test(to) ? to : "",
-    before: intOrNull(single(params, "before")),
-    after: intOrNull(single(params, "after")),
-  };
-}
-
-export function hasActiveFilters(filters: AuditFilters): boolean {
-  return Boolean(filters.action || filters.entity || filters.actor || filters.from || filters.to);
-}
 
 /**
  * `audit_log.id` is `generated always as identity`, so it is assigned in insert

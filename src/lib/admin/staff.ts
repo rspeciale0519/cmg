@@ -57,7 +57,15 @@ export type StaffDirectory = {
   members: StaffMember[];
   pendingInvites: PendingStaffInvite[];
   activeOwnerIds: string[];
+  /** Staff accounts, counted in the database rather than measured off the page. */
+  total: number;
+  activeTotal: number;
+  /** Active accounts with no verified TOTP factor — the one thing here that is someone's job. */
+  unenrolledTotal: number;
 };
+
+/** Fifty. A firm's staff list is small; this is a ceiling, not a window. */
+export const STAFF_PAGE_SIZE = 50;
 
 /**
  * The staff screen's whole dataset. Two of the four facts per person come from
@@ -65,29 +73,59 @@ export type StaffDirectory = {
  * exists — from `public.admin_user_directory()`, because they live in the `auth`
  * schema and no policy in `public` can reach them.
  *
- * Sorted owner → adjuster → assistant, then by name. Role is the axis an owner
- * scans this list on, and alphabetical-only ordering would interleave the three
- * authorities that the workspace treats completely differently.
+ * Sorted owner → adjuster → assistant, then by surname. The ordering moved into
+ * Postgres when the list gained a pager, because a sort applied in JavaScript
+ * after the fact orders the page rather than the list — page 2 would begin
+ * wherever the database happened to stop. `app_role` is declared
+ * owner/adjuster/assistant, and an enum sorts in declaration order, so the role
+ * axis survives the move exactly; the name axis becomes surname-first, which is
+ * what `loadAdjusters` and the partner rep table already do.
+ *
+ * `total` and `activeTotal` are `count: "exact"`. `unenrolledTotal` is counted
+ * across a roster read rather than by the database, because "has a verified
+ * factor" lives in `auth` and cannot be joined here; that read is bounded by
+ * PostgREST's `max_rows` of 1000, which is a bound a firm's own staff list
+ * cannot reach in the way `claim_events` can.
  */
-export async function loadStaffDirectory(): Promise<StaffDirectory> {
+export async function loadStaffDirectory(
+  from = 0,
+  to = STAFF_PAGE_SIZE - 1,
+): Promise<StaffDirectory> {
   const supabase = await createClient();
 
-  const [profilesResult, invitesResult, directory] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, first_name, last_name, role, is_active, phone, created_at")
-      .in("role", [...STAFF_ROLES]),
-    supabase
-      .from("invites")
-      .select("id, email, role, expires_at")
-      .in("role", ["adjuster", "assistant"])
-      .is("accepted_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false }),
-    loadUserDirectory(),
-  ]);
-
-  const rank: Record<string, number> = { owner: 0, adjuster: 1, assistant: 2 };
+  const [profilesResult, rosterResult, activeResult, invitesResult, directory] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, first_name, last_name, role, is_active, phone, created_at", {
+          count: "exact",
+        })
+        .in("role", [...STAFF_ROLES])
+        .order("role", { ascending: true })
+        .order("last_name", { ascending: true })
+        .order("first_name", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+      // Page-independent, because the sole-owner guard and the enrolment tally
+      // are facts about the workspace rather than about this window.
+      supabase
+        .from("profiles")
+        .select("id, role, is_active")
+        .in("role", [...STAFF_ROLES]),
+      supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .in("role", [...STAFF_ROLES])
+        .eq("is_active", true),
+      supabase
+        .from("invites")
+        .select("id, email, role, expires_at")
+        .in("role", ["adjuster", "assistant"])
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false }),
+      loadUserDirectory(),
+    ]);
 
   const members: StaffMember[] = (profilesResult.data ?? [])
     .filter((row) => isStaffAppRole(row.role))
@@ -107,11 +145,9 @@ export async function loadStaffDirectory(): Promise<StaffDirectory> {
         lastSignInAt: account?.lastSignInAt ?? null,
         createdAt: row.created_at,
       };
-    })
-    .sort(
-      (a, b) =>
-        (rank[a.role] ?? 9) - (rank[b.role] ?? 9) || a.name.localeCompare(b.name),
-    );
+    });
+
+  const roster = (rosterResult.data ?? []).filter((row) => isStaffAppRole(row.role));
 
   return {
     members,
@@ -121,8 +157,13 @@ export async function loadStaffDirectory(): Promise<StaffDirectory> {
       role: row.role,
       expiresAt: row.expires_at,
     })),
-    activeOwnerIds: members
-      .filter((member) => member.role === "owner" && member.isActive)
-      .map((member) => member.id),
+    activeOwnerIds: roster
+      .filter((row) => row.role === "owner" && row.is_active)
+      .map((row) => row.id),
+    total: profilesResult.count ?? members.length,
+    activeTotal: activeResult.count ?? 0,
+    unenrolledTotal: roster.filter(
+      (row) => row.is_active && !(directory.get(row.id)?.mfaEnrolled ?? false),
+    ).length,
   };
 }

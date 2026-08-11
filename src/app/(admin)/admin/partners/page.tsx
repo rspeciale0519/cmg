@@ -4,9 +4,20 @@ import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { FormDisclosure } from "@/components/admin/disclosure";
 import { FilterPills } from "@/components/admin/filter-pills";
+import { ListPager } from "@/components/admin/list-pager";
 import { PartnerCompanyForm } from "@/components/admin/partner-forms";
 import { CountCell, PartnerStatusPill } from "@/components/admin/partner-status-pill";
-import { loadPartnerSummaries, type PartnerStatus } from "@/lib/admin/partners";
+import {
+  loadPartnerPage,
+  PARTNERS_PAGE_SIZE,
+  type PartnerStatus,
+} from "@/lib/admin/partners";
+import {
+  clampPage,
+  firstParam,
+  offsetBounds,
+  parsePageNumber,
+} from "@/lib/admin/paging";
 import { metadataForRole, requireRole } from "@/lib/authz";
 import { formatDateStamp } from "@/lib/format";
 
@@ -51,17 +62,36 @@ export default async function PartnersPage({
   await requireRole("owner");
 
   const raw = await searchParams;
-  const statusParam = Array.isArray(raw.status) ? raw.status[0] : raw.status;
+  const statusParam = firstParam(raw, "status");
   const status = statusParam && isPartnerStatus(statusParam) ? statusParam : "";
   const justDeleted = raw.deleted === "1";
 
-  const companies = await loadPartnerSummaries(status || null);
-  const active = companies.filter((company) => company.status === "active").length;
+  // Counted first, so a stale `?page=9` on a three-page list lands on the last
+  // page that exists rather than on an empty table under a header saying 42.
+  const firstPass = await loadPartnerPage(status || null, 0, PARTNERS_PAGE_SIZE - 1);
+  const page = clampPage(
+    parsePageNumber(firstParam(raw, "page")),
+    firstPass.total,
+    PARTNERS_PAGE_SIZE,
+  );
+  const bounds = offsetBounds(page, PARTNERS_PAGE_SIZE);
+  const { companies, total, activeTotal } =
+    page === 1
+      ? firstPass
+      : await loadPartnerPage(status || null, bounds.from, bounds.to);
+
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (target > 1) params.set("page", String(target));
+    const query = params.toString();
+    return query ? `/admin/partners?${query}` : "/admin/partners";
+  };
 
   return (
     <>
       <PageHeader
-        eyebrow={`Owner · ${companies.length} ${companies.length === 1 ? "company" : "companies"}`}
+        eyebrow={`Owner · ${total} ${total === 1 ? "company" : "companies"}`}
         title="Partner companies."
         lede="Contractors who send work to CMG. Each one gets reps with a portal that shows the status, milestones and settlement of the claims they referred — and nothing else."
       />
@@ -93,11 +123,7 @@ export default async function PartnersPage({
 
       <Panel
         title="Companies"
-        meta={
-          companies.length > 0
-            ? `${active} active of ${companies.length}`
-            : undefined
-        }
+        meta={total > 0 ? `${activeTotal} active of ${total}` : undefined}
       >
         {companies.length === 0 ? (
           <EmptyState
@@ -173,6 +199,21 @@ export default async function PartnersPage({
           </DataTable>
         )}
       </Panel>
+
+      {companies.length > 0 ? (
+        <ListPager
+          label="Company pages"
+          noun="company"
+          pluralNoun="companies"
+          shown={companies.length}
+          total={total}
+          prevHref={page > 1 ? pageHref(page - 1) : null}
+          nextHref={
+            bounds.from + companies.length < total ? pageHref(page + 1) : null
+          }
+          startHref={page > 1 ? pageHref(1) : null}
+        />
+      ) : null}
     </>
   );
 }

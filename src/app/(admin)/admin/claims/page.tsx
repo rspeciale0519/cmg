@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { ClaimFilters } from "@/components/admin/claim-filters";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
+import { ListPager } from "@/components/admin/list-pager";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { pageCursors } from "@/lib/admin/audit-range";
 import { loadAdjusters, loadPartnerCompanies } from "@/lib/claims/queries";
@@ -26,7 +27,6 @@ import {
 import { claimSearchClause, hasActiveFilters, parseClaimFilters } from "@/lib/claims/search";
 import { isClaimStatus } from "@/lib/claims/status";
 import { requireStaff } from "@/lib/authz";
-import { cx } from "@/lib/cx";
 import { formatDateOnly, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -259,10 +259,17 @@ export default async function ClaimsPage({
         ) : (
           <DataTable
             caption={`Claims, sorted by ${SORT_LABEL[sort.key]}`}
-            minWidth={1040}
+            /* 1080, up from 1040, because REFERENCE and REFERRED BY each gained
+               width below and the flexible Homeowner column would otherwise
+               have paid for both — 258px at the floor before, 218px after. The
+               floor moves by exactly the 40px the two columns took. */
+            minWidth={1080}
             head={
               <>
-                <Th className="w-[132px]" sort={sortFor("ref")}>
+                {/* 148, up from 132. `CMG-2026-0001` plus the sort caret needs
+                    141px at the rendered size, so the column was clipping the
+                    glyph it exists to make clickable. */}
+                <Th className="w-[148px]" sort={sortFor("ref")}>
                   Reference
                 </Th>
                 <Th>Homeowner &amp; property</Th>
@@ -270,7 +277,10 @@ export default async function ClaimsPage({
                   Status
                 </Th>
                 <Th className="w-[128px]">Adjuster</Th>
-                <Th className="w-[140px]">Referred by</Th>
+                {/* 164, up from 140. A contractor's registered name is the
+                    longest value in this table after the address, and it is the
+                    one an owner filters on. */}
+                <Th className="w-[164px]">Referred by</Th>
                 <Th className="w-[116px]" sort={sortFor("loss")}>
                   Loss date
                 </Th>
@@ -308,7 +318,9 @@ export default async function ClaimsPage({
                         ? `${primary.first_name} ${primary.last_name}`.trim()
                         : "—"}
                     </span>
-                    <CellMeta>
+                    <CellMeta
+                      title={`${claim.property_street}, ${claim.property_city}, ${claim.property_state} ${claim.property_zip}`}
+                    >
                       {claim.property_street}, {claim.property_city},{" "}
                       {claim.property_state} {claim.property_zip}
                     </CellMeta>
@@ -324,7 +336,14 @@ export default async function ClaimsPage({
                     )}
                   </Td>
                   <Td className="text-ink/62">
-                    <span className="block truncate">
+                    {/* `title` because the column is `truncate` inside a cell
+                        whose own overflow is hidden — scrolling the table
+                        sideways does not reveal a clipped company name, so
+                        without this the value is unrecoverable at 390px. */}
+                    <span
+                      className="block truncate"
+                      title={claim.partner?.name ?? "Direct"}
+                    >
                       {/* `ink/55` — 4.87:1 measured on the panel fill, up from
                           `ink/32` at 2.56:1. "Direct" is a value, not a blank: it
                           says this claim came in without a referring company,
@@ -360,101 +379,23 @@ export default async function ClaimsPage({
       </Panel>
 
       {rows.length > 0 ? (
-        <ClaimsPager
+        /* The shared pager, not a private copy of it. This screen had its own —
+           byte-for-byte the same sentence as `/admin/leads` — which is how two
+           lists end up saying different things about the same situation. Round
+           4's commit message records that this consolidation was written and
+           then lost to an interrupted session; this is it. */
+        <ListPager
+          label="Claims pages"
+          noun="claim"
+          pluralNoun="claims"
+          qualifier={SORT_LABEL[sort.key]}
           shown={rows.length}
           total={total}
-          sortLabel={SORT_LABEL[sort.key]}
           prevHref={prevCursor ? pageHref("prev", prevCursor) : null}
           nextHref={nextCursor ? pageHref("next", nextCursor) : null}
           startHref={paged ? href() : null}
         />
       ) : null}
     </>
-  );
-}
-
-/**
- * Says how much of the list is on screen before it offers to move. The old
- * screen showed sixty rows under a header that counted every claim in the
- * business, with nothing in between to say the two numbers were different —
- * so past sixty claims the page quietly stopped being a list of claims and
- * never mentioned it.
- */
-function ClaimsPager({
-  shown,
-  total,
-  sortLabel,
-  prevHref,
-  nextHref,
-  startHref,
-}: {
-  shown: number;
-  total: number;
-  sortLabel: string;
-  prevHref: string | null;
-  nextHref: string | null;
-  startHref: string | null;
-}) {
-  const complete = shown >= total && !prevHref && !nextHref;
-
-  return (
-    <nav
-      aria-label="Claims pages"
-      className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pt-[clamp(14px,1.6vw,20px)]"
-    >
-      <p className="text-[12px] leading-[1.5] text-ink/45">
-        {complete ? (
-          <>
-            All <span className="tabular-nums">{total}</span>{" "}
-            {total === 1 ? "claim" : "claims"}, by {sortLabel}
-          </>
-        ) : (
-          <>
-            Showing <span className="tabular-nums">{shown}</span> of{" "}
-            <span className="tabular-nums">{total}</span>, by {sortLabel}
-            {startHref ? (
-              <>
-                {" · "}
-                <Link
-                  href={startHref}
-                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
-                >
-                  Back to the start
-                </Link>
-              </>
-            ) : null}
-          </>
-        )}
-      </p>
-
-      {prevHref || nextHref ? (
-        <span className="flex items-center gap-2">
-          <PageLink href={prevHref}>← Previous</PageLink>
-          <PageLink href={nextHref}>Next →</PageLink>
-        </span>
-      ) : null}
-    </nav>
-  );
-}
-
-function PageLink({ href, children }: { href: string | null; children: React.ReactNode }) {
-  if (!href) {
-    return (
-      <span aria-hidden="true" className="px-3 text-[12.5px] leading-[1.4] text-ink/20">
-        {children}
-      </span>
-    );
-  }
-
-  return (
-    <Link
-      href={href}
-      className={cx(
-        "min-h-[34px] rounded-md border border-ink/16 px-3 py-[7px] text-[12.5px] leading-[1.4] text-ink/78 no-underline",
-        "transition-colors duration-150 hover:border-ink/32 hover:text-ink",
-      )}
-    >
-      {children}
-    </Link>
   );
 }

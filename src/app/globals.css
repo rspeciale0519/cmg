@@ -258,6 +258,44 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Sticky identity column.
+
+   Every table in the workspace opens with the thing the row *is* — a claim
+   reference, a person, a company — and at 390px those tables are two to three
+   times the width of their scroller. Measured on /admin/staff: an 860px table
+   in a 356px box, a 504px scroll range, and past roughly 200px of travel the
+   PERSON column is off-screen and the row reads "Never / Deactivate" with
+   nothing to attach it to. Row identity is the one thing horizontal scrolling
+   must not be able to take away.
+
+   The cell needs its own opaque fill, because the columns travel *under* it and
+   `--panel-fill` is what the panel actually paints. The hover and focus fills
+   are restated for the same reason: `Tr`'s `hover:bg-ink/[0.085]` paints the
+   row, and an opaque cell on top of it would be the one part of a hovered row
+   that did not light up.
+
+   The right-hand hairline is the same weight as the rule between rows, and it
+   is permanent rather than scroll-triggered: a scroll-linked shadow needs
+   `animation-timeline`, which two of the four engines in this project's
+   browserslist do not support, and a divider that appears in Chrome and never
+   in Safari is worse than one that is simply part of the table.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility sticky-first-col {
+  & tr > *:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: var(--panel-fill);
+    box-shadow: 1px 0 0 0 color-mix(in srgb, var(--color-ink) 8%, transparent);
+  }
+
+  & tbody tr:hover > *:first-child,
+  & tbody tr:focus-within > *:first-child {
+    background-color: color-mix(in srgb, var(--color-ink) 8.5%, var(--panel-fill));
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Native date & time editors.
 
    The field system says an unanswered field is `ink/35` (INPUT_CLASS's

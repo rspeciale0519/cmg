@@ -121,7 +121,14 @@ export function FinancialsForm({
           </dl>
 
           {derivable ? null : (
-            <p className="mt-[7px] text-[12px] leading-[1.5] text-ink/42">
+            /* `ink/60` — 5.26:1, matching the field error above it, up from
+               `ink/42` at 3.35:1. This line was the dimmest text in the error
+               state and it is the line that explains it: the field says the fee
+               is wrong and the form says the save was refused, while this is
+               the only thing on screen that says why both derived figures went
+               to an em-dash. An explanation cannot be quieter than the thing it
+               explains. */
+            <p className="mt-[7px] text-[12px] leading-[1.5] text-ink/60">
               {feeValid
                 ? "Enter a settlement amount of 0 or more to see the split."
                 : "The split appears once the fee is a percentage between 0 and 100."}

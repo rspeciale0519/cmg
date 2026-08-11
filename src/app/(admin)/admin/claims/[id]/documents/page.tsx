@@ -1,6 +1,16 @@
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { DocumentDownload } from "@/components/admin/document-download";
 import { DocumentUpload } from "@/components/admin/document-upload";
+import { ListPager, listMeta } from "@/components/admin/list-pager";
+import { pageCursors } from "@/lib/admin/audit-range";
+import {
+  firstParam,
+  formatTimeCursor,
+  pageSlice,
+  parseTimeCursor,
+  timeCursorFrom,
+  timeKeysetClause,
+} from "@/lib/admin/paging";
 import {
   DOCUMENT_KIND_LABEL,
   formatBytes,
@@ -12,28 +22,71 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Forty. The query had no limit at all, which is not "no limit" — PostgREST's
+ * `max_rows` is 1000, so the list silently stopped at a thousand documents
+ * under a header that counted the rows it had been handed.
+ */
+const PAGE_SIZE = 40;
+
 export default async function DocumentsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
   const { can } = await loadClaimContext(id);
+  const raw = await searchParams;
   const supabase = await createClient();
 
-  const { data: documents } = await supabase
+  const forward = parseTimeCursor(firstParam(raw, "next"));
+  const backward = forward ? null : parseTimeCursor(firstParam(raw, "prev"));
+  const cursor = forward ?? backward;
+  const reversed = backward !== null;
+
+  let query = supabase
     .from("documents")
     .select(
       "id, original_name, kind, mime, size_bytes, visibility, created_at, uploaded_by, uploader:profiles!documents_uploaded_by_fkey(first_name, last_name)",
     )
     .eq("claim_id", id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: reversed })
+    .order("id", { ascending: reversed })
+    .limit(PAGE_SIZE + 1);
 
-  const rows = documents ?? [];
+  if (cursor) query = query.or(timeKeysetClause(reversed ? "asc" : "desc", cursor));
+
+  const [documents, count] = await Promise.all([
+    query,
+    // The same count the tab-strip badge reads.
+    supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("claim_id", id),
+  ]);
+
+  const page = pageSlice(documents.data ?? [], PAGE_SIZE, reversed);
+  const rows = page.rows;
+  const total = count.count ?? rows.length;
+
+  const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
+    ids: rows.map((document) => formatTimeCursor(timeCursorFrom(document))),
+    hasMore: page.hasMore,
+    ascending: reversed,
+    cameFromCursor: cursor !== null,
+  });
+
+  const base = `/admin/claims/${id}/documents`;
+  const pageHref = (key: "next" | "prev", value: string) => `${base}?${key}=${value}`;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-      <Panel title="Documents" meta={`${rows.length} on the file`}>
+      <Panel
+        title="Documents"
+        meta={listMeta(rows.length, total, "document", "documents")}
+      >
         {rows.length === 0 ? (
           <EmptyState headline="Nothing on the file yet.">
             Declarations pages, photos, estimates and the signed letter of
@@ -41,6 +94,7 @@ export default async function DocumentsPage({
             representation stage.
           </EmptyState>
         ) : (
+          <>
           <ul className="divide-y divide-ink/8">
             {rows.map((document) => {
               const uploader = document.uploader
@@ -91,6 +145,19 @@ export default async function DocumentsPage({
               );
             })}
           </ul>
+
+          <ListPager
+            label="Document pages"
+            noun="document"
+            pluralNoun="documents"
+            placement="footer"
+            shown={rows.length}
+            total={total}
+            prevHref={prevCursor ? pageHref("prev", prevCursor) : null}
+            nextHref={nextCursor ? pageHref("next", nextCursor) : null}
+            startHref={cursor ? base : null}
+          />
+          </>
         )}
       </Panel>
 

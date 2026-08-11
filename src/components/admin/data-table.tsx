@@ -32,17 +32,30 @@ export function DataTable({
   children,
   caption,
   minWidth = 860,
+  stickyFirstColumn = true,
 }: {
   head: ReactNode;
   children: ReactNode;
   caption?: string;
   minWidth?: number;
+  /**
+   * Pins the identifying first column while the rest scrolls. Default on,
+   * because every table in this workspace opens with the thing the row *is* —
+   * a claim reference, a person, a company — and the reviewer's measurement was
+   * that at 390px the staff table is 860px wide in a 356px box with a 504px
+   * scroll range, so past about 200px of travel the PERSON column is gone and
+   * the row reads "Never / Deactivate" with nothing to attach it to.
+   */
+  stickyFirstColumn?: boolean;
 }) {
   return (
     <div className="scroll-x-edged">
       <table
         style={{ minWidth: `${minWidth}px` }}
-        className="w-full table-fixed border-collapse text-left"
+        className={cx(
+          "w-full table-fixed border-collapse text-left",
+          stickyFirstColumn && "sticky-first-col",
+        )}
       >
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
@@ -231,10 +244,29 @@ export function Td({
   );
 }
 
-/** Secondary text inside a cell — the address under a name, the city under a street. */
-export function CellMeta({ children }: { children: ReactNode }) {
+/**
+ * Secondary text inside a cell — the address under a name, the city under a
+ * street.
+ *
+ * `title` is not optional decoration here. These lines are `truncate`, and a
+ * truncated cell inside a table whose own overflow is hidden is unrecoverable:
+ * measured at 390px, the dashboard's property address clipped from 220px to
+ * 102px, and scrolling the table sideways does not reveal it because the
+ * clipping happens in the cell rather than in the scroller. Where the text is
+ * generated from data, pass it.
+ */
+export function CellMeta({
+  children,
+  title,
+}: {
+  children: ReactNode;
+  title?: string;
+}) {
   return (
-    <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/42">
+    <span
+      title={title}
+      className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/42"
+    >
       {children}
     </span>
   );

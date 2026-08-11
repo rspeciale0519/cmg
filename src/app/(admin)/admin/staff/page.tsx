@@ -2,13 +2,20 @@ import type { Metadata } from "next";
 import { EmptyState, PageHeader, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { FormDisclosure } from "@/components/admin/disclosure";
+import { ListPager } from "@/components/admin/list-pager";
 import { ROLE_LABEL } from "@/components/admin/nav";
 import {
   StaffActiveForm,
   StaffInviteForm,
   StaffRoleForm,
 } from "@/components/admin/staff-forms";
-import { loadStaffDirectory } from "@/lib/admin/staff";
+import {
+  clampPage,
+  firstParam,
+  offsetBounds,
+  parsePageNumber,
+} from "@/lib/admin/paging";
+import { loadStaffDirectory, STAFF_PAGE_SIZE } from "@/lib/admin/staff";
 import { metadataForRole, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
 
@@ -44,20 +51,36 @@ export async function generateMetadata(): Promise<Metadata> {
  * server action refuses the same change independently — the disabled attribute
  * is a courtesy, not the enforcement.
  */
-export default async function StaffPage() {
+export default async function StaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireRole("owner");
-  const { members, pendingInvites, activeOwnerIds } = await loadStaffDirectory();
+  const raw = await searchParams;
+
+  const firstPass = await loadStaffDirectory();
+  const page = clampPage(
+    parsePageNumber(firstParam(raw, "page")),
+    firstPass.total,
+    STAFF_PAGE_SIZE,
+  );
+  const bounds = offsetBounds(page, STAFF_PAGE_SIZE);
+  const directory =
+    page === 1 ? firstPass : await loadStaffDirectory(bounds.from, bounds.to);
+
+  const { members, pendingInvites, activeOwnerIds, total, activeTotal, unenrolledTotal } =
+    directory;
 
   const soleOwnerId = activeOwnerIds.length === 1 ? activeOwnerIds[0] : null;
-  const active = members.filter((member) => member.isActive).length;
-  const unenrolled = members.filter(
-    (member) => member.isActive && !member.mfaEnrolled,
-  ).length;
+
+  const pageHref = (target: number) =>
+    target > 1 ? `/admin/staff?page=${target}` : "/admin/staff";
 
   return (
     <>
       <PageHeader
-        eyebrow={`Owner · ${active} active of ${members.length}`}
+        eyebrow={`Owner · ${activeTotal} active of ${total}`}
         title="Staff."
         lede="Who holds a CMG account, what they can do with it, and whether they have set up the authenticator the workspace requires."
       />
@@ -73,8 +96,8 @@ export default async function StaffPage() {
       <Panel
         title="Accounts"
         meta={
-          unenrolled > 0
-            ? `${unenrolled} without an authenticator`
+          unenrolledTotal > 0
+            ? `${unenrolledTotal} without an authenticator`
             : "all authenticators enrolled"
         }
       >
@@ -150,6 +173,18 @@ export default async function StaffPage() {
             );
           })}
         </DataTable>
+
+        <ListPager
+          label="Staff pages"
+          noun="account"
+          pluralNoun="accounts"
+          placement="footer"
+          shown={members.length}
+          total={total}
+          prevHref={page > 1 ? pageHref(page - 1) : null}
+          nextHref={bounds.from + members.length < total ? pageHref(page + 1) : null}
+          startHref={page > 1 ? pageHref(1) : null}
+        />
 
         <PanelBody className="border-t border-ink/10">
           <h3 className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">

@@ -1,6 +1,16 @@
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { EventComposer } from "@/components/admin/event-composer";
+import { ListPager, listMeta } from "@/components/admin/list-pager";
 import { VisibilityTag } from "@/components/admin/status-pill";
+import { pageCursors } from "@/lib/admin/audit-range";
+import {
+  firstParam,
+  formatTimeCursor,
+  pageSlice,
+  parseTimeCursor,
+  timeCursorFrom,
+  timeKeysetClause,
+} from "@/lib/admin/paging";
 import { loadClaimContext } from "@/lib/claims/queries";
 import { cx } from "@/lib/cx";
 import { formatTimestamp, initialsFor } from "@/lib/format";
@@ -17,32 +27,93 @@ const TYPE_LABEL: Record<string, string> = {
   system: "System",
 };
 
+/**
+ * Forty. An entry is a header line and a paragraph, so a hundred and twenty of
+ * them was a page nobody reached the bottom of — and the number under the panel
+ * title counted only what had been fetched, while the tab-strip badge 40px above
+ * it counted the whole table. At 121 events the two disagreed on one screen.
+ */
+const PAGE_SIZE = 40;
+
 export default async function ActivityPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
   const { can } = await loadClaimContext(id);
+  const raw = await searchParams;
   const supabase = await createClient();
 
-  const { data: events } = await supabase
-    .from("claim_events")
-    .select(
-      "id, type, body, visibility, created_at, author_id, author:profiles!claim_events_author_id_fkey(first_name, last_name)",
-    )
-    .eq("claim_id", id)
-    .order("created_at", { ascending: false })
-    .limit(120);
+  const forward = parseTimeCursor(firstParam(raw, "next"));
+  const backward = forward ? null : parseTimeCursor(firstParam(raw, "prev"));
+  const cursor = forward ?? backward;
+  const reversed = backward !== null;
 
-  const rows = events ?? [];
+  const SELECT =
+    "id, type, body, visibility, created_at, author_id, author:profiles!claim_events_author_id_fkey(first_name, last_name)";
+
+  let query = supabase
+    .from("claim_events")
+    .select(SELECT)
+    .eq("claim_id", id)
+    .order("created_at", { ascending: reversed })
+    .order("id", { ascending: reversed })
+    .limit(PAGE_SIZE + 1);
+
+  if (cursor) query = query.or(timeKeysetClause(reversed ? "asc" : "desc", cursor));
+
+  const [events, count, question, reply] = await Promise.all([
+    query,
+    // The same `count: "exact"` the tab-strip badge reads, so the two numbers on
+    // this screen are the same number rather than two measurements of it.
+    supabase
+      .from("claim_events")
+      .select("id", { count: "exact", head: true })
+      .eq("claim_id", id),
+    // The reply target is a fact about the claim, not about the page: read from
+    // the whole table so page 2 does not offer to answer a different question
+    // from the one page 1 offered.
+    supabase
+      .from("claim_events")
+      .select("id, body, created_at")
+      .eq("claim_id", id)
+      .eq("type", "question")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("claim_events")
+      .select("created_at")
+      .eq("claim_id", id)
+      .eq("type", "reply")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const page = pageSlice(events.data ?? [], PAGE_SIZE, reversed);
+  const rows = page.rows;
+  const total = count.count ?? rows.length;
+
+  const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
+    ids: rows.map((event) => formatTimeCursor(timeCursorFrom(event))),
+    hasMore: page.hasMore,
+    ascending: reversed,
+    cameFromCursor: cursor !== null,
+  });
+
+  const base = `/admin/claims/${id}/activity`;
+  const pageHref = (key: "next" | "prev", value: string) => `${base}?${key}=${value}`;
 
   // The newest unanswered question, offered to the composer as a reply target.
   // "Unanswered" is read as "no reply posted after it", which is what a staff
   // member means by the word — the schema does not thread replies to questions,
   // and inventing a link would be a schema change to solve a display problem.
-  const newestQuestion = rows.find((event) => event.type === "question");
-  const newestReply = rows.find((event) => event.type === "reply");
+  const newestQuestion = question.data;
+  const newestReply = reply.data;
   const unanswered =
     newestQuestion &&
     (!newestReply ||
@@ -52,13 +123,14 @@ export default async function ActivityPage({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-      <Panel title="Activity" meta={`${rows.length} entries`}>
+      <Panel title="Activity" meta={listMeta(rows.length, total, "entry", "entries")}>
         {rows.length === 0 ? (
           <EmptyState headline="Nothing on the feed yet.">
             Status changes land here automatically. Notes you write and questions
             the homeowner asks appear alongside them.
           </EmptyState>
         ) : (
+          <>
           <ol className="divide-y divide-ink/8">
             {rows.map((event) => {
               const author = event.author
@@ -125,6 +197,19 @@ export default async function ActivityPage({
               );
             })}
           </ol>
+
+          <ListPager
+            label="Activity pages"
+            noun="entry"
+            pluralNoun="entries"
+            placement="footer"
+            shown={rows.length}
+            total={total}
+            prevHref={prevCursor ? pageHref("prev", prevCursor) : null}
+            nextHref={nextCursor ? pageHref("next", nextCursor) : null}
+            startHref={cursor ? base : null}
+          />
+          </>
         )}
       </Panel>
 

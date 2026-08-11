@@ -11,6 +11,16 @@ import { InvitePanel, type InvitableClaimant } from "./invite-panel";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Both panels below are deliberate excerpts, not lists — the newest five
+ * intakes and six homeowners still to invite. That is the right shape for a
+ * dashboard, and it was the caption that was wrong: "6 to send" over a
+ * `.limit(6)` states a total it has not measured, and at seven uninvited
+ * homeowners it says 6 for ever. They keep their caps and state both numbers.
+ */
+const TRIAGE_EXCERPT = 5;
+const INVITE_EXCERPT = 6;
+
 const LEDE: Record<string, string> = {
   owner: "Every claim in the business, and the queues that need a decision today.",
   adjuster: "Your caseload. The stage counts below are your claims, not the firm's.",
@@ -21,7 +31,7 @@ export default async function AdminDashboard() {
   const session = await requireStaff("/admin");
   const supabase = await createClient();
 
-  const [statuses, intake, questions, recent, uninvited] = await Promise.all([
+  const [statuses, intake, questions, recent, uninvited, uninvitedCount] = await Promise.all([
     // One narrow column for every claim the caller may see, tallied below.
     // PostgREST has no GROUP BY without a view, and at CMG's volume — hundreds
     // of claims a year — an enum-per-row is cheaper than the round trips a
@@ -35,7 +45,7 @@ export default async function AdminDashboard() {
       )
       .eq("status", "new_intake")
       .order("created_at", { ascending: false })
-      .limit(5),
+      .limit(TRIAGE_EXCERPT),
     supabase
       .from("claim_events")
       .select("id, body, created_at, claim_id, claims!claim_events_claim_id_fkey(claim_ref)")
@@ -55,7 +65,16 @@ export default async function AdminDashboard() {
       .neq("claims.status", "new_intake")
       .neq("claims.status", "rejected")
       .order("created_at", { ascending: false })
-      .limit(6),
+      .limit(INVITE_EXCERPT),
+    // The same predicate, counted rather than fetched. Without it the panel had
+    // no way to know it was showing an excerpt, so it captioned six rows as the
+    // whole repair list.
+    supabase
+      .from("claimants")
+      .select("id, claims!inner(status)", { count: "exact", head: true })
+      .is("user_id", null)
+      .neq("claims.status", "new_intake")
+      .neq("claims.status", "rejected"),
   ]);
 
   const counts: StatusCounts = {};
@@ -73,6 +92,13 @@ export default async function AdminDashboard() {
     email: row.email,
     claimRef: row.claims?.claim_ref ?? "—",
   }));
+  const invitableTotal = uninvitedCount.count ?? invitable.length;
+
+  const triageShown = (intake.data ?? []).length;
+  // Read from the ladder's own tally rather than counted separately, so the
+  // number in this caption and the number in the pipeline strip above it are
+  // one number and cannot disagree on the same screen.
+  const triageTotal = counts.new_intake ?? triageShown;
 
   return (
     <>
@@ -88,13 +114,22 @@ export default async function AdminDashboard() {
         <Panel
           title="Waiting on triage"
           meta={
-            (counts.new_intake ?? 0) > 0 ? (
-              <Link
-                href="/admin/intake"
-                className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
-              >
-                Open the queue
-              </Link>
+            triageTotal > 0 ? (
+              <>
+                {triageShown < triageTotal ? (
+                  <>
+                    Showing <span className="tabular-nums">{triageShown}</span> of{" "}
+                    <span className="tabular-nums">{triageTotal}</span>
+                    {" · "}
+                  </>
+                ) : null}
+                <Link
+                  href="/admin/intake"
+                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+                >
+                  Open the queue
+                </Link>
+              </>
             ) : undefined
           }
         >
@@ -233,7 +268,9 @@ export default async function AdminDashboard() {
                           ? `${primary.first_name} ${primary.last_name}`.trim()
                           : "—"}
                       </span>
-                      <CellMeta>
+                      <CellMeta
+                        title={`${claim.property_street}, ${claim.property_city}`}
+                      >
                         {claim.property_street}, {claim.property_city}
                       </CellMeta>
                     </Td>
@@ -254,9 +291,15 @@ export default async function AdminDashboard() {
 
         <Panel
           title="Awaiting portal access"
-          meta={invitable.length > 0 ? `${invitable.length} to send` : undefined}
+          meta={
+            invitableTotal > 0
+              ? invitable.length < invitableTotal
+                ? `${invitable.length} of ${invitableTotal} to send`
+                : `${invitableTotal} to send`
+              : undefined
+          }
         >
-          <InvitePanel claimants={invitable} />
+          <InvitePanel claimants={invitable} total={invitableTotal} />
         </Panel>
       </div>
     </>

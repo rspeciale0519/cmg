@@ -224,9 +224,31 @@ export function AuditMeta({
   const statusRow = isJsonObject(row) && ("from_status" in row || "to_status" in row)
     ? row
     : null;
+
+  /**
+   * The claim this entry is about, when the entry *is* the claim.
+   *
+   * `claims.insert` writes no `meta.claim_id` — the row it inserted is the
+   * claim, so the trigger has nothing to point at — and the reference sat
+   * inside `meta.row` behind the "Row as written" disclosure with the other
+   * twenty-odd columns. On the seed that made two of thirty-one claim-scoped
+   * entries the only ones whose collapsed row did not name a claim, and they
+   * were the two that open every claim's history: "Claim created", with no
+   * indication of which one.
+   *
+   * Lifted rather than duplicated, exactly as `StatusTransition` is, so the
+   * disclosure's own count stays right about what is hidden behind it.
+   */
+  const insertedClaimRef =
+    isJsonObject(row) && typeof row.claim_ref === "string" && !("claim_id" in rest)
+      ? row.claim_ref
+      : null;
+
   const rowFields = isJsonObject(row)
     ? Object.entries(row).filter(
-        ([key]) => !statusRow || (key !== "from_status" && key !== "to_status"),
+        ([key]) =>
+          (!statusRow || (key !== "from_status" && key !== "to_status")) &&
+          !(insertedClaimRef && key === "claim_ref"),
       )
     : [];
 
@@ -238,7 +260,8 @@ export function AuditMeta({
     changedFields.length === 0 &&
     rowFields.length === 0 &&
     others.length === 0 &&
-    !statusRow
+    !statusRow &&
+    !insertedClaimRef
   ) {
     return null;
   }
@@ -247,6 +270,13 @@ export function AuditMeta({
     <div className="mt-[7px] text-[12.5px] leading-[1.6]">
       {statusRow ? (
         <StatusTransition from={statusRow.from_status} to={statusRow.to_status} />
+      ) : null}
+
+      {insertedClaimRef ? (
+        <p className={cx("flex flex-wrap items-baseline gap-x-2", statusRow && "mt-[5px]")}>
+          <span className="text-ink/42">Claim</span>
+          <ClaimRefValue value={insertedClaimRef} />
+        </p>
       ) : null}
 
       {changedFields.length > 0 ? (
