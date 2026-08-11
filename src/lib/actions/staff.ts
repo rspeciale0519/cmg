@@ -6,7 +6,7 @@ import { writeAudit } from "@/lib/audit";
 import { ROLE_LABEL } from "@/components/admin/nav";
 import { loadStaffRoster } from "@/lib/admin/staff";
 import type { AppRole } from "@/lib/auth/roles";
-import { requireRole } from "@/lib/authz";
+import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import {
@@ -29,7 +29,11 @@ import {
 /**
  * Staff administration, owner-only in three independent layers:
  *
- *   1. `requireRole("owner")` here, which is `notFound()` for anyone else;
+ *   1. `requireOwner()` here, which is `notFound()` for anyone else — and an
+ *      explicit aal2 check, not merely a role one. `inviteStaff` writes through
+ *      `issueInvite`, which uses the service-role client and is therefore exempt
+ *      from the database's aal2 gate, so without this the only thing standing
+ *      between a one-factor session and an issued invitation was `proxy.ts`;
  *   2. `profiles_update_owner`, the RLS policy that admits the write at all;
  *   3. `guard_profile_privileges()`, a BEFORE UPDATE trigger that refuses any
  *      change to role / partner_company_id / is_active unless the actor is an
@@ -180,7 +184,7 @@ export async function changeStaffRole(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const requested = String(formData.get("role") ?? "").trim();
 
   if (!isStaffAppRole(requested)) {
@@ -225,7 +229,7 @@ export async function setStaffActive(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const requested = String(formData.get("active") ?? "") === "true";
 
   const loaded = await loadTarget(formData);
@@ -279,7 +283,7 @@ export async function inviteStaff(
   _previous: InviteIssueState,
   formData: FormData,
 ): Promise<InviteIssueState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
 
   const parsed = staffInviteSchema.safeParse({
     email: formData.get("email") ?? "",

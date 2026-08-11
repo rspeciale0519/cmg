@@ -1,3 +1,4 @@
+import { isClaimStatus, STATUS_LABEL } from "@/lib/claims/status";
 import { cx } from "@/lib/cx";
 import type { Json } from "@/types/database";
 
@@ -146,7 +147,68 @@ function ChangeRow({ field, change }: { field: string; change: Json | undefined 
   );
 }
 
-export function AuditMeta({ meta }: { meta: Json }) {
+/**
+ * A status enum as the workspace writes it. `settlement_offered` is a database
+ * word and `Settlement offered` is the one on every pill in the product; an
+ * audit trail that spells the same fact a third way is a trail the reader has to
+ * translate before they can compare it to the screen it came from.
+ */
+function StatusValue({ value }: { value: Json | undefined }) {
+  if (typeof value === "string" && isClaimStatus(value)) {
+    return <span className="min-w-0 text-ink/80">{STATUS_LABEL[value]}</span>;
+  }
+  return <Value value={value} />;
+}
+
+/**
+ * The move a status-history entry records, on the collapsed row.
+ *
+ * These two fields arrive inside `meta.row` — `public.audit_row_change()` puts
+ * the whole inserted row there — so they were behind the "Row as written"
+ * disclosure with the other five columns, and the visible row said only that
+ * *a* status had advanced on *a* claim. Nine consecutive transitions on one
+ * claim therefore rendered as nine byte-identical strings: the longest run of
+ * indistinguishable rows measured 9 and spanned 837px, on the page whose lede
+ * promises "what it was before, and what it became".
+ *
+ * They are lifted out rather than duplicated. Leaving them in the disclosure too
+ * would put the same pair on the screen twice and make the row count wrong about
+ * what is hidden behind it.
+ *
+ * `from_status` is nullable — the opening entry of a claim has no previous
+ * status — and renders through `Value`'s "not set", which is the same word the
+ * `old` half of every `ChangeRow` uses for the same absence.
+ */
+function StatusTransition({ from, to }: { from: Json | undefined; to: Json | undefined }) {
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px]">
+      <StatusValue value={from} />
+      <span aria-hidden="true" className="text-accent/60">
+        →
+      </span>
+      <span className="sr-only">changed to</span>
+      <StatusValue value={to} />
+    </p>
+  );
+}
+
+/** The claim reference, set like every other one in the workspace. */
+function ClaimRefValue({ value }: { value: string }) {
+  return (
+    <span className="min-w-0 whitespace-nowrap tabular-nums tracking-[0.01em] text-ink/80">
+      {value}
+    </span>
+  );
+}
+
+export function AuditMeta({
+  meta,
+  claimRef,
+}: {
+  meta: Json;
+  /** `meta.claim_id` resolved by `loadAuditPage`, when it named a live claim. */
+  claimRef?: string | null;
+}) {
   if (!isJsonObject(meta)) {
     if (meta === null) return null;
     return (
@@ -158,19 +220,37 @@ export function AuditMeta({ meta }: { meta: Json }) {
 
   const { op, changed, row, ...rest } = meta;
   const changedFields = isJsonObject(changed) ? Object.entries(changed) : [];
-  const rowFields = isJsonObject(row) ? Object.entries(row) : [];
+
+  const statusRow = isJsonObject(row) && ("from_status" in row || "to_status" in row)
+    ? row
+    : null;
+  const rowFields = isJsonObject(row)
+    ? Object.entries(row).filter(
+        ([key]) => !statusRow || (key !== "from_status" && key !== "to_status"),
+      )
+    : [];
+
   const others = Object.entries(rest)
     .filter(([, value]) => value !== undefined)
     .sort(byReadingOrder);
 
-  if (changedFields.length === 0 && rowFields.length === 0 && others.length === 0) {
+  if (
+    changedFields.length === 0 &&
+    rowFields.length === 0 &&
+    others.length === 0 &&
+    !statusRow
+  ) {
     return null;
   }
 
   return (
     <div className="mt-[7px] text-[12.5px] leading-[1.6]">
+      {statusRow ? (
+        <StatusTransition from={statusRow.from_status} to={statusRow.to_status} />
+      ) : null}
+
       {changedFields.length > 0 ? (
-        <ul className="grid gap-[3px]">
+        <ul className={cx("grid gap-[3px]", statusRow && "mt-[5px]")}>
           {changedFields.map(([field, change]) => (
             <ChangeRow key={field} field={field} change={change} />
           ))}
@@ -181,19 +261,28 @@ export function AuditMeta({ meta }: { meta: Json }) {
         <ul
           className={cx(
             "flex flex-wrap gap-x-5 gap-y-[3px]",
-            changedFields.length > 0 && "mt-[5px]",
+            (changedFields.length > 0 || statusRow) && "mt-[5px]",
           )}
         >
           {/* `flex-wrap` here as on its two sibling lists. This was the one that
               did not have it, and it is the list that holds `token_hash` — so
               the label and a 64-character hash were pinned to a single line
               that could not wrap and could not shrink. */}
-          {others.map(([key, value]) => (
-            <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-              <span className="text-ink/42">{labelKey(key)}</span>
-              <Value value={value} />
-            </li>
-          ))}
+          {others.map(([key, value]) => {
+            /* A claim is `CMG-2026-0002` on every other screen in the workspace
+               and was a 36-character uuid here, which is not the same fact in a
+               different notation — it is a fact the reader cannot match to
+               anything they have seen. The uuid stays when the resolver missed,
+               because `audit_log` keeps no foreign key into `claims` and an
+               entry about a deleted claim is still an entry about that claim. */
+            const resolved = key === "claim_id" && claimRef;
+            return (
+              <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                <span className="text-ink/42">{resolved ? "Claim" : labelKey(key)}</span>
+                {resolved ? <ClaimRefValue value={claimRef} /> : <Value value={value} />}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
 

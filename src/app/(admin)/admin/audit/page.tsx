@@ -186,7 +186,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           ) : null}
         </p>
 
-        <AuditMeta meta={entry.meta} />
+        <AuditMeta meta={entry.meta} claimRef={entry.claimRef} />
       </div>
 
       {/* Under `lg` this column folds back to the bottom of the entry, so the

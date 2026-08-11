@@ -65,6 +65,10 @@ export async function requireUser(next?: string): Promise<Session> {
  * able to tell a resource they may not have from one that is not there. A 403
  * on `/admin/claims/<uuid>` and a 404 on a random uuid together enumerate the
  * claim table for anyone with a portal account.
+ *
+ * Role only. It is the right helper for `customer` and `partner`, who have no
+ * second factor, and it is *not* enough on its own for a staff surface — see
+ * `requireStaff` below and `requireOwner` beneath that.
  */
 export async function requireRole(...roles: readonly AppRole[]): Promise<Session> {
   const session = await requireUser();
@@ -132,6 +136,31 @@ export async function requireStaff(next?: string): Promise<Session> {
   if (session.aal !== "aal2") {
     redirect(next ? `/mfa?next=${encodeURIComponent(next)}` : "/mfa");
   }
+  return session;
+}
+
+/**
+ * Owner *and* aal2 — the helper the owner-only server actions call.
+ *
+ * `requireRole("owner")` was doing this job and it checks no factor, which
+ * matters because the two invite actions do not go on to write through the
+ * caller's client: `issueInvite` writes as the service role, which is exempt
+ * from the database's aal2 gate by construction. Their MFA enforcement
+ * therefore rested entirely on `proxy.ts` — and a guard whose only copy lives in
+ * the proxy is one route-matcher edit away from not existing. Nothing was
+ * reachable at aal1 in this build; this is the second copy, in the layer that
+ * runs on every action POST whatever the proxy decides.
+ *
+ * Composed rather than re-derived, so there is one definition of "staff and
+ * aal2" and this adds one word to it. The order also keeps §7.9: a non-staff
+ * caller 404s before any factor is consulted, so the shortfall redirect can only
+ * be seen by someone who is already staff — and an adjuster sees the same `/mfa`
+ * here that they would see on any staff surface, which tells them nothing about
+ * this one.
+ */
+export async function requireOwner(next?: string): Promise<Session> {
+  const session = await requireStaff(next);
+  if (session.role !== "owner") notFound();
   return session;
 }
 

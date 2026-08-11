@@ -2,9 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { LeadStatusForm } from "@/components/admin/lead-status-form";
+import { ListPager } from "@/components/admin/list-pager";
 import { LeadPill } from "@/components/admin/status-pill";
+import { pageCursors } from "@/lib/admin/audit-range";
 import { requireStaff } from "@/lib/authz";
 import { formatRelative, formatTimestamp } from "@/lib/format";
+import {
+  formatLeadCursor,
+  leadCursorFrom,
+  leadKeysetClause,
+  LEADS_PAGE_SIZE,
+  parseLeadCursor,
+} from "@/lib/leads/list";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -46,28 +55,91 @@ export default async function LeadsPage({
 }) {
   const session = await requireStaff("/admin/leads");
   const raw = await searchParams;
-  const statusParam = Array.isArray(raw.status) ? raw.status[0] : raw.status;
+  const first = (key: string) => {
+    const value = raw[key];
+    return Array.isArray(value) ? value[0] : value;
+  };
+
+  const statusParam = first("status");
   const status = FILTERS.some((filter) => filter.value === statusParam)
     ? (statusParam ?? "")
     : "";
 
+  // Forward wins if both are present: a URL carrying two cursors is hand-made,
+  // and honouring the one that means "onwards" is the harmless reading.
+  const forward = parseLeadCursor(first("next"));
+  const backward = forward ? null : parseLeadCursor(first("prev"));
+  const cursor = forward ?? backward;
+
+  // Paging backwards means walking the opposite way from the cursor and
+  // reversing the window, so the reader still sees newest-first on every page.
+  const reversed = backward !== null;
+  const ascending = reversed;
+
   const supabase = await createClient();
-  let query = supabase
-    .from("leads")
-    .select("id, name, phone, email, message, status, created_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .limit(80);
 
-  if (isLeadStatus(status)) query = query.eq("status", status);
+  /**
+   * The one filter the reader can set, applied to both the page query and the
+   * total-count query so the two can never disagree about what "matching"
+   * means. Written as a method type so the concrete builder — whose `eq` is
+   * keyed to the row's own column union — still satisfies it.
+   */
+  function applyFilter<Q extends { eq(column: string, value: string): Q }>(query: Q): Q {
+    return isLeadStatus(status) ? query.eq("status", status) : query;
+  }
 
-  const { data, count } = await query;
-  const leads = data ?? [];
+  let query = applyFilter(
+    supabase.from("leads").select("id, name, phone, email, message, status, created_at"),
+  )
+    .order("created_at", { ascending })
+    // The tie-break is what makes the cursor safe; ordering on it is what makes
+    // the cursor *match* the order.
+    .order("id", { ascending })
+    .limit(LEADS_PAGE_SIZE + 1);
+
+  if (cursor) query = query.or(leadKeysetClause(ascending ? "asc" : "desc", cursor));
+
+  // The total is counted without the keyset predicate. Folding it into the main
+  // query would make `count` mean "matches on this page and after it", so the
+  // header would count down as the reader paged — the opposite of what a total
+  // is for.
+  const [{ data, error }, { count, error: countError }] = await Promise.all([
+    query,
+    applyFilter(supabase.from("leads").select("id", { count: "exact", head: true })),
+  ]);
+
+  if (error) console.error("[leads] list query failed", error.message);
+  if (countError) console.error("[leads] count query failed", countError.message);
+
+  const fetched = data ?? [];
+  const hasMore = fetched.length > LEADS_PAGE_SIZE;
+  const window = fetched.slice(0, LEADS_PAGE_SIZE);
+  const leads = reversed ? [...window].reverse() : window;
+  const total = count ?? leads.length;
   const canEdit = session.role === "owner" || session.role === "assistant";
+
+  const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
+    ids: leads.map((lead) => formatLeadCursor(leadCursorFrom(lead))),
+    hasMore,
+    ascending: reversed,
+    cameFromCursor: cursor !== null,
+  });
+
+  /** Rebuilt from the parsed filter, so a junk parameter never survives a click. */
+  function href(extra?: Record<string, string>): string {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    for (const [key, value] of Object.entries(extra ?? {})) params.set(key, value);
+    const query = params.toString();
+    return query ? `/admin/leads?${query}` : "/admin/leads";
+  }
+
+  const paged = cursor !== null;
 
   return (
     <>
       <PageHeader
-        eyebrow={`${count ?? leads.length} ${status || "total"}`}
+        eyebrow={`${total} ${status || "total"}`}
         title="Leads."
         lede={
           canEdit
@@ -98,10 +170,18 @@ export default async function LeadsPage({
 
       <Panel>
         {leads.length === 0 ? (
-          <EmptyState headline={status ? `Nothing ${status}.` : "No enquiries yet."}>
-            Submissions from the contact form arrive here with the caller&rsquo;s
-            number and what they wrote.
-          </EmptyState>
+          paged ? (
+            <EmptyState headline="You have reached the end of the list.">
+              <Link href={href()} className="text-accent no-underline hover:text-accent-300">
+                Back to the start
+              </Link>
+            </EmptyState>
+          ) : (
+            <EmptyState headline={status ? `Nothing ${status}.` : "No enquiries yet."}>
+              Submissions from the contact form arrive here with the caller&rsquo;s
+              number and what they wrote.
+            </EmptyState>
+          )
         ) : (
           <ul className="divide-y divide-ink/8">
             {leads.map((lead) => (
@@ -173,6 +253,19 @@ export default async function LeadsPage({
           </ul>
         )}
       </Panel>
+
+      {leads.length > 0 ? (
+        <ListPager
+          label="Lead pages"
+          noun="lead"
+          pluralNoun="leads"
+          shown={leads.length}
+          total={total}
+          prevHref={prevCursor ? href({ prev: prevCursor }) : null}
+          nextHref={nextCursor ? href({ next: nextCursor }) : null}
+          startHref={paged ? href() : null}
+        />
+      ) : null}
     </>
   );
 }

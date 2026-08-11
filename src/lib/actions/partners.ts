@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
-import { requireRole } from "@/lib/authz";
+import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -21,9 +21,12 @@ import {
 /**
  * Partner companies are owner-only in every layer (spec §4). Each action here:
  *
- *   1. `requireRole("owner")` — and that is `notFound()` for anyone else, not a
- *      403, so an adjuster probing `/admin/partners` learns nothing about
- *      whether the surface exists.
+ *   1. `requireOwner()` — owner *and* aal2, and that is `notFound()` for anyone
+ *      else, not a 403, so an adjuster probing `/admin/partners` learns nothing
+ *      about whether the surface exists. The factor check is stated here rather
+ *      than left to `proxy.ts` because `invitePartnerRep` reaches
+ *      `issueInvite`, which writes as the service role and so is not covered by
+ *      the database's own aal2 gate.
  *   2. writes through the *caller's* client, so
  *      `partner_companies_insert_owner` / `_update_owner` / `_delete_owner` are
  *      what actually permit the write. The role check above turns a refusal into
@@ -82,7 +85,7 @@ export async function createPartnerCompany(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
 
   const parsed = readCompanyForm(formData);
   if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error));
@@ -120,7 +123,7 @@ export async function updatePartnerCompany(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
   if (!UUID.test(companyId)) return { status: "error", message: NOT_FOUND };
 
@@ -167,7 +170,7 @@ export async function setPartnerCompanyStatus(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
   const requested = String(formData.get("status") ?? "").trim();
 
@@ -224,7 +227,7 @@ export async function deletePartnerCompany(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
   if (!UUID.test(companyId)) return { status: "error", message: NOT_FOUND };
 
@@ -277,13 +280,15 @@ function sentenceFrom(message: string): string {
  * company, 72h single-use token, hashed at rest. `invites_all_owner` scopes the
  * table to owners; `issueInvite` writes as the service role because the same
  * helper serves the adjuster-accepts-an-intake path, so the authority to issue
- * *this* invitation is decided here, by `requireRole("owner")`.
+ * *this* invitation is decided here, by `requireOwner()` — which is also why
+ * that helper has to check the factor as well as the role: nothing downstream
+ * of this line will.
  */
 export async function invitePartnerRep(
   _previous: InviteIssueState,
   formData: FormData,
 ): Promise<InviteIssueState> {
-  const session = await requireRole("owner");
+  const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
   if (!UUID.test(companyId)) return { status: "error", message: NOT_FOUND };
 

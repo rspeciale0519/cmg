@@ -30,6 +30,11 @@ export type AuditEntry = {
   actorRole: string | null;
   ip: string | null;
   meta: Json;
+  /**
+   * `meta.claim_id` resolved to the reference the workspace uses everywhere
+   * else, or null when the entry names no claim or the claim is gone.
+   */
+  claimRef: string | null;
 };
 
 export type AuditPage = {
@@ -152,10 +157,14 @@ export async function loadAuditPage(filters: AuditFilters): Promise<AuditPage> {
   const window = rows.slice(0, AUDIT_PAGE_SIZE);
   const ordered = ascending ? [...window].reverse() : window;
 
-  const actors = await loadActorNames(ordered.map((row) => row.actor_id));
+  const [actors, claimRefs] = await Promise.all([
+    loadActorNames(ordered.map((row) => row.actor_id)),
+    loadClaimRefs(ordered.map((row) => claimIdIn(row.meta))),
+  ]);
 
   const entries: AuditEntry[] = ordered.map((row) => {
     const actor = row.actor_id ? actors.get(row.actor_id) : undefined;
+    const claimId = claimIdIn(row.meta);
     return {
       id: row.id,
       createdAt: row.created_at,
@@ -167,6 +176,7 @@ export async function loadAuditPage(filters: AuditFilters): Promise<AuditPage> {
       actorRole: actor?.role ?? null,
       ip: typeof row.ip === "string" ? row.ip : null,
       meta: row.meta,
+      claimRef: claimId ? (claimRefs.get(claimId) ?? null) : null,
     };
   });
 
@@ -213,6 +223,43 @@ async function loadActorNames(
       },
     ]),
   );
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** `meta.claim_id`, which `public.audit_row_change()` writes as a text uuid. */
+function claimIdIn(meta: Json): string | null {
+  if (typeof meta !== "object" || meta === null || Array.isArray(meta)) return null;
+  const value = (meta as { claim_id?: Json }).claim_id;
+  return typeof value === "string" && UUID.test(value) ? value : null;
+}
+
+/**
+ * The references for the claims named on this page.
+ *
+ * A second query rather than an embedded join, for the reason `loadActorNames`
+ * gives one line up: `audit_log` holds no foreign key into `claims` — deleting a
+ * claim must not be able to rewrite the record of what was done to it — so
+ * PostgREST has no relationship to embed. It also means a claim can be missing
+ * here, which is why a miss falls back to the raw uuid at the call site rather
+ * than to "unknown": the log is still the record that the row existed.
+ *
+ * `claims_select` is what admits the read, and it already gives an owner every
+ * claim; `/admin/audit` is owner-only, so this never narrows the page.
+ */
+async function loadClaimRefs(
+  ids: readonly (string | null)[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((id): id is string => id !== null))];
+  if (unique.length === 0) return new Map();
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("claims")
+    .select("id, claim_ref")
+    .in("id", unique);
+
+  return new Map((data ?? []).map((row) => [row.id, row.claim_ref]));
 }
 
 export type ActorOption = { id: string; name: string; role: string };
