@@ -2,10 +2,13 @@ import "server-only";
 
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { requireStaff, type Session } from "@/lib/authz";
+import { isStaffRole } from "@/lib/auth/roles";
+import { getSession, requireStaff, type Session } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
 import { claimCapabilities, type ClaimCapabilities } from "./capabilities";
 import { isClaimStatus, type ClaimStatus } from "./status";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Explicit FK hints on every embed. Without them PostgREST resolves the
@@ -153,6 +156,60 @@ export const loadClaimContext = cache(async function loadClaimContext(
     can: claimCapabilities(
       { userId: session.userId, role: session.role },
       { assignedAdjusterId: claim.assignedAdjusterId },
+    ),
+  };
+});
+
+export type ClaimTitleContext = {
+  claimRef: string;
+  can: ClaimCapabilities;
+};
+
+/**
+ * What a claim tab's `<title>` needs, decided without throwing.
+ *
+ * Next resolves a segment's metadata independently of whether that segment's
+ * component renders, and a `generateMetadata` that throws abandons metadata
+ * resolution for the whole segment — the title then comes out empty, which is a
+ * third spelling of the same 404. So neither `requireStaff()` nor
+ * `loadClaimContext()` can be used here: both answer with control flow, and the
+ * question this asks is a string.
+ *
+ * `can` comes back with the reference because a tab may be gated on a
+ * *capability* rather than on a role, and §7.9's rule is about what the refusal
+ * discloses, not about which layer refused. `/admin/claims/<id>/financials`
+ * called `notFound()` for an assistant — `claim_financials` carries no policy
+ * for them at all — while the layout above it went on resolving the claim and
+ * put `CMG-2026-0001 · CMG claims desk` in the tab. The body said the page is
+ * not there and the tab strip confirmed both the claim and the screen exist,
+ * which is precisely the pair `metadataForRole` was written to stop role-gated
+ * routes from emitting.
+ *
+ * A shortfall of any kind — signed out, not staff, one factor short, no such
+ * claim, not this caller's claim — is the same `null`, and every caller renders
+ * it as `NOT_FOUND_TITLE`.
+ */
+export const claimTitleContext = cache(async function claimTitleContext(
+  claimId: string,
+): Promise<ClaimTitleContext | null> {
+  const session = await getSession();
+  if (!session || !isStaffRole(session.role) || session.aal !== "aal2") return null;
+  if (!UUID.test(claimId)) return null;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("claims")
+    .select("claim_ref, assigned_adjuster_id")
+    .eq("id", claimId)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    claimRef: data.claim_ref,
+    can: claimCapabilities(
+      { userId: session.userId, role: session.role },
+      { assignedAdjusterId: data.assigned_adjuster_id },
     ),
   };
 });

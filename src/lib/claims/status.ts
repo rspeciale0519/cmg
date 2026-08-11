@@ -78,10 +78,21 @@ export const ALL_STATUSES: readonly ClaimStatus[] = [
 ] as const;
 
 /**
- * Colour families, kept small so the table reads at a glance. `attention`
- * is the accent gold and is spent only where a human has to act; if more than
- * one status wore it the colour would stop meaning anything.
+ * Colour families, kept small so the table reads at a glance. `attention` is the
+ * accent gold and is spent on exactly the two statuses where someone at CMG
+ * holds the next move: an intake nobody owns, and an offer nobody has answered.
+ * Two, and the file's own test pins the number — if half the lifecycle wore gold
+ * the colour would carry no information and the table would read as uniformly
+ * urgent, which is the same as uniformly calm.
  *
+ * `reopened` used to wear it and does not, because it fails that test. "Back
+ * with the carrier after a denial" is the carrier's move, not CMG's — the same
+ * sentence `filed` and `negotiating` carry — so it is `active` with them. It was
+ * also the more expensive half of the mistake: `settlement_offered` ("an offer
+ * is on the table and needs a decision") and `reopened` ("back with the carrier")
+ * are opposite ends of a negotiation and were rendering as the same pill.
+ *
+
  * A tone is a category and the label is the identity, which is why `settled`
  * and `closed` share `resolved` without confusing anyone: they are the same
  * kind of ending and the words tell you which one.
@@ -115,7 +126,7 @@ export const STATUS_TONE: Record<ClaimStatus, StatusTone> = {
   settled: "resolved",
   closed: "resolved",
   denied: "halted",
-  reopened: "attention",
+  reopened: "active",
   rejected: "declined",
 };
 

@@ -80,6 +80,26 @@ export async function requireRole(...roles: readonly AppRole[]): Promise<Session
 export const NOT_FOUND_TITLE = "Page not found";
 
 /**
+ * The workspace's tab-title suffix, and the one place it is written.
+ *
+ * The `/admin` layout hands this to Next as `title.template`, which Next applies
+ * to a child segment's title and then *consumes* — a deeper segment inherits no
+ * template, because the nearest ancestor that declared one has already had it
+ * used. That is invisible until a route three levels down needs to title itself:
+ * `/admin/claims/[id]/financials` sits under a layout that already spent the
+ * template on the claim reference, so its own title came out bare while every
+ * other refusal in the workspace carried the suffix.
+ *
+ * `adminTitle()` is how a segment past that point re-applies it deliberately,
+ * through `title.absolute`, without a second copy of the string.
+ */
+export const ADMIN_TITLE_TEMPLATE = "%s · CMG claims desk";
+
+export function adminTitle(title: string): string {
+  return ADMIN_TITLE_TEMPLATE.replace("%s", title);
+}
+
+/**
  * The `<title>` for a role-gated route, decided without throwing.
  *
  * Next resolves a segment's metadata independently of whether that segment's

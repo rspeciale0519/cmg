@@ -3,8 +3,8 @@ import Link from "next/link";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { AuditFilters } from "@/components/admin/audit-filters";
 import { AuditMeta } from "@/components/admin/audit-meta";
+import { listMeta } from "@/components/admin/list-pager";
 import {
-  AUDIT_PAGE_SIZE,
   hasActiveFilters,
   loadActorOptions,
   loadAuditPage,
@@ -79,12 +79,15 @@ export default async function AuditPage({
 
       <Panel
         title={filtered ? "Matching entries" : "All activity"}
+        /* Both numbers, through the same helper every other list uses. "40
+           shown" was `rows.length` of a capped page, so it read the same over
+           an unfiltered log of ten thousand as over a filtered set of
+           forty-one — and an owner narrowing to one actor and one week is
+           asking how much of it there was. */
         meta={
           page.entries.length === 0
             ? undefined
-            : page.entries.length === AUDIT_PAGE_SIZE
-              ? `${AUDIT_PAGE_SIZE} shown`
-              : `${page.entries.length} shown`
+            : listMeta(page.entries.length, page.total, "entry", "entries")
         }
       >
         {page.entries.length === 0 ? (

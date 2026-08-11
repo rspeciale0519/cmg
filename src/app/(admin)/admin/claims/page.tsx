@@ -239,7 +239,18 @@ export default async function ClaimsPage({
         resultCount={total}
       />
 
-      <Panel>
+      {/* Titled, where it used to be a bare box. Every other list in the
+          workspace gives its panel a heading — "Accounts" on staff, "Companies"
+          on partners, "Matching entries" / "All activity" on the audit trail —
+          and `/admin/leads` gets one per row from the person's name. This screen
+          had an `h1` and then nothing: a document outline one level deep, and no
+          landmark between the filter bar and a seven-column table for a
+          screen-reader user to move to.
+
+          What the heading says is the one fact the filter bar above it changes:
+          whether these rows are the list or a selection out of it. Same pair,
+          and same reasoning, as the audit viewer. */}
+      <Panel title={hasActiveFilters(filters) ? "Matching claims" : "All claims"}>
         {rows.length === 0 ? (
           hasActiveFilters(filters) ? (
             <EmptyState headline="Nothing matches those filters.">

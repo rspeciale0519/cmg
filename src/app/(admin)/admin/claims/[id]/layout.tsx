@@ -3,42 +3,24 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ClaimTabs, type ClaimTab } from "@/components/admin/claim-tabs";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
-import { loadClaimContext } from "@/lib/claims/queries";
+import { NOT_FOUND_TITLE } from "@/lib/authz";
+import { claimTitleContext, loadClaimContext } from "@/lib/claims/queries";
 import { customerPhaseFor } from "@/lib/claims/status";
 import { formatAddressLine, formatDateOnly } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /**
- * Resolves the reference for the tab title, and answers `null` instead of
- * throwing when the claim is not there or not this caller's.
- *
  * `loadClaimContext` is right to `notFound()` — it is what renders the 404 —
  * but a `generateMetadata` that throws abandons metadata resolution entirely,
  * and the tab title came out as the empty string. That was one of three
  * different titles a single 404 could produce: `""` here, "Page not found ·
  * CMG claims desk" from an unrouted path, and the marketing "Page not found —
  * CMG Property Solutions". The page still calls `notFound()`; only the title
- * is decided without an exception, so every miss under `/admin` now reads the
- * same in a tab strip.
- *
- * RLS answers the question, so "no such claim" and "not yours" are the same
- * `null` here exactly as they are everywhere else (spec §7.9).
+ * is decided without an exception, so every miss under `/admin` reads the same
+ * in a tab strip. See `claimTitleContext` for how it answers without throwing.
  */
-async function claimRefForTitle(id: string): Promise<string | null> {
-  if (!UUID.test(id)) return null;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("claims")
-    .select("claim_ref")
-    .eq("id", id)
-    .maybeSingle();
-  return data?.claim_ref ?? null;
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -46,7 +28,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   return {
-    title: (await claimRefForTitle(id)) ?? "Page not found",
+    title: (await claimTitleContext(id))?.claimRef ?? NOT_FOUND_TITLE,
     robots: { index: false, follow: false },
   };
 }

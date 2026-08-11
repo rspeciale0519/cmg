@@ -13,15 +13,25 @@ const ALL_STAFF: readonly AppRole[] = ["owner", "adjuster", "assistant"] as cons
 const OWNER_ONLY: readonly AppRole[] = ["owner"] as const;
 
 /**
- * Eight destinations, in the order the work runs: what arrived, what it became,
+ * Nine destinations, in the order the work runs: what arrived, what it became,
  * then the reference material. Partners, Staff, Audit and Settings are §9's
  * owner surfaces and are filtered out for everyone else rather than rendered
  * disabled — a control that is never usable is not information.
+ *
+ * Questions sits with the other two inboxes because that is what it is: a
+ * homeowner asking something and waiting. It had no destination at all until
+ * this round — the dashboard showed four of them and there was nowhere to send
+ * anyone for the fifth — and a queue reachable only from one panel on one page
+ * is a queue most of whose rows nobody will ever see. It carries no badge: the
+ * two above it count work that is unstarted, and a question's equivalent is
+ * "unanswered", which cannot be computed across claims without an unbounded
+ * read. A number that is nearly right is worse here than no number.
  */
 export const ADMIN_NAV: readonly AdminNavItem[] = [
   { href: "/admin", label: "Dashboard", roles: ALL_STAFF },
   { href: "/admin/intake", label: "Intake", roles: ALL_STAFF, badge: "intake" },
   { href: "/admin/leads", label: "Leads", roles: ALL_STAFF, badge: "leads" },
+  { href: "/admin/questions", label: "Questions", roles: ALL_STAFF },
   { href: "/admin/claims", label: "Claims", roles: ALL_STAFF },
   { href: "/admin/partners", label: "Partners", roles: OWNER_ONLY },
   { href: "/admin/staff", label: "Staff", roles: OWNER_ONLY },

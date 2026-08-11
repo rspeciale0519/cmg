@@ -915,6 +915,13 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
+      claim_status_counts: {
+        Args: never
+        Returns: {
+          claim_count: number
+          status: Database["public"]["Enums"]["claim_status"]
+        }[]
+      }
       next_claim_ref: { Args: never; Returns: string }
       reassign_claim: {
         Args: { p_claim_id: string; p_new_adjuster: string }

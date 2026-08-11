@@ -1,12 +1,49 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Panel, PanelBody } from "@/components/admin/admin-shell";
 import { Fact, FactList } from "@/components/admin/data-table";
 import { FinancialsForm } from "@/components/admin/financials-form";
-import { loadClaimContext } from "@/lib/claims/queries";
+import { adminTitle, NOT_FOUND_TITLE } from "@/lib/authz";
+import { claimTitleContext, loadClaimContext } from "@/lib/claims/queries";
 import { formatMoney, formatPercent, formatTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * The claim layout above this one titles every tab with the reference, which is
+ * right for the five tabs that are there for everyone who can open the claim.
+ * This one is not: it 404s for an assistant, and it inherited the layout's
+ * title while doing so — the workspace 404 in the body and `CMG-2026-0001 · CMG
+ * claims desk` in the tab strip. Together those say the claim exists, a
+ * Financials screen exists, and this account may not have it, which is exactly
+ * the disclosure `notFound()` is used here to avoid (spec §7.9) and exactly
+ * what `metadataForRole` already prevents on the role-gated routes.
+ *
+ * A capability gate is not a role gate — an adjuster sees this tab on their own
+ * claims and not on anyone else's — so it is asked as a capability, on the same
+ * non-throwing read the layout uses.
+ *
+ * When the tab *is* theirs this returns no title at all and the layout's claim
+ * reference stands, which is what the other five tabs do. The refusal is
+ * `absolute` and re-applies the suffix by hand: the layout above already
+ * consumed `/admin`'s `title.template` on the reference, so a bare string here
+ * would render "Page not found" while `/admin/staff` and an unrouted path both
+ * say "Page not found · CMG claims desk". Three tabs, one refusal, one spelling.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const context = await claimTitleContext(id);
+  const robots = { index: false, follow: false } as const;
+
+  if (context?.can.canSeeFinancials) return { robots };
+
+  return { title: { absolute: adminTitle(NOT_FOUND_TITLE) }, robots };
+}
 
 /**
  * `claim_financials` carries no policy for an assistant at all — RLS denies

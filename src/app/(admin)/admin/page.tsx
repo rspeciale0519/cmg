@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
  */
 const TRIAGE_EXCERPT = 5;
 const INVITE_EXCERPT = 6;
+const QUESTION_EXCERPT = 4;
 
 const LEDE: Record<string, string> = {
   owner: "Every claim in the business, and the queues that need a decision today.",
@@ -31,13 +32,32 @@ export default async function AdminDashboard() {
   const session = await requireStaff("/admin");
   const supabase = await createClient();
 
-  const [statuses, intake, questions, recent, uninvited, uninvitedCount] = await Promise.all([
-    // One narrow column for every claim the caller may see, tallied below.
-    // PostgREST has no GROUP BY without a view, and at CMG's volume — hundreds
-    // of claims a year — an enum-per-row is cheaper than the round trips a
-    // count-per-status would cost. If the table ever reaches six figures this
-    // is the query to replace with a view.
-    supabase.from("claims").select("status"),
+  const [
+    statuses,
+    intake,
+    questions,
+    questionCount,
+    recent,
+    uninvited,
+    uninvitedCount,
+  ] = await Promise.all([
+    // The tally, grouped in Postgres. This used to be `.select("status")` — one
+    // enum per claim, counted in TypeScript — and PostgREST caps every
+    // collection read at `db-max-rows` (1000, supabase/config.toml), so past a
+    // thousand claims the array stopped being the claims table and became its
+    // first page, with no error and nothing on the page that could tell.
+    //
+    // The failure was visible rather than theoretical: at 1522 claims one 1440
+    // screen carried the nav badge "Intake 505 waiting" — a real `count: exact`
+    // head request — beside the ladder's "01 New intake 5", under the eyebrow
+    // "1000 claims in view", while /admin/claims said "Showing 60 of 1022".
+    // All ten stage numbers came off that one clamped array.
+    //
+    // `claim_status_counts()` is SECURITY INVOKER, so `claims_select` scopes it
+    // exactly as it scoped the old query: an adjuster's ladder still counts
+    // their caseload and not the firm's. It returns at most one row per status,
+    // so the row cap has nothing left to bite on.
+    supabase.rpc("claim_status_counts"),
     supabase
       .from("claims")
       .select(
@@ -51,7 +71,15 @@ export default async function AdminDashboard() {
       .select("id, body, created_at, claim_id, claims!claim_events_claim_id_fkey(claim_ref)")
       .eq("type", "question")
       .order("created_at", { ascending: false })
-      .limit(4),
+      .limit(QUESTION_EXCERPT),
+    // The same predicate, counted. Without it the panel stated nothing at all
+    // about the questions it was not showing: at thirteen on file it displayed
+    // four and said no word about the other nine, on the only screen in the
+    // product that looks across claims for them.
+    supabase
+      .from("claim_events")
+      .select("id", { count: "exact", head: true })
+      .eq("type", "question"),
     supabase
       .from("claims")
       .select("id, claim_ref, status, updated_at, property_street, property_city, claimants(first_name, last_name, is_primary)")
@@ -77,14 +105,20 @@ export default async function AdminDashboard() {
       .neq("claims.status", "rejected"),
   ]);
 
+  if (statuses.error) {
+    console.error("[dashboard] status tally failed", statuses.error.message);
+  }
+
   const counts: StatusCounts = {};
   for (const row of statuses.data ?? []) {
     if (isClaimStatus(row.status)) {
-      counts[row.status] = (counts[row.status] ?? 0) + 1;
+      counts[row.status] = (counts[row.status] ?? 0) + Number(row.claim_count);
     }
   }
 
-  const total = (statuses.data ?? []).length;
+  // Summed from the same tally the ladder draws, so the eyebrow and the ten
+  // stage numbers under it are one measurement rather than two of the same set.
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
   const invitable: InvitableClaimant[] = (uninvited.data ?? []).map((row) => ({
     id: row.id,
@@ -93,6 +127,9 @@ export default async function AdminDashboard() {
     claimRef: row.claims?.claim_ref ?? "—",
   }));
   const invitableTotal = uninvitedCount.count ?? invitable.length;
+
+  const questionsShown = (questions.data ?? []).length;
+  const questionsTotal = questionCount.count ?? questionsShown;
 
   const triageShown = (intake.data ?? []).length;
   // Read from the ladder's own tally rather than counted separately, so the
@@ -177,7 +214,28 @@ export default async function AdminDashboard() {
           )}
         </Panel>
 
-        <Panel title="Questions from homeowners">
+        <Panel
+          title="Questions from homeowners"
+          meta={
+            questionsTotal > 0 ? (
+              <>
+                {questionsShown < questionsTotal ? (
+                  <>
+                    Showing <span className="tabular-nums">{questionsShown}</span> of{" "}
+                    <span className="tabular-nums">{questionsTotal}</span>
+                    {" · "}
+                  </>
+                ) : null}
+                <Link
+                  href="/admin/questions"
+                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+                >
+                  Open the queue
+                </Link>
+              </>
+            ) : undefined
+          }
+        >
           {(questions.data ?? []).length === 0 ? (
             <EmptyState headline="No open questions.">
               Anything a homeowner asks from their portal arrives here and on the

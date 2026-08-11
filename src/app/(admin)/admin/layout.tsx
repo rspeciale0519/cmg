@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { requireStaff } from "@/lib/authz";
+import { ADMIN_TITLE_TEMPLATE, requireStaff } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: { default: "Claims desk", template: "%s · CMG claims desk" },
+  title: { default: "Claims desk", template: ADMIN_TITLE_TEMPLATE },
   robots: { index: false, follow: false },
 };
 

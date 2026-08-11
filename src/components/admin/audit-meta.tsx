@@ -121,27 +121,47 @@ function Value({ value }: { value: Json | undefined }) {
 }
 
 /**
+ * The columns whose values are `claim_status` literals, rendered through
+ * `StatusValue` so they read as the words on every pill in the product.
+ *
+ * A single status move writes two entries — the history row and the claim's own
+ * UPDATE — and they were rendering the same fact two different ways, forty
+ * pixels apart: "Status advanced · Settlement offered → Settled" above "Claim
+ * changed · settlement_offered → settled". `StatusTransition` already knew to
+ * humanise its pair; `ChangeRow` did not, so the trail's most common entry was
+ * the one place the workspace still spoke in database words.
+ *
+ * Keyed on the column name rather than sniffing the value, so a `leads.status`
+ * of "contacted" or a partner company's "active" — neither of which is a
+ * `claim_status` — cannot be mistaken for one. `StatusValue` falls through to
+ * the plain renderer for anything `isClaimStatus` rejects, so the guard is
+ * belt and braces.
+ */
+const STATUS_COLUMNS = new Set(["status", "from_status", "to_status"]);
+
+/**
  * `old → new` on one line. The arrow is a real glyph rather than a `->` because
  * the pair is scanned, not read, and at 12px the two characters of an ASCII
  * arrow read as part of the value beside them.
  */
 function ChangeRow({ field, change }: { field: string; change: Json | undefined }) {
   const pair = isJsonObject(change) ? change : null;
+  const Rendered = STATUS_COLUMNS.has(field) ? StatusValue : Value;
 
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px]">
       <span className="text-ink/42">{labelKey(field)}</span>
       {pair ? (
         <>
-          <Value value={pair.old} />
+          <Rendered value={pair.old} />
           <span aria-hidden="true" className="text-accent/60">
             →
           </span>
           <span className="sr-only">changed to</span>
-          <Value value={pair.new} />
+          <Rendered value={pair.new} />
         </>
       ) : (
-        <Value value={change} />
+        <Rendered value={change} />
       )}
     </li>
   );
@@ -306,10 +326,11 @@ export function AuditMeta({
                because `audit_log` keeps no foreign key into `claims` and an
                entry about a deleted claim is still an entry about that claim. */
             const resolved = key === "claim_id" && claimRef;
+            const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
             return (
               <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
                 <span className="text-ink/42">{resolved ? "Claim" : labelKey(key)}</span>
-                {resolved ? <ClaimRefValue value={claimRef} /> : <Value value={value} />}
+                {resolved ? <ClaimRefValue value={claimRef} /> : <Rendered value={value} />}
               </li>
             );
           })}
@@ -339,12 +360,15 @@ export function AuditMeta({
             <span className="tabular-nums text-ink/28">{rowFields.length}</span>
           </summary>
           <ul className="mt-[5px] grid gap-[3px] border-l border-ink/10 pl-[11px]">
-            {rowFields.map(([key, value]) => (
-              <li key={key} className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-ink/42">{labelKey(key)}</span>
-                <Value value={value} />
-              </li>
-            ))}
+            {rowFields.map(([key, value]) => {
+              const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
+              return (
+                <li key={key} className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-ink/42">{labelKey(key)}</span>
+                  <Rendered value={value} />
+                </li>
+              );
+            })}
           </ul>
         </details>
       ) : null}

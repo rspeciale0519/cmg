@@ -71,6 +71,25 @@ describe("claim status vocabulary", () => {
     ]);
   });
 
+  it("spends the accent on exactly the two statuses CMG has to act on", () => {
+    // The rule was written in a comment in two files and obeyed in neither: both
+    // said "exactly two" and the map carried three, so `settlement_offered` ("an
+    // offer is on the table and needs a decision") and `reopened` ("back with
+    // the carrier after a denial") — opposite ends of a negotiation — wore the
+    // same gold pill. A comment cannot fail; this can.
+    const accented = DB_STATUSES.filter((status) => STATUS_TONE[status] === "attention");
+    expect(accented).toEqual(["new_intake", "settlement_offered"]);
+  });
+
+  it("keeps a status waiting on the carrier out of the accent", () => {
+    // The predicate behind the number above, stated so a future status added to
+    // `attention` has to argue with it: gold means someone at CMG holds the next
+    // move, and these three are all waiting on somebody else.
+    for (const status of ["filed", "negotiating", "reopened"] as const) {
+      expect(STATUS_TONE[status], `tone for ${status}`).toBe("active");
+    }
+  });
+
   it("recognises real statuses and refuses anything else", () => {
     expect(isClaimStatus("filed")).toBe(true);
     expect(isClaimStatus("Filed")).toBe(false);

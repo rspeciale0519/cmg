@@ -13,10 +13,20 @@ describe("navFor", () => {
         "/admin",
         "/admin/intake",
         "/admin/leads",
+        "/admin/questions",
         "/admin/claims",
       ]);
       expect(hrefs).not.toContain("/admin/audit");
       expect(hrefs).not.toContain("/admin/settings");
+    }
+  });
+
+  it("gives every staff role the homeowner-question queue", () => {
+    // It is the only cross-claim view of `type = 'question'`; the other one is
+    // scoped to a single claim. An adjuster and an assistant both answer
+    // homeowners, so both need the way in.
+    for (const role of ["owner", "adjuster", "assistant"] as const) {
+      expect(navFor(role).map((item) => item.href)).toContain("/admin/questions");
     }
   });
 

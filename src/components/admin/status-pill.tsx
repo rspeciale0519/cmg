@@ -2,11 +2,16 @@ import { cx } from "@/lib/cx";
 import { STATUS_LABEL, STATUS_TONE, type ClaimStatus, type StatusTone } from "@/lib/claims/status";
 
 /**
- * Four tones, and the accent is spent on exactly two statuses — the ones where
- * a person has to do something (a new intake nobody owns, an offer nobody has
- * answered) plus a reopened file. If every in-flight status wore gold the
- * colour would carry no information and the table would read as uniformly
- * urgent, which is the same as uniformly calm.
+ * Five tones, and the accent is spent on exactly two statuses — the ones where
+ * a person at CMG has to do something: a new intake nobody owns, and an offer
+ * nobody has answered. If every in-flight status wore gold the colour would
+ * carry no information and the table would read as uniformly urgent, which is
+ * the same as uniformly calm.
+ *
+ * This comment used to say "exactly two" and then list three, and the third was
+ * `reopened` — so "an offer is on the table and needs a decision" and "back with
+ * the carrier after a denial", the two opposite ends of a negotiation, rendered
+ * as one pill. See STATUS_TONE for where it went and why.
  *
  * No dot, no icon: the label is the content, and a coloured disc beside a
  * coloured word is the same fact twice.
@@ -68,6 +73,18 @@ const LEAD_TONE: Record<string, string> = {
   dismissed: "border-ink/12 bg-transparent text-ink/42",
 };
 
+/**
+ * A value this component does not know, dressed as nothing in particular.
+ *
+ * The fallback used to be `LEAD_TONE.contacted`, which is not a neutral — it is
+ * a *state*, and one the row may not be in. An unrecognised value would have
+ * rendered as a Contacted lead in every respect except its text, on the one
+ * screen where "has anyone called this person" is the question being asked.
+ * Dashed and quiet says the honest thing instead: the label beside it is the raw
+ * value, because there is nothing to translate it to.
+ */
+const LEAD_TONE_UNKNOWN = "border-dashed border-ink/22 bg-transparent text-ink/50";
+
 const LEAD_LABEL: Record<string, string> = {
   new: "New",
   contacted: "Contacted",
@@ -75,15 +92,24 @@ const LEAD_LABEL: Record<string, string> = {
   dismissed: "Dismissed",
 };
 
+/**
+ * `Object.hasOwn` and not a bare index, for the reason `isClaimStatus` gives:
+ * a plain object answers `LEAD_TONE["toString"]` with a function off the
+ * prototype, and `cx()` would receive it as a class name.
+ */
+function leadLookup(table: Record<string, string>, status: string): string | null {
+  return Object.hasOwn(table, status) ? table[status] : null;
+}
+
 export function LeadPill({ status }: { status: string }) {
   return (
     <span
       className={cx(
         "inline-flex items-center whitespace-nowrap rounded-full border px-[9px] py-[3px] text-[11px] font-medium leading-[1.45]",
-        LEAD_TONE[status] ?? LEAD_TONE.contacted,
+        leadLookup(LEAD_TONE, status) ?? LEAD_TONE_UNKNOWN,
       )}
     >
-      {LEAD_LABEL[status] ?? status}
+      {leadLookup(LEAD_LABEL, status) ?? status}
     </span>
   );
 }

@@ -356,42 +356,60 @@ const MAX_SETTLEMENT_AMOUNT = 9_999_999_999.99;
  * The table states the same bounds — a CHECK for the floor, the column's own
  * `numeric(12, 2)` precision for the ceiling — and these produce the message a
  * person can act on.
+ *
+ * Both fields are judged before either answer is returned. Returning on the
+ * first failure made the form lie about itself: with an out-of-range amount
+ * *and* an out-of-range percentage, only the amount came back with an error and
+ * an `aria-invalid`, under a summary that said "Check the highlighted fields" —
+ * plural, over one highlight. Fixing the amount and saving then surfaced the
+ * percentage, so a form the staff member could have corrected in one pass cost
+ * two round trips and taught them the summary could not be trusted to be
+ * complete.
+ *
+ * The summary agrees in number with what it is pointing at, for the same reason:
+ * "fields" over a single highlighted input is a sentence telling the reader to
+ * go looking for something that is not there.
  */
 function parseMoneyFields(formData: FormData): MoneyFields | { error: FormState } {
   const rawAmount = String(formData.get("settlementAmount") ?? "").trim();
   const rawFee = String(formData.get("feePercent") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
+  const fieldErrors: Record<string, string> = {};
+
   let settlementAmount: number | null = null;
   if (rawAmount.length > 0) {
     const value = Number(rawAmount.replace(/[$,\s]/g, ""));
     if (!Number.isFinite(value) || value < 0 || value > MAX_SETTLEMENT_AMOUNT) {
-      return {
-        error: {
-          status: "error",
-          fieldErrors: {
-            settlementAmount: "Enter an amount between $0 and $9,999,999,999.99.",
-          },
-          message: "Check the highlighted fields and save again.",
-        },
-      };
+      fieldErrors.settlementAmount =
+        "Enter an amount between $0 and $9,999,999,999.99.";
+    } else {
+      settlementAmount = Math.round(value * 100) / 100;
     }
-    settlementAmount = Math.round(value * 100) / 100;
   }
 
   let feePercent: number | null = null;
   if (rawFee.length > 0) {
     const value = Number(rawFee.replace(/[%\s]/g, ""));
     if (!Number.isFinite(value) || value < 0 || value > 100) {
-      return {
-        error: {
-          status: "error",
-          fieldErrors: { feePercent: "Enter a percentage between 0 and 100." },
-          message: "Check the highlighted fields and save again.",
-        },
-      };
+      fieldErrors.feePercent = "Enter a percentage between 0 and 100.";
+    } else {
+      feePercent = Math.round(value * 100) / 100;
     }
-    feePercent = Math.round(value * 100) / 100;
+  }
+
+  const flagged = Object.keys(fieldErrors).length;
+  if (flagged > 0) {
+    return {
+      error: {
+        status: "error",
+        fieldErrors,
+        message:
+          flagged === 1
+            ? "Check the highlighted field and save again."
+            : "Check the highlighted fields and save again.",
+      },
+    };
   }
 
   return { settlementAmount, feePercent, notes };

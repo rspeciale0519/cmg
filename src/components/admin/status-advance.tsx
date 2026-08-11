@@ -46,6 +46,31 @@ export function StatusAdvance({
   const blockedFor = (status: ClaimStatus) =>
     blocked.find((entry) => entry.to === status)?.reason ?? null;
 
+  /**
+   * The selection, but only while it is still a move this claim can make.
+   *
+   * `selected` is client state and the options around it are server state. A
+   * successful transition revalidates and `allowed` arrives new — a claim that
+   * offered `settled` and `denied` now offers `closed` alone — while `selected`
+   * still holds `settled`. Read directly, that stale value drove the label
+   * ("Move to settled"), the meaning blurb, and `disabled`, which went false
+   * over a radio group where nothing was checked. The button therefore offered a
+   * move the claim no longer had, and submitting it sent no `to` at all: the
+   * action answered "That is not a claim status." — an error naming a value the
+   * operator never entered, about a step the screen had just invited.
+   *
+   * Derived rather than reset in an effect, because the same staleness has a
+   * second cause with no event to hang an effect on: a colleague advancing the
+   * claim, or uploading the LOR that lifts a block, changes `allowed` and
+   * `blocked` under a selection this component never touched. One rule covers
+   * both — a selection counts while the server still offers it, and stops
+   * counting the moment it does not.
+   */
+  const activeSelection =
+    selected !== null && allowed.includes(selected) && blockedFor(selected) === null
+      ? selected
+      : null;
+
   if (!canManage) {
     return (
       <p className="text-[13px] leading-[1.65] text-ink/55">
@@ -85,7 +110,7 @@ export function StatusAdvance({
           {allowed.map((status) => {
             const reason = blockedFor(status);
             const disabled = reason !== null;
-            const isSelected = selected === status;
+            const isSelected = activeSelection === status;
 
             return (
               <label
@@ -128,9 +153,9 @@ export function StatusAdvance({
         ))}
       </fieldset>
 
-      {selected ? (
+      {activeSelection ? (
         <p className="mt-[14px] border-l-2 border-accent/50 py-[2px] pl-[10px] text-[12.5px] leading-[1.6] text-ink/60">
-          {STATUS_MEANING[selected]}
+          {STATUS_MEANING[activeSelection]}
         </p>
       ) : null}
 
@@ -148,8 +173,10 @@ export function StatusAdvance({
       </AdminField>
 
       <div className="mt-[14px]">
-        <SubmitButton disabled={selected === null} pendingLabel="Moving…">
-          {selected ? `Move to ${STATUS_LABEL[selected].toLowerCase()}` : "Move claim"}
+        <SubmitButton disabled={activeSelection === null} pendingLabel="Moving…">
+          {activeSelection
+            ? `Move to ${STATUS_LABEL[activeSelection].toLowerCase()}`
+            : "Move claim"}
         </SubmitButton>
       </div>
 

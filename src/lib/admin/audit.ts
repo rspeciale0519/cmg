@@ -35,6 +35,17 @@ export type AuditEntry = {
 
 export type AuditPage = {
   entries: AuditEntry[];
+  /**
+   * Every entry matching the filters, not just this page.
+   *
+   * The panel used to read `${rows.length} shown`, which on a full page is the
+   * page size and nothing else — "40 shown" over an unfiltered log of ten
+   * thousand and over a filtered set of forty-one, identically. `/admin/audit`
+   * was the last list in the workspace without a real total, and it is the one
+   * where the number matters most: narrowing to an actor and a date range is
+   * asking *how much of this happened*, and the screen could not answer.
+   */
+  total: number;
   /** Cursor for the next (older) page, or null at the end of the log. */
   olderThan: number | null;
   /** Cursor for the previous (newer) page, or null on the newest page. */
@@ -62,42 +73,79 @@ export const AUDIT_PAGE_SIZE = 40;
  * A page is fetched with one extra row: its presence is what says there is
  * another page, without a second count query.
  */
+/**
+ * The two PostgREST builder methods the filter pass uses, written as methods so
+ * the concrete builders — whose `eq` is keyed to the row's own column union —
+ * both satisfy it. Same shape and same reason as `ClaimQuery` on the claims
+ * list: spelling the five filters out twice, once for the page and once for the
+ * count, is exactly how a list and its total start disagreeing about what
+ * "matching" means.
+ */
+type AuditQuery<Q> = {
+  eq(column: string, value: string): Q;
+  gte(column: string, value: string): Q;
+  lt(column: string, value: string): Q;
+};
+
 export async function loadAuditPage(filters: AuditFilters): Promise<AuditPage> {
   const supabase = await createClient();
 
-  let query = supabase
-    .from("audit_log")
-    .select("id, created_at, action, entity, entity_id, actor_id, ip, meta")
-    .limit(AUDIT_PAGE_SIZE + 1);
+  /**
+   * Everything the reader asked for except where they are in the log.
+   *
+   * The keyset predicate is deliberately not in here: folding it into the count
+   * would make the total mean "matches on this page and after it", so the
+   * header would count down as the reader paged — the opposite of what a total
+   * is for.
+   */
+  function applyFilters<Q extends AuditQuery<Q>>(query: Q): Q {
+    let next = query;
+    if (filters.action) next = next.eq("action", filters.action);
+    if (filters.entity) next = next.eq("entity", filters.entity);
+    if (filters.actor) next = next.eq("actor_id", filters.actor);
 
-  if (filters.action) query = query.eq("action", filters.action);
-  if (filters.entity) query = query.eq("entity", filters.entity);
-  if (filters.actor) query = query.eq("actor_id", filters.actor);
+    // A calendar day in the business's zone, as a half-open instant range — see
+    // `dayBounds`. A bare date would reach Postgres as UTC midnight, so "from
+    // 10 August" would start at 8pm on the 9th in Orlando and the filter would
+    // disagree with the timestamps printed beside it.
+    const fromBounds = filters.from ? dayBounds(filters.from) : null;
+    const toBounds = filters.to ? dayBounds(filters.to) : null;
+    if (fromBounds) next = next.gte("created_at", fromBounds.startIso);
+    if (toBounds) next = next.lt("created_at", toBounds.endIso);
 
-  // A calendar day in the business's zone, as a half-open instant range — see
-  // `dayBounds`. A bare date would reach Postgres as UTC midnight, so "from
-  // 10 August" would start at 8pm on the 9th in Orlando and the filter would
-  // disagree with the timestamps printed beside it.
-  const fromBounds = filters.from ? dayBounds(filters.from) : null;
-  const toBounds = filters.to ? dayBounds(filters.to) : null;
-  if (fromBounds) query = query.gte("created_at", fromBounds.startIso);
-  if (toBounds) query = query.lt("created_at", toBounds.endIso);
+    return next;
+  }
+
+  let query = applyFilters(
+    supabase
+      .from("audit_log")
+      .select("id, created_at, action, entity, entity_id, actor_id, ip, meta"),
+  ).limit(AUDIT_PAGE_SIZE + 1);
 
   // Paging backwards means walking ascending from the cursor and reversing the
   // window, so the reader still sees newest-first on every page.
   const after = filters.after;
   const ascending = after !== null && filters.before === null;
 
-  if (filters.before !== null) query = query.lt("id", filters.before);
-  if (ascending && after !== null) query = query.gt("id", after);
+  if (filters.before !== null) query = query.lt("id", String(filters.before));
+  if (ascending && after !== null) query = query.gt("id", String(after));
 
   query = query.order("id", { ascending });
 
-  const { data, error } = await query;
+  const [{ data, error }, { count, error: countError }] = await Promise.all([
+    query,
+    applyFilters(
+      supabase.from("audit_log").select("id", { count: "exact", head: true }),
+    ),
+  ]);
+
+  if (countError) {
+    console.error("[audit] count read failed", countError.message);
+  }
 
   if (error) {
     console.error("[audit] page read failed", error.message);
-    return { entries: [], olderThan: null, newerThan: null };
+    return { entries: [], total: 0, olderThan: null, newerThan: null };
   }
 
   const rows = data ?? [];
@@ -130,6 +178,7 @@ export async function loadAuditPage(filters: AuditFilters): Promise<AuditPage> {
 
   return {
     entries,
+    total: count ?? entries.length,
     ...pageCursors({
       ids: entries.map((entry) => entry.id),
       hasMore,
