@@ -54,6 +54,48 @@
 set check_function_bodies = off;
 
 -- ---------------------------------------------------------------------------
+-- private.active_owner_count()
+-- ---------------------------------------------------------------------------
+--
+-- "How many active owners does the workspace have?", answered outside the caller's
+-- RLS view. That distinction is the whole reason this exists, and it is what made the
+-- control below unusable in the one case it most needed to work.
+--
+-- public.change_staff_privileges() is SECURITY INVOKER, so its post-update re-count ran
+-- under the caller's policies. When the caller deactivates *itself*, the UPDATE has
+-- already set its own is_active = false by the time the count runs;
+-- private.current_app_role() filters on is_active and returns NULL, private.is_staff()
+-- goes false, and `profiles_select_self_or_staff` then matches zero rows — including the
+-- caller's own row, because the self branch is `id = auth.uid()` on a policy the caller
+-- can no longer satisfy through the staff branch either. The count read 0 no matter how
+-- many owners were actually left, CMG01 fired, and the server action rendered the
+-- last-owner refusal: "promote a second owner first" told to an owner while two or three
+-- active owners were sitting in the table. There was no state in which an owner could
+-- deactivate their own account.
+--
+-- Reproduced before the fix: with three active owners, O1 deactivating another owner
+-- succeeded and O1 deactivating itself raised CMG01 with three owners still active.
+--
+-- SECURITY DEFINER is therefore not a convenience here — it is the only way to ask the
+-- question the invariant is about ("does an administrator survive this?") rather than the
+-- question RLS answers ("can this caller still see one?"). It leaks nothing: the return is
+-- a single integer over a predicate the caller already knows the shape of, it takes no
+-- arguments, and it cannot be pointed at another table.
+create or replace function private.active_owner_count()
+returns integer
+language sql
+security definer
+set search_path = ''
+as $fn$
+  select count(*)::int
+    from public.profiles
+   where role = 'owner' and is_active;
+$fn$;
+
+revoke all on function private.active_owner_count() from public, anon;
+grant execute on function private.active_owner_count() to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- public.change_staff_privileges()
 -- ---------------------------------------------------------------------------
 --
@@ -106,9 +148,12 @@ begin
       using errcode = '42501';
   end if;
 
-  select count(*) into v_active_owners
-    from public.profiles p
-   where p.role = 'owner' and p.is_active;
+  -- private.active_owner_count() and not a SELECT here. The count has to be taken over
+  -- the whole table, and this function runs as the caller — who, one statement ago, may
+  -- have deactivated themselves and thereby stopped satisfying the SELECT policy on
+  -- public.profiles. An inline count read 0 in exactly that case and refused the only
+  -- change it was never supposed to refuse. See the helper for the full account.
+  v_active_owners := private.active_owner_count();
 
   if v_active_owners = 0 then
     raise exception 'this change would leave the workspace with no active owner'

@@ -35,8 +35,22 @@ export default async function LoginPage({
   const session = await getSession();
   if (session) redirect(next ?? landingPathFor(session.role));
 
+  /* `Object.hasOwn`, not a bare index — the same bug already fixed once in
+     src/lib/claims/status.ts, reintroduced here when `invite-linked` extended
+     the map without anyone revisiting the lookup.
+
+     `NOTICES[noticeKey]` walks the prototype chain, so `?notice=toString`,
+     `?notice=constructor` and `?notice=hasOwnProperty` each resolved to a
+     *function*, which was then handed to JSX as a child. React refuses to render
+     a function and throws, and this is an unauthenticated route: a hand-typed
+     query string turned the sign-in page into a 500. Verified: `?notice=toString`
+     returned 500 before this line changed and 200 after.
+
+     Read once into a local rather than indexed twice, so the guard and the value
+     cannot drift apart later. */
   const noticeKey = Array.isArray(params.notice) ? params.notice[0] : params.notice;
-  const notice = noticeKey ? NOTICES[noticeKey] : undefined;
+  const notice =
+    noticeKey && Object.hasOwn(NOTICES, noticeKey) ? NOTICES[noticeKey] : undefined;
 
   return (
     <AuthShell

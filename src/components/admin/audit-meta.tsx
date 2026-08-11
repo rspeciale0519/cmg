@@ -90,10 +90,32 @@ function describe(value: Json | undefined): { text: string; muted: boolean } {
   };
 }
 
+/**
+ * `min-w-0 [overflow-wrap:anywhere]` because audit values are not prose and a
+ * few of them are single unbreakable tokens. Every issued invitation writes a
+ * 64-character SHA-256 hash into `meta.token_hash`, which is one "word" 512.4px
+ * wide — wider than a 390px phone on its own. As a flex item with the default
+ * `min-width: auto` it refused to shrink below that, so at 390px
+ * documentElement.scrollWidth read 543 and the tail of the hash sat 153px off
+ * the right edge with no way to reach it. This is production data shape rather
+ * than a pathological case: it happens on every invite.
+ *
+ * `anywhere` and not `break-word`: `break-word` still reserves the intrinsic
+ * min-content width when the box is sized, so the row would keep its 512px
+ * minimum even while wrapping. `anywhere` counts the break opportunities toward
+ * min-content, which is what lets the row actually narrow to its container.
+ */
 function Value({ value }: { value: Json | undefined }) {
   const { text, muted } = describe(value);
   return (
-    <span className={muted ? "text-ink/30 italic" : "text-ink/80"}>{text}</span>
+    <span
+      className={cx(
+        "min-w-0 [overflow-wrap:anywhere]",
+        muted ? "text-ink/30 italic" : "text-ink/80",
+      )}
+    >
+      {text}
+    </span>
   );
 }
 
@@ -162,8 +184,12 @@ export function AuditMeta({ meta }: { meta: Json }) {
             changedFields.length > 0 && "mt-[5px]",
           )}
         >
+          {/* `flex-wrap` here as on its two sibling lists. This was the one that
+              did not have it, and it is the list that holds `token_hash` — so
+              the label and a 64-character hash were pinned to a single line
+              that could not wrap and could not shrink. */}
           {others.map(([key, value]) => (
-            <li key={key} className="flex items-baseline gap-x-2">
+            <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
               <span className="text-ink/42">{labelKey(key)}</span>
               <Value value={value} />
             </li>

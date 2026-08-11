@@ -16,7 +16,7 @@ import {
 import { PartnerStatusPill } from "@/components/admin/partner-status-pill";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { loadPartnerDetail } from "@/lib/admin/partners";
-import { requireRole } from "@/lib/authz";
+import { hasRole, NOT_FOUND_TITLE, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,16 +43,24 @@ async function companyNameForTitle(id: string): Promise<string | null> {
   return data?.name ?? null;
 }
 
+/**
+ * `requireRole` used to run here and `notFound()` out of metadata resolution
+ * entirely, which left the tab title empty — a third spelling of the same 404
+ * beside "Page not found" from an unrouted path and the company name from a real
+ * one. `metadataForRole` answers with a string instead, so a non-owner and a
+ * company that is not there read identically. The page below still refuses.
+ */
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  await requireRole("owner");
   const { id } = await params;
 
   return {
-    title: (await companyNameForTitle(id)) ?? "Page not found",
+    title: (await hasRole("owner"))
+      ? ((await companyNameForTitle(id)) ?? NOT_FOUND_TITLE)
+      : NOT_FOUND_TITLE,
     robots: { index: false, follow: false },
   };
 }

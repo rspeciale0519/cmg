@@ -76,6 +76,29 @@ describe("clientIpFromHeaders", () => {
     expect(clientIpFromHeaders(xff("x".repeat(200)), 1)).toBe(UNKNOWN_IP);
   });
 
+  /**
+   * The old pattern was `^[0-9a-f]{0,4}(:[0-9a-f]{0,4}){2,7}(%…)?$`, and `{0,4}`
+   * let every group be empty. Each of these matched it, reached `audit_log.ip`
+   * (an `inet`), and made Postgres answer `invalid input syntax for type inet` —
+   * which `writeAudit` swallows on purpose, so the audit row for that request
+   * just vanished. One header was enough to choose which requests went
+   * unrecorded.
+   */
+  it("refuses colon runs that are not addresses, which used to reach the inet column", () => {
+    for (const value of [":::", "::::::", "abcd::::::", "1:2:3:4:5:6:7:8:9", "::1::2"]) {
+      expect(clientIpFromHeaders(xff(value), 1)).toBe(UNKNOWN_IP);
+      expect(inetOrNull(value)).toBeNull();
+    }
+  });
+
+  it("still accepts the IPv6 spellings that are real", () => {
+    expect(clientIpFromHeaders(xff("::1"), 1)).toBe("::1");
+    expect(clientIpFromHeaders(xff("2001:DB8::8:800:200C:417A"), 1)).toBe(
+      "2001:db8::8:800:200c:417a",
+    );
+    expect(clientIpFromHeaders(xff("1:2:3:4:5:6:7:8"), 1)).toBe("1:2:3:4:5:6:7:8");
+  });
+
   it("falls back to x-real-ip only when the trusted chain wrote nothing", () => {
     expect(clientIpFromHeaders(new Headers({ "x-real-ip": "198.51.100.7" }))).toBe(
       "198.51.100.7",
@@ -115,6 +138,14 @@ describe("inetOrNull", () => {
 
   it("returns null for a non-address", () => {
     expect(inetOrNull("not-an-ip")).toBeNull();
+  });
+
+  it("passes an IPv4-mapped address through, which Postgres does accept", () => {
+    expect(inetOrNull("::ffff:203.0.113.9")).toBe("::ffff:203.0.113.9");
+  });
+
+  it("returns null for a zone index, which inet has no syntax for", () => {
+    expect(inetOrNull("fe80::1%eth0")).toBeNull();
   });
 });
 

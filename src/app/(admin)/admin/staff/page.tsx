@@ -9,15 +9,18 @@ import {
   StaffRoleForm,
 } from "@/components/admin/staff-forms";
 import { loadStaffDirectory } from "@/lib/admin/staff";
-import { requireRole } from "@/lib/authz";
+import { metadataForRole, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Staff",
-  robots: { index: false, follow: false },
-};
+/* `generateMetadata` and not `export const metadata`, because a static title is
+   emitted whether or not the component below ever renders — so a non-owner got
+   the workspace 404 in the body and this page's real name in the tab. See
+   `metadataForRole`. */
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForRole(["owner"], "Staff");
+}
 
 /**
  * Owner only, and a non-owner gets `notFound()` rather than a 403 (spec §7.9).

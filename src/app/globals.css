@@ -211,6 +211,23 @@
    ───────────────────────────────────────────────────────────────────────── */
 @utility scroll-x-edged {
   overflow-x: auto;
+  /* `position: relative` is not for stacking — it is what makes this element a
+     containing block for absolutely-positioned descendants, and without it the
+     screen-reader labels inside these tables escaped the scroller entirely.
+
+     `.sr-only` is `position: absolute`, and an absolute box resolves against its
+     nearest positioned ancestor. With this utility left `static` the nearest one
+     was BODY, so every `<span class="sr-only">Deactivate {name}</span>` on
+     /admin/staff was laid out against the page rather than against the cell it
+     belongs to. At 390px the furthest one's right edge measured 757.8px and
+     documentElement.scrollWidth read 758 against a clientWidth of 390 — 368px of
+     canvas that could not be reached, because `body { overflow-x: clip }`
+     propagates to the viewport and there is nothing to scroll. Invisible content
+     was setting the width of the document.
+
+     One line, and it is the correct line rather than a patch: a scroll container
+     should contain what is scrolled. */
+  position: relative;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-ink) 20%, transparent) transparent;
   background-image:

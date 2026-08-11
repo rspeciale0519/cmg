@@ -1,5 +1,7 @@
 import "server-only";
 
+import { isIP } from "node:net";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type RateLimitRule = {
@@ -61,8 +63,41 @@ function readTrustedHops(): number {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 8 ? parsed : 1;
 }
 
-const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-const IPV6 = /^[0-9a-f]{0,4}(:[0-9a-f]{0,4}){2,7}(%[0-9a-z]{1,16})?$/i;
+/**
+ * `net.isIP` and not a regular expression.
+ *
+ * The hand-rolled IPv6 pattern that used to live here was
+ * `^[0-9a-f]{0,4}(:[0-9a-f]{0,4}){2,7}(%[0-9a-z]{1,16})?$`, and `{0,4}` means
+ * *every* group may be empty. `:::`, `::::::` and `abcd::::::` all matched. They
+ * are not addresses, and they did not stop at this function: the value became
+ * `audit_log.ip`, which is `inet`, and Postgres answered `invalid input syntax
+ * for type inet`. `writeAudit` swallows its errors by design — an audit write
+ * must never fail the user's request — so the outcome was a silently missing
+ * audit row for a request an attacker chose, by setting one header.
+ *
+ * The tempting reply is a stricter regex. A correct IPv6 pattern has to count
+ * groups either side of a single `::`, reject a second `::`, and allow a
+ * dotted-quad tail — it is long, it is write-only, and it is the third attempt
+ * at it in this file. Node already ships the answer: `isIP` returns 4, 6 or 0
+ * and is the same parser the runtime uses.
+ *
+ * `isIP` is necessary and not quite sufficient, which is worth stating because it
+ * is the residue of the same bug. Node accepts a zone index — `net.isIP(
+ * "fe80::1%eth0")` is 6 on Node 22 — and Postgres does not: `select
+ * 'fe80::1%eth0'::inet` is `invalid input syntax for type inet`. Swapping the
+ * regex for `isIP` alone would therefore have left one spelling still reaching
+ * the column and still being swallowed. So `%` is refused here explicitly.
+ *
+ * Refused rather than stripped: a scope identifier names an interface on the
+ * machine that wrote it, so it cannot be a remote client's address in the first
+ * place, and stripping would merge `fe80::1%eth0` and `fe80::1%eth1` into one
+ * rate-limit bucket. These fall through to the `unknown` bucket instead, which
+ * is a bucket rather than a skipped check.
+ */
+function ipVersion(value: string): 0 | 4 | 6 {
+  if (value.includes("%")) return 0;
+  return isIP(value) as 0 | 4 | 6;
+}
 
 /**
  * One `x-forwarded-for` entry, reduced to a bare address or rejected.
@@ -85,8 +120,9 @@ function normaliseIp(raw: string): string | null {
   const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(value);
   if (mapped) value = mapped[1];
 
-  if (IPV4.test(value)) return value;
-  if (value.includes(":") && IPV6.test(value)) return value.toLowerCase();
+  const version = ipVersion(value);
+  if (version === 4) return value;
+  if (version === 6) return value.toLowerCase();
   return null;
 }
 
@@ -146,10 +182,13 @@ export function clientIpFromHeaders(
  */
 export function inetOrNull(ip: string): string | null {
   if (!ip || ip === UNKNOWN_IP) return null;
-  const bare = ip.startsWith("::ffff:") ? ip.slice(7) : ip;
-  const isIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(bare);
-  const isIpv6 = /^[0-9a-fA-F:]+$/.test(ip) && ip.includes(":");
-  return isIpv4 || isIpv6 ? ip : null;
+  /* The same `net.isIP` as `normaliseIp`, because this is the last check before
+     an `inet` column and it used to be looser than the one upstream of it:
+     `/^[0-9a-fA-F:]+$/` admitted `::::::` and `:::` on its own, so a caller
+     handing this function a value that did not come through `normaliseIp` had no
+     guard at all. Two spellings of one rule is one rule too many when the
+     failure is a swallowed audit write. */
+  return ipVersion(ip) === 0 ? null : ip;
 }
 
 /**

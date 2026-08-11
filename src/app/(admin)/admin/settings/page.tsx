@@ -3,7 +3,7 @@ import { PageHeader, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { Fact, FactList } from "@/components/admin/data-table";
 import { IntegrationList } from "@/components/admin/integration-list";
 import { RecheckButton } from "@/components/admin/recheck-button";
-import { requireRole } from "@/lib/authz";
+import { metadataForRole, requireRole } from "@/lib/authz";
 import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { loadIntegrations } from "@/lib/settings/status";
 import { site } from "@/lib/site";
@@ -14,10 +14,13 @@ import { site } from "@/lib/site";
    than not having the panel. */
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Settings",
-  robots: { index: false, follow: false },
-};
+/* `generateMetadata` and not `export const metadata`, because a static title is
+   emitted whether or not the component below ever renders — so a non-owner got
+   the workspace 404 in the body and this page's real name in the tab. See
+   `metadataForRole`. */
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForRole(["owner"], "Settings");
+}
 
 /**
  * Owner only; a non-owner gets `notFound()` (spec §7.9).

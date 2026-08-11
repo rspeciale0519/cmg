@@ -30,7 +30,7 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(29);
 
 -- ---------------------------------------------------------------------------
 -- Shape and grants
@@ -137,6 +137,67 @@ select is(
   'and it took effect'
 );
 
+-- ---------------------------------------------------------------------------
+-- Self-DEACTIVATION, which is a different case from self-demotion
+-- ---------------------------------------------------------------------------
+--
+-- The suite below used to prove "the first owner may step down" with a role demotion
+-- only, and a demotion cannot catch this: the caller stays *active*, so they stay
+-- private.is_staff(), so the function's own post-update re-count still sees the table.
+--
+-- Deactivation blinds the caller instead. `profiles_select_self_or_staff` is
+-- `(id = auth.uid() and is_active) or private.is_staff()`, and one UPDATE ago the caller
+-- failed both branches — the self branch on its own is_active, the staff branch because
+-- private.current_app_role() filters on is_active too. A SECURITY INVOKER count then read
+-- 0 rows and reported "no active owner survives" while two were sitting in the table, and
+-- the staff screen answered a self-deactivation with "promote a second owner first" to an
+-- owner who had already done exactly that. It was not a narrow window; there was no state
+-- in which the control worked.
+--
+-- So this is pinned as the count the invariant is actually about — how many owners the
+-- workspace has, not how many the caller can still see.
+select lives_ok(
+  $$ select public.change_staff_privileges('00000000-0000-4000-a000-000000000001'::uuid, null, false) $$,
+  'with a second owner present, an owner may deactivate their own account — the caller losing sight of the roster is not the roster being empty'
+);
+
+-- Counted with RLS out of the way, which is the point: as the now-deactivated caller this
+-- same query returns 0, and that answer was the bug.
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+select is(
+  (select count(*)::int from public.profiles where role = 'owner' and is_active),
+  1,
+  'one active owner survives, so the change was never the one CMG01 exists to refuse'
+);
+
+select is(
+  (select is_active from public.profiles where id = '00000000-0000-4000-a000-000000000001'),
+  false,
+  'and it landed on the caller''s own row rather than being rolled back with a raise'
+);
+
+select is(
+  (select prosecdef from pg_proc p
+     join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private' and p.proname = 'active_owner_count'),
+  true,
+  'the surviving-owner count is SECURITY DEFINER, which is what takes it out of the caller''s RLS view'
+);
+
+-- Restored under service context so the demotion case below runs against two owners, the
+-- shape it was written for.
+update public.profiles set is_active = true
+ where id = '00000000-0000-4000-a000-000000000001';
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}',
+  true
+);
+set local role authenticated;
+
 select lives_ok(
   $$ select public.change_staff_privileges('00000000-0000-4000-a000-000000000001'::uuid, 'adjuster'::public.app_role, null) $$,
   'the first owner may now step down, because the workspace keeps an administrator without them'
@@ -221,6 +282,58 @@ select is(
   (select count(*)::int from public.profiles where role = 'owner' and is_active),
   1,
   'and the workspace still has its owner'
+);
+
+-- ---------------------------------------------------------------------------
+-- The floor is in the trigger, so the RPC is not the only door it guards
+-- ---------------------------------------------------------------------------
+--
+-- public.change_staff_privileges() is an RPC, and src/lib/staff/guards.ts is TypeScript.
+-- Neither is on the path of a request that simply writes the table, and writing the table
+-- is something the sole owner can do with the publishable key and their own session:
+--
+--     PATCH /rest/v1/profiles?id=eq.<self>   {"is_active": false}
+--
+-- returned 200 and left the workspace with zero active owners, which /admin/staff states
+-- as something that cannot happen. public.guard_profile_privileges() is the one layer
+-- every UPDATE must pass, so the floor now lives there and these probes go around both
+-- of the other two on purpose.
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}',
+  true
+);
+set local role authenticated;
+
+select throws_ok(
+  $$ update public.profiles set is_active = false
+      where id = '00000000-0000-4000-a000-000000000001' $$,
+  'CMG01'::char(5), null::text,
+  'the sole active owner cannot deactivate themselves with a direct UPDATE — the refusal does not depend on which entry point was used'
+);
+
+select throws_ok(
+  $$ update public.profiles set role = 'adjuster'
+      where id = '00000000-0000-4000-a000-000000000001' $$,
+  'CMG01'::char(5), null::text,
+  'nor demote themselves, which strands the workspace by the other half of the same predicate'
+);
+
+-- A filter rather than an id: the same request shape with `?role=eq.owner` would have
+-- taken every owner in one statement, so the trigger is asked about the set as well.
+select throws_ok(
+  $$ update public.profiles set is_active = false where role = 'owner' $$,
+  'CMG01'::char(5), null::text,
+  'and a set-shaped update is refused too, because the check is per row and every row it touches is the last one'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+select is(
+  (select count(*)::int from public.profiles where role = 'owner' and is_active),
+  1,
+  'after three refused direct writes the owner is still an active owner'
 );
 
 select * from finish();

@@ -80,7 +80,25 @@ export function validateUploads(entries: unknown[]): FileValidationResult {
 
   for (const file of files) {
     const mime = (file.type || "").toLowerCase().split(";")[0].trim();
-    const extension = ALLOWED_MIME_TYPES[mime];
+    /* `Object.hasOwn` before the index, because `mime` is the per-part
+       Content-Type of a multipart upload and therefore attacker text on a public
+       unauthenticated route (/file-a-claim).
+
+       `ALLOWED_MIME_TYPES[mime]` walks the prototype chain. `.toLowerCase()`
+       happens to defuse most of it — `toString` becomes `tostring`, which is not
+       a property of anything — but two prototype members are already lowercase
+       and survive verbatim: `Content-Type: constructor` returned the `Object`
+       function and `Content-Type: __proto__` returned `Object.prototype`. Both
+       are truthy, so `if (!extension)` waved the file through, and the allowlist
+       this module's header calls "the only pass that is trusted" was defeated by
+       a header value. What stopped the upload after that was the bucket's own
+       allowed_mime_types and the documents_mime_allowlist CHECK — so nothing
+       landed, but the caller got the generic failure instead of the sentence
+       that tells them which formats to use, and the app-layer guarantee was not
+       one. */
+    const extension = Object.hasOwn(ALLOWED_MIME_TYPES, mime)
+      ? ALLOWED_MIME_TYPES[mime]
+      : undefined;
 
     if (!extension) {
       return {

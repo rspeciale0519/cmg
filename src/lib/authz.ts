@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { isAppRole, isStaffRole, type AppRole } from "@/lib/auth/roles";
@@ -69,6 +70,49 @@ export async function requireRole(...roles: readonly AppRole[]): Promise<Session
   const session = await requireUser();
   if (!roles.includes(session.role)) notFound();
   return session;
+}
+
+/** Every miss under `/admin` reads the same in a tab strip. */
+export const NOT_FOUND_TITLE = "Page not found";
+
+/**
+ * The `<title>` for a role-gated route, decided without throwing.
+ *
+ * Next resolves a segment's metadata independently of whether that segment's
+ * component renders, so a `export const metadata = { title: "Staff" }` was
+ * emitted even when `requireRole("owner")` had answered the request with
+ * `notFound()`. An aal2 adjuster opening `/admin/staff` got the workspace 404 in
+ * the document and `<title>Staff · CMG claims desk</title>` in the tab — while a
+ * genuinely unrouted path under `/admin` said "Page not found · CMG claims
+ * desk". Two different answers for the same refusal is exactly the distinction
+ * `requireRole`'s `notFound()` exists to erase (spec §7.9): the title confirmed
+ * that a screen called Staff is there and that this account is not allowed on
+ * it.
+ *
+ * `getSession()` rather than `requireRole()`, because the answer here is a
+ * string and not a control-flow decision. A `generateMetadata` that throws
+ * abandons metadata resolution for the whole segment and the title comes out
+ * empty — which is a *third* spelling of the same 404, and was already the case
+ * on `/admin/partners/[id]`. The page still calls `requireRole()`; this only
+ * decides what the tab says. `getSession` is `cache()`d, so it costs no extra
+ * query.
+ *
+ * aal is not consulted: a staff member one factor short is redirected to `/mfa`
+ * before any of this renders, and a signed-out one to `/login`.
+ */
+export async function hasRole(...roles: readonly AppRole[]): Promise<boolean> {
+  const session = await getSession();
+  return session !== null && roles.includes(session.role);
+}
+
+export async function metadataForRole(
+  roles: readonly AppRole[],
+  title: string,
+): Promise<Metadata> {
+  return {
+    title: (await hasRole(...roles)) ? title : NOT_FOUND_TITLE,
+    robots: { index: false, follow: false },
+  };
 }
 
 /**

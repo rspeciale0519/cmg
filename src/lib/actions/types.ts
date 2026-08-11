@@ -65,7 +65,12 @@ export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
 
   for (const issue of error.issues) {
     const key = issue.path[0];
-    if (typeof key === "string" && !(key in errors)) {
+    /* `Object.hasOwn` rather than `in`, matching src/lib/claims/status.ts. Paths
+       come from this repo's own zod schemas so nothing reaches it today, but `in`
+       answers true for `toString` on an empty object — a field named after any
+       Object.prototype member would silently lose its first error message, and
+       the reader should not have to check the schema list to know it is safe. */
+    if (typeof key === "string" && !Object.hasOwn(errors, key)) {
       errors[key] = issue.message;
     }
   }

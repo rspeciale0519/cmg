@@ -12,15 +12,18 @@ import {
   type AuditEntry,
 } from "@/lib/admin/audit";
 import { actionLabel, entityLabel, splitAction } from "@/lib/admin/audit-vocabulary";
-import { requireRole } from "@/lib/authz";
+import { metadataForRole, requireRole } from "@/lib/authz";
 import { cx } from "@/lib/cx";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Audit",
-  robots: { index: false, follow: false },
-};
+/* `generateMetadata` and not `export const metadata`, because a static title is
+   emitted whether or not the component below ever renders — so a non-owner got
+   the workspace 404 in the body and this page's real name in the tab. See
+   `metadataForRole`. */
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForRole(["owner"], "Audit");
+}
 
 /**
  * Owner only — `audit_log_select_owner` is the only policy on the table, and

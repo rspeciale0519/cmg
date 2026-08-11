@@ -168,7 +168,19 @@ export async function processPandaDocWebhook(
   const counts = { applied: 0, ignored: 0, failed: 0 };
 
   for (const event of events) {
-    const handler = HANDLERS[event.event];
+    /* Own-property check, same reason as src/lib/validators/files.ts and
+       src/lib/claims/status.ts. `event.event` is a string lifted straight out of
+       the request body, so `HANDLERS["constructor"]` and `HANDLERS["toString"]`
+       both returned a truthy function, skipped the "no handler" branch below,
+       and were then *called* as handlers — `counts[outcome] += 1` turned into
+       NaN under an `[object Object]` key in the 200 response, and
+       `__defineGetter__` threw, which deletes the dedupe row and makes PandaDoc
+       retry the same payload forever. HMAC verification upstream means this
+       needs the shared secret, so it is a robustness fix rather than a hole; the
+       sibling module src/lib/email/render.tsx already does it this way. */
+    const handler = Object.hasOwn(HANDLERS, event.event)
+      ? HANDLERS[event.event]
+      : undefined;
     if (!handler) {
       console.info("[pandadoc-webhook] no handler for event", { event: event.event });
       counts.ignored += 1;

@@ -1277,6 +1277,51 @@ begin
       using errcode = '42501';
   end if;
 
+  -- THE FLOOR: this update may not take the workspace to zero active owners.
+  --
+  -- Everything above decides *who* may change a privilege. This decides what the answer
+  -- may leave behind, and it has to live here rather than only in the server action,
+  -- because the action is not the only way to reach the write. `/admin/staff` states the
+  -- rule as a guarantee, and yet the sole owner could strand the workspace in one request
+  -- with nothing but the publishable key and their own signed-in session:
+  --
+  --     PATCH /rest/v1/profiles?id=eq.<self>   {"is_active": false}   -> 200
+  --
+  -- and afterwards `select count(*) from profiles where role='owner' and is_active` is 0.
+  -- Both existing defences miss it for the same structural reason: strandsWorkspace() is
+  -- in TypeScript on a code path this request never enters, and change_staff_privileges()
+  -- is an RPC nobody is obliged to call. This trigger is the only layer every UPDATE to
+  -- public.profiles must pass, so it is the only place the guarantee can actually be made.
+  -- The guard used to check the *actor's* state at BEFORE-UPDATE time and nothing about
+  -- the resulting roster, which is why a self-deactivation sailed through: the actor was
+  -- an active owner at the moment they were asked about.
+  --
+  -- The predicate is "if this row stops being an active owner, another one must exist"
+  -- rather than a plain count, because at BEFORE UPDATE the new values are not in the
+  -- table yet. `old.role = 'owner' and old.is_active` short-circuits every update that
+  -- cannot lower the count — which is nearly all of them.
+  --
+  -- Below private.is_service_context(), deliberately: the seed, a restore, an offboarding
+  -- migration and supabase/tests/04_rls_roles.test.sql all deactivate owner accounts on
+  -- purpose, and none of them are the staff screen. That escape is what makes it safe for
+  -- this rule to be a trigger at all.
+  --
+  -- CMG01 and not 42501, matching public.change_staff_privileges(): the caller is a
+  -- legitimate active owner and their authority is not in question, so the action can
+  -- answer with the sentence that explains the rule instead of the one that says they do
+  -- not belong here.
+  if old.role = 'owner' and old.is_active
+     and not (new.role = 'owner' and new.is_active)
+     and not exists (
+       select 1
+         from public.profiles p
+        where p.id <> old.id and p.role = 'owner' and p.is_active
+     )
+  then
+    raise exception 'this change would leave the workspace with no active owner'
+      using errcode = 'CMG01';
+  end if;
+
   return new;
 end;
 $fn$;
