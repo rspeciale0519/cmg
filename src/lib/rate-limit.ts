@@ -38,6 +38,25 @@ export const RATE_LIMITS = {
   inviteAcceptIp: { scope: "invite-accept:ip", max: 20, window: "1 hour" },
   inviteAcceptToken: { scope: "invite-accept:token", max: 10, window: "1 hour" },
   mfaVerifyUser: { scope: "mfa-verify:user", max: 10, window: "15 minutes" },
+
+  /* Portal surfaces. Keyed on the account rather than the IP: every caller here
+     has already signed in, so the identity is known and is the thing worth
+     bounding — an IP bucket would merge a household behind one router and would
+     miss the same account posting from a phone and a laptop.
+
+     The question budget is generous on purpose. It bounds a script hammering
+     the feed, and 12 an hour is far past anything a person asking about their
+     own roof will reach; a homeowner who has just been denied and writes four
+     messages in ten minutes is behaving normally and must not meet a wall.
+
+     The password budget is tight for the opposite reason: `changePassword`
+     verifies the current password before it will set a new one, which makes it
+     an online guessing oracle against a session that may be borrowed rather
+     than the account holder's. Five attempts a quarter hour leaves room for a
+     typo and none for a search. */
+  portalQuestionUser: { scope: "portal-question:user", max: 12, window: "1 hour" },
+  portalUploadUser: { scope: "portal-upload:user", max: 20, window: "1 hour" },
+  portalPasswordUser: { scope: "portal-password:user", max: 5, window: "15 minutes" },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

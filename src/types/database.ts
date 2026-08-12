@@ -923,6 +923,13 @@ export type Database = {
         }[]
       }
       next_claim_ref: { Args: never; Returns: string }
+      portal_claim_contact: {
+        Args: { p_claim_id: string }
+        Returns: {
+          first_name: string
+          last_name: string
+        }[]
+      }
       reassign_claim: {
         Args: { p_claim_id: string; p_new_adjuster: string }
         Returns: undefined
