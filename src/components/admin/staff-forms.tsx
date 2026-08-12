@@ -91,8 +91,12 @@ export function StaffRoleForm({
         ) : null}
       </div>
 
+      {/* `ink/60` (5.46:1), not `ink/38` (3.02:1). This sentence is the only
+          thing on screen that says why the select above it is dim and inert,
+          and it was quieter than the control it explains — the rule
+          `financials-form.tsx` already states and applies. */}
       {disabled && disabledReason ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/38">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
           {disabledReason}
         </p>
       ) : null}
@@ -142,11 +146,11 @@ export function StaffActiveForm({
       </span>
 
       {disabled && disabledReason ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/38">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
           {disabledReason}
         </p>
       ) : isActive && isSelf ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/38">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
           You cannot restore your own account afterwards.
         </p>
       ) : null}

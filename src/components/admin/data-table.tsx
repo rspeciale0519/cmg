@@ -136,9 +136,15 @@ export function Th({
           aria-label={sort.label}
           scroll={false}
           className={cx(
-            "group inline-flex items-center gap-[5px] text-inherit no-underline",
+            /* The link fills the header cell rather than wrapping the glyph.
+               Sized to the text it was 15.4px tall inside a 33.9px `th`, so
+               the two-thirds of the cell a thumb naturally lands on did
+               nothing — under the 24px WCAG 2.2 target floor, and the sort
+               control is the header's whole purpose. The negative margins give
+               the padding back, so the box grows without moving the label. */
+            "group -my-[9px] flex items-center gap-[5px] py-[9px] text-inherit no-underline",
             "transition-colors duration-150 hover:text-ink/72",
-            align === "right" && "flex-row-reverse",
+            align === "right" ? "flex-row-reverse" : undefined,
             sort.state !== "none" && "text-ink/72",
           )}
         >

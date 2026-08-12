@@ -47,8 +47,11 @@ export function ClaimTabs({ tabs, root }: { tabs: PortalTab[]; root: string }) {
                   {typeof tab.count === "number" && tab.count > 0 ? (
                     <span
                       className={cx(
+                        /* Same correction as the workspace strip: `ink/45` and
+                           `ink/30` measure 3.74:1 and 2.46:1 on this canvas,
+                           under the 4.5:1 a numeral this size needs. */
                         "text-[12px] leading-none tabular-nums",
-                        active ? "text-ink/45" : "text-ink/30",
+                        active ? "text-ink/65" : "text-ink/55",
                       )}
                     >
                       {tab.count}

@@ -182,7 +182,13 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           {href ? (
             <Link
               href={href}
-              className="text-[12px] text-accent/85 no-underline transition-colors duration-150 hover:text-accent-300"
+              /* The word is 28.6px wide and was 17.4px tall — the smallest
+                 target in the workspace, and the only way from an entry to the
+                 thing the entry is about. The padding and the negative margins
+                 that cancel it give it a 24px box without moving anything:
+                 the row aligns on baselines, so the text stays exactly where
+                 it was and only the hit area grows. */
+              className="-my-[4px] -mx-[6px] inline-flex min-h-[24px] items-center rounded px-[6px] py-[4px] text-[12px] text-accent/85 no-underline transition-colors duration-150 hover:text-accent-300"
             >
               open
             </Link>

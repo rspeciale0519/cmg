@@ -189,8 +189,19 @@ export default async function LeadsPage({
                 key={lead.id}
                 className="px-[clamp(14px,1.6vw,20px)] py-[15px] transition-colors duration-150 hover:bg-ink/[0.03]"
               >
+                {/* `basis-[240px]` is what makes `flex-wrap` above mean
+                    anything. `min-w-0` is needed — an email address is a single
+                    unbreakable token and without it the row grew wider than the
+                    phone — but it also removes the floor the wrap decision is
+                    made against, so at 390 the row never wrapped: the enquiry
+                    took 111.5px and the status control beside it took 192.5px,
+                    and the message set seven lines of about sixteen characters
+                    while the address broke as `rosa.delgado@exa` / `mple.test`.
+                    The control that acts on a lead was 73% wider than the lead.
+                    A basis states the width the column wants; the row now breaks
+                    at 390 and the column takes the full 328. */}
                 <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 basis-[240px]">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <h2 className="text-[14px] font-medium leading-[1.35] tracking-[-0.01em]">
                         {lead.name}

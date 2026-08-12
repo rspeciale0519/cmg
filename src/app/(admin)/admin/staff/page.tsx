@@ -105,11 +105,20 @@ export default async function StaffPage({
           caption="Staff accounts with role, access and second-factor state"
           head={
             <>
-              <Th className="w-[26%]">Person</Th>
-              <Th className="w-[17%]">Role</Th>
+              {/* Role is 25% rather than 17% because the column has two states
+                  and was sized for the quieter one. Changing a role reveals a
+                  Save button beside the select, and at the table's 860px floor
+                  — which is every viewport from a phone to a small laptop — the
+                  cell needed 198px of content in 146px of box. The button drew
+                  380.6→439 against a cell ending at 386.8, so it sat on top of
+                  the next column's "Not enrolled". The eight points come off
+                  Person and Access, both of which hold text that wraps or
+                  truncates rather than a control that cannot. */}
+              <Th className="w-[22%]">Person</Th>
+              <Th className="w-[25%]">Role</Th>
               <Th className="w-[16%]">Second factor</Th>
               <Th className="w-[15%]">Last signed in</Th>
-              <Th className="w-[26%]">Access</Th>
+              <Th className="w-[22%]">Access</Th>
             </>
           }
         >

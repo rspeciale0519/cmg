@@ -38,8 +38,21 @@ export function PipelineLadder({ counts }: { counts: StatusCounts }) {
         Claims by stage
       </h2>
 
-      <div className="overflow-x-auto [scrollbar-width:thin]">
-        <ol className="flex min-w-[860px] items-stretch gap-[3px]">
+      {/* The row becomes a grid below `lg`, and that is the whole fix rather
+          than a responsive flourish. As one 860px row in a 358px scroller the
+          phone showed stages 01–04, every one of them reading `0`, while both
+          claims in the business sat at 08 and 09 — 262px and 348px past the
+          right edge, with no scrollbar and no edge fade to say so. The element
+          whose stated job is "where is the work sitting today" answered
+          "nowhere". Ten stages cannot be legible side by side at 390: at 33px
+          each, "Settlement offered" is a column of single letters. So they
+          wrap — two up on a phone, five up on a tablet, and the single rule
+          the row is a segment of only from `lg`, where it fits without
+          scrolling. `scroll-x-edged` stays as the floor for a zoomed or narrow
+          desktop window, and it is the utility rather than a bare
+          `overflow-x-auto` so that a strip which does scroll says so. */}
+      <div className="scroll-x-edged [--panel-fill:var(--color-canvas)]">
+        <ol className="grid grid-cols-2 gap-x-[3px] gap-y-[22px] sm:grid-cols-5 lg:flex lg:min-w-[860px] lg:items-stretch lg:gap-[3px]">
           {PIPELINE.map((status, index) => (
             <Stage
               key={status}
@@ -84,7 +97,7 @@ function Stage({
   const occupied = count > 0;
 
   return (
-    <li className="flex-1">
+    <li className="lg:flex-1">
       <Link
         href={`/admin/claims?status=${status}`}
         className="group block no-underline"

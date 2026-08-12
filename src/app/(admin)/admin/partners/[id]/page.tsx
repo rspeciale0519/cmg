@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  BackLink,
   EmptyState,
   PageHeader,
   Panel,
@@ -171,14 +172,7 @@ export default async function PartnerDetailPage({
 
   return (
     <>
-      <p className="pb-[10px] text-[12.5px] leading-[1.4]">
-        <Link
-          href="/admin/partners"
-          className="text-ink/50 no-underline transition-colors duration-150 hover:text-accent"
-        >
-          ← Partner companies
-        </Link>
-      </p>
+      <BackLink href="/admin/partners">Partner companies</BackLink>
 
       <PageHeader
         eyebrow={`Owner · added ${formatDateStamp(company.createdAt)}`}

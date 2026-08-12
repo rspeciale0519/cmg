@@ -97,6 +97,36 @@ export function AdminShell({
 }
 
 /**
+ * The way back up, written once.
+ *
+ * The two detail screens had grown their own versions and disagreed on four
+ * separate decisions — 12px against 12.5px, `ink/45` against `ink/50`,
+ * `hover:text-ink` against `hover:text-accent`, and an `aria-hidden` arrow
+ * against a literal one that read the link out as "← Partner companies". None
+ * of those is a decision either page should be making.
+ *
+ * The arrow is decoration and is hidden from the accessible name; `min-h-[24px]`
+ * is the WCAG 2.2 target floor, which the 15–16.8px text boxes were under, and
+ * the negative top margin gives the added height back so the label still sits
+ * on the same baseline it did.
+ *
+ * `ink/58` rather than either version's own colour: at 12px both were under AA
+ * on this canvas — `ink/45` measured 3.74:1 and `ink/50` 4.29:1 — and settling
+ * on one of two failing values would only have made the failure consistent.
+ * 5.25:1.
+ */
+export function BackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="-mt-[4px] mb-[14px] inline-flex min-h-[24px] items-center gap-[6px] text-[12px] leading-[1.4] text-ink/58 no-underline transition-colors duration-150 hover:text-ink"
+    >
+      <span aria-hidden="true">←</span> {children}
+    </Link>
+  );
+}
+
+/**
  * The one heading pattern every workspace page uses. `eyebrow` carries the
  * count or the scope, `actions` the page-level control — so the reader's eye
  * lands on the same three positions on every route.

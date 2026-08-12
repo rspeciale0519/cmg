@@ -61,8 +61,15 @@ export function ClaimTabs({ tabs, root }: { tabs: ClaimTab[]; root: string }) {
                   {typeof tab.count === "number" && tab.count > 0 ? (
                     <span
                       className={cx(
+                        /* Was `ink/45` active and `ink/30` inactive — 3.74:1
+                           and 2.46:1 measured against the canvas, both under
+                           the 4.5:1 an 11px numeral needs, and brightest on the
+                           tab the reader is already standing on. These are the
+                           numbers that decide which tab to open next, so the
+                           three you are choosing between were the three you
+                           could not read. Now 4.83:1 and 6.15:1. */
                         "text-[11px] leading-none tabular-nums",
-                        active ? "text-ink/45" : "text-ink/30",
+                        active ? "text-ink/65" : "text-ink/55",
                       )}
                     >
                       {tab.count}

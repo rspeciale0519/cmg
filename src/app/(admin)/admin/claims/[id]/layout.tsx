@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { BackLink } from "@/components/admin/admin-shell";
 import { ClaimTabs, type ClaimTab } from "@/components/admin/claim-tabs";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { NOT_FOUND_TITLE } from "@/lib/authz";
@@ -83,12 +83,7 @@ export default async function ClaimLayout({
   return (
     <>
       <div className="pb-[clamp(16px,2vw,22px)]">
-        <Link
-          href="/admin/claims"
-          className="mb-[14px] inline-flex items-center gap-[6px] text-[12px] leading-[1.4] text-ink/45 no-underline transition-colors duration-150 hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> All claims
-        </Link>
+        <BackLink href="/admin/claims">All claims</BackLink>
 
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
           <div className="min-w-0">
