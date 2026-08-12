@@ -85,7 +85,7 @@ export default async function PortalProfilePage() {
                       <p
                         className={
                           withdrawn
-                            ? "text-[12px] leading-[1.45] text-ink/40"
+                            ? "text-[12px] leading-[1.45] text-ink/58"
                             : "text-[12px] uppercase leading-[1.45] tracking-[0.13em] text-accent"
                         }
                       >
@@ -95,7 +95,7 @@ export default async function PortalProfilePage() {
                       </p>
                     </div>
 
-                    <p className="mt-[6px] text-[12.5px] leading-[1.5] text-ink/40">
+                    <p className="mt-[6px] text-[12.5px] leading-[1.5] text-ink/58">
                       Given {formatDateStamp(consent.granted_at)}
                     </p>
 
@@ -134,7 +134,7 @@ export default async function PortalProfilePage() {
               withdrawal is an annotation on it, not an edit to it. Claiming
               otherwise would misrepresent what this page can do. */}
           <div className="border-t border-ink/9 px-[clamp(18px,2.4vw,28px)] py-[16px]">
-            <p className="max-w-[54ch] text-[12.5px] leading-[1.7] text-ink/40">
+            <p className="max-w-[54ch] text-[12.5px] leading-[1.7] text-ink/58">
               These records cannot be changed, by us or by you — they are the
               proof of what you agreed to and when. Withdrawing adds the date you
               withdrew; it never rewrites the original. To give permission again,

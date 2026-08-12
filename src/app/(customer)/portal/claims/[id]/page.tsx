@@ -88,7 +88,7 @@ export default async function ClaimOverviewPage({
             />
 
             <div className="mt-[22px] border-t border-ink/9 pt-[18px]">
-              <p className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/40">
+              <p className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/58">
                 What you told us happened
               </p>
               <p className="mt-[8px] max-w-[68ch] whitespace-pre-line text-[14.5px] leading-[1.75] text-ink/72">
@@ -136,7 +136,7 @@ export default async function ClaimOverviewPage({
               >
                 {site.email}
               </a>
-              <p className="mt-[8px] text-[12.5px] leading-[1.6] text-ink/40">
+              <p className="mt-[8px] text-[12.5px] leading-[1.6] text-ink/58">
                 {site.city} · License #{site.license}
               </p>
             </div>

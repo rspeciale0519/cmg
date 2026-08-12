@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { site, telHref } from "@/lib/site";
 
@@ -59,12 +60,12 @@ export default function PortalError({
         >
           Try again
         </button>
-        <a
+        <Link
           href="/portal"
           className="inline-flex min-h-[46px] items-center rounded-md border border-ink/16 px-[22px] text-sm leading-[1.2] text-ink no-underline transition-colors duration-200 hover:bg-ink/7"
         >
           Back to your claims
-        </a>
+        </Link>
       </div>
 
       {error.digest ? (

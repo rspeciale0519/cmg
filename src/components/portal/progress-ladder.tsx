@@ -26,6 +26,16 @@ import { formatDateStamp } from "@/lib/format";
  * Gold is spent here and nowhere else on the overview: the current marker and
  * the rail behind it. Completed stages are ink, upcoming stages are ink at low
  * opacity, and the whole screen therefore has exactly one place the eye lands.
+ *
+ * "Low opacity" is `ink/58` and not `ink/40`, and the correction is worth
+ * recording because it applied to this whole surface. The portal's secondary
+ * tier was set by eye and never measured: on the panel fill it read 3.18:1,
+ * with the sentence explaining the current stage at 2.55:1 — while the
+ * workspace holds 4.5:1 for every real value even with a row lit, and spells
+ * out the measurement wherever it goes quieter. The stage dates are the part
+ * this component's own note calls the reason it exists, and they were the least
+ * legible thing on the screen. The three-step ordering current › done ›
+ * upcoming survives; only the floor moved.
  */
 
 const MARKER_LABEL = {
@@ -89,7 +99,7 @@ export function ProgressLadder({ progress }: { progress: ProgressView }) {
                         ? "font-medium text-ink"
                         : done
                           ? "font-normal text-ink/78"
-                          : "font-normal text-ink/40",
+                          : "font-normal text-ink/58",
                     )}
                   >
                     {stage.phase}
@@ -101,7 +111,7 @@ export function ProgressLadder({ progress }: { progress: ProgressView }) {
                       dateTime={stage.reachedAt}
                       className={cx(
                         "shrink-0 text-[12.5px] leading-[1.45] tabular-nums",
-                        current ? "text-accent" : "text-ink/40",
+                        current ? "text-accent" : "text-ink/58",
                       )}
                     >
                       {formatDateStamp(stage.reachedAt)}
@@ -118,7 +128,7 @@ export function ProgressLadder({ progress }: { progress: ProgressView }) {
                 <p
                   className={cx(
                     "mt-[5px] max-w-[56ch] text-[13.5px] leading-[1.65]",
-                    current ? "text-ink/70" : done ? "text-ink/58" : "text-ink/32",
+                    current ? "text-ink/70" : done ? "text-ink/58" : "text-ink/55",
                   )}
                 >
                   {stage.summary}
@@ -131,14 +141,14 @@ export function ProgressLadder({ progress }: { progress: ProgressView }) {
                       progress.awaitingHomeowner ? "border-accent" : "border-accent/40",
                     )}
                   >
-                    <p className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/40">
+                    <p className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/58">
                       Right now
                     </p>
                     <p className="mt-[6px] max-w-[54ch] text-[15px] leading-[1.7] text-ink">
                       {progress.now}
                     </p>
 
-                    <p className="mt-[16px] text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/40">
+                    <p className="mt-[16px] text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/58">
                       {progress.awaitingHomeowner ? "Over to you" : "What happens next"}
                     </p>
                     <p

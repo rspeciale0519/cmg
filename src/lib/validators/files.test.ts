@@ -45,6 +45,46 @@ describe("validateUploads", () => {
     if (!result.ok) expect(result.message).toContain("larger than 25 MB");
   });
 
+  /**
+   * One round trip, not one per bad file. Both refusals used to `return` from
+   * inside the loop, so a ten-file selection with two problems in it reported
+   * the first, and a file input cannot be re-seeded by any page — the operator
+   * re-picked and re-uploaded everything, then heard about the second.
+   */
+  it("names every offending file, not just the first", () => {
+    const result = validateUploads([
+      fileOf("declarations.pdf", "application/pdf"),
+      fileOf("notes.txt", "text/plain"),
+      fileOf("roof.jpg", "image/jpeg"),
+      fileOf("scan.pdf", "application/pdf", MAX_FILE_BYTES + 1),
+    ]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toContain("notes.txt");
+      expect(result.message).toContain("scan.pdf");
+    }
+  });
+
+  it("offers only the remedy the reader needs", () => {
+    const tooBig = validateUploads([
+      fileOf("scan.pdf", "application/pdf", MAX_FILE_BYTES + 1),
+    ]);
+    expect(tooBig.ok).toBe(false);
+    // A 40 MB PDF is the right format. Reading the format list back is noise.
+    if (!tooBig.ok) {
+      expect(tooBig.message).toContain("by email");
+      expect(tooBig.message).not.toContain("PDF, JPG");
+    }
+
+    const wrongType = validateUploads([fileOf("notes.txt", "text/plain")]);
+    expect(wrongType.ok).toBe(false);
+    if (!wrongType.ok) {
+      expect(wrongType.message).toContain("PDF, JPG");
+      expect(wrongType.message).not.toContain("by email");
+    }
+  });
+
   it("accepts a file at exactly the limit", () => {
     expect(
       validateUploads([fileOf("edge.pdf", "application/pdf", MAX_FILE_BYTES)]).ok,

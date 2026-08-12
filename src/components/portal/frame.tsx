@@ -54,7 +54,7 @@ export function PortalFrame({
               className="min-h-11 rounded-md px-1 py-[10px] text-right text-[13px] leading-[1.4] text-ink/72 no-underline transition-colors duration-200 hover:text-ink"
             >
               {identity.name}
-              <span className="block text-[11px] uppercase tracking-[0.16em] text-ink/40">
+              <span className="block text-[11px] uppercase tracking-[0.16em] text-ink/58">
                 Your account
               </span>
             </Link>

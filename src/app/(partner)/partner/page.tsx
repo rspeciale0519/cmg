@@ -5,6 +5,7 @@ import {
   PortalShell,
 } from "@/components/auth/portal-shell";
 import { requireRole } from "@/lib/authz";
+import { formatMoney } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +14,6 @@ export const metadata: Metadata = {
   title: "Referred claims",
   robots: { index: false, follow: false },
 };
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 export default async function PartnerPage() {
   const session = await requireRole("partner");
@@ -69,10 +64,20 @@ export default async function PartnerPage() {
               <p className="mt-2">
                 {summary.property_street}, {summary.property_city}
               </p>
+              {/* `formatMoney`, not a local formatter. This page had its own
+                  `Intl.NumberFormat` at `maximumFractionDigits: 0`, which rounds
+                  half *up*: a settlement recorded as $412,500.50 was reported to
+                  the referring contractor as $412,501 — more than the business
+                  received — and $9,999,999,999.99, the product's own ceiling,
+                  printed as $10,000,000,000. `format.ts` states the rule this
+                  broke: a figure that is not round keeps its cents, because
+                  rounding a settlement in the UI is how two systems come to
+                  disagree about what was paid. This is the only reading of that
+                  number the partner ever gets. */}
               <p className="mt-2">
                 {summary.settlement_amount === null
                   ? "Settlement reported once the claim settles."
-                  : `Settled at ${currency.format(Number(summary.settlement_amount))}`}
+                  : `Settled at ${formatMoney(summary.settlement_amount)}`}
               </p>
             </PortalCard>
           ))}

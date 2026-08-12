@@ -156,7 +156,7 @@ export default async function PortalDocumentsPage({
               </li>
               <li>Receipts for repairs you have already paid for.</li>
             </ul>
-            <p className="mt-[16px] text-[12.5px] leading-[1.6] text-ink/40">
+            <p className="mt-[16px] text-[12.5px] leading-[1.6] text-ink/58">
               Everything you send here goes straight to your adjuster and stays on
               the claim file.
             </p>

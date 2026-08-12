@@ -103,7 +103,7 @@ export function FactList({
     <dl className={cx("grid gap-[18px] sm:grid-cols-2", className)}>
       {items.map((item) => (
         <div key={item.term} className="min-w-0">
-          <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/40">
+          <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.14em] text-ink/58">
             {item.term}
           </dt>
           <dd className="mt-[6px] text-[15px] leading-[1.6] text-ink/88">

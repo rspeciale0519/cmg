@@ -132,7 +132,7 @@ export default async function PortalActivityPage({
                       <p
                         className={cx(
                           "text-[11px] uppercase leading-[1.4] tracking-[0.14em]",
-                          mine ? "text-accent" : "text-ink/40",
+                          mine ? "text-accent" : "text-ink/58",
                         )}
                       >
                         {TYPE_LABEL[event.type] ?? "Update"}
