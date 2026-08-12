@@ -5,6 +5,53 @@ Live log for the autonomous build. Newest first. Roadmap:
 
 ---
 
+## Phase 6 — Partner system ✅ (craft gate open)
+
+**Shipped** — the last missing piece was `/partner/refer`. Companies, rep invites and the
+`claim_partner_summaries` projection all landed in Phase 4; the portal itself in Phase 5.
+
+A rep sends the homeowner and the loss and nothing else — spec §6's "staff completes details
+on accept" — behind Turnstile and a per-account rate limit, inserted with the service-role
+client after an app-level authz check, with `public.partner_referral_company()` delegating to
+the private helper so "which company may this rep act for" has exactly one definition.
+
+**No consent row is written, and the absence is the decision.** A consent carries the
+checkbox text verbatim, the subject's phone and email, their IP and the moment they ticked
+it, and `guard_consent_immutable()` treats it as evidence. The homeowner is not at this form.
+A row minted from a contractor's submission would look exactly like evidence while being
+evidence of nothing.
+
+**Four columns lost their NOT NULL** — `carrier`, `policy_number`, `carrier_tenure`,
+`loss_time` — because a contractor on somebody else's roof does not know any of them. The
+alternative was a sentinel, and `carrier_tenure`'s three labels are all lengths of time, so
+any of them asserts on the homeowner's behalf a fact nobody collected. `loss_time` was
+already fabricating: NOT NULL DEFAULT noon, so the triage card printed "· 12:00 PM" for a
+storm nobody gave a time for.
+
+**The gap that relaxation opened, and how it closed.** The migration closed it at accept, and
+assumed accept was the only door out of `new_intake`. It is not — the status picker offers
+`under_review`, the claim detail layout reads no status, and from there `lor_sent` was legal.
+A Letter of Representation would have gone to a carrier with the carrier and policy number
+blank. Reproduced live before the fix. Now gated in three places (the disabled pill with its
+reason, the server action, and `enforce_claim_status_transition()`), and `PolicyForm` on the
+claim Overview is the screen where the details are entered — and corrected, which the
+workspace had no way to do at all.
+
+**Two defects found in passing and fixed:** `SelectField` never re-applied an echoed
+`defaultValue` (React updates `defaultSelected` for inputs and textareas, not for an
+uncontrolled select), so a refused referral came back with Cause of loss silently changed
+from "Wind / hail" to "Wind" while the server's echo said otherwise. And accept had no way to
+collect the policy side at all, which would have made a referral impossible to complete.
+
+**Checks** — 549 unit tests, **666 pgTAP assertions across 17 files**, type-check, lint and
+build all exit 0 on a freshly reset database.
+
+**Known, recorded rather than fixed:** the pgTAP suite asserts absolute row counts, so any
+row created through the UI fails a dozen assertions until the next `db reset`. Worth
+converting to relative counts before the suite is run in CI against a shared database.
+
+---
+
 ## Phase 4 — Admin workspace 🔶 (craft gate open)
 
 **Shipped** — the full staff workspace: dashboard with a pipeline ladder, intake queue,

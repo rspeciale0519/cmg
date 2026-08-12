@@ -54,9 +54,9 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [ ] CRAFT GATE converged (customer portal)
 
 ## Phase 6 — Partner system
-- [ ] Partner companies + rep invites, projection trigger (pgTAP verified)
-- [ ] Partner portal + refer-a-claim form
-- [ ] CRAFT GATE converged (partner portal)
+- [x] Partner companies + rep invites, projection trigger (pgTAP verified)
+- [x] Partner portal + refer-a-claim form
+- [ ] CRAFT GATE converged (partner portal) — 2 rounds run, R2 found 2 majors (fixed); not converged
 
 ## Phase 7 — Notifications
 - [ ] All templates render; outbox wired to every event
