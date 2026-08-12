@@ -488,8 +488,16 @@ Add to that list, from Phase 7:
 
 ## 10. If you change one thing first
 
-Run **craft round 4 on the portal and partner surfaces**, because round 3's five
-fixes are committed but unverified, and an unverified fix is the one thing this
-process has repeatedly caught being half-right — round 18 found that round 17's
-fix restored the note but not the radio selection, while the alert said "What you
-typed is still here."
+Two candidates, and they answer different questions.
+
+**To move the build forward:** run **craft round 4 on the portal and partner
+surfaces.** Round 3's five fixes are committed but unverified, and an unverified
+fix is the one thing this process has repeatedly caught being half-right — round
+18 found that round 17's fix restored the note but not the radio selection, while
+the alert said "What you typed is still here."
+
+**To close the most consequential open defect:** build the
+**`storage_cleanup_queue` drainer** (§7.2, item 1). It is perhaps an hour's work,
+and until it exists, deleting a document removes the row and leaves the file. Of
+everything on these lists it is the only item where the product does something
+other than what it tells the person using it.
