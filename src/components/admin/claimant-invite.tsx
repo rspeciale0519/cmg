@@ -37,8 +37,13 @@ export function ClaimantInvite({
 
   if (!canInvite) {
     return (
+      /* Names who can act, like every other refusal in the workspace. "No
+         portal access" was a permission written as a status, in the same slot
+         and the same colour as the real status "Portal active" above it — and
+         the row already says the claimant has none, so the label added nothing
+         and hid the fact that someone else can fix it. */
       <span className="text-[12px] leading-[1.4] text-ink/58">
-        No portal access
+        Invited by the owner or the assigned adjuster
       </span>
     );
   }

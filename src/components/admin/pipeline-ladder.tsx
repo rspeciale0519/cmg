@@ -111,7 +111,18 @@ function Stage({
               : "bg-ink/12 group-hover:bg-ink/25",
           )}
         />
-        <span className="mt-[11px] block text-[10px] leading-none tabular-nums tracking-[0.14em] text-ink/28">
+        <span
+          className={cx(
+            "mt-[11px] block text-[10px] leading-none tabular-nums tracking-[0.14em] transition-colors duration-200",
+            /* The ordinal follows `occupied` like the count and the label do.
+               It was pinned at `ink/28` — the tier reserved for the em-dash that
+               means "nothing here" — on every stage including the two holding
+               work, so the one span that carries "the order is the information"
+               was the one span that never joined the distinction. 2.30:1
+               against 5.49:1. */
+            occupied ? "text-ink/62" : "text-ink/28",
+          )}
+        >
           {String(index).padStart(2, "0")}
         </span>
         <span

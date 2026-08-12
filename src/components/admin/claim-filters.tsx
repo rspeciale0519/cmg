@@ -29,10 +29,20 @@ export function ClaimFilters({
   adjusters,
   partners,
   resultCount,
+  showAdjusterFilter = true,
 }: {
   adjusters: AdjusterOption[];
   partners: PartnerOption[];
   resultCount: number;
+  /**
+   * Off for an adjuster, whose every option here is inert. `claims_select`
+   * scopes them to `assigned_adjuster_id = auth.uid()`, so "Dana Reyes" is
+   * always the same set as "Anyone" and "Unassigned" can never match anything —
+   * measured: `/admin/claims` reads 2 total, `?adjuster=unassigned` reads 0 and
+   * "Nothing matches those filters". `nav.ts` states the rule: a control that is
+   * never usable is not information.
+   */
+  showAdjusterFilter?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -160,31 +170,35 @@ export function ClaimFilters({
         </AdminSelect>
       </div>
 
-      <div className="min-w-[150px]">
-        <label
-          htmlFor="admin-adjuster"
-          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
-        >
-          Adjuster
-        </label>
-        <AdminSelect
-          name="adjuster"
-          value={params.get("adjuster") ?? ""}
-          onChange={(event) =>
-            startTransition(() =>
-              router.replace(withParam("adjuster", event.target.value), { scroll: false }),
-            )
-          }
-        >
-          <option value="">Anyone</option>
-          <option value="unassigned">Unassigned</option>
-          {adjusters.map((adjuster) => (
-            <option key={adjuster.id} value={adjuster.id}>
-              {adjuster.name}
-            </option>
-          ))}
-        </AdminSelect>
-      </div>
+      {showAdjusterFilter ? (
+        <div className="min-w-[150px]">
+          <label
+            htmlFor="admin-adjuster"
+            className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
+          >
+            Adjuster
+          </label>
+          <AdminSelect
+            name="adjuster"
+            value={params.get("adjuster") ?? ""}
+            onChange={(event) =>
+              startTransition(() =>
+                router.replace(withParam("adjuster", event.target.value), {
+                  scroll: false,
+                }),
+              )
+            }
+          >
+            <option value="">Anyone</option>
+            <option value="unassigned">Unassigned</option>
+            {adjusters.map((adjuster) => (
+              <option key={adjuster.id} value={adjuster.id}>
+                {adjuster.name}
+              </option>
+            ))}
+          </AdminSelect>
+        </div>
+      ) : null}
 
       <div className="min-w-[150px]">
         <label

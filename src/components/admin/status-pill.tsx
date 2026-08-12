@@ -24,16 +24,25 @@ import { STATUS_LABEL, STATUS_TONE, type ClaimStatus, type StatusTone } from "@/
  * followed by "Settled", so the two colours that had to be told apart at a
  * glance were the two that were nearly the same light tan.
  *
- * Dropping to `bronze-400` on a deeper `bronze-700` wash separates them on
+ * Dropping to a darker tan on a deeper `bronze-700` wash separates them on
  * lightness rather than on hue, which keeps the palette entirely inside the
  * brand's gold/bronze ramp and adds no fifth colour. It also says the right
  * thing: a settled or closed claim is finished, and finished work should sit
  * back from a table of live ones rather than glow next to them.
+ *
+ * `#cbb094` and not `bronze-400` (#c0a483), because the pill's fill is 24%
+ * opaque and its row lights to `ink/8.5` on hover and on `focus-within`. The
+ * row's fill therefore composites *through* the pill: `bronze-400` measured
+ * 4.92:1 at rest and 4.06:1 lit, and `focus-within` makes the lit state
+ * persistent for a keyboard reader. 5.66 and 4.64 now — the same rule
+ * `CellMeta` states, that an in-row token is chosen against the lit state. It
+ * is still darker than `bronze-300`, so the ΔE00 separation from `attention`
+ * that this whole tone exists for is preserved.
  */
 const TONE_CLASS: Record<StatusTone, string> = {
   attention: "border-accent/40 bg-accent/12 text-accent-300",
   active: "border-ink/16 bg-ink/6 text-ink/78",
-  resolved: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
+  resolved: "border-bronze-600/50 bg-bronze-700/24 text-[#cbb094]",
   halted: "border-[#E08C6A]/40 bg-[#E08C6A]/10 text-[#E8A98D]",
   /* `declined` carries `rejected` alone, and it is the only tone here with no
      fill. See STATUS_TONE for the reasoning — a carrier denial and a CMG intake

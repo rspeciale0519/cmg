@@ -227,7 +227,7 @@ export default async function PartnerDetailPage({
                 <>
                   <Th className="w-[26%]">Rep</Th>
                   <Th className="w-[32%]">Email</Th>
-                  <Th className="w-[18%]">Phone</Th>
+                  <Th className="w-[20%]">Phone</Th>
                   <Th className="w-[22%]">Last signed in</Th>
                 </>
               }

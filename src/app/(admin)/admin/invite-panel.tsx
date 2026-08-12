@@ -27,9 +27,10 @@ export type InvitableClaimant = {
  * the refusal it answered with is `GENERIC_ERROR`: "We could not submit that just
  * now. Please try again, or call us and we'll take the details over the phone."
  * A permission they will never hold, described as a transient failure, with an
- * invitation to keep trying and then telephone the office. The claim's own
- * Claimants tab has always got this right — see `ClaimantInvite`, which says
- * "No portal access" — so the two screens disagreed about the same operation.
+ * invitation to keep trying and then telephone the office. The two screens now
+ * say the same thing in the same words — see `ClaimantInvite` — and the words
+ * name the person who can act, because a refusal that only says no leaves the
+ * reader with nothing to do next.
  */
 export function InvitePanel({
   claimants,
@@ -77,7 +78,7 @@ export function InvitePanel({
               </form>
             ) : (
               <span className="text-[12px] leading-[1.4] text-ink/58">
-                No portal access
+                Invited by the owner or the assigned adjuster
               </span>
             )}
           </li>

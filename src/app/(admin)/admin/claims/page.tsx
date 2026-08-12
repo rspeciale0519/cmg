@@ -218,6 +218,11 @@ export default async function ClaimsPage({
     } as const;
   }
 
+  /* Read as a claim reference and nothing else — these arrive only from this
+     app's own redirect, but a query parameter is a query parameter. */
+  const handedOn = (first("handedOn") ?? "").slice(0, 20);
+  const released = (first("released") ?? "").slice(0, 20);
+
   const scope =
     session.role === "adjuster"
       ? "The claims assigned to you. Reassignment moves a file off this list."
@@ -233,10 +238,26 @@ export default async function ClaimsPage({
         lede={scope}
       />
 
+      {/* Where an adjuster's own hand-off lands. `reassign_claim` judges the
+          caller against the row as it was, so the write succeeds and the claim
+          then leaves their view — re-rendering the claim in place showed them
+          the workspace 404 and the success sentence was never read. */}
+      {handedOn || released ? (
+        <p
+          role="status"
+          className="mb-[clamp(14px,1.6vw,20px)] border-l-2 border-accent py-[2px] pl-[10px] text-[12.5px] leading-[1.55] text-ink/72"
+        >
+          {handedOn
+            ? `${handedOn} is now with another adjuster and has left your list.`
+            : `${released} is back in the intake queue and has left your list.`}
+        </p>
+      ) : null}
+
       <ClaimFilters
         adjusters={adjusters}
         partners={partners}
         resultCount={total}
+        showAdjusterFilter={session.role !== "adjuster"}
       />
 
       {/* Titled, where it used to be a bare box. Every other list in the

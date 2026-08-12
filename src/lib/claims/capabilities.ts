@@ -35,6 +35,16 @@ export type ClaimCapabilities = {
   /** Representation documents arm the lor_signed gate; §4 keeps them narrow. */
   canUploadRepresentation: boolean;
   isOwner: boolean;
+  /**
+   * The caller is the adjuster this claim is assigned to — which `canManage`
+   * already implies but does not distinguish from an owner, and the difference
+   * matters in exactly one place. Every assignment change this person can make
+   * takes the claim out of their own view, because `claims_select` scopes an
+   * adjuster to `assigned_adjuster_id = auth.uid()`. The owner is never in that
+   * position, so the warning belongs to this predicate rather than to
+   * `canManage`.
+   */
+  isAssignedAdjuster: boolean;
 };
 
 export function claimCapabilities(
@@ -58,6 +68,7 @@ export function claimCapabilities(
     canUploadDocuments: isStaff,
     canUploadRepresentation: canManage,
     isOwner,
+    isAssignedAdjuster,
   };
 }
 

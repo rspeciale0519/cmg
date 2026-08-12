@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/status";
@@ -164,7 +165,7 @@ export async function reassignClaimAdjuster(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireStaff("/admin");
+  const session = await requireStaff("/admin");
   const claimId = String(formData.get("claimId") ?? "").trim();
   const raw = String(formData.get("adjusterId") ?? "").trim();
   const adjusterId = raw.length > 0 ? raw : null;
@@ -199,6 +200,31 @@ export async function reassignClaimAdjuster(
   }
 
   revalidateClaim(claimId);
+
+  /**
+   * An adjuster who hands the claim on has just left their own view of it.
+   * `claims_select` scopes them to `assigned_adjuster_id = auth.uid()`, and
+   * `reassign_claim` judges the caller against the row as it was — so the write
+   * is allowed and the row then disappears. Re-rendering in place put the
+   * success sentence on a screen that had become the workspace's 404: the
+   * operator was told nothing and shown "That page isn't in the workspace."
+   *
+   * Sending them to the list is not a courtesy, it is the only place the message
+   * can be read. The owner and the assistant keep every claim in view, so they
+   * stay where they are.
+   */
+  const strandedSelf =
+    session.role === "adjuster" &&
+    claim.assigned_adjuster_id === session.userId &&
+    adjusterId !== session.userId;
+
+  if (strandedSelf) {
+    redirect(
+      adjusterId
+        ? `/admin/claims?handedOn=${encodeURIComponent(claim.claim_ref)}`
+        : `/admin/claims?released=${encodeURIComponent(claim.claim_ref)}`,
+    );
+  }
 
   return {
     status: "success",

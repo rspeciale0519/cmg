@@ -71,7 +71,18 @@ function Enrollment({ next }: { next: string | null }) {
   if (state.status === "ready" && state.factorId) {
     return (
       <>
-        <div className="flex flex-col items-center gap-5 border-b border-ink/13 pb-6">
+        {/* Instruction, then the code, then the fallback, then the field. The
+            three used to run QR → "Or enter this key by hand" → key → "Scan the
+            code with…", so the word "Or" referred back to an instruction the
+            reader had not been given yet and the divider grouped the sentence
+            explaining the QR with the input rather than with the QR. This is
+            the first screen every new staff member sees. */}
+        <p className="mb-5 text-[15px] leading-[1.7] text-ink/72">
+          Scan the code with Google Authenticator, 1Password, Authy or any TOTP app,
+          then enter the 6-digit code it shows.
+        </p>
+
+        <div className="mb-6 flex flex-col items-center gap-5 border-b border-ink/13 pb-6">
           <div className="rounded-md bg-ink p-3">
             <img
               src={state.qrCode}
@@ -90,11 +101,6 @@ function Enrollment({ next }: { next: string | null }) {
             </p>
           </div>
         </div>
-
-        <p className="mt-6 mb-5 text-[15px] leading-[1.7] text-ink/72">
-          Scan the code with Google Authenticator, 1Password, Authy or any TOTP app,
-          then enter the 6-digit code it shows.
-        </p>
 
         <CodeForm
           factorId={state.factorId}

@@ -140,6 +140,7 @@ export default async function AdminDashboard() {
         row.claims?.assigned_adjuster_id === session.userId),
   }));
   const invitableTotal = uninvitedCount.count ?? invitable.length;
+  const sendableTotal = invitable.filter((row) => row.canInvite).length;
 
   const questionsShown = (questions.data ?? []).length;
   const questionsTotal = questionCount.count ?? questionsShown;
@@ -361,14 +362,21 @@ export default async function AdminDashboard() {
           )}
         </Panel>
 
+        {/* "to send" is a count of work this reader can do, so it counts the
+            rows they can act on. An assistant can act on none of them —
+            issuance is the owner's or the assigned adjuster's — and the caption
+            was saying "2 to send" over two rows that each read "No portal
+            access", contradicting every line beneath it. */}
         <Panel
           title="Awaiting portal access"
           meta={
-            invitableTotal > 0
-              ? invitable.length < invitableTotal
-                ? `${invitable.length} of ${invitableTotal} to send`
-                : `${invitableTotal} to send`
-              : undefined
+            invitableTotal === 0
+              ? undefined
+              : sendableTotal === 0
+                ? `${invitableTotal} waiting on an owner or the assigned adjuster`
+                : invitable.length < invitableTotal
+                  ? `${invitable.length} of ${invitableTotal} to send`
+                  : `${invitableTotal} to send`
           }
         >
           <InvitePanel claimants={invitable} total={invitableTotal} />

@@ -20,11 +20,19 @@ export function ReassignForm({
   currentAdjusterId,
   adjusters,
   canManage,
+  isOwnCaseload,
 }: {
   claimId: string;
   currentAdjusterId: string | null;
   adjusters: AdjusterOption[];
   canManage: boolean;
+  /**
+   * The caller is the adjuster this claim is assigned to, so every move this
+   * control can make takes the claim out of their own view — `claims_select`
+   * scopes an adjuster to their own assignments. Said before the click rather
+   * than discovered after it.
+   */
+  isOwnCaseload: boolean;
 }) {
   const [state, formAction] = useActionState(reassignClaimAdjuster, idleState);
 
@@ -61,6 +69,13 @@ export function ReassignForm({
           ))}
         </AdminSelect>
       </AdminField>
+
+      {isOwnCaseload ? (
+        <p className="mt-[8px] max-w-[48ch] text-[12px] leading-[1.55] text-ink/65">
+          This is your claim. Saving any other value here removes it from your
+          list, and only an owner can give it back to you.
+        </p>
+      ) : null}
 
       <div className="mt-[13px]">
         <SubmitButton variant="secondary" pendingLabel="Saving…">

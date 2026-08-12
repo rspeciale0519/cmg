@@ -104,6 +104,7 @@ export default async function ClaimOverviewPage({
               currentAdjusterId={claim.assignedAdjusterId}
               adjusters={adjusters}
               canManage={can.canManage}
+              isOwnCaseload={can.isAssignedAdjuster}
             />
           </PanelBody>
         </Panel>
