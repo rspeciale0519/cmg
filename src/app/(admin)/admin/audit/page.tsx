@@ -206,7 +206,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
       <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[12.5px] leading-[1.5] lg:justify-end lg:text-right">
         {entry.actorName ? (
           <>
-            <span className="truncate text-ink/62">{entry.actorName}</span>
+            <span className="truncate text-ink/65">{entry.actorName}</span>
             <span className="text-[11px] uppercase tracking-[0.13em] text-ink/58">
               {entry.actorRole}
             </span>
@@ -227,7 +227,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
             promises who did it, and this is the half of that answer a reader
             cannot reconstruct from anywhere else. */}
         {entry.ip ? (
-          <span className="tabular-nums text-[11.5px] text-ink/55">{entry.ip}</span>
+          <span className="tabular-nums text-[11.5px] text-ink/58">{entry.ip}</span>
         ) : null}
       </p>
     </li>

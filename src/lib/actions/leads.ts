@@ -63,6 +63,18 @@ export async function updateLeadStatus(
     return { status: "error", message: "That enquiry is no longer available." };
   }
 
+  // A save that changes nothing is not a save. Without this the action ran a
+  // real UPDATE, wrote `leads.status_changed` with `from` equal to `to`, and
+  // answered "marked contacted" — an entry in an append-only trail, and a
+  // sentence claiming an event, for a status that never moved. `audit_log` is
+  // the record of what happened; it must not carry things that did not.
+  if (existing.status === requested) {
+    return {
+      status: "success",
+      message: `${existing.name} is already ${requested}.`,
+    };
+  }
+
   const { data, error } = await supabase
     .from("leads")
     .update({ status: requested })

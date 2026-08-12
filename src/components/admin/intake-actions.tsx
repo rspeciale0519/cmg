@@ -162,7 +162,14 @@ function AcceptForm({
             <legend className="mb-[5px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
               Referring company
             </legend>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {/* Chips, like the workspace's other two radio groups — the status
+                advance and the event composer's audience. This was the one bare
+                native group left: a 13px control in a 19.5px label, 4.5px under
+                the 24px target floor and 11px under it for the dot itself, on
+                the form that decides whether a claim carries a referral. The
+                input stays in the DOM as `sr-only` so it is still a real radio
+                for the keyboard and for the form. */}
+            <div className="flex flex-wrap gap-2">
               {(
                 [
                   ["none", "None"],
@@ -172,7 +179,13 @@ function AcceptForm({
               ).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex items-center gap-[6px] text-[13px] leading-[1.5] text-ink/78"
+                  className={cx(
+                    "inline-flex cursor-pointer items-center rounded-md border px-[12px] py-[7px] text-[13px] leading-[1.4] transition-colors duration-150",
+                    "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent",
+                    choice === value
+                      ? "border-accent bg-accent/16 text-accent"
+                      : "border-ink/16 text-ink/78 hover:border-accent/55 hover:text-ink",
+                  )}
                 >
                   <input
                     type="radio"
@@ -180,7 +193,7 @@ function AcceptForm({
                     value={value}
                     checked={choice === value}
                     onChange={() => setChoice(value)}
-                    className="size-[13px] accent-[#d4b36a]"
+                    className="sr-only"
                     aria-controls={groupName}
                   />
                   {label}

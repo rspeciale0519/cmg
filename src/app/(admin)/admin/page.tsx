@@ -337,7 +337,7 @@ export default async function AdminDashboard() {
                         <StatusPill status={claim.status} />
                       ) : null}
                     </Td>
-                    <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                    <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                       {formatRelative(claim.updated_at)}
                     </Td>
                   </Tr>

@@ -92,12 +92,25 @@ export async function uploadClaimDocument(
 
   if (!claim) return { status: "error", message: NOT_YOURS, values: typed };
 
+  // Both refusals are about the file field, so both name it. A form-level
+  // message alone left the operator with a sentence at the foot of the form and
+  // no mark on the one control they had to redo.
   const validation = validateUploads(formData.getAll("files"));
   if (!validation.ok) {
-    return { status: "error", message: validation.message, values: typed };
+    return {
+      status: "error",
+      message: validation.message,
+      fieldErrors: { files: validation.message },
+      values: typed,
+    };
   }
   if (validation.files.length === 0) {
-    return { status: "error", message: "Choose a file to upload.", values: typed };
+    return {
+      status: "error",
+      message: "Choose a file to upload.",
+      fieldErrors: { files: "Choose a file to upload." },
+      values: typed,
+    };
   }
 
   const admin = createAdminClient();

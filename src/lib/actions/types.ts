@@ -97,13 +97,21 @@ export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
   return errors;
 }
 
+/**
+ * Counted, because one marked field is the common case. The claim screens write
+ * their own refusals and already say "Check the highlighted field and post
+ * again"; every form that came through here said "fields" whether it had marked
+ * one or five, so the product counted correctly on some screens and not others.
+ */
 export function invalid(
   fieldErrors: Record<string, string>,
   values?: Record<string, string>,
 ): FormState {
+  const marked = Object.keys(fieldErrors).length;
+
   return {
     status: "error",
-    message: "Check the highlighted fields and submit again.",
+    message: `Check the highlighted ${marked === 1 ? "field" : "fields"} and submit again.`,
     fieldErrors,
     values,
   };

@@ -191,7 +191,7 @@ export default async function PartnersPage({
                     <span className="text-ink/28">—</span>
                   )}
                 </Td>
-                <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                   {formatDateStamp(company.createdAt)}
                 </Td>
               </Tr>

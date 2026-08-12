@@ -5,7 +5,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { STATUS_LABEL } from "@/lib/claims/status";
 import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
-import { STATUS_FILTER_OPTIONS } from "@/lib/claims/search";
+import {
+  hasActiveFilters,
+  parseClaimFilters,
+  sanitiseSearch,
+  STATUS_FILTER_OPTIONS,
+} from "@/lib/claims/search";
 import { cx } from "@/lib/cx";
 import { AdminSelect } from "./form-controls";
 
@@ -63,11 +68,17 @@ export function ClaimFilters({
     // effect now asks whether the URL already says what the box says, which
     // is true on mount, true after its own replace, and false only when the
     // operator has actually typed something new.
-    if (term.trim() === (params.get("q") ?? "")) return;
+    //
+    // Compared and pushed through `sanitiseSearch`, so the URL only ever carries
+    // a term that the page would actually search on. Pushing the raw text put
+    // `?q=%%%` in the address bar for a query that filtered nothing, which is
+    // what let the bar below offer to clear a filter that was not applied.
+    const searched = sanitiseSearch(term);
+    if (searched === (params.get("q") ?? "")) return;
 
     const timer = setTimeout(() => {
       startTransition(() => {
-        router.replace(withParam("q", term.trim()), { scroll: false });
+        router.replace(withParam("q", searched), { scroll: false });
       });
     }, 260);
 
@@ -78,8 +89,22 @@ export function ClaimFilters({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [term]);
 
-  const active =
-    params.get("status") || params.get("adjuster") || params.get("partner") || term;
+  // Read through the same validator the page reads through, not off the raw
+  // query string. `parseClaimFilters` rejects a status that is not in the enum
+  // and a partner that is not a uuid, and `sanitiseSearch` strips the characters
+  // Postgres would read as syntax — so `?status=bogus` and a search box holding
+  // `%%%` both leave the list unfiltered, while this bar offered to clear them.
+  // Every other element on the screen said nothing was filtered; only the bar
+  // disagreed, and clicking its Clear changed nothing. `audit-filters.tsx`
+  // states the same rule for the same reason.
+  const active = hasActiveFilters(
+    parseClaimFilters({
+      status: params.get("status") ?? undefined,
+      adjuster: params.get("adjuster") ?? undefined,
+      partner: params.get("partner") ?? undefined,
+      q: term,
+    }),
+  );
 
   // Clearing the filters clears the filters. The chosen ordering is a way of
   // reading the list rather than a restriction on it, so it survives.

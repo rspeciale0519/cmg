@@ -150,7 +150,7 @@ function ChangeRow({ field, change }: { field: string; change: Json | undefined 
 
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px]">
-      <span className="text-ink/55">{labelKey(field)}</span>
+      <span className="text-ink/58">{labelKey(field)}</span>
       {pair ? (
         <>
           <Rendered value={pair.old} />
@@ -294,7 +294,7 @@ export function AuditMeta({
 
       {insertedClaimRef ? (
         <p className={cx("flex flex-wrap items-baseline gap-x-2", statusRow && "mt-[5px]")}>
-          <span className="text-ink/55">Claim</span>
+          <span className="text-ink/58">Claim</span>
           <ClaimRefValue value={insertedClaimRef} />
         </p>
       ) : null}
@@ -329,7 +329,7 @@ export function AuditMeta({
             const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
             return (
               <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                <span className="text-ink/55">{resolved ? "Claim" : labelKey(key)}</span>
+                <span className="text-ink/58">{resolved ? "Claim" : labelKey(key)}</span>
                 {resolved ? <ClaimRefValue value={claimRef} /> : <Rendered value={value} />}
               </li>
             );
@@ -342,7 +342,7 @@ export function AuditMeta({
           every other entry off the screen. */}
       {rowFields.length > 0 ? (
         <details className="group mt-[5px]">
-          <summary className="inline-flex min-h-[24px] cursor-pointer list-none items-center gap-1.5 text-ink/55 transition-colors duration-150 hover:text-ink/70 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-[24px] cursor-pointer list-none items-center gap-1.5 text-ink/58 transition-colors duration-150 hover:text-ink/70 [&::-webkit-details-marker]:hidden">
             <svg
               aria-hidden="true"
               viewBox="0 0 16 16"
@@ -364,7 +364,7 @@ export function AuditMeta({
               const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
               return (
                 <li key={key} className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-ink/55">{labelKey(key)}</span>
+                  <span className="text-ink/58">{labelKey(key)}</span>
                   <Rendered value={value} />
                 </li>
               );

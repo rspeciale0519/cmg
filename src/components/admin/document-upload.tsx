@@ -70,7 +70,24 @@ export function DocumentUpload({
         </AdminField>
       </div>
 
-      <AdminField name="files" label="File" hint={FILE_RULES_HINT} className="mt-4">
+      {/* The refusal marks the field, which it did not before. A rejected upload
+          answered with one sentence at the foot of the form, 105px below a file
+          input carrying no `aria-invalid`, no `aria-describedby` and its resting
+          border — and React's reset had just emptied that input, so the single
+          control that had to be redone was the one nothing pointed at. This is
+          the shape `event-composer.tsx` records fixing for its textarea.
+
+          The `aria-invalid:` variants are spelled out rather than appended,
+          because `border-ink/15` and a bare ember border are equal-specificity
+          single-class selectors and emit order would otherwise decide which one
+          paints. */}
+      <AdminField
+        name="files"
+        label="File"
+        hint={FILE_RULES_HINT}
+        error={state.fieldErrors?.files}
+        className="mt-4"
+      >
         <input
           id="admin-files"
           type="file"
@@ -78,7 +95,9 @@ export function DocumentUpload({
           multiple
           required
           accept={FILE_ACCEPT_ATTRIBUTE}
-          className="w-full rounded-md border border-ink/15 bg-canvas/70 p-[9px] text-[13px] leading-[1.5] text-ink/78 transition-colors duration-150 hover:border-ink/40 focus-visible:border-accent focus-visible:outline-offset-0 file:mr-3 file:rounded file:border file:border-ink/20 file:bg-transparent file:px-[9px] file:py-[3px] file:text-[12.5px] file:text-ink/78"
+          aria-invalid={state.fieldErrors?.files ? true : undefined}
+          aria-describedby={state.fieldErrors?.files ? "admin-files-error" : undefined}
+          className="w-full rounded-md border border-ink/15 bg-canvas/70 p-[9px] text-[13px] leading-[1.5] text-ink/78 transition-colors duration-150 hover:border-ink/40 focus-visible:border-accent focus-visible:outline-offset-0 file:mr-3 file:rounded file:border file:border-ink/20 file:bg-transparent file:px-[9px] file:py-[3px] file:text-[12.5px] file:text-ink/78 aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A] aria-invalid:focus-visible:outline-[#E08C6A]"
         />
       </AdminField>
 

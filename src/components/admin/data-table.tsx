@@ -228,19 +228,46 @@ export function Tr({
  * two claims tables used to right-align theirs and the three partner/staff
  * tables did not; this is the convention they were reconciled to.
  */
+/**
+ * How loud a cell is, as a prop rather than as a class the call site appends.
+ *
+ * Nine cells across six tables were passing `text-ink/62` or `text-ink/58` in
+ * `className` and getting `text-ink/78` — `cx` concatenates, it does not merge,
+ * and two single-class colour utilities are equal specificity, so the one
+ * Tailwind emits later wins no matter what order the author wrote them in. The
+ * whole claims row therefore rendered at one weight: the reference, the
+ * adjuster, the referring company, the loss date and "3h ago" all at `ink/78`,
+ * in a table written to have three tiers.
+ *
+ * This is the same failure the invalid-border rule hit in `form-controls.tsx`,
+ * and it gets the same answer: state the variants here rather than leaving the
+ * outcome to emit order. A caller cannot now write a colour that silently loses,
+ * because there is nowhere to write one.
+ */
+const TD_TONE = {
+  value: "text-ink/78",
+  /** The address under a street, a company, an adjuster's name. */
+  meta: "text-ink/62",
+  /** Timestamps and counts — present, deliberately last to be read. */
+  quiet: "text-ink/58",
+} as const;
+
 export function Td({
   children,
   className,
   align = "left",
+  tone = "value",
 }: {
   children: ReactNode;
   className?: string;
   align?: "left" | "right";
+  tone?: keyof typeof TD_TONE;
 }) {
   return (
     <td
       className={cx(
-        "px-[clamp(10px,1.1vw,14px)] py-[11px] text-[13px] leading-[1.45] text-ink/78 align-middle",
+        "px-[clamp(10px,1.1vw,14px)] py-[11px] text-[13px] leading-[1.45] align-middle",
+        TD_TONE[tone],
         align === "right" ? "text-right" : "text-left",
         className,
       )}

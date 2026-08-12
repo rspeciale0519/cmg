@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateLeadStatus } from "@/lib/actions/leads";
 import { idleState } from "@/lib/actions/types";
 import { AdminSelect, SubmitButton } from "./form-controls";
@@ -20,6 +20,14 @@ const NEXT_LABEL: Record<string, string> = {
  * The select does not auto-submit. A lead's status is a claim about what a
  * person did — "I called them" — and a control that fires on change turns a
  * mis-scroll over a dropdown into a false record.
+ *
+ * Save appears only once the value differs from the stored one, which is the
+ * rule `StaffRoleForm` already states and this form did not follow. A live Save
+ * beside an untouched select ran a real UPDATE and wrote `leads.status_changed`
+ * with `from` equal to `to`, then reported the lead "marked contacted" — an
+ * audit entry and a success sentence for a change that did not happen. The
+ * server refuses the same case now; this is the half that stops it being
+ * offered.
  */
 export function LeadStatusForm({
   leadId,
@@ -31,11 +39,16 @@ export function LeadStatusForm({
   canEdit: boolean;
 }) {
   const [state, formAction] = useActionState(updateLeadStatus, idleState);
+  const [dirty, setDirty] = useState(false);
 
   if (!canEdit) return null;
 
   return (
-    <form action={formAction} className="flex items-center gap-2">
+    <form
+      action={formAction}
+      onReset={() => setDirty(false)}
+      className="flex items-center gap-2"
+    >
       <input type="hidden" name="leadId" value={leadId} />
       <label htmlFor={`admin-status-${leadId}`} className="sr-only">
         Status
@@ -43,7 +56,9 @@ export function LeadStatusForm({
       <AdminSelect
         name="status"
         id={`admin-status-${leadId}`}
+        key={status}
         defaultValue={status}
+        onChange={(event) => setDirty(event.target.value !== status)}
         className="min-w-[126px]"
       >
         {Object.entries(NEXT_LABEL).map(([value, label]) => (
@@ -52,9 +67,11 @@ export function LeadStatusForm({
           </option>
         ))}
       </AdminSelect>
-      <SubmitButton variant="secondary" pendingLabel="Saving…">
-        Save
-      </SubmitButton>
+      {dirty ? (
+        <SubmitButton variant="secondary" pendingLabel="Saving…">
+          Save
+        </SubmitButton>
+      ) : null}
       {state.status === "error" && state.message ? (
         <span role="alert" className="text-[12px] leading-[1.4] text-[#E8A98D]">
           {state.message}

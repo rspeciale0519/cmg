@@ -157,7 +157,7 @@ export default async function StaffPage({
                   <MfaState enrolled={member.mfaEnrolled} isActive={member.isActive} />
                 </Td>
 
-                <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                   {member.lastSignInAt ? formatRelative(member.lastSignInAt) : "Never"}
                 </Td>
 

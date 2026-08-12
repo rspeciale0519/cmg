@@ -341,12 +341,12 @@ export default async function ClaimsPage({
                       <StatusPill status={claim.status} />
                     ) : null}
                   </Td>
-                  <Td className="truncate text-ink/62">
+                  <Td tone="meta" className="truncate">
                     {adjusterName || (
                       <span className="text-accent/70">Unassigned</span>
                     )}
                   </Td>
-                  <Td className="text-ink/62">
+                  <Td tone="meta">
                     {/* `title` because the column is `truncate` inside a cell
                         whose own overflow is hidden — scrolling the table
                         sideways does not reveal a clipped company name, so
@@ -376,10 +376,10 @@ export default async function ClaimsPage({
                       )}
                     </span>
                   </Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/62">
+                  <Td tone="meta" className="whitespace-nowrap tabular-nums">
                     {formatDateOnly(claim.loss_date)}
                   </Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                  <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                     {formatRelative(claim.updated_at)}
                   </Td>
                 </Tr>

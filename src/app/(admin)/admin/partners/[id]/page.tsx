@@ -252,7 +252,7 @@ export default async function PartnerDetailPage({
                     )}
                   </Td>
                   <Td className="tabular-nums">{rep.phone ?? "—"}</Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                  <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                     {rep.lastSignInAt ? formatRelative(rep.lastSignInAt) : "Never"}
                   </Td>
                 </Tr>
@@ -349,7 +349,7 @@ export default async function PartnerDetailPage({
                   <Td>
                     <StatusPill status={claim.status} />
                   </Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
+                  <Td tone="quiet" className="whitespace-nowrap tabular-nums">
                     {formatDateStamp(claim.createdAt)}
                   </Td>
                 </Tr>
