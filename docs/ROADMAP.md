@@ -59,8 +59,8 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [ ] CRAFT GATE converged (partner portal) — 2 rounds run, R2 found 2 majors (fixed); not converged
 
 ## Phase 7 — Notifications
-- [ ] All templates render; outbox wired to every event
-- [ ] `/api/cron/outbox` sweeper with backoff + dead-letter, tested
+- [x] All templates render; outbox wired to every event
+- [x] `/api/cron/outbox` sweeper with backoff + dead-letter, tested
 
 ## Phase 8 — Hardening + cohesion
 - [ ] Security headers/CSP verified; `npm audit` clean or justified

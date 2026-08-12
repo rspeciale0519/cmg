@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isNotificationTemplate, renderNotification } from "./render";
+import {
+  isNotificationTemplate,
+  NOTIFICATION_TEMPLATES,
+  renderNotification,
+} from "./render";
 
 const intakeStaffPayload = {
   claimRef: "CMG-2026-0042",
@@ -116,6 +120,166 @@ describe("renderNotification", () => {
     expect(html).toContain("An adjuster will call you.");
   });
 
+  it("renders the settled notice with the figure when one is recorded", async () => {
+    const { subject, html, text } = await renderNotification({
+      template: "settled_notice",
+      payload: {
+        firstName: "Dana",
+        claimRef: "CMG-2026-0042",
+        settlementAmount: "$48,200.00",
+        portalUrl: "https://example.test/portal",
+      },
+    });
+
+    expect(subject).toBe("CMG-2026-0042 has settled.");
+    expect(text).toContain("Hi Dana");
+    expect(html).toContain("$48,200.00");
+    expect(html).toContain("Settlement");
+  });
+
+  it("omits the settlement row entirely when no figure is on the file", async () => {
+    const { html } = await renderNotification({
+      template: "settled_notice",
+      payload: {
+        firstName: "Dana",
+        claimRef: "CMG-2026-0042",
+        portalUrl: "https://example.test/portal",
+      },
+    });
+
+    // A blank or a $0.00 beside the word "settled" would be worse than silence.
+    expect(html).not.toContain("Settlement");
+    expect(html).toContain("CMG-2026-0042");
+  });
+
+  /**
+   * `referClaim` writes a claim and, before this phase, told nobody — a referral's
+   * only arrival signal was a number on a queue somebody had to think to open.
+   * The template states the gap in the record rather than rendering it as blanks:
+   * a rep is never asked for the carrier or the policy number, so an empty row
+   * would read as data that failed to load.
+   */
+  it("names what a referral does not carry instead of showing it as blank", async () => {
+    const { subject, html } = await renderNotification({
+      template: "referral_staff_alert",
+      payload: {
+        claimRef: "CMG-2026-0042",
+        companyName: "Palmetto Roofing",
+        referrerName: "Palmetto Roofing — Joel Reyes",
+        referrerEmail: "joel@palmettoroofing.example",
+        homeownerName: "Dana Whitfield",
+        homeownerEmail: "dana@example.com",
+        homeownerPhone: "407-555-0119",
+        propertyAddress: "1420 Palmetto Row, Orlando, Florida 32801",
+        lossDate: "2026-07-14",
+        cause: "Wind / hail",
+        description: "Ridge cap gone, water in the hallway.",
+      },
+    });
+
+    expect(subject).toBe("New referral CMG-2026-0042 — Palmetto Roofing");
+    expect(html).toContain("Not supplied");
+    expect(html).toContain("Palmetto Roofing — Joel Reyes");
+    expect(html).toContain("407-555-0119");
+  });
+
+  it("says to call the company when the rep's session carries no address", async () => {
+    const { html } = await renderNotification({
+      template: "referral_staff_alert",
+      payload: {
+        claimRef: "CMG-2026-0042",
+        companyName: "Palmetto Roofing",
+        referrerName: "Palmetto Roofing",
+        homeownerName: "Dana Whitfield",
+        homeownerEmail: "dana@example.com",
+        homeownerPhone: "407-555-0119",
+        propertyAddress: "Orlando",
+        lossDate: "2026-07-14",
+        cause: "Wind / hail",
+        description: "Roof damage.",
+      },
+    });
+
+    expect(html).toContain("not on file — call the company");
+  });
+
+  it("renders the staff question alert and quotes the question in full", async () => {
+    const question =
+      "The adjuster mentioned a supplement for the soffits — is that already in the estimate you filed?";
+
+    const { subject, html } = await renderNotification({
+      template: "question_staff_alert",
+      payload: {
+        claimRef: "CMG-2026-0042",
+        homeownerName: "Dana Whitfield",
+        question,
+        assignedTo: "Austin Graham",
+        claimUrl: "https://example.test/admin/claims/abc",
+      },
+    });
+
+    expect(subject).toBe("Question on CMG-2026-0042 — Dana Whitfield");
+    expect(html).toContain("Austin Graham");
+    expect(html).toContain("soffits");
+  });
+
+  it("says nobody is assigned rather than leaving the row blank", async () => {
+    const { html } = await renderNotification({
+      template: "question_staff_alert",
+      payload: {
+        claimRef: "CMG-2026-0042",
+        homeownerName: "Dana Whitfield",
+        question: "Any news?",
+        claimUrl: "https://example.test/admin/claims/abc",
+      },
+    });
+
+    expect(html).toContain("Nobody yet");
+  });
+
+  it("renders the customer reply notice with the entry quoted", async () => {
+    const { subject, html, text } = await renderNotification({
+      template: "reply_posted",
+      payload: {
+        firstName: "Dana",
+        claimRef: "CMG-2026-0042",
+        body: "The carrier acknowledged receipt this morning.",
+        portalUrl: "https://example.test/portal",
+      },
+    });
+
+    expect(subject).toBe("New note on CMG-2026-0042");
+    expect(text).toContain("Hi Dana");
+    expect(html).toContain("The carrier acknowledged receipt this morning.");
+  });
+
+  /**
+   * The partner template is the one with a disclosure rule attached, so the rule
+   * is asserted rather than left to the reviewer. A referring contractor's inbox
+   * is not an access-control boundary: the address, the money and the dates live
+   * behind the portal link, where the policy still applies.
+   */
+  it("tells a referring partner what moved and nothing more", async () => {
+    const { subject, html } = await renderNotification({
+      template: "partner_status_update",
+      payload: {
+        companyName: "Palmetto Roofing",
+        claimRef: "CMG-2026-0042",
+        homeownerName: "Dana Whitfield",
+        statusLabel: "Filed",
+        partnerUrl: "https://example.test/partner",
+      },
+    });
+
+    expect(subject).toBe("Referral update — CMG-2026-0042");
+    expect(html).toContain("Palmetto Roofing");
+    expect(html).toContain("Filed");
+    expect(html).toContain("https://example.test/partner");
+
+    // The homeowner's name stays out of a subject line that a shared inbox indexes.
+    expect(subject).not.toContain("Whitfield");
+  });
+
   it("every template carries the CMG identification and a reason line", async () => {
     const messages = [
       { template: "intake_staff_alert" as const, payload: intakeStaffPayload },
@@ -128,13 +292,107 @@ describe("renderNotification", () => {
         payload: { name: "Dana", phone: "407-555-0119", submittedAt: "now" },
       },
       { template: "lead_auto_reply" as const, payload: { firstName: "Dana" } },
+      {
+        template: "claim_status_update" as const,
+        payload: {
+          firstName: "Dana",
+          claimRef: "CMG-2026-0042",
+          statusLabel: "Filed",
+          statusMeaning: "Submitted to the carrier.",
+          portalUrl: "https://example.test/portal",
+        },
+      },
+      {
+        template: "settled_notice" as const,
+        payload: {
+          firstName: "Dana",
+          claimRef: "CMG-2026-0042",
+          portalUrl: "https://example.test/portal",
+        },
+      },
+      {
+        template: "partner_status_update" as const,
+        payload: {
+          companyName: "Palmetto Roofing",
+          claimRef: "CMG-2026-0042",
+          homeownerName: "Dana Whitfield",
+          statusLabel: "Filed",
+          partnerUrl: "https://example.test/partner",
+        },
+      },
+      {
+        template: "referral_staff_alert" as const,
+        payload: {
+          claimRef: "CMG-2026-0042",
+          companyName: "Palmetto Roofing",
+          referrerName: "Palmetto Roofing — Joel Reyes",
+          referrerEmail: "joel@palmettoroofing.example",
+          homeownerName: "Dana Whitfield",
+          homeownerEmail: "dana@example.com",
+          homeownerPhone: "407-555-0119",
+          propertyAddress: "1420 Palmetto Row, Orlando, Florida 32801",
+          lossDate: "2026-07-14",
+          cause: "Wind / hail",
+          description: "Ridge cap gone, water in the hallway.",
+        },
+      },
+      {
+        template: "question_staff_alert" as const,
+        payload: {
+          claimRef: "CMG-2026-0042",
+          homeownerName: "Dana Whitfield",
+          question: "Any news?",
+          claimUrl: "https://example.test/admin/claims/abc",
+        },
+      },
+      {
+        template: "reply_posted" as const,
+        payload: {
+          firstName: "Dana",
+          claimRef: "CMG-2026-0042",
+          body: "Filed this morning.",
+          portalUrl: "https://example.test/portal",
+        },
+      },
+      {
+        template: "lor_signed" as const,
+        payload: { firstName: "Dana", claimRef: "CMG-2026-0042" },
+      },
+      {
+        template: "esign_staff_alert" as const,
+        payload: {
+          claimRef: "CMG-2026-0042",
+          headline: "Both signers have completed.",
+          detail: "Signed copy stored against the claim.",
+        },
+      },
+      {
+        template: "invite" as const,
+        payload: {
+          firstName: "Dana",
+          inviteUrl: "https://example.test/invite/abc",
+          audience: "customer" as const,
+          claimRef: "CMG-2026-0042",
+          expiresInHours: 168,
+        },
+      },
     ];
+
+    /* Spec §6: "Transactional only; footer identifies CMG + reason." Asserted
+       against the registry and not against this list, because a template added
+       without a reason line would otherwise pass simply by not being listed
+       here — the failure mode is an omission, so the test has to notice one. */
+    expect(messages.map((message) => message.template).sort()).toEqual(
+      [...NOTIFICATION_TEMPLATES].sort(),
+    );
 
     for (const message of messages) {
       const { html, text } = await renderNotification(message);
-      expect(html).toContain("CMG Property Solutions");
-      expect(text).toContain("License # G086165");
-      expect(text).toMatch(/Sent (to the CMG staff inbox )?because/);
+      expect(html, message.template).toContain("CMG Property Solutions");
+      expect(text, message.template).toContain("License # G086165");
+      expect(text, message.template).toMatch(
+        /Sent (to the CMG staff inbox |to your company )?because/,
+      );
     }
   });
 });

@@ -50,6 +50,7 @@ const stub = vi.hoisted(() => {
     companyError: null as { message: string } | null,
     claimError: null as { message: string } | null,
     claimantError: null as { message: string } | null,
+    outboxError: null as { message: string } | null,
 
     /* Recorders. */
     inserted: vi.fn(),
@@ -103,6 +104,19 @@ vi.mock("@/lib/supabase/admin", () => ({
                   ? { data: null, error: stub.claimError }
                   : { data: stub.CLAIM, error: null },
             }),
+          };
+        }
+
+        /* The staff alert. `enqueueNotifications` reads the ids back so it can
+           attempt an immediate send, so the double has to return rows rather
+           than a bare error — and with no RESEND_API_KEY that send is skipped,
+           which is why nothing further is stubbed. */
+        if (table === "notifications_outbox") {
+          return {
+            select: async () =>
+              stub.outboxError
+                ? { data: null, error: stub.outboxError }
+                : { data: [{ id: "40000000-0000-4000-a000-000000000001" }], error: null },
           };
         }
 
@@ -175,6 +189,7 @@ beforeEach(() => {
   stub.companyError = null;
   stub.claimError = null;
   stub.claimantError = null;
+  stub.outboxError = null;
   stub.profile = { first_name: "Tyler", last_name: "Boone" };
 });
 
@@ -341,7 +356,11 @@ describe("referClaim — consent", () => {
 
     const tables = stub.inserted.mock.calls.map(([table]) => table);
     expect(tables).not.toContain("consents");
-    expect(tables).toEqual(["claims", "claimants"]);
+    /* Still exhaustive rather than a `toContain`, so a fourth write added later
+       has to be justified here. `notifications_outbox` is the staff alert added
+       in Phase 7 — it is addressed to CMG's own inbox, not to the homeowner, so
+       it asserts nothing on their behalf. */
+    expect(tables).toEqual(["claims", "claimants", "notifications_outbox"]);
   });
 });
 
@@ -390,5 +409,49 @@ describe("referClaim — the record", () => {
 
     expect(state.status).toBe("success");
     expect(state.values).toBeUndefined();
+  });
+
+  /**
+   * Before Phase 7 this action wrote a claim and told nobody. The referral's
+   * entire arrival signal was a count on a queue somebody had to think to open,
+   * while the contractor had already told the homeowner to expect a call.
+   */
+  it("alerts the CMG desk, because nothing else does", async () => {
+    await referClaim(idleState, form());
+
+    expect(stub.inserted).toHaveBeenCalledWith(
+      "notifications_outbox",
+      expect.arrayContaining([
+        expect.objectContaining({ template: "referral_staff_alert" }),
+      ]),
+    );
+  });
+
+  /* The homeowner was not at this form and has consented to nothing, which is
+     also why `referClaim` writes no `consents` row. CMG makes the first
+     approach. */
+  it("writes to nobody but the desk", async () => {
+    await referClaim(idleState, form());
+
+    const enqueued = stub.inserted.mock.calls.find(
+      ([table]) => table === "notifications_outbox",
+    );
+    const rows = enqueued?.[1] as Array<{ recipient_email: string }>;
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].recipient_email).not.toBe(SUBMISSION.email);
+  });
+
+  it("still reports the referral received when the alert cannot be queued", async () => {
+    stub.outboxError = { message: "outbox unreachable" };
+
+    const state = await referClaim(idleState, form());
+
+    // The claim is committed by then. A rep must not be told their referral
+    // failed because a mail queue was down — but they should be told to call.
+    expect(state.status).toBe("success");
+    expect(state.reference).toBe("CMG-2026-0104");
+    expect(state.message).toMatch(/could not be queued/i);
+    expect(stub.deleted).not.toHaveBeenCalled();
   });
 });

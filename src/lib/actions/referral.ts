@@ -10,9 +10,12 @@ import {
   inetOrNull,
   RATE_LIMITS,
 } from "@/lib/rate-limit";
+import { enqueueNotifications } from "@/lib/claims/notify";
+import { staffInbox } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { CAUSE_OPTIONS, labelFor } from "@/lib/validators/intake";
 import { REFERRAL_FIELDS, referralSchema } from "@/lib/validators/referral";
 import {
   fieldErrorsFrom,
@@ -272,13 +275,61 @@ export async function referClaim(
     ip,
   });
 
+  /**
+   * Tell CMG. Nothing else does.
+   *
+   * The public intake alerts the staff inbox the moment it writes a claim; this
+   * form wrote one and told nobody, so a referral's entire arrival signal was a
+   * count on a queue somebody had to think to open. A contractor who refers a
+   * homeowner has handed CMG a live claim and told the homeowner to expect a
+   * call, and the delay before anyone noticed was however long until the next
+   * time a person looked at the intake screen.
+   *
+   * Staff only. The homeowner is not written to, for the reason set out above
+   * the missing `consents` row: they were not at this form, and CMG making the
+   * first approach is the point.
+   *
+   * Enqueued after the audit row and reported as a warning rather than an error
+   * — the referral is committed by now, and a rep who has just submitted a claim
+   * must not be told it failed because a mail queue was unreachable.
+   */
+  const queued = await enqueueNotifications([
+    {
+      recipientEmail: staffInbox(),
+      message: {
+        template: "referral_staff_alert",
+        payload: {
+          claimRef: claim.claim_ref,
+          companyName: company.name,
+          referrerName,
+          referrerEmail: session.email ?? undefined,
+          homeownerName: `${input.firstName} ${input.lastName}`,
+          homeownerEmail: input.email,
+          homeownerPhone: input.phone,
+          propertyAddress: [
+            input.street,
+            input.street2,
+            `${input.city}, ${input.state} ${input.zip}`,
+          ]
+            .filter(Boolean)
+            .join(", "),
+          lossDate: input.lossDate,
+          cause: labelFor(CAUSE_OPTIONS, input.cause),
+          description: input.description,
+        },
+      },
+    },
+  ]);
+
   // The projection trigger has already written this claim's row into
   // `claim_partner_summaries`, so the rep's list shows it on the next render.
   revalidatePath("/partner");
 
   return {
     status: "success",
-    message: "Referral received.",
+    message: queued
+      ? "Referral received."
+      : "Referral received. The alert to the CMG desk could not be queued, so call it in if it is urgent.",
     reference: claim.claim_ref,
   };
 }

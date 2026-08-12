@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { writeAudit } from "@/lib/audit";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { requireRole } from "@/lib/authz";
+import { notifyStaffOfQuestion } from "@/lib/claims/notify";
 import {
   checkRateLimit,
   clientIpFromHeaders,
@@ -132,10 +133,21 @@ export async function askQuestion(
     return { status: "error", message: REFUSED, values: typed };
   }
 
+  /* The question is in the feed and committed by this point. Alerting CMG is
+     best-effort on top of that, and a queue that is down must not turn a posted
+     question into an error message — so the warning is appended to the success
+     sentence rather than replacing it. */
+  const warning = await notifyStaffOfQuestion({
+    claimId: claim,
+    question: parsed.data.body,
+  });
+
   revalidatePath(`/portal/claims/${claim}/activity`);
   return {
     status: "success",
-    message: "Sent. Your adjuster will answer here, and we will email you when they do.",
+    message: warning
+      ? `Sent, and it is on your claim. ${warning}`
+      : "Sent. Your adjuster will answer here, and we will email you when they do.",
   };
 }
 

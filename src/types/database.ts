@@ -915,6 +915,16 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
+      claim_outbox_batch: {
+        Args: { p_ids?: string[]; p_lease_seconds?: number; p_limit?: number }
+        Returns: {
+          attempts: number
+          id: string
+          payload: Json
+          recipient_email: string
+          template: string
+        }[]
+      }
       claim_status_counts: {
         Args: never
         Returns: {

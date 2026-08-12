@@ -8,8 +8,22 @@ import {
 } from "./templates/esign";
 import {
   ClaimStatusUpdate,
+  SettledNotice,
   type ClaimStatusUpdatePayload,
+  type SettledNoticePayload,
 } from "./templates/claim-status";
+import {
+  PartnerStatusUpdate,
+  ReferralStaffAlert,
+  type PartnerStatusUpdatePayload,
+  type ReferralStaffAlertPayload,
+} from "./templates/partner";
+import {
+  QuestionStaffAlert,
+  ReplyPosted,
+  type QuestionStaffAlertPayload,
+  type ReplyPostedPayload,
+} from "./templates/thread";
 import {
   IntakeConfirmation,
   IntakeStaffAlert,
@@ -31,6 +45,11 @@ export type NotificationMessage =
   | { template: "lead_auto_reply"; payload: LeadAutoReplyPayload }
   | { template: "invite"; payload: InvitePayload }
   | { template: "claim_status_update"; payload: ClaimStatusUpdatePayload }
+  | { template: "settled_notice"; payload: SettledNoticePayload }
+  | { template: "partner_status_update"; payload: PartnerStatusUpdatePayload }
+  | { template: "referral_staff_alert"; payload: ReferralStaffAlertPayload }
+  | { template: "question_staff_alert"; payload: QuestionStaffAlertPayload }
+  | { template: "reply_posted"; payload: ReplyPostedPayload }
   | { template: "lor_signed"; payload: LorSignedPayload }
   | { template: "esign_staff_alert"; payload: ESignStaffAlertPayload };
 
@@ -76,6 +95,32 @@ const TEMPLATES: Record<NotificationTemplate, Renderer> = {
       `${payload.claimRef} — ${payload.statusLabel}`,
     element: (payload: ClaimStatusUpdatePayload) => <ClaimStatusUpdate {...payload} />,
   },
+  settled_notice: {
+    subject: (payload: SettledNoticePayload) => `${payload.claimRef} has settled.`,
+    element: (payload: SettledNoticePayload) => <SettledNotice {...payload} />,
+  },
+  partner_status_update: {
+    /* The referring company's own reference is the claim ref, and the subject
+       carries nothing else. A contractor's inbox is shared and searchable by
+       whoever holds it, so the homeowner's name stays inside the message. */
+    subject: (payload: PartnerStatusUpdatePayload) =>
+      `Referral update — ${payload.claimRef}`,
+    element: (payload: PartnerStatusUpdatePayload) => <PartnerStatusUpdate {...payload} />,
+  },
+  referral_staff_alert: {
+    subject: (payload: ReferralStaffAlertPayload) =>
+      `New referral ${payload.claimRef} — ${payload.companyName}`,
+    element: (payload: ReferralStaffAlertPayload) => <ReferralStaffAlert {...payload} />,
+  },
+  question_staff_alert: {
+    subject: (payload: QuestionStaffAlertPayload) =>
+      `Question on ${payload.claimRef} — ${payload.homeownerName}`,
+    element: (payload: QuestionStaffAlertPayload) => <QuestionStaffAlert {...payload} />,
+  },
+  reply_posted: {
+    subject: (payload: ReplyPostedPayload) => `New note on ${payload.claimRef}`,
+    element: (payload: ReplyPostedPayload) => <ReplyPosted {...payload} />,
+  },
   lor_signed: {
     subject: (payload: LorSignedPayload) =>
       `Your Letter of Representation is signed — ${payload.claimRef}`,
@@ -87,6 +132,13 @@ const TEMPLATES: Record<NotificationTemplate, Renderer> = {
     element: (payload: ESignStaffAlertPayload) => <ESignStaffAlert {...payload} />,
   },
 } as Record<NotificationTemplate, Renderer>;
+
+/**
+ * Every registered template name. Exported so `render.test.tsx` can assert that
+ * its footer guarantee — spec §6's "footer identifies CMG + reason" — covers the
+ * whole registry rather than the subset a test author remembered to list.
+ */
+export const NOTIFICATION_TEMPLATES = Object.keys(TEMPLATES) as NotificationTemplate[];
 
 export function isNotificationTemplate(value: string): value is NotificationTemplate {
   return Object.hasOwn(TEMPLATES, value);

@@ -109,6 +109,8 @@ export type IntegrationEnvironment = {
   supabase: SupabaseProbe;
   resendApiKey: string | null;
   emailFrom: string | null;
+  /** Outbox rows still owed a send. Null when the count could not be read. */
+  outboxDue: number | null;
   turnstileSiteKey: string | null;
   turnstileSecretKey: string | null;
   esign: ESignCapabilities;
@@ -123,7 +125,7 @@ export type IntegrationEnvironment = {
 export function buildIntegrations(env: IntegrationEnvironment): Integration[] {
   return [
     supabaseIntegration(env.supabase),
-    resendIntegration(env.resendApiKey, env.emailFrom),
+    resendIntegration(env.resendApiKey, env.emailFrom, env.outboxDue),
     turnstileIntegration(env.turnstileSiteKey, env.turnstileSecretKey),
     esignIntegration(env.esign),
   ];
@@ -170,9 +172,29 @@ function supabaseIntegration(probe: SupabaseProbe): Integration {
   };
 }
 
-function resendIntegration(apiKey: string | null, from: string | null): Integration {
+/**
+ * The backlog is a fact about this environment in the same way the round-trip
+ * time is, and it is the one an owner running without a key actually needs: "no
+ * mail leaves the system" is a sentence, and "no mail leaves the system, 47
+ * notifications are waiting" is a decision.
+ */
+function resendIntegration(
+  apiKey: string | null,
+  from: string | null,
+  due: number | null,
+): Integration {
   const facts: IntegrationFact[] = [
     { label: "From address", value: from ?? "not set", quiet: from === null },
+    {
+      label: "Waiting to send",
+      value:
+        due === null
+          ? "could not be read"
+          : due === 1
+            ? "1 notification"
+            : `${due} notifications`,
+      quiet: due === 0,
+    },
   ];
 
   if (!apiKey) {
@@ -181,8 +203,13 @@ function resendIntegration(apiKey: string | null, from: string | null): Integrat
       name: "Resend",
       state: "absent",
       headline: "No API key, so no mail leaves the system.",
+      /* This used to say the queue was "still retried". It is not, and the
+         difference matters: the sweeper deliberately claims nothing without a
+         key, because claiming would spend an attempt on every pass and walk the
+         whole backlog to `dead` in five sweeps — destroying the record of what
+         was owed, which is the only reason the table exists. */
       detail:
-        "Notifications are still written to the outbox and still retried, so nothing is lost — they just are not delivered. Invitations fall back to a link the screen hands you to pass on yourself. Set RESEND_API_KEY to turn delivery on.",
+        "Notifications are still written to the outbox and held there, so nothing is lost. The cron sweep leaves them alone rather than spending retries it cannot make, so none of them will expire while the key is missing — they send once one is set. Invitations fall back to a link the screen hands you to pass on yourself.",
       facts,
     };
   }
@@ -193,7 +220,7 @@ function resendIntegration(apiKey: string | null, from: string | null): Integrat
     state: "ready",
     headline: "Configured — notifications are delivered.",
     detail:
-      "The outbox attempts delivery immediately after each write and the cron sweep retries anything that failed, backing off up to five times before marking it dead.",
+      "The outbox attempts delivery immediately after each write, and the cron sweep retries anything that failed — after 1 minute, 5, 25 and about 2 hours, then marking it dead on the fifth failed attempt.",
     facts,
   };
 }

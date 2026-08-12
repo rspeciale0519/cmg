@@ -1,9 +1,13 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { dispatchOutbox, outboxRows } from "@/lib/email/outbox";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/database";
+import {
+  enqueueNotifications,
+  notifyPartnerOfStatus,
+  portalUrl,
+  settlementAmountFor,
+} from "./notify";
 import {
   customerPhaseFor,
   STATUS_LABEL,
@@ -13,11 +17,6 @@ import {
 
 type Client = SupabaseClient<Database>;
 type EventVisibility = Database["public"]["Enums"]["claim_event_visibility"];
-
-function portalUrl(): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/+$/, "")}/portal`;
-}
 
 /**
  * Spec §5: "visibility `shared` for milestone statuses, `customer` otherwise".
@@ -118,6 +117,19 @@ export async function recordTransition(
   const notifyWarning = await notifyPrimaryClaimant(supabase, record);
   if (notifyWarning) warnings.push(notifyWarning);
 
+  /* `shared` is exactly the milestone set a referring contractor is entitled to
+     — see `visibilityForStatus` above — so the partner mail is driven by the
+     same predicate as the feed entry rather than by a second list that could
+     disagree with it. Skipped entirely for a claim nobody referred. */
+  if (visibility === "shared") {
+    const partnerWarning = await notifyPartnerOfStatus({
+      claimId: record.claimId,
+      claimRef: record.claimRef,
+      statusLabel: STATUS_LABEL[record.to],
+    });
+    if (partnerWarning) warnings.push(partnerWarning);
+  }
+
   return warnings;
 }
 
@@ -128,6 +140,11 @@ export async function recordTransition(
  * service-role-only tables). The queue write is the delivery guarantee; the
  * immediate send attempt after it is an optimisation, and with no
  * `RESEND_API_KEY` it is skipped and the sweeper owns the row.
+ *
+ * `settled` is the one status that does not get the generic update. It is the
+ * answer the homeowner has been waiting for rather than another step towards it,
+ * and it is the only one carrying a figure — `templates/claim-status.tsx`
+ * records why that earns its own template.
  */
 async function notifyPrimaryClaimant(
   supabase: Client,
@@ -142,43 +159,38 @@ async function notifyPrimaryClaimant(
 
   if (!claimant) return null;
 
-  const admin = createAdminClient();
   const phase = customerPhaseFor(record.to);
 
-  const { data: queued, error } = await admin
-    .from("notifications_outbox")
-    .insert(
-      outboxRows([
-        {
-          recipientEmail: claimant.email,
-          message: {
-            template: "claim_status_update",
-            payload: {
-              firstName: claimant.first_name,
-              claimRef: record.claimRef,
-              statusLabel: STATUS_LABEL[record.to],
-              statusMeaning: STATUS_MEANING[record.to],
-              phase: phase ?? undefined,
-              note: record.note ?? undefined,
-              portalUrl: portalUrl(),
-            },
+  const message =
+    record.to === "settled"
+      ? ({
+          template: "settled_notice",
+          payload: {
+            firstName: claimant.first_name,
+            claimRef: record.claimRef,
+            settlementAmount: (await settlementAmountFor(record.claimId)) ?? undefined,
+            note: record.note ?? undefined,
+            portalUrl: portalUrl(),
           },
-        },
-      ]),
-    )
-    .select("id");
+        } as const)
+      : ({
+          template: "claim_status_update",
+          payload: {
+            firstName: claimant.first_name,
+            claimRef: record.claimRef,
+            statusLabel: STATUS_LABEL[record.to],
+            statusMeaning: STATUS_MEANING[record.to],
+            phase: phase ?? undefined,
+            note: record.note ?? undefined,
+            portalUrl: portalUrl(),
+          },
+        } as const);
 
-  if (error) {
-    console.error("[claims] outbox enqueue failed", error.message);
-    return "The status changed, but the homeowner's notification could not be queued.";
-  }
+  const ok = await enqueueNotifications([
+    { recipientEmail: claimant.email, message },
+  ]);
 
-  if (queued && queued.length > 0) {
-    await dispatchOutbox(
-      admin,
-      queued.map((row) => row.id),
-    );
-  }
-
-  return null;
+  return ok
+    ? null
+    : "The status changed, but the homeowner's notification could not be queued.";
 }

@@ -17,6 +17,7 @@ import {
   CAUSE_OPTIONS,
   INTAKE_CONSENT_TEXT,
   intakeSchema,
+  labelFor,
 } from "@/lib/validators/intake";
 import {
   removeObjects,
@@ -31,11 +32,6 @@ import {
   VERIFICATION_ERROR,
   type FormState,
 } from "./types";
-
-const labelFor = (
-  options: ReadonlyArray<{ value: string; label: string }>,
-  value: string,
-) => options.find((option) => option.value === value)?.label ?? value;
 
 export async function submitIntake(
   _previous: FormState,

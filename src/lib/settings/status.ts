@@ -1,6 +1,8 @@
 import "server-only";
 
+import { countOutboxOwed } from "@/lib/email/outbox";
 import { esignCapabilities } from "@/lib/esign";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildIntegrations,
@@ -18,15 +20,21 @@ import {
  * process environment.
  */
 export async function loadIntegrations(): Promise<Integration[]> {
-  const [supabase, esign] = await Promise.all([
+  const [supabase, esign, outboxDue] = await Promise.all([
     probeSupabase(),
     Promise.resolve(esignCapabilities()),
+    /* Through the service-role client, because `notifications_outbox` grants
+       nothing to `authenticated` — not even to the owner reading this page. The
+       count is a number, never a row, so no recipient address crosses into the
+       render. */
+    countOutboxOwed(createAdminClient()),
   ]);
 
   return buildIntegrations({
     supabase,
     resendApiKey: nonEmpty(process.env.RESEND_API_KEY),
     emailFrom: nonEmpty(process.env.EMAIL_FROM),
+    outboxDue,
     turnstileSiteKey: nonEmpty(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
     turnstileSecretKey: nonEmpty(process.env.TURNSTILE_SECRET_KEY),
     esign,

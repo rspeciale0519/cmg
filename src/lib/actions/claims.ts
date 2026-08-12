@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { claimCapabilities } from "@/lib/claims/capabilities";
+import { notifyCustomerOfReply } from "@/lib/claims/notify";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/status";
 import {
@@ -483,8 +484,20 @@ export async function postClaimEvent(
     return { status: "error", message: REFUSED_BY_RLS, values: typed };
   }
 
+  /* Spec §6's "reply posted (customer)". Driven by whether the homeowner can
+     read the entry rather than by `isReply`: `visibility` is the deliberate
+     choice the composer already forces, and `internal` — its default — is the
+     one that stays silent. `notify.ts` records the reasoning. */
+  const notifyWarning =
+    visibility === "customer" || visibility === "shared"
+      ? await notifyCustomerOfReply({ claimId, body })
+      : null;
+
   revalidateClaim(claimId);
-  return { status: "success", message: "Posted." };
+  return {
+    status: "success",
+    message: notifyWarning ? `Posted. ${notifyWarning}` : "Posted.",
+  };
 }
 
 /**

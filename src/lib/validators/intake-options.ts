@@ -124,3 +124,16 @@ export const US_STATES = [
   "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
   "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
 ] as const;
+
+/**
+ * The human label for a stored option value, falling back to the value itself.
+ *
+ * Lives beside the tables rather than in the action that first needed it: the
+ * public intake and the partner referral both turn a `cause` into prose for the
+ * same staff inbox, and a second copy of this is a second place for "Wind /
+ * hail" to become "wind".
+ */
+export const labelFor = (
+  options: ReadonlyArray<{ value: string; label: string }>,
+  value: string,
+) => options.find((option) => option.value === value)?.label ?? value;

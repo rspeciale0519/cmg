@@ -29,6 +29,7 @@ function environment(overrides: Partial<IntegrationEnvironment> = {}): Integrati
     supabase: HEALTHY_DB,
     resendApiKey: null,
     emailFrom: "CMG <claims@cmgpropertysolutions.net>",
+    outboxDue: 0,
     turnstileSiteKey: "1x00000000000000000000AA",
     turnstileSecretKey: "1x0000000000000000000000000000000AA",
     esign: MANUAL_ESIGN,
@@ -137,6 +138,31 @@ describe("buildIntegrations — Resend", () => {
   it("reports a configured key as delivering", () => {
     const resend = pick(environment({ resendApiKey: "re_live_key" }), "resend");
     expect(resend.state).toBe("ready");
+  });
+
+  /* The panel used to say the queue was "still retried" without a key. The
+     sweeper deliberately does not retry in that state — it claims nothing, so
+     that a missing key cannot spend five attempts a row and bury the backlog in
+     `dead`. This pins the copy to the behaviour. */
+  it("does not claim an unconfigured queue is being retried", () => {
+    const resend = pick(environment(), "resend");
+    expect(resend.detail).not.toMatch(/still retried/i);
+    expect(resend.detail).toMatch(/leaves them alone/i);
+  });
+
+  it("counts the backlog so an owner sees the size of what is waiting", () => {
+    expect(pick(environment({ outboxDue: 47 }), "resend").facts).toContainEqual(
+      expect.objectContaining({ label: "Waiting to send", value: "47 notifications" }),
+    );
+    expect(pick(environment({ outboxDue: 1 }), "resend").facts).toContainEqual(
+      expect.objectContaining({ value: "1 notification" }),
+    );
+  });
+
+  it("says the backlog could not be read rather than reporting it as zero", () => {
+    expect(pick(environment({ outboxDue: null }), "resend").facts).toContainEqual(
+      expect.objectContaining({ value: "could not be read" }),
+    );
   });
 });
 
