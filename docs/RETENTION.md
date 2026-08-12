@@ -37,7 +37,7 @@ place when they do.
 | `notifications_outbox` | 90 days after `sent` or `dead` | delete | no |
 | `pandadoc_webhook_events` | 90 days | delete | no |
 | `rate_limits` | 24 hours | delete | **yes** — self-pruning |
-| `storage_cleanup_queue` | until drained | delete on success | **yes** — drains itself |
+| `storage_cleanup_queue` | until drained | set `processed_at` | **no** — nothing drains it |
 | `claim_partner_summaries` | derived | rebuilt by trigger; never archived | n/a |
 | `profiles`, `partner_companies` | life of the relationship | deactivate, do not delete | n/a |
 | `claim_ref_counters` | forever | — | n/a |
@@ -63,8 +63,9 @@ what; a `documents` row without its storage object is a filename.
 
 - **Storage objects and rows must go together.** `storage_cleanup_queue` already
   exists for exactly this problem in the other direction (an object whose row is
-  gone) — an archival sweeper should use the same queue rather than delete an
-  object inline, so a failure is retried rather than lost.
+  gone) — an archival sweeper should enqueue there rather than delete an object
+  inline, so a failure is recorded rather than lost. It needs a drainer first;
+  see below.
 - **`audit_log` is not part of the unit.** It has its own clock and its own rule
   (below). Archiving a claim must not remove the record that it existed.
 - **Archive means archive.** Export to cold storage before deletion. A public
@@ -145,9 +146,39 @@ is generous.
 
 - **`rate_limits`** — windows are pruned as they are read; nothing accumulates
   beyond a day.
-- **`storage_cleanup_queue`** — rows exist only until the object they name is
-  removed, then they are deleted. A row that persists means a failing delete, and
-  that is a monitoring signal rather than a retention question.
+
+## `storage_cleanup_queue` — the queue nobody empties
+
+This is the one place where the design and the code disagree, and it is written
+here rather than quietly fixed because it is a *retention* fact: **the bytes of
+every deleted document are still in the bucket.**
+
+`tg_enqueue_storage_cleanup()`, on the `documents_enqueue_storage_cleanup`
+trigger, fires after delete and writes the object's path here. That is the
+correct shape — the row is deleted through the caller's own client under RLS, and
+the object must then be removed by something holding the service role, because
+`storage.objects` carries no policy for `authenticated`. The queue is the handoff
+between the two, and the table is built for a retrying worker: it carries
+`processed_at`, `attempts` and `last_error`, and there is a partial index on the
+unprocessed rows.
+
+Nothing reads it. There is no drainer, no cron route, no sweeper — the only code
+in the repository that touches the table is a test fixture's teardown. A
+homeowner or an operator who removes a document sees it leave the list,
+`audit_log` records the deletion, and the file itself stays in `claim-docs`
+indefinitely under a UUID nobody can reach from the app.
+
+The exposure is bounded — the bucket is private, every read is a signed URL
+minted behind an authorization check, and there is no path from a deleted row
+back to its object — so this is a retention failure rather than a disclosure one.
+It still means "delete" does not currently mean delete, which is the sentence
+that matters if anyone is ever asked.
+
+Building the drainer is small and is the single highest-value item in this
+document: a service-role route in the shape of `/api/cron/outbox` that reads the
+unprocessed rows, removes each object, and stamps `processed_at` — incrementing
+`attempts` and recording `last_error` on failure, so a failing delete stays
+visible as a growing queue rather than disappearing.
 
 ## Not retention questions
 

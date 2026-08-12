@@ -19,13 +19,13 @@ brief assumes both.
 
 | | |
 |---|---|
-| Branch | `feature/claims-platform`, 48 commits, never merged to `develop` or `main` |
+| Branch | `feature/claims-platform`, 50 commits, never merged to `develop` or `main` |
 | Phases 0–7 | complete, each with a checkpoint commit |
 | Phase 8 | partially complete — see §4 |
 | Phase 9 | not started |
 | `npm run type-check` | exits 0 |
 | `npm run lint` | exits 0 |
-| `npm test` | 587 tests across 44 files, exits 0 |
+| `npm test` | 597 tests across 45 files, exits 0 |
 | `npm run build` | exits 0 |
 | `npx supabase test db` | 691 assertions across 18 files, PASS **on a freshly reset database** |
 | `npm audit` | 0 vulnerabilities, production and full tree |
@@ -127,23 +127,32 @@ and have **not yet been re-verified by a round 4** — that is the next action.
 ### 4.2 Phase 8 — hardening and cohesion
 
 Done:
-- [x] Security headers / CSP — `next.config.ts`, spec §7.6 in full
 - [x] `npm audit` clean (0 vulnerabilities, prod and full tree)
 - [x] No secret leakage into the client bundle — no server-only env var name
       appears in `.next/static`
+- [x] **`docs/RETENTION.md`** — every table, with the periods argued rather than
+      asserted. Read the `storage_cleanup_queue` section: it is where the design
+      and the code disagree, and it is §7.2's first minor.
 
 Remaining:
-- [ ] **`docs/RETENTION.md`** — data retention policy. Not started. The spec
-      names it; the tables it must cover are `claims`, `claimants`, `documents`
-      (+ storage objects), `claim_events`, `consents`, `audit_log` (append-only,
-      so retention means archival not deletion), `notifications_outbox`,
-      `invites` (already single-use, 72h), and `leads`.
+- [ ] **Finish or decide the CSP.** It currently ships as
+      `Content-Security-Policy-Report-Only`, and `next.config.ts` says at length
+      why: enforcing it blocks Next's inline streaming bootstrap and the app does
+      not hydrate. Two ways out — a per-request nonce from `src/proxy.ts` (tight
+      policy, but every page becomes dynamic and the marketing site loses the
+      prerendering Phase 2 bought), or `'unsafe-inline'` on `script-src` (nothing
+      breaks, most of the value is gone, and it contradicts spec §7.6). **This is
+      a judgement call, not a task** — make it deliberately. Whichever you pick,
+      re-open the app in a browser and check the console: the build passed and
+      all seven headers were served correctly while the page was completely
+      broken, which is exactly how this was nearly missed.
 - [ ] **Cohesion round** — a gauntlet loop across all four surfaces at once,
       looking for inconsistency *between* them rather than defects within one.
       Must converge on the same rule as gate B.
 - [ ] **Lighthouse re-verified** — see the open performance item in §5.
-- [ ] **Backend architecture re-review (gate C)** — was running when this brief
-      was written; see §7 for its result and any findings it left.
+- [ ] **Backend architecture re-review (gate C)** — the first review has returned
+      MAJORS REMAIN. The major is fixed; §7 has the eleven open minors. Gate C
+      needs a fresh-context re-review returning NO MAJORS before it converges.
 
 ### 4.3 Phase 9 — launch prep
 
@@ -278,11 +287,123 @@ These are properties of the automation environment, not defects:
 
 ## 7. Backend architecture review (gate C)
 
-*(Filled in below when the review that was running at the time of writing
-returned. If this section still says "pending", re-run it — the brief used is
-reproducible from §6's rules plus the scope in `AUTOPILOT_SPEC.md`.)*
+The review that was running when this brief was first written has returned.
+**Verdict: MAJORS REMAIN — one major, eleven minors.** The major is fixed and
+committed (`eff63ea`); the minors are open and are the list below.
 
-**Status:** see §7.1.
+Provenance, because it changes how much you should trust each line: items **1,
+3, 5, 6 and 7** were re-checked against the source before being written down, and
+their file and line numbers were read rather than relayed. Items **2, 4, 8, 9,
+10 and 11** are the review's own wording and have not been independently
+confirmed — verify before acting.
+
+Gate C is therefore **not converged**: the protocol needs a re-review from a
+fresh context that returns NO MAJORS. Re-run it after working the list.
+
+### 7.1 The major — fixed
+
+**Multi-file upload could leave a `documents` row whose bytes had been deleted.**
+`uploadClaimDocument` and `uploadPortalDocument` each uploaded one object and
+committed its row per iteration, while the rollback list `stored` accumulated
+across the whole loop. A failure on file three removed the bytes of files one and
+two and deleted no rows. The claim then showed three documents, two of which
+produced a signed URL against a missing object — and
+`issueDocumentDownload` wrote `document.signed_url_issued` into `audit_log` on
+the way, so the trail asserted the file had been released. There is no repair
+from the UI once the claim is past the gate, because `documents_delete` refuses
+an `lor_signed` row by then.
+
+Fixed by adopting the shape `submitIntake` already used: upload every object,
+then insert every row in **one** statement. One statement is one transaction, so
+on failure no row survived — which is what makes removing the whole batch of
+objects correct rather than merely careful.
+
+`src/lib/actions/upload-rollback.test.ts` pins it for both surfaces. It models
+the bucket as a set of paths and the table as an array of rows and asserts from
+the rows outward — every surviving row's `storage_path` must still name a live
+object. The insert double accepts a single row as well as an array on purpose,
+so the test is not itself asserting the fix: **run against the pre-fix code it
+fails 2 of 10, both `expected [ …, … ] to have a length of +0 but got 2`.** That
+was verified, not assumed.
+
+### 7.2 The minors — open, in the order I would take them
+
+The first four are behavioural. The rest are hardening.
+
+1. **Nothing drains `storage_cleanup_queue`.** The delete trigger fills it and
+   `docs/RETENTION.md` describes it as self-draining. It is not: no code removes
+   the objects it names. Every deleted document's bytes stay in the bucket
+   forever. Either build the drainer (a route like `/api/cron/outbox`, service
+   role, delete-on-success) or correct RETENTION.md — but do not leave the
+   document saying a mechanism exists when it does not.
+
+2. **The PandaDoc dedupe marker is committed before the work it protects.**
+   `pandadoc_webhook_events` gets its row first, so a handler that then throws
+   has already told the next delivery of the same event that it was handled.
+   PandaDoc retries; the retry is dropped. Write the marker after the work, or
+   make it a claim (insert `processing`, update to `done`) so a crash is
+   distinguishable from a success.
+
+3. **The outbox sweeper claims 25 and sends serially with no `maxDuration`.**
+   `/api/cron/outbox` has `runtime = "nodejs"` and `dynamic = "force-dynamic"`
+   and no duration cap. Twenty-five sequential Resend calls on a slow provider
+   can exceed the platform default; the lease is 300s, so a timed-out batch
+   re-sends after the lease expires. Set `maxDuration` explicitly and size the
+   batch against it, or send concurrently with a small pool.
+
+4. **`issueInvite` reports success when the enqueue failed.** The invite row is
+   written, the email is queued, and a queue failure is swallowed — the operator
+   is told the invitation was sent. `referClaim` already solved this shape: it
+   returns success (the claim is committed) with a message that says the alert
+   could not be queued. Copy that. Same defect on the webhook's staff alert,
+   which is lost silently with nothing on screen at all.
+
+5. **`RESEND_API_KEY` is read untrimmed in three places.**
+   `src/lib/email/outbox.ts:44` trims it, with a comment explaining that
+   `RESEND_API_KEY=""` is how "not configured" is written. `invite.ts:113`,
+   `partners.ts:370` and `staff.ts:315` use bare `Boolean(process.env.…)`. A key
+   set to whitespace makes those three claim deliverability while the outbox
+   declines to send, so the invite link is *not* handed back on screen and the
+   mail never leaves. Export the trimmed helper and use it in all four.
+
+6. **Turnstile is verified before the rate limit on the two public forms.**
+   `intake.ts` (turnstile line 44, rate limit line 54) and `contact.ts` (33, 43)
+   spend a Cloudflare verification on a submission they are about to refuse.
+   `referral.ts` has it the right way round at lines 79 and 95, and
+   `referral.test.ts` already asserts it — "does not spend a verification request
+   on a submission it has already refused". Reorder the two, copy the test.
+
+7. **`renderNotification` indexes `TEMPLATES` without a guard.**
+   `src/lib/email/render.tsx:150`. `isNotificationTemplate` exists two lines above
+   and uses `Object.hasOwn`; the renderer does not use it, so a template name
+   reaching it off the enum path would return a prototype member. Callers read
+   `template` from an enum-constrained column today, so this is defence in depth
+   — but `validators/files.ts` documents the identical prototype-chain hole being
+   live once, which is why it is on the list.
+
+8. **`issueClaimantInvite`'s `canManage` branch is untested.** The authorization
+   decision has no unit test and no pgTAP coverage.
+
+9. **The storage helper functions are tested but never called.** Dead code with a
+   test suite reads as covered surface. Either wire them or archive them.
+
+10. **`claims.carrier` invariants live only in comments.** The columns are
+    nullable since the partner-referral migration, and what may be null when is
+    stated in prose. The `lor_sent` gate is enforced in
+    `enforce_claim_status_transition()`; the rest is convention.
+
+11. **Reads are unbounded against PostgREST's `max_rows = 1000`.** Several list
+    queries have no explicit `.range()`, so at 1001 rows they silently return the
+    first thousand and the page says nothing. The paginated lists are fine; the
+    unpaginated ones are the exposure.
+
+### 7.3 What the review confirmed as sound
+
+Worth recording so a later round does not re-litigate it: RLS as the boundary
+with service-role confined to tables that carry no `authenticated` policy by
+design; the claim-then-send outbox RPC with `for update skip locked`; the
+signed-URL two-step (authorize under RLS, then mint, then audit); the status
+machine and its `lor_signed` document gate; and the append-only `audit_log`.
 
 ---
 

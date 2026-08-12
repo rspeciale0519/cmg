@@ -63,9 +63,12 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] `/api/cron/outbox` sweeper with backoff + dead-letter, tested
 
 ## Phase 8 — Hardening + cohesion
-- [x] Security headers/CSP verified; `npm audit` clean (0 vulns, prod and full tree)
+- [x] Six security headers enforced; `npm audit` clean (0 vulns, prod and full tree)
+- [ ] CSP — **Report-Only**; enforcing it blocks Next's inline bootstrap and the app does not hydrate. Two completion paths and their costs are in `next.config.ts`; the decision is open (CONTINUATION.md §4.2)
 - [x] No secret leakage into client bundle (no server-only var name in `.next/static`)
-- [x] Full unit + pgTAP suites green (587 / 691); `docs/RETENTION.md` written (policy only — no sweeper is built)
+- [x] Full unit + pgTAP suites green (597 / 691); `docs/RETENTION.md` written (policy only — no sweeper is built)
+- [x] BACKEND REVIEW GATE round 1 — MAJORS REMAIN; the major (upload rollback orphaning `documents` rows) fixed in `eff63ea`
+- [ ] BACKEND REVIEW GATE converged — 11 minors open, re-review needed (CONTINUATION.md §7)
 - [ ] COHESION ROUND converged
 - [ ] Lighthouse re-verified (open at 71 vs 85 on this host — see PROGRESS.md)
 
