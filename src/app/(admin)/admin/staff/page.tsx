@@ -132,7 +132,7 @@ export default async function StaffPage({
                   <span className="block truncate font-medium text-ink">
                     {member.name}
                     {isSelf ? (
-                      <span className="ml-2 text-[11px] font-normal uppercase tracking-[0.14em] text-ink/58">
+                      <span className="ml-2 text-[11px] font-normal uppercase tracking-[0.14em] text-ink/62">
                         you
                       </span>
                     ) : null}

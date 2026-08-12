@@ -119,7 +119,7 @@ export default async function AuditPage({
           {paged ? (
             <Link
               href="/admin/audit"
-              className="text-[12.5px] leading-[1.4] text-ink/55 no-underline transition-colors duration-150 hover:text-accent"
+              className="tap-block text-[12.5px] leading-[1.4] text-ink/55 no-underline transition-colors duration-150 hover:text-accent"
             >
               Back to newest
             </Link>
@@ -227,7 +227,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
             promises who did it, and this is the half of that answer a reader
             cannot reconstruct from anywhere else. */}
         {entry.ip ? (
-          <span className="tabular-nums text-[11.5px] text-ink/62">{entry.ip}</span>
+          <span className="tabular-nums text-[11.5px] text-ink/55">{entry.ip}</span>
         ) : null}
       </p>
     </li>

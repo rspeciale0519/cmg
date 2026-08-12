@@ -54,7 +54,7 @@ export function ClaimTabs({ tabs, root }: { tabs: ClaimTab[]; root: string }) {
                     "after:absolute after:inset-x-[8px] after:-bottom-px after:h-[2px] after:content-['']",
                     active
                       ? "text-ink after:bg-accent"
-                      : "text-ink/55 after:bg-transparent hover:text-ink/88 hover:after:bg-ink/20",
+                      : "text-ink/58 after:bg-transparent hover:text-ink/90 hover:after:bg-ink/20",
                   )}
                 >
                   {tab.label}

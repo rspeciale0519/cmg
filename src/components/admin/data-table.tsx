@@ -269,9 +269,17 @@ export function CellMeta({
   title?: string;
 }) {
   return (
+    /* `ink/62` and not the `ink/55` the rest of the secondary tier sits at,
+       because this one lives inside a row that lights on hover and stays lit on
+       `focus-within`. The 8.5% fill takes the row background from
+       `rgb(42,46,49)` to `rgb(59,62,64)`, which costs about 0.6 of a ratio
+       point: `ink/55` measured 4.64 at rest and 4.01 hovered. `focus-within`
+       makes that persistent rather than transient — a keyboard user operating
+       the role select on /admin/staff holds their row in it — so the tier is
+       chosen against the lit state, at 5.49 resting and 4.64 hovered. */
     <span
       title={title}
-      className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/55"
+      className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/62"
     >
       {children}
     </span>

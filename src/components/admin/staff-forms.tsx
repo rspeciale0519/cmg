@@ -96,7 +96,7 @@ export function StaffRoleForm({
           and it was quieter than the control it explains — the rule
           `financials-form.tsx` already states and applies. */}
       {disabled && disabledReason ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/65">
           {disabledReason}
         </p>
       ) : null}
@@ -146,11 +146,11 @@ export function StaffActiveForm({
       </span>
 
       {disabled && disabledReason ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/65">
           {disabledReason}
         </p>
       ) : isActive && isSelf ? (
-        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/60">
+        <p className="mt-[6px] max-w-[34ch] text-[11.5px] leading-[1.5] text-ink/65">
           You cannot restore your own account afterwards.
         </p>
       ) : null}
