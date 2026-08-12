@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { EmptyState, Panel } from "@/components/admin/admin-shell";
 import { ClaimantInvite } from "@/components/admin/claimant-invite";
 import { ListPager, listMeta } from "@/components/admin/list-pager";
@@ -12,6 +13,10 @@ import { formatTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+/* Its own title, so the six tabs of one claim are six distinct tabs in a
+   strip rather than six copies of the reference. */
+export const metadata: Metadata = { title: "Claimants" };
 
 /**
  * Twenty-five, and paged by offset rather than by cursor.

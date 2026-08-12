@@ -40,7 +40,9 @@ export async function generateMetadata({
   const context = await claimTitleContext(id);
   const robots = { index: false, follow: false } as const;
 
-  if (context?.can.canSeeFinancials) return { robots };
+  // Named like its five siblings when the tab exists; the layout's template
+  // adds the claim reference.
+  if (context?.can.canSeeFinancials) return { title: "Financials", robots };
 
   return { title: { absolute: adminTitle(NOT_FOUND_TITLE) }, robots };
 }

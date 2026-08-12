@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { DocumentDownload } from "@/components/admin/document-download";
 import { DocumentUpload } from "@/components/admin/document-upload";
@@ -21,6 +22,10 @@ import { formatTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+/* Its own title, so the six tabs of one claim are six distinct tabs in a
+   strip rather than six copies of the reference. */
+export const metadata: Metadata = { title: "Documents" };
 
 /**
  * Forty. The query had no limit at all, which is not "no limit" — PostgREST's

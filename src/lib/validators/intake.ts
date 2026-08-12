@@ -67,6 +67,29 @@ const initials = z
 
 const EARLIEST_LOSS_DATE = "1990-01-01";
 
+/**
+ * Today in Florida, not today in UTC.
+ *
+ * This bound was `new Date().toISOString().slice(0, 10)`, which between 8pm and
+ * midnight Eastern is already tomorrow's date — so for four hours every evening
+ * the public form accepted a date of loss one day in the future, and the storm
+ * a homeowner is filing about had not happened yet. It was the one date
+ * comparison in the codebase not routed through the business zone; everything
+ * that renders or filters a timestamp goes through `America/New_York` already
+ * (`format.ts`, `audit-range.ts`).
+ *
+ * `en-CA` because it formats as `YYYY-MM-DD`, which is the shape this string is
+ * compared against.
+ */
+function businessToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 const lossDate = z
   .string()
   .trim()
@@ -77,7 +100,7 @@ const lossDate = z
   .refine((value) => value >= EARLIEST_LOSS_DATE, {
     message: "Enter a date of loss from 1990 onwards.",
   })
-  .refine((value) => value <= new Date().toISOString().slice(0, 10), {
+  .refine((value) => value <= businessToday(), {
     message: "The date of loss cannot be in the future.",
   });
 

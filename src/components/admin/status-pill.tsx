@@ -50,8 +50,16 @@ const TONE_CLASS: Record<StatusTone, string> = {
      which of the two had happened without being read word by word. Unfilled and
      hairline is what `dismissed` already means on the leads table, which is the
      same decision one surface earlier; matching it keeps a refusal looking like
-     a refusal across the product and adds no colour to the palette. */
-  declined: "border-ink/14 bg-transparent text-ink/58",
+     a refusal across the product and adds no colour to the palette.
+
+     `ink/62` and not `ink/58`, for the reason `resolved` above is `#cbb094`:
+     the row lights to `ink/8.5` on hover and stays lit on `focus-within`, and
+     an unfilled pill has no fill of its own to hold the light off its text.
+     `ink/58` measured 4.98 at rest and 4.25 lit. The four filled tones were all
+     chosen against the lit state; these unfilled two were added later and were
+     not, and no seeded claim is `rejected`, so no sweep had ever rendered one.
+     5.49 and 4.64 now. */
+  declined: "border-ink/14 bg-transparent text-ink/62",
 };
 
 export function StatusPill({
@@ -79,7 +87,7 @@ const LEAD_TONE: Record<string, string> = {
   new: "border-accent/40 bg-accent/12 text-accent-300",
   contacted: "border-ink/16 bg-ink/6 text-ink/78",
   converted: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
-  dismissed: "border-ink/12 bg-transparent text-ink/55",
+  dismissed: "border-ink/12 bg-transparent text-ink/62",
 };
 
 /**
@@ -92,7 +100,7 @@ const LEAD_TONE: Record<string, string> = {
  * Dashed and quiet says the honest thing instead: the label beside it is the raw
  * value, because there is nothing to translate it to.
  */
-const LEAD_TONE_UNKNOWN = "border-dashed border-ink/22 bg-transparent text-ink/58";
+const LEAD_TONE_UNKNOWN = "border-dashed border-ink/22 bg-transparent text-ink/62";
 
 const LEAD_LABEL: Record<string, string> = {
   new: "New",

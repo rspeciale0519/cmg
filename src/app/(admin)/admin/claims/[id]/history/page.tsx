@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
 import { AuditMeta } from "@/components/admin/audit-meta";
@@ -20,6 +21,10 @@ import { formatTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+/* Its own title, so the six tabs of one claim are six distinct tabs in a
+   strip rather than six copies of the reference. */
+export const metadata: Metadata = { title: "History" };
 
 /*
  * Action wording comes from `audit-vocabulary.ts` and from nowhere else.

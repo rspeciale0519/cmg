@@ -21,6 +21,19 @@ export const dynamic = "force-dynamic";
  *
  * Static and dynamic segments outrank a catch-all in Next's matcher, so every
  * real route continues to win.
+ *
+ * **The response is 200, not 404, and that is a trade rather than an oversight.**
+ * Measured: `/admin/nope` and a missing claim id both answer 200 while `/nope`
+ * on the marketing site answers 404. The cause is `admin/loading.tsx` — a
+ * Suspense boundary at the `/admin` segment flushes the shell and its skeleton
+ * before this page runs, and a status cannot be set after the first byte has
+ * gone. The only way to get the 404 status back is to delete the skeleton for
+ * every route under `/admin`, which trades a thing every reader sees on every
+ * slow navigation for a header nothing in this product reads: the workspace is
+ * behind auth and `robots: noindex`, so there is no crawler, no cache and no
+ * client code that branches on it. The *page* is still the workspace 404, in
+ * the shell, with the right title. Revisit if `/admin` ever needs to be
+ * crawlable or cacheable, which would be a larger change than this one.
  */
 export const metadata: Metadata = {
   title: "Page not found",

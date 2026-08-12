@@ -27,8 +27,17 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const claimRef = (await claimTitleContext(id))?.claimRef;
+
+  /* A template rather than a string, because all six tabs of a claim were
+     serving one identical title — an adjuster comparing Documents against
+     Financials on the same file, in two windows, had nothing in either tab to
+     tell them apart. Each tab names itself and the `default` keeps the bare
+     reference for Overview, which has no name of its own to add. */
   return {
-    title: (await claimTitleContext(id))?.claimRef ?? NOT_FOUND_TITLE,
+    title: claimRef
+      ? { default: claimRef, template: `%s · ${claimRef}` }
+      : NOT_FOUND_TITLE,
     robots: { index: false, follow: false },
   };
 }

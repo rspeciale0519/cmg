@@ -43,7 +43,15 @@ export const STATUS_MEANING: Record<ClaimStatus, string> = {
   closed: "Finished. No further moves.",
   denied: "The carrier refused. Reopening is the only way forward.",
   reopened: "Back with the carrier after a denial.",
-  rejected: "CMG declined this intake. Archived, and no invite was ever sent.",
+  /* "…and no invite was ever sent" was true of the intake queue, whose reject
+     action is pinned to `status = 'new_intake'`, and false of the status picker,
+     which `allowed_claim_transitions` also offers at `under_review` and
+     `lor_sent`. A homeowner on either of those may already hold a portal account
+     — the dashboard's invite panel excludes only `new_intake` and `rejected`,
+     and `issueClaimantInvite` carries no status gate. The sentence is shown as a
+     preview of the move and then permanently on the file, so it asserted
+     something the workspace cannot check. */
+  rejected: "CMG declined this intake. Archived, and no further moves are possible.",
 };
 
 /**

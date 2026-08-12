@@ -1,15 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { PipelineLadder, type StatusCounts } from "@/components/admin/pipeline-ladder";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { isClaimStatus } from "@/lib/claims/status";
-import { requireStaff } from "@/lib/authz";
+import { adminTitle, requireStaff } from "@/lib/authz";
 import { formatAddressLine, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { InvitePanel, type InvitableClaimant } from "./invite-panel";
 
 export const dynamic = "force-dynamic";
+
+/* The workspace home was the single workspace tab reading "Claims desk — CMG
+   Property Solutions", in the marketing voice and with the marketing separator,
+   while every other one read "X · CMG claims desk" — two spellings of one
+   product, side by side in the tab strip of the page an adjuster opens first.
+
+   `absolute`, through `adminTitle`, because a layout's `title.template` applies
+   to its *children* and not to the page in its own folder: a bare string here
+   is resolved by the root template, which is exactly the bug. Same reason
+   `financials/page.tsx` reaches for the helper. */
+export const metadata: Metadata = { title: { absolute: adminTitle("Dashboard") } };
 
 /**
  * Both panels below are deliberate excerpts, not lists — the newest five

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { advanceClaimStatus } from "@/lib/actions/claims";
 import { idleState, resilient } from "@/lib/actions/types";
 import { STATUS_LABEL, STATUS_MEANING, type ClaimStatus } from "@/lib/claims/status";
@@ -42,6 +42,7 @@ export function StatusAdvance({
 }) {
   const [state, formAction] = useActionState(resilient(advanceClaimStatus), idleState);
   const [selected, setSelected] = useState<ClaimStatus | null>(null);
+  const group = useRef<HTMLFieldSetElement>(null);
 
   const blockedFor = (status: ClaimStatus) =>
     blocked.find((entry) => entry.to === status)?.reason ?? null;
@@ -70,6 +71,29 @@ export function StatusAdvance({
     selected !== null && allowed.includes(selected) && blockedFor(selected) === null
       ? selected
       : null;
+
+  /**
+   * Puts the DOM's `checked` back after React's post-action form reset.
+   *
+   * The hidden `to` field keeps the *submission* right, and the pill keeps
+   * looking selected because its styling comes from state — but the radio
+   * itself is a real control with a real accessible state, and the reset clears
+   * it without a re-render to restore it. Measured after a refused move: the
+   * label rendered `border-accent` and the button read "Move to denied" while
+   * both radios reported `checked === false`, so a screen reader announced an
+   * unselected group over a screen that named a choice.
+   *
+   * Keyed on the action's state, because that is the thing that changes when
+   * the reset happens; `activeSelection` is in the deps so an ordinary click is
+   * a no-op rather than a fight with the browser.
+   */
+  useEffect(() => {
+    for (const input of group.current?.querySelectorAll<HTMLInputElement>(
+      'input[name="toChoice"]',
+    ) ?? []) {
+      input.checked = input.value === activeSelection;
+    }
+  }, [state, activeSelection]);
 
   if (!canManage) {
     return (
@@ -113,7 +137,7 @@ export function StatusAdvance({
         {STATUS_MEANING[current]}
       </p>
 
-      <fieldset className="mt-[15px]">
+      <fieldset ref={group} className="mt-[15px]">
         <legend className="mb-[9px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
           Move to
         </legend>
