@@ -2,6 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { cx } from "@/lib/cx";
 import { isAdminRouteActive, type AdminNavItem } from "./nav";
 
@@ -30,13 +31,28 @@ export function AdminNav({
   counts: NavCounts;
 }) {
   const pathname = usePathname();
+  const rail = useRef<HTMLDivElement>(null);
+
+  // The rail is 733px of items in a 390px phone. Left alone it opens at
+  // scrollLeft 0, so on Partners, Staff, Audit and Settings the marked item sat
+  // off-screen and the visible run carried no marker at all — the rail asserted
+  // you were on none of the pages it was showing. Bringing the current item into
+  // view is the half that matters; the edge fade below only says there is more.
+  useEffect(() => {
+    rail.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [pathname]);
 
   return (
     <nav
       aria-label="Workspace"
       className="border-b border-ink/10 bg-canvas/82 backdrop-blur-[14px]"
     >
-      <div className="mx-auto w-full max-w-[1440px] overflow-x-auto px-[clamp(16px,3vw,40px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={rail}
+        className="scroll-x-edged mx-auto w-full max-w-[1440px] px-[clamp(16px,3vw,40px)] [--panel-fill:var(--color-canvas)]"
+      >
         <ul className="flex min-w-max items-stretch gap-1">
           {items.map((item) => {
             const active = isAdminRouteActive(pathname, item.href);

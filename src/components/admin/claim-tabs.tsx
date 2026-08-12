@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { cx } from "@/lib/cx";
 
 export type ClaimTab = { href: string; label: string; count?: number };
@@ -17,10 +18,27 @@ export type ClaimTab = { href: string; label: string; count?: number };
  */
 export function ClaimTabs({ tabs, root }: { tabs: ClaimTab[]; root: string }) {
   const pathname = usePathname();
+  const strip = useRef<HTMLDivElement>(null);
+
+  // 534px of tabs in a 358px box on a phone. Opening at scrollLeft 0 left
+  // Financials and History off the end, so on those two the strip showed four
+  // tabs and marked none of them — and Financials, which holds the settlement
+  // figures, was undiscoverable without a swipe nothing hinted at.
+  useEffect(() => {
+    strip.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [pathname]);
 
   return (
     <nav aria-label="Claim sections" className="border-b border-ink/10">
-      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* The strip sits on the page rather than inside a `Panel`, so the fade
+          has to be painted in the page's own fill; the `--panel-fill` default is
+          the panel composite and would show as a pale block over the canvas. */}
+      <div
+        ref={strip}
+        className="scroll-x-edged [--panel-fill:var(--color-canvas)]"
+      >
         <ul className="flex min-w-max items-stretch gap-1">
           {tabs.map((tab) => {
             const active = tab.href === root ? pathname === root : pathname === tab.href;
