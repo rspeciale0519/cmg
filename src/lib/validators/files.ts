@@ -26,8 +26,18 @@ export const FILE_ACCEPT_ATTRIBUTE = [
   ...Object.keys(ALLOWED_MIME_TYPES),
 ].join(",");
 
-export const FILE_RULES_HINT =
-  "PDF, JPG, PNG, WEBP, HEIC or DOCX · up to 10 files · 25 MB each";
+/**
+ * The formats alone, as a phrase that can finish a sentence.
+ *
+ * Separate from `FILE_RULES_HINT` because the two are read in different places
+ * and one of them is a remedy. The hint sits under a field and states all three
+ * limits at a glance; a refusal names the fault the reader actually hit and then
+ * tells them what to do about *that*, so a wrong format must not be answered
+ * with the size cap and the file count in a middle-dot fragment.
+ */
+export const ACCEPTED_FORMATS = "PDF, JPG, PNG, WEBP, HEIC or DOCX";
+
+export const FILE_RULES_HINT = `${ACCEPTED_FORMATS} · up to 10 files · 25 MB each`;
 
 export type ValidatedUpload = {
   file: File;
@@ -90,7 +100,7 @@ export function validateUploads(entries: unknown[]): FileValidationResult {
    * round trips and taught them the summary could not be trusted to be
    * complete." The upload path is the more expensive of the two.
    */
-  const rejected: { why: "type" | "size"; text: string }[] = [];
+  const rejected: { why: "type" | "size"; name: string }[] = [];
 
   for (const file of files) {
     const mime = (file.type || "").toLowerCase().split(";")[0].trim();
@@ -115,18 +125,12 @@ export function validateUploads(entries: unknown[]): FileValidationResult {
       : undefined;
 
     if (!extension) {
-      rejected.push({
-        why: "type",
-        text: `"${safeOriginalName(file.name)}" is not a file type we accept`,
-      });
+      rejected.push({ why: "type", name: safeOriginalName(file.name) });
       continue;
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      rejected.push({
-        why: "size",
-        text: `"${safeOriginalName(file.name)}" is larger than 25 MB`,
-      });
+      rejected.push({ why: "size", name: safeOriginalName(file.name) });
       continue;
     }
 
@@ -140,22 +144,39 @@ export function validateUploads(entries: unknown[]): FileValidationResult {
   }
 
   if (rejected.length > 0) {
-    // Every offender in one sentence, so the selection can be fixed in a single
-    // pass — and only the remedies that apply. A reader whose only problem is a
-    // 40 MB scan does not need the format list read to them.
-    const names = rejected.map((entry) => entry.text);
-    const list =
-      names.length === 1
-        ? names[0]
-        : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+    /* One clause per *fault*, not one per file, and only the remedies that
+       apply.
+
+       Naming the fault once and the files inside it is the difference between
+       `"a.txt" is not a file type we accept, "b.xlsx" is not a file type we
+       accept and "c.zip" is not a file type we accept` and one readable
+       sentence. And the remedy is a remedy: this used to interpolate
+       `FILE_RULES_HINT`, which is the *field hint* — a middle-dot fragment
+       carrying the format list, the file-count cap and the size cap — so a
+       reader whose only problem was a format had the size limit read back to
+       them in something that is not a sentence. */
+    const clauses = (["type", "size"] as const)
+      .map((why) => {
+        const names = rejected.filter((entry) => entry.why === why).map((entry) => `"${entry.name}"`);
+        if (names.length === 0) return null;
+        const list =
+          names.length === 1
+            ? names[0]
+            : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+        const verb = names.length === 1 ? "is" : "are";
+        return why === "type"
+          ? `${list} ${verb} not a file type we accept`
+          : `${list} ${verb} larger than 25 MB`;
+      })
+      .filter((clause): clause is string => clause !== null);
 
     const advice = [
-      rejected.some((entry) => entry.why === "type") && `Use ${FILE_RULES_HINT}.`,
+      rejected.some((entry) => entry.why === "type") && `Use ${ACCEPTED_FORMATS}.`,
       rejected.some((entry) => entry.why === "size") &&
-        "Send anything over 25 MB by email instead.",
+        "Send anything larger by email instead.",
     ].filter((sentence): sentence is string => typeof sentence === "string");
 
-    return { ok: false, message: `${list}. ${advice.join(" ")}` };
+    return { ok: false, message: `${clauses.join(", and ")}. ${advice.join(" ")}` };
   }
 
   return { ok: true, files: validated };

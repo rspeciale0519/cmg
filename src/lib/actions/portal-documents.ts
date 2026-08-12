@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { writeAudit } from "@/lib/audit";
 import { requireRole } from "@/lib/authz";
 import { isPortalDocumentKind } from "@/lib/portal/documents";
+import { site } from "@/lib/site";
 import {
   checkRateLimit,
   clientIpFromHeaders,
@@ -215,7 +216,17 @@ export async function issuePortalDownload(
 
   if (signError || !signed?.signedUrl) {
     console.error("[portal] signed url failed", signError?.message);
-    return { status: "error", message: GENERIC_ERROR };
+    /* Not `GENERIC_ERROR`. That sentence is written for a submission — "We
+       could not submit that just now… call us and we'll take the details over
+       the phone" — and this is the one control on the surface that submits
+       nothing: the homeowner asked for a file. Telling them their details could
+       not be taken, about a PDF, on the screen where they are trying to read
+       their own letter of representation, is an answer to a question they did
+       not ask. */
+    return {
+      status: "error",
+      message: `We could not open that file just now. Try again, and if it happens twice call us on ${site.phone} and we will email it to you.`,
+    };
   }
 
   // Spec §7.5 / §7.7: every issuance is written to the trail, whoever asked for

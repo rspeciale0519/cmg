@@ -30,7 +30,7 @@ export function PortalShell({
   return (
     <div className="min-h-dvh">
       <header className="border-b border-ink/9 bg-canvas/82 backdrop-blur-[14px]">
-        <div className="mx-auto flex min-h-[76px] w-full max-w-[1360px] flex-wrap items-center gap-x-8 gap-y-4 px-[clamp(20px,4vw,56px)] py-4">
+        <div className="mx-auto flex min-h-[76px] w-full max-w-[1360px] flex-wrap items-center gap-x-8 gap-y-3 px-[clamp(20px,4vw,56px)] py-4">
           <Link
             href="/"
             aria-label={`${site.name} — home`}
@@ -51,7 +51,13 @@ export function PortalShell({
           </Link>
 
           <div className="ml-auto flex items-center gap-5">
-            <span className="hidden text-right text-[13px] leading-[1.5] text-ink/72 sm:block">
+            {/* Not `hidden … sm:block`. At 390 the whole partner header read
+                "PARTNER PORTAL | Sign out" and the identity was in the DOM,
+                reachable by no gesture — on the one surface where a contractor
+                with two companies' logins most needs to know which one they are
+                in. The customer portal's own header solves this at the same
+                width without hiding anything; the row wraps instead. */}
+            <span className="text-right text-[13px] leading-[1.5] text-ink/72">
               {identity.name}
               <span className="block text-[11px] uppercase tracking-[0.18em] text-ink/55">
                 {identity.role}

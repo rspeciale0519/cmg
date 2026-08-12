@@ -17,9 +17,14 @@ export function formAlertMessage(state: FormState): string | undefined {
 
   if (count === 0) return state.message;
 
+  /* "marked below" was true on the marketing forms, where `FormAlert` renders
+     above the fields, and false on all four portal forms, where `FormFeedback`
+     is the last child: measured on the question composer, the alert sat at
+     y=718.8 and the field error it was pointing at at y=623.3 — 95.5px above
+     it. One string, two positions, so the string cannot name a direction. */
   return count === 1
-    ? "1 field needs your attention. It's marked below."
-    : `${count} fields need your attention. Each one is marked below.`;
+    ? "1 field needs your attention. It is marked on the form."
+    : `${count} fields need your attention. Each one is marked on the form.`;
 }
 
 /**

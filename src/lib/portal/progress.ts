@@ -194,7 +194,16 @@ export function progressFor(
   const stages: ProgressStage[] = CUSTOMER_PHASE.map((name, index) => ({
     phase: name,
     state: index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming",
-    summary: STAGE_SUMMARY[name],
+    /* `settled` and `closed` share the Resolved rung, and the shared summary was
+       written for `settled` alone — so a closed claim read "Agreed with the
+       carrier, with payment and closeout to follow." one line above "This claim
+       is finished. Nothing further is needed." The rung promised a payment the
+       narrative had just said was done. A finished file gets the finished
+       wording. */
+    summary:
+      name === "Resolved" && status === "closed"
+        ? "Agreed with the carrier, paid, and closed."
+        : STAGE_SUMMARY[name],
     reachedAt: dates[name] ?? null,
   }));
 

@@ -4,11 +4,31 @@ import {
   PortalEmpty,
   PortalShell,
 } from "@/components/auth/portal-shell";
-import { requireRole } from "@/lib/authz";
-import { formatMoney } from "@/lib/format";
+import { formatDateStamp, formatMoney } from "@/lib/format";
+import { partnerIdentity } from "@/lib/portal/partner-identity";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * The three moments §4 lets a partner see, in the order they happen, with the
+ * ones that have not happened yet left out.
+ *
+ * These are exactly the columns `claim_partner_summaries` exposes — the
+ * whitelist is the view, not this list — so nothing here can widen what a
+ * contractor reads.
+ */
+function milestonesOf(summary: {
+  lor_signed_at: string | null;
+  filed_at: string | null;
+  settled_at: string | null;
+}): { label: string; at: string }[] {
+  return [
+    { label: "LOR signed", at: summary.lor_signed_at },
+    { label: "Filed", at: summary.filed_at },
+    { label: "Settled", at: summary.settled_at },
+  ].filter((entry): entry is { label: string; at: string } => entry.at !== null);
+}
 
 export const metadata: Metadata = {
   title: "Referred claims",
@@ -16,7 +36,6 @@ export const metadata: Metadata = {
 };
 
 export default async function PartnerPage() {
-  const session = await requireRole("partner");
   const supabase = await createClient();
 
   // `claim_partner_summaries` is the only claim-shaped relation a partner holds
@@ -24,28 +43,24 @@ export default async function PartnerPage() {
   // nothing else, and there is no query available here that could return a
   // policy number, a document or a homeowner's contact details — the whitelist
   // is structural, not a projection of a filtered `claims` read.
-  const [{ data: summaries }, { data: profile }] = await Promise.all([
+  const [{ data: summaries }, identity] = await Promise.all([
     supabase
       .from("claim_partner_summaries")
       .select(
         "claim_id, claim_ref, homeowner_name, property_street, property_city, status, lor_signed_at, filed_at, settled_at, settlement_amount",
       )
       .order("updated_at", { ascending: false }),
-    supabase
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("id", session.userId)
-      .maybeSingle(),
+    // Shared with this surface's 404, which used to name the same person
+    // differently — see `partnerIdentity`.
+    partnerIdentity(),
   ]);
-
-  const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
 
   return (
     <PortalShell
       surface="Partner portal"
       heading="Claims you referred."
       intro="Status and milestones on every claim your company sent to CMG. Settlement figures appear once a claim settles."
-      identity={{ name: name || (session.email ?? "Partner"), role: "Referral partner" }}
+      identity={identity}
     >
       {!summaries || summaries.length === 0 ? (
         <PortalEmpty>
@@ -79,6 +94,32 @@ export default async function PartnerPage() {
                   ? "Settlement reported once the claim settles."
                   : `Settled at ${formatMoney(summary.settlement_amount)}`}
               </p>
+
+              {/* The milestones the intro promises. The three timestamps were
+                  selected by the query above and then never rendered, so a
+                  contractor was told this page carries "status and milestones"
+                  and handed one word of status: the seed's own row holds an LOR
+                  signed on 19 Feb, a filing on 4 Mar and a settlement on 18 Jun,
+                  and `main` contained no `<time>` at all.
+
+                  Nulls are dropped rather than shown as pending, because the
+                  three are strictly ordered — a claim cannot be filed before the
+                  LOR is signed — so the last one present is also the position,
+                  and a row of dashes would say less than the dates do. */}
+              {milestonesOf(summary).length > 0 ? (
+                <dl className="mt-3 grid gap-1 text-[13px] leading-[1.5]">
+                  {milestonesOf(summary).map((milestone) => (
+                    <div key={milestone.label} className="flex gap-x-3">
+                      <dt className="min-w-[86px] text-ink/58">{milestone.label}</dt>
+                      <dd className="tabular-nums text-ink/78">
+                        <time dateTime={milestone.at}>
+                          {formatDateStamp(milestone.at)}
+                        </time>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
             </PortalCard>
           ))}
         </div>

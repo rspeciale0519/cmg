@@ -107,10 +107,22 @@ export default async function PortalProfilePage() {
                       {consent.consent_text}
                     </blockquote>
 
+                    {/* Branched on the kind, and worded to match the sentence
+                        `withdrawConsent` returns the moment the button is
+                        pressed. It used to read "We will not contact you this
+                        way about the claim this was given for." for both — which
+                        for email contradicted the action's own answer seconds
+                        earlier ("messages about the claim itself still reach
+                        you") and was the false one of the two, because CMG does
+                        email a homeowner about their claim. The two statements
+                        are about the same act, and this is the compliance screen
+                        that says a few lines up that these records are the proof
+                        of what was agreed. */}
                     {withdrawn ? (
                       <p className="mt-[14px] text-[13px] leading-[1.65] text-ink/55">
-                        We will not contact you this way about the claim this was
-                        given for.
+                        {consent.kind === "sms"
+                          ? "Withdrawn. We will not text you about this claim."
+                          : "Withdrawn. We will not send you marketing email about this claim — messages about the claim itself still reach you."}
                       </p>
                     ) : (
                       <div className="mt-[14px]">

@@ -340,8 +340,10 @@ export async function withdrawConsent(
   return {
     status: "success",
     message:
+      /* Word for word what `/portal/profile` prints on the row afterwards. The
+         two used to differ, and the persistent one was the wrong one. */
       data[0].kind === "sms"
         ? "Withdrawn. We will not text you about this claim."
-        : "Withdrawn. We will not email you marketing about this claim — messages about the claim itself still reach you.",
+        : "Withdrawn. We will not send you marketing email about this claim — messages about the claim itself still reach you.",
   };
 }
