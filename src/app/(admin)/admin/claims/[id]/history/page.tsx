@@ -209,7 +209,7 @@ export default async function HistoryPage({
                       {entry.from_status && isClaimStatus(entry.from_status) ? (
                         <>
                           <StatusPill status={entry.from_status} />
-                          <span aria-hidden="true" className="text-ink/28">
+                          <span aria-hidden="true" className="text-ink/55">
                             →
                           </span>
                         </>
@@ -219,7 +219,7 @@ export default async function HistoryPage({
                       ) : null}
                     </div>
 
-                    <p className="mt-[7px] text-[11.5px] leading-[1.4] text-ink/38">
+                    <p className="mt-[7px] text-[11.5px] leading-[1.4] text-ink/58">
                       {actor ?? "System"} · {formatTimestamp(entry.created_at)}
                     </p>
 
@@ -272,12 +272,12 @@ export default async function HistoryPage({
                       </p>
                       <time
                         dateTime={entry.created_at}
-                        className="shrink-0 text-[11.5px] leading-[1.4] tabular-nums text-ink/32"
+                        className="shrink-0 text-[11.5px] leading-[1.4] tabular-nums text-ink/58"
                       >
                         {formatTimestamp(entry.created_at)}
                       </time>
                     </div>
-                    <p className="mt-[3px] font-mono text-[11px] leading-[1.45] text-ink/30">
+                    <p className="mt-[3px] font-mono text-[11px] leading-[1.45] text-ink/58">
                       {entry.action}
                     </p>
                   </li>
@@ -311,7 +311,7 @@ export default async function HistoryPage({
       ) : (
         <Panel title="Audit trail">
           <PanelBody>
-            <p className="text-[12.5px] leading-[1.7] text-ink/50">
+            <p className="text-[12.5px] leading-[1.7] text-ink/58">
               The full audit trail — every row change, every invitation, every
               download link issued — is readable by the owner. It is append-only
               and carries no update or delete permission for anyone, including

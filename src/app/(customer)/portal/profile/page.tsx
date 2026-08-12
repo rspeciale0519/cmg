@@ -108,7 +108,7 @@ export default async function PortalProfilePage() {
                     </blockquote>
 
                     {withdrawn ? (
-                      <p className="mt-[14px] text-[13px] leading-[1.65] text-ink/45">
+                      <p className="mt-[14px] text-[13px] leading-[1.65] text-ink/55">
                         We will not contact you this way about the claim this was
                         given for.
                       </p>

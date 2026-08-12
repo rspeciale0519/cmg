@@ -263,7 +263,7 @@ export function PartnerDeleteForm({
       </div>
 
       {repCount > 0 ? (
-        <p className="mt-[10px] text-[12.5px] leading-[1.55] text-ink/45">
+        <p className="mt-[10px] text-[12.5px] leading-[1.55] text-ink/55">
           {repCount === 1
             ? "One rep profile is linked to this company, so the database will refuse the delete."
             : `${repCount} rep profiles are linked to this company, so the database will refuse the delete.`}{" "}
@@ -317,7 +317,7 @@ export function PartnerRepInviteForm({ companyId }: { companyId: string }) {
         <SubmitButton pendingLabel="Sending…">Send invitation</SubmitButton>
       </div>
 
-      <p className="mt-[10px] max-w-[62ch] text-[12.5px] leading-[1.6] text-ink/45">
+      <p className="mt-[10px] max-w-[62ch] text-[12.5px] leading-[1.6] text-ink/55">
         The link works once and expires after 72 hours. A rep sees the status,
         milestones and settlement figure for claims they referred — never
         documents, policy numbers or homeowner contact details.

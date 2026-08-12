@@ -66,7 +66,7 @@ export function ProfileForm({
           leaving a greyed-out box to be argued with. Changing a sign-in address
           re-points an account, which is a support action with an identity check
           behind it, not a text field. */}
-      <p className="mt-[18px] text-[13px] leading-[1.7] text-ink/45">
+      <p className="mt-[18px] text-[13px] leading-[1.7] text-ink/55">
         You sign in as <span className="text-ink/72">{email ?? "—"}</span>. To change
         the address on your account, call us — we verify it with you first.
       </p>

@@ -39,7 +39,7 @@ export default function AdminNotFound() {
               >
                 Dashboard
               </Link>
-              <span className="ml-2 text-ink/50">
+              <span className="ml-2 text-ink/58">
                 — the queues that need a decision today.
               </span>
             </li>
@@ -50,7 +50,7 @@ export default function AdminNotFound() {
               >
                 Claims
               </Link>
-              <span className="ml-2 text-ink/50">
+              <span className="ml-2 text-ink/58">
                 — search by reference, homeowner, address or carrier.
               </span>
             </li>
@@ -61,13 +61,13 @@ export default function AdminNotFound() {
               >
                 Intake
               </Link>
-              <span className="ml-2 text-ink/50">
+              <span className="ml-2 text-ink/58">
                 — submissions waiting on triage.
               </span>
             </li>
           </ul>
 
-          <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/45">
+          <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/55">
             If a colleague sent you this link and it should work, ask them to
             re-send it from the file itself — a claim reference typed by hand is
             the usual culprit.

@@ -30,7 +30,7 @@ export function ReassignForm({
 
   if (!canManage) {
     return (
-      <p className="text-[13px] leading-[1.6] text-ink/50">
+      <p className="text-[13px] leading-[1.6] text-ink/58">
         Reassignment is done by the owner and by the adjuster the claim is
         currently assigned to.
       </p>

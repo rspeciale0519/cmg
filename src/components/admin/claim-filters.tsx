@@ -93,7 +93,7 @@ export function ClaimFilters({
       <div className="min-w-[200px] flex-1 sm:max-w-[320px]">
         <label
           htmlFor="claim-search"
-          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
         >
           Search
         </label>
@@ -113,7 +113,7 @@ export function ClaimFilters({
       <div className="min-w-[150px]">
         <label
           htmlFor="admin-status"
-          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
         >
           Status
         </label>
@@ -138,7 +138,7 @@ export function ClaimFilters({
       <div className="min-w-[150px]">
         <label
           htmlFor="admin-adjuster"
-          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
         >
           Adjuster
         </label>
@@ -164,7 +164,7 @@ export function ClaimFilters({
       <div className="min-w-[150px]">
         <label
           htmlFor="admin-partner"
-          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
         >
           Referred by
         </label>
@@ -191,7 +191,7 @@ export function ClaimFilters({
         aria-live="polite"
         className={cx(
           "ml-auto pb-[8px] text-[12px] leading-[1.4] transition-opacity duration-150",
-          isPending ? "text-ink/30" : "text-ink/45",
+          isPending ? "text-ink/30" : "text-ink/55",
         )}
       >
         <span className="tabular-nums">{resultCount}</span>{" "}
@@ -201,7 +201,7 @@ export function ClaimFilters({
             {" · "}
             <Link
               href={clearHref}
-              className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+              className="tap-block text-accent no-underline transition-colors duration-150 hover:text-accent-300"
             >
               Clear
             </Link>

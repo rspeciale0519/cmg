@@ -65,7 +65,7 @@ export function DocumentDownload({
           >
             {label}
           </a>
-          <p role="status" className="text-[11.5px] leading-[1.4] text-ink/42">
+          <p role="status" className="text-[11.5px] leading-[1.4] text-ink/55">
             Link issued · expires in 5 minutes
           </p>
         </>

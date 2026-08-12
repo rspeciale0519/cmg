@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
                 ) : null}
                 <Link
                   href="/admin/intake"
-                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+                  className="tap-block text-accent no-underline transition-colors duration-150 hover:text-accent-300"
                 >
                   Open the queue
                 </Link>
@@ -193,7 +193,7 @@ export default async function AdminDashboard() {
                             ? `${primary.first_name} ${primary.last_name}`.trim()
                             : "Unnamed homeowner"}
                         </span>
-                        <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/42">
+                        <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/55">
                           {formatAddressLine({
                             street: claim.property_street,
                             city: claim.property_city,
@@ -202,7 +202,7 @@ export default async function AdminDashboard() {
                           })}
                         </span>
                       </span>
-                      <span className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/42">
+                      <span className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/55">
                         <ClaimRef value={claim.claim_ref} className="text-ink/62" />
                         {formatRelative(claim.created_at)}
                       </span>
@@ -228,7 +228,7 @@ export default async function AdminDashboard() {
                 ) : null}
                 <Link
                   href="/admin/questions"
-                  className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+                  className="tap-block text-accent no-underline transition-colors duration-150 hover:text-accent-300"
                 >
                   Open the queue
                 </Link>
@@ -252,7 +252,7 @@ export default async function AdminDashboard() {
                     <span className="line-clamp-2 block text-[13px] leading-[1.5] text-ink/82">
                       {event.body}
                     </span>
-                    <span className="mt-[5px] flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/42">
+                    <span className="mt-[5px] flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/55">
                       <ClaimRef
                         value={event.claims?.claim_ref ?? "—"}
                         className="text-ink/58"
@@ -273,7 +273,7 @@ export default async function AdminDashboard() {
           meta={
             <Link
               href="/admin/claims"
-              className="text-accent no-underline transition-colors duration-150 hover:text-accent-300"
+              className="tap-block text-accent no-underline transition-colors duration-150 hover:text-accent-300"
             >
               All claims
             </Link>
@@ -315,7 +315,7 @@ export default async function AdminDashboard() {
                     <Td>
                       <Link
                         href={`/admin/claims/${claim.id}`}
-                        className="text-ink no-underline hover:text-accent"
+                        className="tap-block text-ink no-underline hover:text-accent"
                       >
                         <ClaimRef value={claim.claim_ref} />
                       </Link>
@@ -337,7 +337,7 @@ export default async function AdminDashboard() {
                         <StatusPill status={claim.status} />
                       ) : null}
                     </Td>
-                    <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                    <Td className="whitespace-nowrap tabular-nums text-ink/58">
                       {formatRelative(claim.updated_at)}
                     </Td>
                   </Tr>

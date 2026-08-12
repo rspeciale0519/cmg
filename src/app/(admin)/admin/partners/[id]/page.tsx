@@ -243,7 +243,7 @@ export default async function PartnerDetailPage({
                     {rep.email ? (
                       <a
                         href={`mailto:${rep.email}`}
-                        className="block truncate text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                        className="tap-block block truncate text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                       >
                         {rep.email}
                       </a>
@@ -252,7 +252,7 @@ export default async function PartnerDetailPage({
                     )}
                   </Td>
                   <Td className="tabular-nums">{rep.phone ?? "—"}</Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
                     {rep.lastSignInAt ? formatRelative(rep.lastSignInAt) : "Never"}
                   </Td>
                 </Tr>
@@ -278,7 +278,7 @@ export default async function PartnerDetailPage({
           )}
 
           <div className="border-t border-ink/10 px-[clamp(14px,1.6vw,20px)] py-[clamp(14px,1.6vw,18px)]">
-            <h3 className="mb-[12px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+            <h3 className="mb-[12px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
               Invite a rep
             </h3>
             <PartnerRepInviteForm companyId={company.id} />
@@ -286,7 +286,7 @@ export default async function PartnerDetailPage({
 
           {pendingInvites.length > 0 ? (
             <div className="border-t border-ink/10 px-[clamp(14px,1.6vw,20px)] py-[clamp(14px,1.6vw,18px)]">
-              <h3 className="mb-[10px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+              <h3 className="mb-[10px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
                 Awaiting acceptance
               </h3>
               <ul className="grid gap-[7px]">
@@ -296,7 +296,7 @@ export default async function PartnerDetailPage({
                     className="flex flex-wrap items-baseline gap-x-3 text-[13px] leading-[1.5]"
                   >
                     <span className="text-ink/78">{invite.email}</span>
-                    <span className="text-[12px] text-ink/42">
+                    <span className="text-[12px] text-ink/55">
                       expires {formatDateStamp(invite.expiresAt)}
                     </span>
                   </li>
@@ -337,7 +337,7 @@ export default async function PartnerDetailPage({
                   <Td>
                     <Link
                       href={`/admin/claims/${claim.id}`}
-                      className="text-ink no-underline transition-colors duration-150 hover:text-accent"
+                      className="tap-block text-ink no-underline transition-colors duration-150 hover:text-accent"
                     >
                       <ClaimRef value={claim.claimRef} />
                     </Link>
@@ -349,7 +349,7 @@ export default async function PartnerDetailPage({
                   <Td>
                     <StatusPill status={claim.status} />
                   </Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
                     {formatDateStamp(claim.createdAt)}
                   </Td>
                 </Tr>

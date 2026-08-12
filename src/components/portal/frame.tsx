@@ -81,7 +81,7 @@ export function PortalFrame({
           number, so it is in the furniture on every screen rather than on a
           contact page they have to find. */}
       <footer className="border-t border-ink/9">
-        <div className="mx-auto flex w-full max-w-[1080px] flex-wrap items-baseline gap-x-8 gap-y-2 px-[clamp(20px,4vw,48px)] py-[24px] text-[13px] leading-[1.6] text-ink/45">
+        <div className="mx-auto flex w-full max-w-[1080px] flex-wrap items-baseline gap-x-8 gap-y-2 px-[clamp(20px,4vw,48px)] py-[24px] text-[13px] leading-[1.6] text-ink/55">
           <p>
             Questions we have not answered?{" "}
             <a
@@ -177,7 +177,7 @@ export function ClaimSwitcher({
                 )}
               >
                 <span className="tabular-nums">{claim.claim_ref}</span>
-                <span className={current ? "text-accent/62" : "text-ink/35"}>
+                <span className={current ? "text-accent" : "text-ink/58"}>
                   {claim.property_city}
                 </span>
               </Link>

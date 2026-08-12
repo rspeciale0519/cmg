@@ -161,14 +161,14 @@ export default async function ActivityPage({
                       <span
                         className={cx(
                           "text-[11px] uppercase tracking-[0.12em]",
-                          isQuestion ? "text-accent" : "text-ink/38",
+                          isQuestion ? "text-accent" : "text-ink/58",
                         )}
                       >
                         {TYPE_LABEL[event.type] ?? event.type}
                       </span>
                       <span className="text-ink/62">
                         {author ?? (
-                          <span className="text-ink/38">
+                          <span className="text-ink/58">
                             {isQuestion ? "Homeowner" : "System"}
                           </span>
                         )}
@@ -176,13 +176,13 @@ export default async function ActivityPage({
                       {author ? (
                         <span
                           aria-hidden="true"
-                          className="rounded-full bg-ink/8 px-[6px] py-[1px] text-[10px] tracking-[0.06em] text-ink/40"
+                          className="rounded-full bg-ink/8 px-[6px] py-[1px] text-[10px] tracking-[0.06em] text-ink/58"
                         >
                           {initialsFor(author)}
                         </span>
                       ) : null}
                     </p>
-                    <p className="flex shrink-0 items-baseline gap-3 text-[11.5px] leading-[1.4] text-ink/32">
+                    <p className="flex shrink-0 items-baseline gap-3 text-[11.5px] leading-[1.4] text-ink/58">
                       <VisibilityTag visibility={event.visibility} />
                       <time dateTime={event.created_at}>
                         {formatTimestamp(event.created_at)}
@@ -227,7 +227,7 @@ export default async function ActivityPage({
         ) : (
           <Panel title="Post an entry">
             <PanelBody>
-              <p className="text-[12.5px] leading-[1.7] text-ink/50">
+              <p className="text-[12.5px] leading-[1.7] text-ink/58">
                 Notes and replies on this claim are written by the owner, the
                 assigned adjuster, and the assistant.
               </p>
@@ -240,25 +240,25 @@ export default async function ActivityPage({
             <dl className="grid gap-[11px] text-[12.5px] leading-[1.6]">
               <div>
                 <dt className="text-ink/72">CMG only</dt>
-                <dd className="text-ink/42">
+                <dd className="text-ink/55">
                   Stays inside the firm. Nothing leaves the workspace.
                 </dd>
               </div>
               <div>
                 <dt className="text-ink/72">Homeowner</dt>
-                <dd className="text-ink/42">
+                <dd className="text-ink/55">
                   Appears in their portal and is emailed to them.
                 </dd>
               </div>
               <div>
                 <dt className="text-ink/72">Partner</dt>
-                <dd className="text-ink/42">
+                <dd className="text-ink/55">
                   Goes to the referring contractor, never to the homeowner.
                 </dd>
               </div>
               <div>
                 <dt className="text-ink/72">Homeowner + partner</dt>
-                <dd className="text-ink/42">
+                <dd className="text-ink/55">
                   A milestone both sides of the referral should know about.
                 </dd>
               </div>

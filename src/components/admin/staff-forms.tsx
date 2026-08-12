@@ -213,7 +213,7 @@ export function StaffInviteForm() {
         <SubmitButton pendingLabel="Sending…">Send invitation</SubmitButton>
       </div>
 
-      <p className="mt-[10px] max-w-[68ch] text-[12.5px] leading-[1.6] text-ink/45">
+      <p className="mt-[10px] max-w-[68ch] text-[12.5px] leading-[1.6] text-ink/55">
         The link works once and expires after 72 hours. Owner is not offered here
         because the database refuses an owner invitation — a 72-hour link in an
         inbox should not be able to mint the account that controls every other

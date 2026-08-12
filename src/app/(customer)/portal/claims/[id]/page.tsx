@@ -105,7 +105,7 @@ export default async function ClaimOverviewPage({
             {adjuster ? (
               <>
                 <p className="text-[16px] leading-[1.4] text-ink">{adjuster}</p>
-                <p className="mt-[5px] text-[13px] leading-[1.6] text-ink/45">
+                <p className="mt-[5px] text-[13px] leading-[1.6] text-ink/55">
                   Your public adjuster at CMG
                 </p>
               </>

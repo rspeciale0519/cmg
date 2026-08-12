@@ -46,7 +46,7 @@ export function PortalPager({
       aria-label={label}
       className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-ink/9 px-[clamp(18px,2.4vw,28px)] py-[14px]"
     >
-      <p className="text-[12.5px] leading-[1.45] text-ink/42 tabular-nums">{count}</p>
+      <p className="text-[12.5px] leading-[1.45] text-ink/55 tabular-nums">{count}</p>
 
       <div className="flex flex-wrap items-center gap-[7px]">
         {startHref ? <PagerLink href={startHref}>Newest</PagerLink> : null}

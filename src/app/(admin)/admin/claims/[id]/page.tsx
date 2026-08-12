@@ -49,7 +49,7 @@ export default async function ClaimOverviewPage({
             <FactList columns={2}>
               <Fact label="Date and time of loss">
                 <span className="tabular-nums">{formatDateOnly(claim.lossDate)}</span>
-                <span className="text-ink/45"> · {formatTimeOnly(claim.lossTime)}</span>
+                <span className="text-ink/55"> · {formatTimeOnly(claim.lossTime)}</span>
               </Fact>
               <Fact label="Cause">{humanizeEnum(claim.cause)}</Fact>
               <Fact label="What happened" wide>
@@ -75,7 +75,7 @@ export default async function ClaimOverviewPage({
                 {claim.claimNumber ? (
                   <span className="tabular-nums">{claim.claimNumber}</span>
                 ) : (
-                  <span className="text-ink/38">Not issued yet</span>
+                  <span className="text-ink/58">Not issued yet</span>
                 )}
               </Fact>
               <Fact label="Prior roof claim">
@@ -120,7 +120,7 @@ export default async function ClaimOverviewPage({
                 <Fact label="Named on the intake">
                   {claim.referrerName}
                   {claim.referrerEmail ? (
-                    <span className="block text-[13px] text-ink/50">
+                    <span className="block text-[13px] text-ink/58">
                       {claim.referrerEmail}
                     </span>
                   ) : null}

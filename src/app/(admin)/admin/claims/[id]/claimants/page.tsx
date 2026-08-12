@@ -113,27 +113,27 @@ export default async function ClaimantsPage({
                 <p className="mt-[5px] flex flex-wrap gap-x-4 text-[12.5px] leading-[1.5]">
                   <a
                     href={`mailto:${person.email}`}
-                    className="text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                    className="tap-block text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                   >
                     {person.email}
                   </a>
                   {person.phone ? (
                     <a
                       href={`tel:${person.phone.replace(/[^\d+]/g, "")}`}
-                      className="tabular-nums text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                      className="tap-block tabular-nums text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                     >
                       {person.phone}
                     </a>
                   ) : null}
                 </p>
 
-                <p className="mt-[5px] text-[12px] leading-[1.45] text-ink/38">
+                <p className="mt-[5px] text-[12px] leading-[1.45] text-ink/58">
                   {person.user_id
                     ? "Signed in to the homeowner portal"
                     : pending.has(person.email.toLowerCase())
                       ? "Invitation sent, not yet accepted"
                       : "No invitation outstanding"}
-                  <span className="text-ink/25">
+                  <span className="text-ink/55">
                     {" "}
                     · added {formatTimestamp(person.created_at)}
                   </span>

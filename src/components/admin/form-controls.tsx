@@ -40,14 +40,39 @@ export function AdminLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+      className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
     >
       {children}
+      {/* A hint is an instruction — "PDF, JPG, PNG, WEBP, HEIC or DOCX · up to
+          10 files", "internal — never shown to the partner", "blank if not
+          agreed". At `ink/32` it read at 2.55:1: the sentence telling an
+          operator what a field will accept was quieter than the field. */}
       {hint ? (
-        <span className="ml-2 normal-case tracking-normal text-ink/32">{hint}</span>
+        <span className="ml-2 normal-case tracking-normal text-ink/60">{hint}</span>
       ) : null}
     </label>
   );
+}
+
+/**
+ * The id a control actually carries.
+ *
+ * `admin-${name}` is right for a field that appears once on a page and wrong for
+ * one that appears once per row: `/admin/staff` renders a role select for every
+ * member and `/admin/leads` a status select for every enquiry, and every one of
+ * them was `id="admin-role"` or `id="admin-status"`. Both screens pass a unique
+ * id — `admin-role-${staffId}` — and both were being ignored, because the
+ * controls wrote `{...props}` first and their own `id` second, so the later
+ * attribute won and the caller's was dropped. Four elements shared `admin-role`
+ * on `/admin/staff`; three `<label for>` pointed at nothing; and the three row
+ * selects, which `staff-forms.tsx` calls the most consequential control on the
+ * screen, were announced as unnamed combo boxes.
+ *
+ * A caller's id wins, and the error paragraph is derived from the same value so
+ * `aria-describedby` cannot point at a paragraph that is not there.
+ */
+function controlId(id: string | undefined, name: string): string {
+  return id ?? `admin-${name}`;
 }
 
 /**
@@ -56,12 +81,20 @@ export function AdminLabel({
  * markup repeated at each call site — a field whose error paragraph is spelled
  * out by hand is a field one typo away from describing nothing.
  */
-export function FieldError({ name, children }: { name: string; children?: string }) {
+export function FieldError({
+  name,
+  id,
+  children,
+}: {
+  name: string;
+  id?: string;
+  children?: string;
+}) {
   if (!children) return null;
 
   return (
     <p
-      id={`admin-${name}-error`}
+      id={`${controlId(id, name)}-error`}
       className="mt-[5px] text-[12px] leading-[1.45] text-[#E08C6A]"
     >
       {children}
@@ -71,6 +104,7 @@ export function FieldError({ name, children }: { name: string; children?: string
 
 export function AdminField({
   name,
+  id,
   label,
   hint,
   error,
@@ -78,6 +112,7 @@ export function AdminField({
   className,
 }: {
   name: string;
+  id?: string;
   label: string;
   hint?: ReactNode;
   error?: string;
@@ -86,11 +121,13 @@ export function AdminField({
 }) {
   return (
     <div className={cx("min-w-0", className)}>
-      <AdminLabel htmlFor={`admin-${name}`} hint={hint}>
+      <AdminLabel htmlFor={controlId(id, name)} hint={hint}>
         {label}
       </AdminLabel>
       {children}
-      <FieldError name={name}>{error}</FieldError>
+      <FieldError name={name} id={id}>
+        {error}
+      </FieldError>
     </div>
   );
 }
@@ -99,18 +136,21 @@ export function AdminInput({
   name,
   error,
   className,
+  id,
   ...props
 }: { name: string; error?: string; className?: string } & Omit<
   ComponentPropsWithoutRef<"input">,
   "name" | "className"
 >) {
+  const fieldId = controlId(id, name);
+
   return (
     <input
       {...props}
-      id={`admin-${name}`}
+      id={fieldId}
       name={name}
       aria-invalid={error ? true : undefined}
-      aria-describedby={error ? `admin-${name}-error` : undefined}
+      aria-describedby={error ? `${fieldId}-error` : undefined}
       className={cx(CONTROL_BOX, className)}
     />
   );
@@ -120,18 +160,21 @@ export function AdminTextarea({
   name,
   error,
   className,
+  id,
   ...props
 }: { name: string; error?: string; className?: string } & Omit<
   ComponentPropsWithoutRef<"textarea">,
   "name" | "className"
 >) {
+  const fieldId = controlId(id, name);
+
   return (
     <textarea
       {...props}
-      id={`admin-${name}`}
+      id={fieldId}
       name={name}
       aria-invalid={error ? true : undefined}
-      aria-describedby={error ? `admin-${name}-error` : undefined}
+      aria-describedby={error ? `${fieldId}-error` : undefined}
       className={cx(CONTROL, "min-h-[76px] py-[7px]", className)}
     />
   );
@@ -174,6 +217,7 @@ export function AdminSelect({
   error,
   className,
   children,
+  id,
   ...props
 }: {
   name: string;
@@ -181,15 +225,17 @@ export function AdminSelect({
   className?: string;
   children: ReactNode;
 } & Omit<ComponentPropsWithoutRef<"select">, "name" | "className" | "children">) {
+  const fieldId = controlId(id, name);
+
   return (
     <span className="relative block">
       <select
         {...props}
         key={String(props.defaultValue ?? "")}
-        id={`admin-${name}`}
+        id={fieldId}
         name={name}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `admin-${name}-error` : undefined}
+        aria-describedby={error ? `${fieldId}-error` : undefined}
         className={cx(CONTROL_BOX, "peer appearance-none pr-8", className)}
       >
         {children}

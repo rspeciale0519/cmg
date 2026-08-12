@@ -65,8 +65,8 @@ export function PipelineLadder({ counts }: { counts: StatusCounts }) {
       </div>
 
       {branchTotal > 0 ? (
-        <p className="mt-[18px] flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] leading-[1.5] text-ink/45">
-          <span className="text-[11px] uppercase tracking-[0.13em] text-ink/32">
+        <p className="mt-[18px] flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] leading-[1.5] text-ink/55">
+          <span className="text-[11px] uppercase tracking-[0.13em] text-ink/58">
             Off the line
           </span>
           {BRANCH_STATUSES.filter((status) => (counts[status] ?? 0) > 0).map((status) => (

@@ -49,7 +49,7 @@ export function IntakeActions({
 
   if (!canAccept) {
     return (
-      <p className="border-t border-ink/9 px-[clamp(14px,1.6vw,20px)] py-[13px] text-[12.5px] leading-[1.6] text-ink/45">
+      <p className="border-t border-ink/9 px-[clamp(14px,1.6vw,20px)] py-[13px] text-[12.5px] leading-[1.6] text-ink/55">
         Accepting or declining an intake assigns it and moves it, which the owner
         does. Nothing here is yours to action yet — once {claimRef} is accepted and
         assigned, it appears in Claims.
@@ -159,7 +159,7 @@ function AcceptForm({
 
         {canLinkPartner ? (
           <fieldset className="min-w-0">
-            <legend className="mb-[5px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+            <legend className="mb-[5px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
               Referring company
             </legend>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -217,7 +217,7 @@ function AcceptForm({
             </div>
           </fieldset>
         ) : (
-          <p className="self-end text-[12px] leading-[1.55] text-ink/42">
+          <p className="self-end text-[12px] leading-[1.55] text-ink/55">
             Attributing a claim to a referring company is the owner&rsquo;s to set.
           </p>
         )}
@@ -237,7 +237,7 @@ function AcceptForm({
         />
       </AdminField>
 
-      <p className="mt-[12px] text-[12px] leading-[1.6] text-ink/45">
+      <p className="mt-[12px] text-[12px] leading-[1.6] text-ink/55">
         Accepting assigns the adjuster, moves the claim to under review, and emails
         a portal invitation to every claimant on the file.
       </p>
@@ -277,7 +277,7 @@ function RejectForm({ claimId }: { claimId: string }) {
         />
       </AdminField>
 
-      <p className="mt-[12px] text-[12px] leading-[1.6] text-ink/45">
+      <p className="mt-[12px] text-[12px] leading-[1.6] text-ink/55">
         The claim is archived with the reason on its record. No portal invitation is
         ever sent, and the homeowner receives no email from this action.
       </p>

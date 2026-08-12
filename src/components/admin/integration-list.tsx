@@ -85,13 +85,18 @@ export function IntegrationList({ integrations }: { integrations: Integration[] 
               <dl className="mt-[10px] flex flex-wrap gap-x-7 gap-y-[6px]">
                 {integration.facts.map((fact) => (
                   <div key={fact.label} className="flex items-baseline gap-x-2">
-                    <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/38">
+                    <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/58">
                       {fact.label}
                     </dt>
                     <dd
                       className={cx(
                         "text-[12.5px] leading-[1.45] tabular-nums",
-                        fact.quiet ? "text-ink/30 italic" : "text-ink/78",
+                        /* `not set` is a fact about the configuration, not a
+                           placeholder for one — at `ink/30` it measured 2.43:1,
+                           below even the em-dash absence mark the table
+                           deliberately keeps quiet. Italic carries the quiet;
+                           the colour no longer has to. */
+                        fact.quiet ? "text-ink/60 italic" : "text-ink/78",
                       )}
                     >
                       {fact.value}

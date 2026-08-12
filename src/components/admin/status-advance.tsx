@@ -76,7 +76,7 @@ export function StatusAdvance({
       <p className="text-[13px] leading-[1.65] text-ink/55">
         This claim is at <strong className="font-medium text-ink/85">{STATUS_LABEL[current]}</strong>.{" "}
         {STATUS_MEANING[current]}
-        <span className="mt-[9px] block text-ink/42">
+        <span className="mt-[9px] block text-ink/55">
           Moving a claim through the pipeline is done by the owner and by the
           adjuster it is assigned to.
         </span>
@@ -102,7 +102,7 @@ export function StatusAdvance({
       </p>
 
       <fieldset className="mt-[15px]">
-        <legend className="mb-[9px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+        <legend className="mb-[9px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
           Move to
         </legend>
 
@@ -143,7 +143,7 @@ export function StatusAdvance({
         {blocked.map((entry) => (
           <p
             key={entry.to}
-            className="mt-[11px] border-l-2 border-ink/16 py-[2px] pl-[10px] text-[12.5px] leading-[1.6] text-ink/50"
+            className="mt-[11px] border-l-2 border-ink/16 py-[2px] pl-[10px] text-[12.5px] leading-[1.6] text-ink/58"
           >
             <strong className="font-medium text-ink/72">
               {STATUS_LABEL[entry.to]}

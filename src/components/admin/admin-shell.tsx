@@ -62,13 +62,13 @@ export function AdminShell({
           <div className="ml-auto flex items-center gap-4">
             <span className="text-right text-[13px] leading-[1.35] text-ink/78">
               <span className="whitespace-nowrap">{identity.name}</span>
-              <span className="ml-2 whitespace-nowrap text-[11px] uppercase tracking-[0.16em] text-ink/42">
+              <span className="ml-2 whitespace-nowrap text-[11px] uppercase tracking-[0.16em] text-ink/55">
                 {ROLE_LABEL[identity.role]}
               </span>
             </span>
             <Link
               href="/"
-              className="hidden text-[13px] leading-[1.4] text-ink/58 no-underline transition-colors duration-150 hover:text-ink/90 sm:inline"
+              className="tap-block hidden text-[13px] leading-[1.4] text-ink/58 no-underline transition-colors duration-150 hover:text-ink/90 sm:inline"
             >
               {site.name.split(" ")[0]} site
             </Link>
@@ -210,7 +210,7 @@ export function Panel({
             {title}
           </h2>
           {meta ? (
-            <span className="text-[12px] leading-[1.4] text-ink/50">{meta}</span>
+            <span className="text-[12px] leading-[1.4] text-ink/58">{meta}</span>
           ) : null}
           {actions}
         </div>
@@ -249,7 +249,7 @@ export function EmptyState({
     <div className="px-[clamp(14px,1.6vw,20px)] py-[clamp(28px,4vw,44px)] text-center">
       <p className="text-[14px] leading-[1.5] text-ink/72">{headline}</p>
       {children ? (
-        <p className="mx-auto mt-[7px] max-w-[52ch] text-[13px] leading-[1.6] text-ink/45">
+        <p className="mx-auto mt-[7px] max-w-[52ch] text-[13px] leading-[1.6] text-ink/55">
           {children}
         </p>
       ) : null}

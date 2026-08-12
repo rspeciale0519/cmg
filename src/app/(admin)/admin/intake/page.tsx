@@ -148,7 +148,7 @@ export default async function IntakeQueuePage({
                         ? `${primary.first_name} ${primary.last_name}`.trim()
                         : "Unnamed homeowner"}
                     </h2>
-                    <p className="mt-[3px] text-[12.5px] leading-[1.45] text-ink/50">
+                    <p className="mt-[3px] text-[12.5px] leading-[1.45] text-ink/58">
                       {formatAddressLine({
                         street: claim.property_street,
                         street2: claim.property_street2,
@@ -158,7 +158,7 @@ export default async function IntakeQueuePage({
                       })}
                     </p>
                   </div>
-                  <p className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/42">
+                  <p className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/55">
                     <ClaimRef value={claim.claim_ref} className="text-accent/85" />
                     <span>submitted {formatRelative(claim.created_at)}</span>
                   </p>
@@ -170,7 +170,7 @@ export default async function IntakeQueuePage({
                       <span className="tabular-nums">
                         {formatDateOnly(claim.loss_date)}
                       </span>
-                      <span className="text-ink/45">
+                      <span className="text-ink/55">
                         {" "}
                         · {formatTimeOnly(claim.loss_time)}
                       </span>
@@ -178,7 +178,7 @@ export default async function IntakeQueuePage({
                     <Fact label="Cause">{humanizeEnum(claim.cause)}</Fact>
                     <Fact label="Carrier">
                       {claim.carrier}
-                      <span className="block text-[12.5px] text-ink/45">
+                      <span className="block text-[12.5px] text-ink/55">
                         Policy {claim.policy_number} ·{" "}
                         {humanizeEnum(claim.carrier_tenure)}
                       </span>
@@ -187,7 +187,7 @@ export default async function IntakeQueuePage({
                     <Fact label="Contact">
                       {primary?.email ?? "—"}
                       {primary?.phone ? (
-                        <span className="block text-[12.5px] tabular-nums text-ink/45">
+                        <span className="block text-[12.5px] tabular-nums text-ink/55">
                           {primary.phone}
                         </span>
                       ) : null}
@@ -202,7 +202,7 @@ export default async function IntakeQueuePage({
                         <>
                           {claim.referrer_name}
                           {claim.referrer_email ? (
-                            <span className="block text-[12.5px] text-ink/45">
+                            <span className="block text-[12.5px] text-ink/55">
                               {claim.referrer_email}
                             </span>
                           ) : null}

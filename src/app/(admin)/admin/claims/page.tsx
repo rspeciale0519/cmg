@@ -318,7 +318,7 @@ export default async function ClaimsPage({
                         elements are invalid besides. */}
                     <Link
                       href={`/admin/claims/${claim.id}`}
-                      className="text-ink no-underline transition-colors duration-150 hover:text-accent"
+                      className="tap-block text-ink no-underline transition-colors duration-150 hover:text-accent"
                     >
                       <ClaimRef value={claim.claim_ref} />
                     </Link>
@@ -379,7 +379,7 @@ export default async function ClaimsPage({
                   <Td className="whitespace-nowrap tabular-nums text-ink/62">
                     {formatDateOnly(claim.loss_date)}
                   </Td>
-                  <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                  <Td className="whitespace-nowrap tabular-nums text-ink/58">
                     {formatRelative(claim.updated_at)}
                   </Td>
                 </Tr>

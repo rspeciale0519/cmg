@@ -112,7 +112,7 @@ function Value({ value }: { value: Json | undefined }) {
     <span
       className={cx(
         "min-w-0 [overflow-wrap:anywhere]",
-        muted ? "text-ink/30 italic" : "text-ink/80",
+        muted ? "text-ink/60 italic" : "text-ink/80",
       )}
     >
       {text}
@@ -150,11 +150,11 @@ function ChangeRow({ field, change }: { field: string; change: Json | undefined 
 
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px]">
-      <span className="text-ink/42">{labelKey(field)}</span>
+      <span className="text-ink/55">{labelKey(field)}</span>
       {pair ? (
         <>
           <Rendered value={pair.old} />
-          <span aria-hidden="true" className="text-accent/60">
+          <span aria-hidden="true" className="text-accent/88">
             →
           </span>
           <span className="sr-only">changed to</span>
@@ -203,7 +203,7 @@ function StatusTransition({ from, to }: { from: Json | undefined; to: Json | und
   return (
     <p className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px]">
       <StatusValue value={from} />
-      <span aria-hidden="true" className="text-accent/60">
+      <span aria-hidden="true" className="text-accent/88">
         →
       </span>
       <span className="sr-only">changed to</span>
@@ -294,7 +294,7 @@ export function AuditMeta({
 
       {insertedClaimRef ? (
         <p className={cx("flex flex-wrap items-baseline gap-x-2", statusRow && "mt-[5px]")}>
-          <span className="text-ink/42">Claim</span>
+          <span className="text-ink/55">Claim</span>
           <ClaimRefValue value={insertedClaimRef} />
         </p>
       ) : null}
@@ -329,7 +329,7 @@ export function AuditMeta({
             const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
             return (
               <li key={key} className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                <span className="text-ink/42">{resolved ? "Claim" : labelKey(key)}</span>
+                <span className="text-ink/55">{resolved ? "Claim" : labelKey(key)}</span>
                 {resolved ? <ClaimRefValue value={claimRef} /> : <Rendered value={value} />}
               </li>
             );
@@ -342,7 +342,7 @@ export function AuditMeta({
           every other entry off the screen. */}
       {rowFields.length > 0 ? (
         <details className="group mt-[5px]">
-          <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-ink/42 transition-colors duration-150 hover:text-ink/70 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-[24px] cursor-pointer list-none items-center gap-1.5 text-ink/55 transition-colors duration-150 hover:text-ink/70 [&::-webkit-details-marker]:hidden">
             <svg
               aria-hidden="true"
               viewBox="0 0 16 16"
@@ -357,14 +357,14 @@ export function AuditMeta({
               />
             </svg>
             {op === "DELETE" ? "Row as deleted" : "Row as written"}
-            <span className="tabular-nums text-ink/28">{rowFields.length}</span>
+            <span className="tabular-nums text-ink/58">{rowFields.length}</span>
           </summary>
           <ul className="mt-[5px] grid gap-[3px] border-l border-ink/10 pl-[11px]">
             {rowFields.map(([key, value]) => {
               const Rendered = STATUS_COLUMNS.has(key) ? StatusValue : Value;
               return (
                 <li key={key} className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-ink/42">{labelKey(key)}</span>
+                  <span className="text-ink/55">{labelKey(key)}</span>
                   <Rendered value={value} />
                 </li>
               );

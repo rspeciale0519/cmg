@@ -158,7 +158,7 @@ export default async function PartnersPage({
                 <Td>
                   <Link
                     href={`/admin/partners/${company.id}`}
-                    className="block truncate font-medium text-ink no-underline transition-colors duration-150 hover:text-accent"
+                    className="tap-block block truncate font-medium text-ink no-underline transition-colors duration-150 hover:text-accent"
                   >
                     {company.name}
                   </Link>
@@ -179,7 +179,7 @@ export default async function PartnersPage({
                   {company.contactEmail ? (
                     <a
                       href={`mailto:${company.contactEmail}`}
-                      className="block truncate text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                      className="tap-block block truncate text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                     >
                       {company.contactEmail}
                     </a>
@@ -191,7 +191,7 @@ export default async function PartnersPage({
                     <span className="text-ink/28">—</span>
                   )}
                 </Td>
-                <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                <Td className="whitespace-nowrap tabular-nums text-ink/58">
                   {formatDateStamp(company.createdAt)}
                 </Td>
               </Tr>

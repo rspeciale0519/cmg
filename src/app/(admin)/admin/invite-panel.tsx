@@ -33,7 +33,7 @@ export function InvitePanel({
 
   if (claimants.length === 0) {
     return (
-      <p className="px-[clamp(14px,1.6vw,20px)] py-[clamp(28px,4vw,44px)] text-center text-[13px] leading-[1.6] text-ink/45">
+      <p className="px-[clamp(14px,1.6vw,20px)] py-[clamp(28px,4vw,44px)] text-center text-[13px] leading-[1.6] text-ink/55">
         Everyone on your claims has portal access.
       </p>
     );
@@ -51,7 +51,7 @@ export function InvitePanel({
               <p className="truncate text-[13px] leading-[1.45] text-ink/85">
                 {claimant.name}
               </p>
-              <p className="mt-[2px] truncate text-[12px] leading-[1.4] text-ink/42">
+              <p className="mt-[2px] truncate text-[12px] leading-[1.4] text-ink/55">
                 {claimant.email} · <span className="tabular-nums">{claimant.claimRef}</span>
               </p>
             </div>
@@ -70,7 +70,7 @@ export function InvitePanel({
            screen that lists the rest — the remainder is reached one claim at a
            time. Saying so is the difference between an excerpt and a wrong
            total: sending one of these refills the panel from the same queue. */
-        <p className="border-t border-ink/8 px-[clamp(14px,1.6vw,20px)] py-[10px] text-[12px] leading-[1.55] text-ink/45">
+        <p className="border-t border-ink/8 px-[clamp(14px,1.6vw,20px)] py-[10px] text-[12px] leading-[1.55] text-ink/55">
           The newest {claimants.length} of {total}. Sending one brings the next
           into view; any homeowner can also be invited from their claim&rsquo;s
           Claimants tab.

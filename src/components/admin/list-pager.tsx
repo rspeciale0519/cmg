@@ -61,7 +61,7 @@ export function ListPager({
           : "pt-[clamp(14px,1.6vw,20px)]",
       )}
     >
-      <p className="text-[12px] leading-[1.5] text-ink/45">
+      <p className="text-[12px] leading-[1.5] text-ink/55">
         {complete ? (
           <>
             All <span className="tabular-nums">{total}</span>{" "}

@@ -31,13 +31,13 @@ export function ClaimantInvite({
 
   if (hasAccount) {
     return (
-      <span className="text-[12px] leading-[1.4] text-ink/38">Portal active</span>
+      <span className="text-[12px] leading-[1.4] text-ink/58">Portal active</span>
     );
   }
 
   if (!canInvite) {
     return (
-      <span className="text-[12px] leading-[1.4] text-ink/38">
+      <span className="text-[12px] leading-[1.4] text-ink/58">
         No portal access
       </span>
     );

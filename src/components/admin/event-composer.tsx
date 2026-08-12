@@ -67,7 +67,7 @@ export function EventComposer({
       ) : null}
 
       <fieldset>
-        <legend className="mb-[8px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+        <legend className="mb-[8px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
           Who sees this
         </legend>
         <div className="flex flex-wrap gap-[6px]">
@@ -103,7 +103,7 @@ export function EventComposer({
           <p
             className={cx(
               "mt-[8px] text-[12px] leading-[1.5]",
-              visibility === "internal" ? "text-ink/40" : "text-accent/72",
+              visibility === "internal" ? "text-ink/60" : "text-accent",
             )}
           >
             {active.caption}

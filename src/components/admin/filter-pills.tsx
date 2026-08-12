@@ -69,7 +69,7 @@ export function FilterPills({
               <span
                 className={cx(
                   "tabular-nums",
-                  isActive ? "text-accent/70" : "text-ink/32",
+                  isActive ? "text-accent" : "text-ink/58",
                 )}
               >
                 {option.count}

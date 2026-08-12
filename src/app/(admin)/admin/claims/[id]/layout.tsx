@@ -98,7 +98,7 @@ export default async function ClaimLayout({
               />
               <StatusPill status={claim.status} />
               {phase ? (
-                <span className="text-[11.5px] leading-[1.4] text-ink/35">
+                <span className="text-[11.5px] leading-[1.4] text-ink/58">
                   homeowner sees &ldquo;{phase}&rdquo;
                 </span>
               ) : null}
@@ -108,7 +108,7 @@ export default async function ClaimLayout({
               {primary
                 ? `${primary.first_name} ${primary.last_name}`.trim()
                 : "No claimant on file"}
-              <span className="text-ink/38"> · </span>
+              <span className="text-ink/55"> · </span>
               {formatAddressLine({
                 street: claim.propertyStreet,
                 street2: claim.propertyStreet2,
@@ -121,7 +121,7 @@ export default async function ClaimLayout({
 
           <dl className="flex flex-wrap gap-x-8 gap-y-3 text-[12.5px] leading-[1.4]">
             <div>
-              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/32">
+              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/58">
                 Adjuster
               </dt>
               <dd className="mt-[4px] text-ink/78">
@@ -131,7 +131,7 @@ export default async function ClaimLayout({
               </dd>
             </div>
             <div>
-              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/32">
+              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/58">
                 Referred by
               </dt>
               <dd className="mt-[4px] text-ink/78">
@@ -139,7 +139,7 @@ export default async function ClaimLayout({
               </dd>
             </div>
             <div>
-              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/32">
+              <dt className="text-[10.5px] uppercase tracking-[0.13em] text-ink/58">
                 Date of loss
               </dt>
               <dd className="mt-[4px] tabular-nums text-ink/78">

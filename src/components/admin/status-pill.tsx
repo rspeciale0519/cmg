@@ -70,7 +70,7 @@ const LEAD_TONE: Record<string, string> = {
   new: "border-accent/40 bg-accent/12 text-accent-300",
   contacted: "border-ink/16 bg-ink/6 text-ink/78",
   converted: "border-bronze-600/50 bg-bronze-700/24 text-bronze-400",
-  dismissed: "border-ink/12 bg-transparent text-ink/42",
+  dismissed: "border-ink/12 bg-transparent text-ink/55",
 };
 
 /**
@@ -83,7 +83,7 @@ const LEAD_TONE: Record<string, string> = {
  * Dashed and quiet says the honest thing instead: the label beside it is the raw
  * value, because there is nothing to translate it to.
  */
-const LEAD_TONE_UNKNOWN = "border-dashed border-ink/22 bg-transparent text-ink/50";
+const LEAD_TONE_UNKNOWN = "border-dashed border-ink/22 bg-transparent text-ink/58";
 
 const LEAD_LABEL: Record<string, string> = {
   new: "New",
@@ -133,7 +133,7 @@ export function VisibilityTag({ visibility }: { visibility: string }) {
     <span
       className={cx(
         "inline-flex items-center whitespace-nowrap text-[11px] leading-[1.45] tracking-[0.04em]",
-        isPrivate ? "text-ink/38" : "text-accent/78",
+        isPrivate ? "text-ink/58" : "text-accent",
       )}
     >
       {VISIBILITY_LABEL[visibility] ?? visibility}

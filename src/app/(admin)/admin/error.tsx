@@ -57,7 +57,7 @@ export default function AdminError({
             </Link>
           </div>
 
-          <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/50">
+          <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/58">
             If it fails again, send this reference to whoever looks after the
             site — it identifies this exact failure in the server log.
           </p>

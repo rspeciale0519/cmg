@@ -157,7 +157,7 @@ function Field({
     <div className="min-w-0">
       <label
         htmlFor={htmlFor}
-        className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45"
+        className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
       >
         {label}
       </label>

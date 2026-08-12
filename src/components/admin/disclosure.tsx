@@ -42,7 +42,7 @@ export function FormDisclosure({
         </svg>
         <span className="font-medium">{summary}</span>
         {hint ? (
-          <span className="text-[12px] text-ink/38 group-open:hidden">{hint}</span>
+          <span className="text-[12px] text-ink/58 group-open:hidden">{hint}</span>
         ) : null}
       </summary>
       <div className="border-t border-ink/10 px-[clamp(14px,1.6vw,20px)] py-[clamp(14px,1.6vw,18px)]">

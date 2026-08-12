@@ -258,6 +258,31 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   A 24px tap box on a link sized to its text.
+
+   The workspace's row-identity and contact links — the claim reference that
+   opens a file, a partner company's name, the phone number an operator taps to
+   call a lead back — measured 16 to 18.8px tall at 390, under the WCAG 2.2
+   target floor of 24px. They are the most-used targets on their screens.
+
+   Padding rather than `min-height`, because these links are variously inline
+   and `block truncate`, and neither tolerates being turned into a flex box:
+   `truncate` needs a block formatting context, and an inline element ignores
+   `min-height` entirely. Vertical padding grows the hit box in both cases. The
+   negative margin cancels the padding for block links so no row gets taller;
+   on an inline link it is a no-op, and vertical padding there does not affect
+   the line box either. Nothing moves.
+
+   The floor is 24px rather than 44px deliberately. 2.5.8 asks for 24; the 44px
+   comfort target belongs to the controls a phone-first surface is built around,
+   and this is a desk tool whose text links sit inside dense table rows.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility tap-block {
+  padding-block: 5px;
+  margin-block: -5px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Sticky identity column.
 
    Every table in the workspace opens with the thing the row *is* — a claim

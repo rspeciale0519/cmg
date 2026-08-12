@@ -271,7 +271,7 @@ export function CellMeta({
   return (
     <span
       title={title}
-      className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/42"
+      className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/55"
     >
       {children}
     </span>
@@ -315,8 +315,16 @@ export function Fact({
   wide?: boolean;
 }) {
   return (
-    <div className={cx("min-w-0", wide && "sm:col-span-2 lg:col-span-3")}>
-      <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/38">
+    /* `col-span-full` (`grid-column: 1 / -1`) rather than a hard `lg:col-span-3`,
+       which assumed every list it lands in has three tracks. In the claim
+       Overview's two-column list it forced an implicit third track and the grid
+       charged a second 32px gap for it: "The loss" resolved to
+       `451.5px 451.5px 0px` while "Policy and carrier" directly below it
+       resolved to `467.5px 467.5px`, so the second column of two stacked panels
+       sat 16px out of line and 32px of the row was dead. Spanning to the end of
+       the explicit grid is the same instruction without the assumption. */
+    <div className={cx("min-w-0", wide && "col-span-full")}>
+      <dt className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/58">
         {label}
       </dt>
       <dd className="mt-[5px] text-[14px] leading-[1.55] text-ink/85">{children}</dd>

@@ -118,7 +118,7 @@ export default async function DocumentsPage({
                     >
                       {document.original_name}
                     </p>
-                    <p className="mt-[5px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] leading-[1.4] text-ink/42">
+                    <p className="mt-[5px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] leading-[1.4] text-ink/55">
                       <span className="text-ink/62">
                         {isDocumentKind(document.kind)
                           ? DOCUMENT_KIND_LABEL[document.kind]
@@ -127,11 +127,17 @@ export default async function DocumentsPage({
                       <span className="tabular-nums">
                         {formatBytes(document.size_bytes)}
                       </span>
+                      {/* The two answers of one field, at one weight. They were
+                          4.26:1 for "Homeowner can see it" and 2.55:1 for "CMG
+                          only" — a 1.7x split between two states a reader has to
+                          compare down a list, with the private state the one
+                          that had all but disappeared. Hue is now the only
+                          difference between them. */}
                       <span
                         className={
                           document.visibility === "customer"
-                            ? "text-accent/72"
-                            : "text-ink/32"
+                            ? "text-accent"
+                            : "text-ink/60"
                         }
                       >
                         {document.visibility === "customer"
@@ -139,7 +145,7 @@ export default async function DocumentsPage({
                           : "CMG only"}
                       </span>
                     </p>
-                    <p className="mt-[3px] text-[11.5px] leading-[1.4] text-ink/30">
+                    <p className="mt-[3px] text-[11.5px] leading-[1.4] text-ink/55">
                       {uploader ? `${uploader} · ` : ""}
                       {formatTimestamp(document.created_at)}
                     </p>

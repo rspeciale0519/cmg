@@ -111,7 +111,7 @@ export function FinancialsForm({
             className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px] leading-[1.5]"
           >
             <div className="flex justify-between">
-              <dt className="text-ink/50">CMG fee</dt>
+              <dt className="text-ink/58">CMG fee</dt>
               <dd
                 className={
                   derivable ? "tabular-nums text-ink/85" : "tabular-nums text-ink/28"
@@ -121,7 +121,7 @@ export function FinancialsForm({
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink/50">To the homeowner</dt>
+              <dt className="text-ink/58">To the homeowner</dt>
               <dd
                 className={
                   derivable ? "tabular-nums text-ink/85" : "tabular-nums text-ink/28"

@@ -118,7 +118,7 @@ export function ProgressLadder({ progress }: { progress: ProgressView }) {
                 <p
                   className={cx(
                     "mt-[5px] max-w-[56ch] text-[13.5px] leading-[1.65]",
-                    current ? "text-ink/70" : done ? "text-ink/48" : "text-ink/32",
+                    current ? "text-ink/70" : done ? "text-ink/58" : "text-ink/32",
                   )}
                 >
                   {stage.summary}

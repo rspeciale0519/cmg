@@ -210,7 +210,7 @@ export default async function LeadsPage({
                       <time
                         dateTime={lead.created_at}
                         title={formatTimestamp(lead.created_at)}
-                        className="text-[12px] leading-[1.4] text-ink/38"
+                        className="text-[12px] leading-[1.4] text-ink/58"
                       >
                         {formatRelative(lead.created_at)}
                       </time>
@@ -228,14 +228,14 @@ export default async function LeadsPage({
                     <p className="mt-[5px] flex flex-wrap gap-x-4 text-[12.5px] leading-[1.5] text-ink/58">
                       <a
                         href={`tel:${lead.phone.replace(/[^\d+]/g, "")}`}
-                        className="tabular-nums text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                        className="tap-block tabular-nums text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                       >
                         {lead.phone}
                       </a>
                       {lead.email ? (
                         <a
                           href={`mailto:${lead.email}`}
-                          className="min-w-0 [overflow-wrap:anywhere] text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
+                          className="tap-block min-w-0 [overflow-wrap:anywhere] text-ink/72 no-underline transition-colors duration-150 hover:text-accent"
                         >
                           {lead.email}
                         </a>
@@ -247,7 +247,7 @@ export default async function LeadsPage({
                         {lead.message}
                       </p>
                     ) : (
-                      <p className="mt-[9px] text-[13px] leading-[1.6] text-ink/32">
+                      <p className="mt-[9px] text-[13px] leading-[1.6] text-ink/58">
                         No message left.
                       </p>
                     )}

@@ -139,7 +139,7 @@ export default async function PortalActivityPage({
                       </p>
                       <time
                         dateTime={event.created_at}
-                        className="shrink-0 text-[12px] leading-[1.45] text-ink/35"
+                        className="shrink-0 text-[12px] leading-[1.45] text-ink/58"
                       >
                         {formatTimestamp(event.created_at)}
                       </time>

@@ -22,7 +22,7 @@ export function PartnerStatusPill({
         "inline-flex items-center whitespace-nowrap rounded-full border px-[9px] py-[3px] text-[11px] font-medium leading-[1.45]",
         status === "active"
           ? "border-bronze-400/38 bg-bronze-500/12 text-bronze-300"
-          : "border-ink/12 text-ink/42",
+          : "border-ink/12 text-ink/55",
         className,
       )}
     >

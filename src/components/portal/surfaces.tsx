@@ -40,7 +40,7 @@ export function Panel({
             {title}
           </h2>
           {meta ? (
-            <p className="text-[12px] leading-[1.45] text-ink/45">{meta}</p>
+            <p className="text-[12px] leading-[1.45] text-ink/55">{meta}</p>
           ) : null}
         </header>
       ) : null}
@@ -79,7 +79,7 @@ export function EmptyState({
     <div className="px-[clamp(18px,2.4vw,28px)] py-[clamp(26px,3.4vw,38px)]">
       <p className="text-[15px] leading-[1.5] text-ink/78">{headline}</p>
       {children ? (
-        <p className="mt-[8px] max-w-[52ch] text-[14px] leading-[1.7] text-ink/45">
+        <p className="mt-[8px] max-w-[52ch] text-[14px] leading-[1.7] text-ink/55">
           {children}
         </p>
       ) : null}

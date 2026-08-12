@@ -132,7 +132,7 @@ export default async function StaffPage({
                   <span className="block truncate font-medium text-ink">
                     {member.name}
                     {isSelf ? (
-                      <span className="ml-2 text-[11px] font-normal uppercase tracking-[0.14em] text-ink/32">
+                      <span className="ml-2 text-[11px] font-normal uppercase tracking-[0.14em] text-ink/58">
                         you
                       </span>
                     ) : null}
@@ -157,7 +157,7 @@ export default async function StaffPage({
                   <MfaState enrolled={member.mfaEnrolled} isActive={member.isActive} />
                 </Td>
 
-                <Td className="whitespace-nowrap tabular-nums text-ink/50">
+                <Td className="whitespace-nowrap tabular-nums text-ink/58">
                   {member.lastSignInAt ? formatRelative(member.lastSignInAt) : "Never"}
                 </Td>
 
@@ -196,7 +196,7 @@ export default async function StaffPage({
         />
 
         <PanelBody className="border-t border-ink/10">
-          <h3 className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/45">
+          <h3 className="text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
             How access works here
           </h3>
           <ul className="mt-[9px] grid max-w-[86ch] gap-[7px] text-[12.5px] leading-[1.65] text-ink/58">
@@ -242,10 +242,10 @@ export default async function StaffPage({
                 className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-[clamp(14px,1.6vw,20px)] py-[12px] text-[13px] leading-[1.5]"
               >
                 <span className="text-ink/85">{invite.email}</span>
-                <span className="text-[12px] uppercase tracking-[0.13em] text-ink/42">
+                <span className="text-[12px] uppercase tracking-[0.13em] text-ink/55">
                   {ROLE_LABEL[invite.role]}
                 </span>
-                <span className="ml-auto text-[12px] text-ink/42">
+                <span className="ml-auto text-[12px] text-ink/55">
                   expires {formatDateStamp(invite.expiresAt)}
                 </span>
               </li>
@@ -281,7 +281,7 @@ function MfaState({ enrolled, isActive }: { enrolled: boolean; isActive: boolean
       className={
         isActive
           ? "text-[12.5px] leading-[1.45] text-accent-300"
-          : "text-[12.5px] leading-[1.45] text-ink/32"
+          : "text-[12.5px] leading-[1.45] text-ink/58"
       }
     >
       Not enrolled

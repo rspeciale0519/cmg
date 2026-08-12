@@ -119,7 +119,7 @@ export default async function AuditPage({
           {paged ? (
             <Link
               href="/admin/audit"
-              className="text-[12.5px] leading-[1.4] text-ink/45 no-underline transition-colors duration-150 hover:text-accent"
+              className="text-[12.5px] leading-[1.4] text-ink/55 no-underline transition-colors duration-150 hover:text-accent"
             >
               Back to newest
             </Link>
@@ -168,7 +168,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         >
           {clockTime(entry.createdAt)}
         </time>
-        <span className="block text-[11.5px] leading-[1.45] tabular-nums text-ink/38">
+        <span className="block text-[11.5px] leading-[1.45] tabular-nums text-ink/58">
           {dayStamp(entry.createdAt)}
         </span>
       </div>
@@ -176,7 +176,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
       <div className="min-w-0">
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-[2px] text-[13px] leading-[1.45]">
           <span className="font-medium text-ink">{actionLabel(entry.action)}</span>
-          <span className="text-[11px] uppercase tracking-[0.13em] text-ink/32">
+          <span className="text-[11px] uppercase tracking-[0.13em] text-ink/58">
             {family || entityLabel(entry.entity)}
           </span>
           {href ? (
@@ -207,7 +207,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         {entry.actorName ? (
           <>
             <span className="truncate text-ink/62">{entry.actorName}</span>
-            <span className="text-[11px] uppercase tracking-[0.13em] text-ink/30">
+            <span className="text-[11px] uppercase tracking-[0.13em] text-ink/58">
               {entry.actorRole}
             </span>
           </>
@@ -215,14 +215,19 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           /* An id with no profile. `audit_log` holds no foreign key precisely
              so that deleting a person cannot rewrite history, so this is the
              expected end state for a departed account — not an error. */
-          <span className="truncate font-mono text-[11.5px] text-ink/38">
+          <span className="truncate font-mono text-[11.5px] text-ink/58">
             {entry.actorId}
           </span>
         ) : (
-          <span className="text-ink/38">System</span>
+          <span className="text-ink/58">System</span>
         )}
+        {/* `ink/28` is the tier this workspace reserves for the em-dash that
+            means "nothing here" — 2.26:1. An originating IP on an append-only
+            forensic record is the opposite of nothing: the page's own lede
+            promises who did it, and this is the half of that answer a reader
+            cannot reconstruct from anywhere else. */}
         {entry.ip ? (
-          <span className="tabular-nums text-[11.5px] text-ink/28">{entry.ip}</span>
+          <span className="tabular-nums text-[11.5px] text-ink/62">{entry.ip}</span>
         ) : null}
       </p>
     </li>

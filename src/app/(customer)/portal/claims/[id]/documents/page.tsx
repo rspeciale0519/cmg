@@ -106,7 +106,7 @@ export default async function PortalDocumentsPage({
                     <p className="break-words text-[14.5px] leading-[1.5] text-ink/88">
                       {row.original_name}
                     </p>
-                    <p className="mt-[6px] flex flex-wrap items-baseline gap-x-[10px] gap-y-1 text-[12.5px] leading-[1.45] text-ink/42">
+                    <p className="mt-[6px] flex flex-wrap items-baseline gap-x-[10px] gap-y-1 text-[12.5px] leading-[1.45] text-ink/55">
                       <span className="text-ink/55">
                         {PORTAL_KIND_LABEL[row.kind as DocumentKind] ?? "Document"}
                       </span>

@@ -53,7 +53,7 @@ export function PortalShell({
           <div className="ml-auto flex items-center gap-5">
             <span className="hidden text-right text-[13px] leading-[1.5] text-ink/72 sm:block">
               {identity.name}
-              <span className="block text-[11px] uppercase tracking-[0.18em] text-ink/45">
+              <span className="block text-[11px] uppercase tracking-[0.18em] text-ink/55">
                 {identity.role}
               </span>
             </span>

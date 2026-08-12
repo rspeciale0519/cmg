@@ -61,7 +61,7 @@ export default function PortalError({
       </div>
 
       {error.digest ? (
-        <p className="mt-[24px] text-[12.5px] leading-[1.6] text-ink/35">
+        <p className="mt-[24px] text-[12.5px] leading-[1.6] text-ink/58">
           If you call us, quote this: <span className="tabular-nums">{error.digest}</span>
         </p>
       ) : null}

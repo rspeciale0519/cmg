@@ -120,11 +120,11 @@ export default async function FinancialsPage({
                   <>
                     {formatTimestamp(financials.updated_at)}
                     {updater ? (
-                      <span className="block text-[13px] text-ink/50">{updater}</span>
+                      <span className="block text-[13px] text-ink/58">{updater}</span>
                     ) : null}
                   </>
                 ) : (
-                  <span className="text-ink/38">Never</span>
+                  <span className="text-ink/58">Never</span>
                 )}
               </Fact>
             </FactList>
