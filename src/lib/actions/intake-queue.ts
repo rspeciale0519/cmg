@@ -11,8 +11,13 @@ import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { CARRIER_TENURE_VALUES } from "@/lib/validators/intake-options";
-import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
+import { claimPolicySchema, type ClaimPolicyInput } from "@/lib/validators/claims";
+import {
+  fieldErrorsFrom,
+  GENERIC_ERROR,
+  submittedValues,
+  type FormState,
+} from "./types";
 
 /**
  * What `AcceptForm` re-seeds after a refusal — every uncontrolled control on the
@@ -244,7 +249,7 @@ export async function acceptIntake(
     partner_company_id?: string;
     carrier?: string;
     policy_number?: string;
-    carrier_tenure?: CarrierTenure;
+    carrier_tenure?: ClaimPolicyInput["carrierTenure"];
   } = { status: "under_review" };
   if (linkedPartnerId) update.partner_company_id = linkedPartnerId;
   /* Carried by the same statement as the status change, so a referral cannot
@@ -327,46 +332,30 @@ export async function acceptIntake(
   };
 }
 
-type CarrierTenure = (typeof CARRIER_TENURE_VALUES)[number];
-
-type PolicyDetails = {
-  carrier: string;
-  policyNumber: string;
-  carrierTenure: CarrierTenure;
-};
+type PolicyDetails = ClaimPolicyInput;
 
 /**
  * The three columns a partner referral arrives without.
  *
- * Validated here rather than by a zod schema because there is no second caller
- * and no branching: three required strings, one of which has to be an enum
- * label. The bounds match `intakeSchema`'s for the same columns — 120 and 80 —
- * so a carrier the public form would refuse is not admitted through the desk.
+ * The rules moved to `claimPolicySchema` when the Overview's policy panel became
+ * the second caller — accept is where the gap is *first* closed and no longer
+ * the only place it can be. Two hand-rolled copies of "required, 120
+ * characters, one of three enum labels" are two places for a bound to drift, and
+ * a carrier the public form would refuse must not be admitted through either
+ * desk screen.
  */
 function readPolicyDetails(
   formData: FormData,
 ): PolicyDetails | { fieldErrors: Record<string, string> } {
-  const carrier = String(formData.get("carrier") ?? "").trim();
-  const policyNumber = String(formData.get("policyNumber") ?? "").trim();
-  const carrierTenure = String(formData.get("carrierTenure") ?? "").trim();
+  const parsed = claimPolicySchema.safeParse({
+    carrier: formData.get("carrier") ?? "",
+    policyNumber: formData.get("policyNumber") ?? "",
+    carrierTenure: formData.get("carrierTenure") ?? "",
+  });
 
-  const fieldErrors: Record<string, string> = {};
+  if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
 
-  if (carrier.length === 0) fieldErrors.carrier = "Name the insurance company.";
-  else if (carrier.length > 120) fieldErrors.carrier = "Carrier must be 120 characters or fewer.";
-
-  if (policyNumber.length === 0) fieldErrors.policyNumber = "Enter the policy number.";
-  else if (policyNumber.length > 80) {
-    fieldErrors.policyNumber = "Policy number must be 80 characters or fewer.";
-  }
-
-  if (!CARRIER_TENURE_VALUES.includes(carrierTenure as CarrierTenure)) {
-    fieldErrors.carrierTenure = "Say how long they have been with this carrier.";
-  }
-
-  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
-
-  return { carrier, policyNumber, carrierTenure: carrierTenure as CarrierTenure };
+  return parsed.data;
 }
 
 async function inviteClaimants(

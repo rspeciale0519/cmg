@@ -2,13 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { writeAudit } from "@/lib/audit";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/status";
-import { hasSignedLor, isLegalTransition } from "@/lib/claims/transitions";
+import {
+  hasSignedLor,
+  isLegalTransition,
+  namesAPolicy,
+  NO_POLICY_REASON,
+} from "@/lib/claims/transitions";
 import { requireStaff } from "@/lib/authz";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
+import { claimPolicySchema, CLAIM_POLICY_FIELDS } from "@/lib/validators/claims";
+import {
+  fieldErrorsFrom,
+  GENERIC_ERROR,
+  submittedValues,
+  type FormState,
+} from "./types";
 
 /**
  * Every action here follows the same three steps, in this order:
@@ -25,8 +38,9 @@ import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
  *      sentence instead of a raised exception — they are not the boundary.
  *
  * Nothing in this file uses the service-role client for a claim write. The only
- * service-role reach is inside `recordTransition`, for `notifications_outbox`,
- * which has no policy for `authenticated` by design.
+ * service-role reaches are inside `recordTransition`, for `notifications_outbox`,
+ * and `writeAudit` in `saveClaimPolicy` — both for tables that have no policy for
+ * `authenticated` by design.
  */
 
 const NOT_YOURS =
@@ -40,6 +54,12 @@ type ClaimRow = {
   claim_ref: string;
   status: ClaimStatus;
   assigned_adjuster_id: string | null;
+  /* The policy side, read here rather than in a second query: one action gates
+     on it and another rewrites it, and both already hold this row. Nullable
+     since Phase 6 — a partner referral carries none of it. */
+  carrier: string | null;
+  policy_number: string | null;
+  carrier_tenure: string | null;
 };
 
 async function loadClaimForWrite(
@@ -52,7 +72,9 @@ async function loadClaimForWrite(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("claims")
-    .select("id, claim_ref, status, assigned_adjuster_id")
+    .select(
+      "id, claim_ref, status, assigned_adjuster_id, carrier, policy_number, carrier_tenure",
+    )
     .eq("id", claimId)
     .maybeSingle();
 
@@ -100,6 +122,23 @@ export async function advanceClaimStatus(
     return {
       status: "error",
       message: `${STATUS_LABEL[claim.status]} cannot move to ${STATUS_LABEL[requested]}. That is not a step this claim can take.`,
+      values: typed,
+    };
+  }
+
+  /* The gate on the move that produces the letter, checked for the same reason
+     the document gate below is: a Letter of Representation is addressed to an
+     insurance carrier and cites a policy, and this claim may hold neither — a
+     partner referral is not asked for them (§6) and the accept form, which
+     collects them, is not the only way out of `new_intake`.
+
+     `StatusAdvance` already renders this move disabled with this sentence under
+     it. That is a courtesy; this is the gate. The claim row was read through the
+     caller's own client above, so `claims_select` is what decided it exists. */
+  if (requested === "lor_sent" && !namesAPolicy(claim)) {
+    return {
+      status: "error",
+      message: `${claim.claim_ref} has no carrier or policy number on file. ${NO_POLICY_REASON}`,
       values: typed,
     };
   }
@@ -232,6 +271,125 @@ export async function reassignClaimAdjuster(
     message: adjusterId
       ? `${claim.claim_ref} reassigned.`
       : `${claim.claim_ref} returned to the intake queue.`,
+  };
+}
+
+/**
+ * The policy side of a claim, written from the Overview.
+ *
+ * It exists because until now nothing could write these three columns after
+ * accept. That was tolerable while `acceptIntake` was believed to be the only
+ * way out of `new_intake` — it collects them when the claim it is accepting has
+ * none — and it is not: the status picker moves a partner referral to
+ * `under_review` without ever opening the accept form, and from there the file
+ * was one legal move from a Letter of Representation naming no carrier. The
+ * transition is now refused; this is the screen that lifts the refusal.
+ *
+ * It is equally the place a correction is made. A carrier taken down a phone
+ * line is misheard, and a claim whose policy number is wrong is worse than one
+ * whose policy number is missing: the second announces itself.
+ *
+ * Authorization is `claims_update_manage` — owner or the assigned adjuster —
+ * and it is the write itself that asks. An assistant reaches this line, because
+ * `claims_select` shows them every claim, and their UPDATE matches zero rows.
+ */
+export async function saveClaimPolicy(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const session = await requireStaff("/admin");
+  const claimId = String(formData.get("claimId") ?? "").trim();
+  const typed = submittedValues(formData, CLAIM_POLICY_FIELDS);
+
+  const loaded = await loadClaimForWrite(claimId);
+  if ("error" in loaded) return { ...loaded.error, values: typed };
+  const { claim } = loaded;
+
+  const parsed = claimPolicySchema.safeParse({
+    carrier: formData.get("carrier") ?? "",
+    policyNumber: formData.get("policyNumber") ?? "",
+    carrierTenure: formData.get("carrierTenure") ?? "",
+  });
+
+  if (!parsed.success) {
+    const fieldErrors = fieldErrorsFrom(parsed.error);
+    const marked = Object.keys(fieldErrors).length;
+    return {
+      status: "error",
+      fieldErrors,
+      // "field" over one highlight, "fields" over several — the count the claim
+      // screens already keep, rather than `invalid()`'s "submit again" under a
+      // button that says Save.
+      message: `Check the highlighted ${marked === 1 ? "field" : "fields"} and save again.`,
+      values: typed,
+    };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("claims")
+    .update({
+      carrier: parsed.data.carrier,
+      policy_number: parsed.data.policyNumber,
+      carrier_tenure: parsed.data.carrierTenure,
+    })
+    .eq("id", claimId)
+    .select("id");
+
+  if (error) {
+    console.error("[claims] policy update failed", error.message);
+    return { status: "error", message: GENERIC_ERROR, values: typed };
+  }
+
+  if ((data?.length ?? 0) === 0) {
+    return {
+      status: "error",
+      message:
+        "The carrier and policy are recorded by the owner and by the adjuster the claim is assigned to.",
+      values: typed,
+    };
+  }
+
+  /* `audit_claims` has already logged the column-by-column diff with its actor,
+     so this row is not the record of *what* changed. It is the record of what
+     the change was for: these three columns are what the `lor_sent` gate reads,
+     and an entry naming the claim and saying whether the file had a carrier
+     before is what an auditor reading backwards from a letter needs. */
+  await writeAudit(createAdminClient(), {
+    actorId: session.userId,
+    action: "claim.policy_updated",
+    entity: "claims",
+    entityId: claimId,
+    meta: {
+      claim_ref: claim.claim_ref,
+      carrier: parsed.data.carrier,
+      policy_number: parsed.data.policyNumber,
+      carrier_tenure: parsed.data.carrierTenure,
+      first_entry: !namesAPolicy(claim),
+    },
+  });
+
+  revalidateClaim(claimId);
+
+  /* Three sentences, because "saved" is the least useful of them. A correction
+     is not a first entry, and a first entry made while the claim is sitting at
+     `under_review` has just lifted the block the operator was reading a moment
+     ago — which is the outcome they came here for, and the one place it can be
+     confirmed. Anywhere earlier in the lifecycle there is no block to lift yet,
+     so saying so would be describing a screen they have not seen. */
+  if (namesAPolicy(claim)) {
+    return {
+      status: "success",
+      message: `Policy details updated for ${claim.claim_ref}.`,
+    };
+  }
+
+  return {
+    status: "success",
+    message:
+      claim.status === "under_review"
+        ? `Policy details recorded for ${claim.claim_ref}. The letter of representation is no longer held back.`
+        : `Policy details recorded for ${claim.claim_ref}.`,
   };
 }
 

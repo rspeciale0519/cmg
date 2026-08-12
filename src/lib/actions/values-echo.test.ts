@@ -67,7 +67,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { createPartnerCompany, updatePartnerCompany } from "./partners";
 import { inviteStaff } from "./staff";
-import { postClaimEvent, saveClaimFinancials } from "./claims";
+import { postClaimEvent, saveClaimFinancials, saveClaimPolicy } from "./claims";
 import { idleInviteIssueState, idleState, submittedValues } from "./types";
 
 function form(fields: Record<string, string>): FormData {
@@ -221,6 +221,29 @@ describe("saveClaimFinancials", () => {
     expect(state.fieldErrors?.feePercent).toBeDefined();
     expect(state.message).toBe("Check the highlighted fields and save again.");
     expect(state.values?.settlementAmount).toBe("abc");
+  });
+});
+
+describe("saveClaimPolicy", () => {
+  it("keeps the carrier taken down the phone when the tenure select is refused", async () => {
+    const state = await saveClaimPolicy(
+      idleState,
+      form({
+        claimId: stub.claim.id,
+        carrier: "Citizens Property Insurance",
+        policyNumber: "FL-CPI-4410",
+        carrierTenure: "",
+      }),
+    );
+
+    expect(state.status).toBe("error");
+    expect(state.fieldErrors?.carrierTenure).toBeDefined();
+    /* The select is the field that would lose its value silently — an
+       uncontrolled `<select>` snaps back to its mount-time option — but the two
+       inputs beside it were typed off a phone call, and a refusal that made
+       them be re-read from the homeowner is a refusal that costs a second call. */
+    expect(state.values?.carrier).toBe("Citizens Property Insurance");
+    expect(state.values?.policyNumber).toBe("FL-CPI-4410");
   });
 });
 

@@ -2,8 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { hasSignedLor, isLegalTransition, legalTransitions, transitionBlocks } =
-  await import("./transitions");
+const {
+  claimNamesAPolicy,
+  hasSignedLor,
+  isLegalTransition,
+  legalTransitions,
+  namesAPolicy,
+  transitionBlocks,
+} = await import("./transitions");
 
 type RpcResult = { data: unknown; error: { message: string } | null };
 
@@ -25,6 +31,17 @@ function clientWithDocuments(result: {
   const select = vi.fn().mockReturnValue({ eq: eqClaim });
   const from = vi.fn().mockReturnValue({ select });
   return { client: { from } as never, from, select, eqClaim, eqKind };
+}
+
+function clientWithClaim(result: {
+  data: { carrier: string | null; policy_number: string | null } | null;
+  error: { message: string } | null;
+}) {
+  const maybeSingle = vi.fn().mockResolvedValue(result);
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq });
+  const from = vi.fn().mockReturnValue({ select });
+  return { client: { from } as never, from, select, eq };
 }
 
 beforeEach(() => {
@@ -106,6 +123,84 @@ describe("hasSignedLor", () => {
   it("is false when the read fails", async () => {
     const { client } = clientWithDocuments({ data: null, error: { message: "nope" } });
     expect(await hasSignedLor(client, "claim-1")).toBe(false);
+  });
+});
+
+describe("namesAPolicy", () => {
+  it("is true only when the claim carries both columns", () => {
+    expect(namesAPolicy({ carrier: "Citizens", policy_number: "FL-1" })).toBe(true);
+  });
+
+  it("is false for a partner referral, which carries neither", () => {
+    expect(namesAPolicy({ carrier: null, policy_number: null })).toBe(false);
+  });
+
+  it("is false with a carrier and no policy number", () => {
+    // Half the answer is still no: the letter cites a policy number, and one
+    // sent without it names an insurer but not the contract it is about.
+    expect(namesAPolicy({ carrier: "Citizens", policy_number: null })).toBe(false);
+  });
+
+  it("treats blank as absent, because no CHECK stops a column being whitespace", () => {
+    expect(namesAPolicy({ carrier: "  ", policy_number: "FL-1" })).toBe(false);
+    expect(namesAPolicy({ carrier: "Citizens", policy_number: "\t" })).toBe(false);
+  });
+});
+
+describe("claimNamesAPolicy", () => {
+  it("reads the two columns off the claim", async () => {
+    const { client, from, eq } = clientWithClaim({
+      data: { carrier: "Citizens", policy_number: "FL-1" },
+      error: null,
+    });
+
+    expect(await claimNamesAPolicy(client, "claim-1")).toBe(true);
+    expect(from).toHaveBeenCalledWith("claims");
+    expect(eq).toHaveBeenCalledWith("id", "claim-1");
+  });
+
+  it("is false when the read fails", async () => {
+    const { client } = clientWithClaim({ data: null, error: { message: "down" } });
+    expect(await claimNamesAPolicy(client, "claim-1")).toBe(false);
+  });
+
+  it("is false for a claim the caller cannot see", async () => {
+    // Zero rows is `claims_select` declining, and a claim this caller cannot
+    // read is not one they can advance either.
+    const { client } = clientWithClaim({ data: null, error: null });
+    expect(await claimNamesAPolicy(client, "claim-1")).toBe(false);
+  });
+});
+
+describe("transitionBlocks — the letter needs an addressee", () => {
+  it("blocks lor_sent with a reason when the claim names no carrier", async () => {
+    const { client } = clientWithClaim({
+      data: { carrier: null, policy_number: null },
+      error: null,
+    });
+    const blocks = await transitionBlocks(client, "claim-1", ["lor_sent", "rejected"]);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].to).toBe("lor_sent");
+    // The reason has to name the fix and where it is made — a disabled pill with
+    // no sentence teaches an adjuster nothing about what to do next.
+    expect(blocks[0].reason).toMatch(/Policy and carrier/);
+  });
+
+  it("does not block once both are on the file", async () => {
+    const { client } = clientWithClaim({
+      data: { carrier: "Citizens", policy_number: "FL-1" },
+      error: null,
+    });
+    expect(await transitionBlocks(client, "claim-1", ["lor_sent", "rejected"])).toEqual([]);
+  });
+
+  it("does not query at all when lor_sent is not on offer", async () => {
+    const { client, from } = clientWithClaim({ data: null, error: null });
+    expect(await transitionBlocks(client, "claim-1", ["under_review", "rejected"])).toEqual(
+      [],
+    );
+    expect(from).not.toHaveBeenCalled();
   });
 });
 

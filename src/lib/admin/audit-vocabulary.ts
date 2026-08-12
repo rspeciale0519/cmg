@@ -43,6 +43,7 @@ export const AUDIT_ENTITIES: readonly AuditEntity[] = [
       { value: "claims.delete", label: "Claim deleted" },
       { value: "claim.intake_accepted", label: "Intake accepted" },
       { value: "claim.intake_rejected", label: "Intake rejected" },
+      { value: "claim.policy_updated", label: "Policy details recorded" },
       { value: "esign.lor_sent", label: "LOR sent for signature" },
       { value: "esign.lor_send_failed", label: "LOR send failed" },
       { value: "esign.lor_signed", label: "LOR signed" },

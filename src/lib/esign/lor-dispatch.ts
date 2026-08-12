@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
+import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
 import type { Database } from "@/types/database";
@@ -44,6 +45,8 @@ export type SendLorSuccess = {
 export type SendLorFailureCode =
   | "claim_not_found"
   | "invalid_status"
+  /** No carrier or no policy number: there is nobody to address the letter to. */
+  | "missing_policy"
   | "no_claimants"
   | "not_configured"
   | "provider_error"
@@ -86,11 +89,12 @@ function tokensFor(
 
   return [
     { name: "Claim.Ref", value: claim.claim_ref },
-    /* Empty rather than "null" on the page. Both are nullable since Phase 6 —
-       a partner referral carries no policy side until staff take it on accept —
-       and a Letter of Representation with a blank carrier is a document that
-       visibly needs completing, which is the honest outcome of sending one
-       before the details were collected. */
+    /* Both are nullable in the type since Phase 6 — a partner referral carries
+       no policy side until staff record it — and neither is null by the time it
+       reaches here: `dispatchLorForClaim` refuses the claim above. The coalesce
+       is what the type requires, not a blank the letter is willing to print.
+       `Claim.ClaimNumber` is different and stays optional: the carrier issues it
+       after the claim is filed, so a letter sent before then honestly has none. */
     { name: "Claim.Carrier", value: claim.carrier ?? "" },
     { name: "Claim.PolicyNumber", value: claim.policy_number ?? "" },
     { name: "Claim.ClaimNumber", value: claim.claim_number ?? "" },
@@ -185,6 +189,22 @@ export async function dispatchLorForClaim(
       ok: false,
       code: "invalid_status",
       message: `A Letter of Representation is sent from under_review; this claim is ${claim.status}.`,
+    };
+  }
+
+  /* Refused before the provider is called, not after. The claim's own transition
+     to `lor_sent` is gated on these two columns in the app and in
+     `public.enforce_claim_status_transition()`, and without this check the
+     database gate would fire on the UPDATE *below* — after the letter had been
+     put in front of the homeowner. The order matters more than the rule: an
+     unsent letter is a refusal, a sent one naming no carrier is a document that
+     should never have existed. */
+  if (!namesAPolicy(claim)) {
+    return {
+      ok: false,
+      code: "missing_policy",
+      message:
+        "This claim has no carrier or policy number on file, and the letter is addressed to the carrier. Record them on the claim first.",
     };
   }
 

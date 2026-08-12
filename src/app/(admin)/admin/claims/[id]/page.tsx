@@ -1,5 +1,6 @@
 import { Panel, PanelBody } from "@/components/admin/admin-shell";
 import { Fact, FactList } from "@/components/admin/data-table";
+import { PolicyForm } from "@/components/admin/policy-form";
 import { ReassignForm } from "@/components/admin/reassign-form";
 import { StatusAdvance } from "@/components/admin/status-advance";
 import { loadAdjusters, loadClaimContext } from "@/lib/claims/queries";
@@ -9,7 +10,6 @@ import {
   formatTimeOnly,
   formatTimestamp,
   humanizeEnum,
-  NOT_SUPPLIED,
 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -75,49 +75,45 @@ export default async function ClaimOverviewPage({
 
         <Panel title="Policy and carrier">
           <PanelBody>
-            <FactList columns={2}>
-              {/* All three are absent on a partner referral until staff take
-                  them from the homeowner. Said in words rather than left blank:
-                  an empty cell beside a filled one reads as a rendering fault,
-                  and the operator's next move depends on knowing which it is. */}
-              <Fact label="Carrier">
-                {claim.carrier ?? <span className="text-ink/58">{NOT_SUPPLIED}</span>}
-              </Fact>
-              <Fact label="Policy number">
-                {claim.policyNumber ? (
-                  <span className="tabular-nums">{claim.policyNumber}</span>
-                ) : (
-                  <span className="text-ink/58">{NOT_SUPPLIED}</span>
-                )}
-              </Fact>
-              <Fact label="With this carrier">
-                {claim.carrierTenure ? (
-                  humanizeEnum(claim.carrierTenure)
-                ) : (
-                  <span className="text-ink/58">{NOT_SUPPLIED}</span>
-                )}
-              </Fact>
-              <Fact label="Carrier claim number">
-                {claim.claimNumber ? (
-                  <span className="tabular-nums">{claim.claimNumber}</span>
-                ) : (
-                  <span className="text-ink/58">Not issued yet</span>
-                )}
-              </Fact>
-              <Fact label="Prior roof claim">
-                {claim.priorRoofClaim
-                  ? humanizeEnum(claim.priorOutcome)
-                  : "None reported"}
-              </Fact>
-              <Fact label="Property">
-                {claim.propertyStreet}
-                {claim.propertyStreet2 ? `, ${claim.propertyStreet2}` : ""}
-                <span className="block text-[13px] text-ink/55">
-                  {claim.propertyCity}, {claim.propertyState}{" "}
-                  <span className="tabular-nums">{claim.propertyZip}</span>
-                </span>
-              </Fact>
-            </FactList>
+            {/* Editable, because these three are what the `lor_sent` gate reads
+                and a partner referral arrives without them — and until now no
+                screen could supply them once the claim had left the intake
+                queue. */}
+            <PolicyForm
+              claimId={id}
+              carrier={claim.carrier}
+              policyNumber={claim.policyNumber}
+              carrierTenure={claim.carrierTenure}
+              canManage={can.canManage}
+            />
+
+            {/* What the panel states rather than takes: a carrier claim number
+                is issued by the carrier, and the prior-claim answer and the
+                address came from the intake and are not edited here. */}
+            <div className="mt-[18px] border-t border-ink/9 pt-[18px]">
+              <FactList columns={2}>
+                <Fact label="Carrier claim number">
+                  {claim.claimNumber ? (
+                    <span className="tabular-nums">{claim.claimNumber}</span>
+                  ) : (
+                    <span className="text-ink/58">Not issued yet</span>
+                  )}
+                </Fact>
+                <Fact label="Prior roof claim">
+                  {claim.priorRoofClaim
+                    ? humanizeEnum(claim.priorOutcome)
+                    : "None reported"}
+                </Fact>
+                <Fact label="Property">
+                  {claim.propertyStreet}
+                  {claim.propertyStreet2 ? `, ${claim.propertyStreet2}` : ""}
+                  <span className="block text-[13px] text-ink/55">
+                    {claim.propertyCity}, {claim.propertyState}{" "}
+                    <span className="tabular-nums">{claim.propertyZip}</span>
+                  </span>
+                </Fact>
+              </FactList>
+            </div>
           </PanelBody>
         </Panel>
       </div>

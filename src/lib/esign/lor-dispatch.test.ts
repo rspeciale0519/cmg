@@ -365,6 +365,40 @@ describeDb("dispatchLorForClaim against the local database", () => {
     ).resolves.toMatchObject({ ok: false, code: "invalid_status" });
   });
 
+  /**
+   * The refusal has to come *before* the provider is called. A partner referral
+   * carries no carrier and no policy number (§6 asks the rep for neither), and
+   * `enforce_claim_status_transition()` now refuses `lor_sent` without them — so
+   * without this check the database would stop the claim one statement *after*
+   * the letter had gone out. An unsent letter is a refusal; a sent one naming no
+   * carrier is a legal instrument that should never have existed.
+   */
+  it("refuses a claim with no carrier before any letter is produced", async () => {
+    const claim = await support.seedClaim(admin, { status: "under_review" });
+    created.push({ id: claim.id, claimRef: claim.claimRef });
+
+    await admin
+      .from("claims")
+      .update({ carrier: null, policy_number: null })
+      .eq("id", claim.id);
+
+    const provider = new ManualSignProvider();
+    const dispatch = vi.spyOn(provider, "dispatchLor");
+
+    await expect(
+      dispatchLorForClaim({ claimId: claim.id }, { admin, provider }),
+    ).resolves.toMatchObject({ ok: false, code: "missing_policy" });
+
+    expect(dispatch).not.toHaveBeenCalled();
+
+    const { data: after } = await admin
+      .from("claims")
+      .select("status")
+      .eq("id", claim.id)
+      .single();
+    expect(after!.status).toBe("under_review");
+  });
+
   it("refuses a claim id that does not exist", async () => {
     const missing = sendLorRequestFixture().claimId;
 

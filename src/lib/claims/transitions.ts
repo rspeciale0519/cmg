@@ -85,7 +85,71 @@ export async function hasSignedLor(
   return (data?.length ?? 0) > 0;
 }
 
+/** The two columns a Letter of Representation is written against. */
+export type PolicyIdentity = {
+  carrier: string | null;
+  policy_number: string | null;
+};
+
+/**
+ * Whether this claim knows whose policy it is about.
+ *
+ * Blank counts as absent, not as a value. `carrier` is nullable so a partner
+ * referral can state that nobody was asked (see the 20260812120000 migration),
+ * and the column carries no length CHECK — so `''` is reachable in principle and
+ * would name a carrier no more than null does.
+ *
+ * Pure, and separate from the reader below, because two callers hold the row in
+ * different ways: the picker has only a claim id, and `advanceClaimStatus` has
+ * already read the row through `claims_select`. One definition of "present" is
+ * what stops the disabled control and the action from disagreeing.
+ */
+export function namesAPolicy(claim: PolicyIdentity): boolean {
+  return (claim.carrier ?? "").trim().length > 0 &&
+    (claim.policy_number ?? "").trim().length > 0;
+}
+
+/**
+ * The same question asked of a claim the caller has only the id of, through
+ * their own client so `claims_select` answers it.
+ *
+ * Fails closed for the same reason `hasSignedLor` does: a claim this caller
+ * cannot read is a claim they cannot advance, and a read that failed is not
+ * evidence that a carrier is on the file.
+ */
+export async function claimNamesAPolicy(
+  supabase: Client,
+  claimId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("claims")
+    .select("carrier, policy_number")
+    .eq("id", claimId)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error(
+      "[status-machine] policy lookup failed",
+      error?.message ?? "no such claim",
+    );
+    return false;
+  }
+
+  return namesAPolicy(data);
+}
+
 export type TransitionBlock = { to: ClaimStatus; reason: string };
+
+/**
+ * Each reason names the fix and where it is made. "Policy and carrier" is the
+ * title of the panel directly below the picker on the same screen, so the
+ * sentence points at something the reader can already see.
+ */
+export const NO_POLICY_REASON =
+  "Record the carrier and the policy number under Policy and carrier on this page first. The letter is addressed to the carrier and cites the policy, so one sent without them names neither.";
+
+export const NO_SIGNED_LOR_REASON =
+  "Upload the signed letter of representation to Documents first — the file has to hold one before representation can be marked signed.";
 
 /**
  * The moves that are legal by the status machine but blocked by a condition
@@ -93,20 +157,35 @@ export type TransitionBlock = { to: ClaimStatus; reason: string };
  * can render the move *and* say why it is unavailable — a control that simply
  * omits `lor_signed` teaches an adjuster nothing about what to do next, and
  * "upload the signed letter" is exactly what they need to be told.
+ *
+ * There are two such conditions, one per representation step, and they guard
+ * the same document from opposite ends: a Letter of Representation cannot be
+ * called sent while the claim names no carrier to address it to, and cannot be
+ * called signed while the file holds no signed copy of it.
+ *
+ * The first is new because the premise it was left out on turned out to be
+ * false. A partner referral carries no carrier — §6 does not ask the referring
+ * rep for one — and `acceptIntake`, which collects it, is not the only door out
+ * of `new_intake`: this very picker offers `new_intake → under_review`, and
+ * from `under_review` the letter is one legal move away.
+ *
+ * At most one query runs. No status offers both moves: `under_review` offers
+ * `lor_sent`, `lor_sent` offers `lor_signed`.
  */
 export async function transitionBlocks(
   supabase: Client,
   claimId: string,
   allowed: readonly ClaimStatus[],
 ): Promise<TransitionBlock[]> {
-  if (!allowed.includes("lor_signed")) return [];
-  if (await hasSignedLor(supabase, claimId)) return [];
+  const blocks: TransitionBlock[] = [];
 
-  return [
-    {
-      to: "lor_signed",
-      reason:
-        "Upload the signed letter of representation to Documents first — the file has to hold one before representation can be marked signed.",
-    },
-  ];
+  if (allowed.includes("lor_sent") && !(await claimNamesAPolicy(supabase, claimId))) {
+    blocks.push({ to: "lor_sent", reason: NO_POLICY_REASON });
+  }
+
+  if (allowed.includes("lor_signed") && !(await hasSignedLor(supabase, claimId))) {
+    blocks.push({ to: "lor_signed", reason: NO_SIGNED_LOR_REASON });
+  }
+
+  return blocks;
 }
