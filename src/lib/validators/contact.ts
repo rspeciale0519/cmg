@@ -21,7 +21,7 @@ export const CONTACT_CONSENT_TEXT =
 
 export const contactSchema = z.object({
   name: requiredName("Full name"),
-  phone: requiredPhone,
+  phone: requiredPhone(),
   email: optionalEmail,
   message: optionalText(4000),
   turnstileToken,

@@ -32,10 +32,12 @@ export default async function PartnerNotFound() {
       intro="The address does not name anything in your portal. Your referred claims are all reachable from one page."
       identity={identity}
     >
-      <p className="text-[15px] leading-[1.75] text-ink/72">
+      {/* The customer portal's 404 gives its one way out a 46px box; this gave
+          the same job a 19px line of text. One product, one target size. */}
+      <p>
         <Link
           href="/partner"
-          className="text-accent no-underline transition-colors duration-200 hover:text-accent-300"
+          className="inline-flex min-h-11 items-center text-[15px] leading-[1.75] text-accent no-underline transition-colors duration-200 hover:text-accent-300"
         >
           Back to your referred claims
         </Link>

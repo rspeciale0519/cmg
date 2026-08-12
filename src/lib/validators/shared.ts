@@ -1,4 +1,10 @@
 import { z } from "zod";
+import { businessToday, EARLIEST_LOSS_DATE } from "./loss-date-bounds";
+
+/* Re-exported so server callers keep one import site for the validator
+   vocabulary; client components must import from `./loss-date-bounds` directly
+   or the zod split is undone. Same arrangement as `./intake-options`. */
+export { businessToday, EARLIEST_LOSS_DATE };
 
 /** FormData yields `""` for untouched optional inputs; treat that as absent. */
 export const optionalText = (max: number) =>
@@ -35,45 +41,28 @@ export const requiredEmail = z
  * Deliberately permissive: CMG takes calls from anywhere and a homeowner filing
  * after a hurricane should not be argued with about punctuation. Requires seven
  * digits, which is the shortest string that can be a real phone number.
+ *
+ * Takes its sentence, the way `requiredName` takes a label, because this field
+ * is not always about the person filling the form in. On `/partner/refer` a
+ * contractor types the *homeowner's* number under a hint that says so — "We call
+ * the homeowner ourselves — this is the number we use" — and the error under it
+ * read "Enter a phone number we can reach you on." Two sentences on one field,
+ * disagreeing about whose number it is.
  */
-export const requiredPhone = z
-  .string()
-  .trim()
-  .min(7, "Enter a phone number we can reach you on.")
-  .max(40, "Phone number must be 40 characters or fewer.")
-  .refine((value) => (value.replace(/\D/g, "").length >= 7), {
-    message: "Enter a phone number we can reach you on.",
-  });
+export const requiredPhone = (
+  message = "Enter a phone number we can reach you on.",
+) =>
+  z
+    .string()
+    .trim()
+    .min(7, message)
+    .max(40, "Phone number must be 40 characters or fewer.")
+    .refine((value) => value.replace(/\D/g, "").length >= 7, { message });
 
 export const turnstileToken = z
   .string()
   .min(1, "Complete the verification challenge before submitting.")
   .max(4096);
-
-const EARLIEST_LOSS_DATE = "1990-01-01";
-
-/**
- * Today in Florida, not today in UTC.
- *
- * This bound was `new Date().toISOString().slice(0, 10)`, which between 8pm and
- * midnight Eastern is already tomorrow's date — so for four hours every evening
- * the public form accepted a date of loss one day in the future, and the storm
- * a homeowner is filing about had not happened yet. It was the one date
- * comparison in the codebase not routed through the business zone; everything
- * that renders or filters a timestamp goes through `America/New_York` already
- * (`format.ts`, `audit-range.ts`).
- *
- * `en-CA` because it formats as `YYYY-MM-DD`, which is the shape this string is
- * compared against.
- */
-function businessToday(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
 
 /**
  * Here rather than in `./intake`, because two forms now take a date of loss —

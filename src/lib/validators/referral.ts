@@ -34,7 +34,7 @@ export const referralSchema = z.object({
   firstName: requiredName("Homeowner's first name"),
   lastName: requiredName("Homeowner's last name"),
   email: requiredEmail,
-  phone: requiredPhone,
+  phone: requiredPhone("Enter a phone number we can reach the homeowner on."),
 
   street: z.string().trim().min(1, "Street address is required.").max(160),
   street2: optionalText(160),

@@ -16,6 +16,7 @@ import { idleState, resilient } from "@/lib/actions/types";
    client component importing from it ships zod to the browser. `intake-options`
    holds the same tables with no zod in its import graph. */
 import { CAUSE_OPTIONS, US_STATES } from "@/lib/validators/intake-options";
+import { businessToday, EARLIEST_LOSS_DATE } from "@/lib/validators/loss-date-bounds";
 import { FormFeedback, SubmitButton } from "./form-controls";
 
 const STATE_OPTIONS = US_STATES.map((name) => ({ value: name, label: name }));
@@ -113,18 +114,22 @@ export function ReferralForm() {
           policy details from them — you were not asked for those and do not need
           to chase them. The status moves as the claim does.
         </SuccessBody>
+        {/* `ink/58`, not the `ink/55` the rest of the surface uses: this panel
+            carries `bg-accent/7`, so the background composites lighter and the
+            same class measured 4.46:1 here against 4.85:1 on the canvas. The
+            tint is what fails it. */}
         {state.reference ? (
-          <p className="mt-7 border-t border-accent/25 pt-5 text-[13px] uppercase leading-[1.6] tracking-[0.18em] text-ink/55">
+          <p className="mt-7 border-t border-accent/25 pt-5 text-[13px] uppercase leading-[1.6] tracking-[0.18em] text-ink/58">
             Reference
             <span className="mt-1 block text-[19px] tracking-[0.04em] text-accent">
               {state.reference}
             </span>
           </p>
         ) : null}
-        <p className="mt-7 text-[15px] leading-[1.75]">
+        <p className="mt-7">
           <Link
             href="/partner"
-            className="text-accent no-underline transition-colors duration-200 hover:text-accent-300"
+            className="inline-flex min-h-11 items-center text-[15px] leading-[1.75] text-accent no-underline transition-colors duration-200 hover:text-accent-300"
           >
             Back to your referred claims
           </Link>
@@ -231,11 +236,20 @@ export function ReferralForm() {
 
       <Group step="03" title="The loss">
         <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(200px,1fr))]`}>
+          {/* The same bounds the schema enforces, given to the picker as well.
+              The server refuses a future date, but without `max` the rep only
+              learns that by having a filled-in form refused — and the control
+              they are typing into is the one that could have said so. Not a
+              replacement for the server check: `noValidate` is on this form, so
+              these attributes inform the picker's UI and its `rangeOverflow`
+              flag rather than blocking the submit. */}
           <TextField
             name="lossDate"
             label="Date of loss"
             required
             type="date"
+            min={EARLIEST_LOSS_DATE}
+            max={businessToday()}
             defaultValue={values.lossDate ?? ""}
             error={errors.lossDate}
           />

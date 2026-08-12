@@ -28,7 +28,17 @@ export async function generateMetadata({
   const claims = await listPortalClaims();
   const claim = claims.find((row) => row.id === id);
 
-  return { title: claim ? claim.claim_ref : "Claim not found" };
+  if (!claim) return { title: "Claim not found" };
+
+  /* A template as well as a default, because a bare string here *consumes* the
+     portal layout's `%s · Your CMG claim` and declares nothing in its place — so
+     the Activity and Documents tabs, which do name themselves, rendered as bare
+     "Activity" and "Documents", naming neither the claim nor the product. The
+     default keeps the reference alone for Overview, which has no name of its own
+     to add. */
+  return {
+    title: { default: claim.claim_ref, template: `%s · ${claim.claim_ref}` },
+  };
 }
 
 export default async function ClaimLayout({

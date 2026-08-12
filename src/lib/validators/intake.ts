@@ -86,7 +86,7 @@ export const intakeSchema = z
     firstName: requiredName("First name"),
     lastName: requiredName("Last name"),
     email: requiredEmail,
-    phone: requiredPhone,
+    phone: requiredPhone(),
     initials,
 
     hasSecondPolicyholder,

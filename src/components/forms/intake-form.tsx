@@ -20,6 +20,7 @@ import {
   US_STATES,
   YES_NO_OPTIONS,
 } from "@/lib/validators/intake-options";
+import { businessToday, EARLIEST_LOSS_DATE } from "@/lib/validators/loss-date-bounds";
 import {
   CheckboxField,
   FileField,
@@ -225,7 +226,12 @@ export function IntakeForm() {
 
         <IntakeSection step="03" title="The loss">
           <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(180px,1fr))]`}>
-            <TextField name="lossDate" label="Date of loss" required type="date" error={errors.lossDate} />
+            {/* The schema's own bounds, handed to the picker as well, so a
+                homeowner reaching for a future date is told by the control
+                rather than by a refused form. `noValidate` is on this form, so
+                these inform the picker rather than blocking the submit — the
+                server check is still the gate. */}
+            <TextField name="lossDate" label="Date of loss" required type="date" min={EARLIEST_LOSS_DATE} max={businessToday()} error={errors.lossDate} />
             <TextField name="lossTime" label="Approximate time" required type="time" error={errors.lossTime} />
             <SelectField name="cause" label="Cause of loss" required options={CAUSE_OPTIONS} error={errors.cause} />
           </div>
