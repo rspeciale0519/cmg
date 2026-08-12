@@ -269,6 +269,7 @@ export default async function ClaimsPage({
           )
         ) : (
           <DataTable
+            stickyColumnWidth={148}
             caption={`Claims, sorted by ${SORT_LABEL[sort.key]}`}
             /* 1080, up from 1040, because REFERENCE and REFERRED BY each gained
                width below and the flexible Homeowner column would otherwise
@@ -324,7 +325,14 @@ export default async function ClaimsPage({
                     </Link>
                   </Td>
                   <Td>
-                    <span className="block truncate">
+                    <span
+                      className="block truncate"
+                      title={
+                        primary
+                          ? `${primary.first_name} ${primary.last_name}`.trim()
+                          : undefined
+                      }
+                    >
                       {primary
                         ? `${primary.first_name} ${primary.last_name}`.trim()
                         : "—"}
@@ -341,7 +349,7 @@ export default async function ClaimsPage({
                       <StatusPill status={claim.status} />
                     ) : null}
                   </Td>
-                  <Td tone="meta" className="truncate">
+                  <Td tone="meta" className="truncate" title={adjusterName ?? undefined}>
                     {adjusterName || (
                       <span className="text-accent/70">Unassigned</span>
                     )}

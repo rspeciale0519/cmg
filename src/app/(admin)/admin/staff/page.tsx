@@ -102,6 +102,7 @@ export default async function StaffPage({
         }
       >
         <DataTable
+          stickyColumnWidth={189}
           caption="Staff accounts with role, access and second-factor state"
           head={
             <>

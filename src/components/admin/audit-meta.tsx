@@ -224,10 +224,18 @@ function ClaimRefValue({ value }: { value: string }) {
 export function AuditMeta({
   meta,
   claimRef,
+  omitClaim,
 }: {
   meta: Json;
   /** `meta.claim_id` resolved by `loadAuditPage`, when it named a live claim. */
   claimRef?: string | null;
+  /**
+   * Drops the claim identity from the meta. Set on a claim's own History tab,
+   * where every entry is about that claim by construction, so "Claim id
+   * 20000000-…" on each of seventeen rows is the same uuid seventeen times and
+   * the one field guaranteed to carry no information on that screen.
+   */
+  omitClaim?: boolean;
 }) {
   if (!isJsonObject(meta)) {
     if (meta === null) return null;
@@ -273,7 +281,7 @@ export function AuditMeta({
     : [];
 
   const others = Object.entries(rest)
-    .filter(([, value]) => value !== undefined)
+    .filter(([key, value]) => value !== undefined && !(omitClaim && key === "claim_id"))
     .sort(byReadingOrder);
 
   if (

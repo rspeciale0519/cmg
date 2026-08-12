@@ -10,6 +10,8 @@ export type InvitableClaimant = {
   name: string;
   email: string;
   claimRef: string;
+  /** Owner, or the adjuster this row's claim is assigned to — the action's rule. */
+  canInvite: boolean;
 };
 
 /**
@@ -17,6 +19,17 @@ export type InvitableClaimant = {
  * invitations automatically (§6), so a row here means one of them did not send
  * — a bounced address, or a claim accepted before this flow existed. It is a
  * repair list, and it is empty on a healthy day.
+ *
+ * `canInvite` is not decoration. `claimants_select` admits an assistant to every
+ * claimant row, so the panel populates for them, but `issueClaimantInvite`
+ * allows only an owner or the claim's own adjuster — so an assistant was shown a
+ * Send invite button on every row that the server would refuse every time, and
+ * the refusal it answered with is `GENERIC_ERROR`: "We could not submit that just
+ * now. Please try again, or call us and we'll take the details over the phone."
+ * A permission they will never hold, described as a transient failure, with an
+ * invitation to keep trying and then telephone the office. The claim's own
+ * Claimants tab has always got this right — see `ClaimantInvite`, which says
+ * "No portal access" — so the two screens disagreed about the same operation.
  */
 export function InvitePanel({
   claimants,
@@ -55,12 +68,18 @@ export function InvitePanel({
                 {claimant.email} · <span className="tabular-nums">{claimant.claimRef}</span>
               </p>
             </div>
-            <form action={formAction}>
-              <input type="hidden" name="claimantId" value={claimant.id} />
-              <SubmitButton variant="secondary" pendingLabel="Sending…">
-                Send invite
-              </SubmitButton>
-            </form>
+            {claimant.canInvite ? (
+              <form action={formAction}>
+                <input type="hidden" name="claimantId" value={claimant.id} />
+                <SubmitButton variant="secondary" pendingLabel="Sending…">
+                  Send invite
+                </SubmitButton>
+              </form>
+            ) : (
+              <span className="text-[12px] leading-[1.4] text-ink/58">
+                No portal access
+              </span>
+            )}
           </li>
         ))}
       </ul>

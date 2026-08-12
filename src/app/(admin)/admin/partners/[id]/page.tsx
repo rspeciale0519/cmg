@@ -221,11 +221,12 @@ export default async function PartnerDetailPage({
           ) : (
             <>
             <DataTable
+              stickyColumnWidth={224}
               caption={`Representatives of ${company.name}`}
               head={
                 <>
-                  <Th className="w-[30%]">Rep</Th>
-                  <Th className="w-[30%]">Email</Th>
+                  <Th className="w-[26%]">Rep</Th>
+                  <Th className="w-[32%]">Email</Th>
                   <Th className="w-[18%]">Phone</Th>
                   <Th className="w-[22%]">Last signed in</Th>
                 </>
@@ -322,6 +323,7 @@ export default async function PartnerDetailPage({
           ) : (
             <>
             <DataTable
+              stickyColumnWidth={172}
               caption={`Claims referred by ${company.name}`}
               head={
                 <>

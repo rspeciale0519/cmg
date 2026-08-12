@@ -88,7 +88,9 @@ export default async function AdminDashboard() {
       .limit(6),
     supabase
       .from("claimants")
-      .select("id, first_name, last_name, email, claims!inner(claim_ref, status)")
+      .select(
+        "id, first_name, last_name, email, claims!inner(claim_ref, status, assigned_adjuster_id)",
+      )
       .is("user_id", null)
       .neq("claims.status", "new_intake")
       .neq("claims.status", "rejected")
@@ -120,11 +122,22 @@ export default async function AdminDashboard() {
   // stage numbers under it are one measurement rather than two of the same set.
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
+  /**
+   * The same rule `issueClaimantInvite` enforces — owner, or the adjuster the
+   * claim is assigned to — decided per row rather than per session, because a
+   * dashboard spans claims and an adjuster may hold some of them and not others.
+   * `claimants_select` admits an assistant to all of these rows, so without this
+   * the panel offered them a button the server refuses every time.
+   */
   const invitable: InvitableClaimant[] = (uninvited.data ?? []).map((row) => ({
     id: row.id,
     name: `${row.first_name} ${row.last_name}`.trim(),
     email: row.email,
     claimRef: row.claims?.claim_ref ?? "—",
+    canInvite:
+      session.role === "owner" ||
+      (session.role === "adjuster" &&
+        row.claims?.assigned_adjuster_id === session.userId),
   }));
   const invitableTotal = uninvitedCount.count ?? invitable.length;
 
@@ -285,6 +298,7 @@ export default async function AdminDashboard() {
             </EmptyState>
           ) : (
             <DataTable
+              stickyColumnWidth={132}
               caption="Recently updated claims"
               /* The default floor is 860, which is the claims list's number: seven
                  columns with 746px of fixed width before the flexible one gets

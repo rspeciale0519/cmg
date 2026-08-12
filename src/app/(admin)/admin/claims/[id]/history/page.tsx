@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { EmptyState, Panel, PanelBody } from "@/components/admin/admin-shell";
+import { AuditMeta } from "@/components/admin/audit-meta";
 import { ListPager, listMeta } from "@/components/admin/list-pager";
 import { StatusPill } from "@/components/admin/status-pill";
-import { actionLabel } from "@/lib/admin/audit-vocabulary";
+import { actionLabel, entityLabel, splitAction } from "@/lib/admin/audit-vocabulary";
 import { pageCursors } from "@/lib/admin/audit-range";
 import {
   firstParam,
@@ -277,9 +278,21 @@ export default async function HistoryPage({
                         {formatTimestamp(entry.created_at)}
                       </time>
                     </div>
-                    <p className="mt-[3px] font-mono text-[11px] leading-[1.45] text-ink/58">
-                      {entry.action}
+                    {/* The subject, then what actually changed. This panel
+                        selected `meta` and never rendered it, and printed the
+                        raw dotted action underneath — so seventeen entries on
+                        one claim came out as six distinct strings, with eight
+                        consecutive rows reading "Status advanced /
+                        claim_status_history.insert" across 480px. `AuditMeta`
+                        is the component `/admin/audit` uses for exactly this,
+                        and its own note records fixing the identical defect
+                        there; the trail on the claim had been left behind. The
+                        second line is now the action family, as it is there,
+                        rather than a database string the reader has to parse. */}
+                    <p className="mt-[3px] text-[11px] uppercase leading-[1.45] tracking-[0.13em] text-ink/58">
+                      {splitAction(entry.action).family || entityLabel(entry.entity)}
                     </p>
+                    <AuditMeta meta={entry.meta} omitClaim />
                   </li>
                 ))}
               </ol>

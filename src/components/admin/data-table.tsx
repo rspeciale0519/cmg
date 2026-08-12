@@ -33,6 +33,7 @@ export function DataTable({
   caption,
   minWidth = 860,
   stickyFirstColumn = true,
+  stickyColumnWidth,
 }: {
   head: ReactNode;
   children: ReactNode;
@@ -47,9 +48,38 @@ export function DataTable({
    * the row reads "Never / Deactivate" with nothing to attach it to.
    */
   stickyFirstColumn?: boolean;
+  /**
+   * What the first column resolves to at `minWidth`, in pixels — and the reason
+   * it has to be told rather than measured is that this is a server component
+   * and the number is needed in CSS, not in JavaScript.
+   *
+   * It becomes `scroll-padding-inline-start` on the scroller, which is the fix
+   * for a keyboard trap the sticky column had been creating since it was added.
+   * Tab moves focus to a control in a column that is off-screen; the browser
+   * scrolls it into the scrollport and stops, because as far as scrolling is
+   * concerned it *is* visible — and then the sticky first cell, which paints on
+   * top at `z-index: 1` with an opaque fill, covers it. Measured on
+   * `/admin/partners` at 390 before this: the second Tab landed the CONTACT
+   * link at x 119–271 under a sticky cell spanning 17–283.6, so 100% of the
+   * control and its whole focus ring were behind the company name, and
+   * `elementFromPoint` at the link's own left edge returned "Summit Exteriors
+   * LLC". On `/admin/staff` the ROLE select was 59% covered, hiding the word
+   * "Adjuster" — a keyboard user changing a role could not see what it said.
+   *
+   * Telling the scrollport that its first N pixels are spoken for makes the
+   * browser scroll past them instead of up to them.
+   */
+  stickyColumnWidth?: number;
 }) {
   return (
-    <div className="scroll-x-edged">
+    <div
+      className="scroll-x-edged"
+      style={
+        stickyFirstColumn && stickyColumnWidth
+          ? { scrollPaddingInlineStart: `${stickyColumnWidth}px` }
+          : undefined
+      }
+    >
       <table
         style={{ minWidth: `${minWidth}px` }}
         className={cx(
@@ -247,9 +277,9 @@ export function Tr({
 const TD_TONE = {
   value: "text-ink/78",
   /** The address under a street, a company, an adjuster's name. */
-  meta: "text-ink/62",
+  meta: "text-ink/68",
   /** Timestamps and counts — present, deliberately last to be read. */
-  quiet: "text-ink/58",
+  quiet: "text-ink/62",
 } as const;
 
 export function Td({
@@ -257,14 +287,23 @@ export function Td({
   className,
   align = "left",
   tone = "value",
+  title,
 }: {
   children: ReactNode;
   className?: string;
   align?: "left" | "right";
   tone?: keyof typeof TD_TONE;
+  /**
+   * Required whenever the cell truncates. The claims table is 1358px in a
+   * 1358px wrapper at 1440, so there is no horizontal scroll at all and a
+   * clipped name is unrecoverable by any gesture — "Christina Papadopoulos"
+   * lost 46px in the 128px ADJUSTER column with nothing to hover for.
+   */
+  title?: string;
 }) {
   return (
     <td
+      title={title}
       className={cx(
         "px-[clamp(10px,1.1vw,14px)] py-[11px] text-[13px] leading-[1.45] align-middle",
         TD_TONE[tone],

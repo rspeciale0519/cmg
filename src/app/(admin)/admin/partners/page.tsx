@@ -138,18 +138,30 @@ export default async function PartnersPage({
         ) : (
           <DataTable
             caption="Partner companies with their rep and claim counts"
+            /* 22% of 860, and 31% before that. The sticky identity column was
+               266.6px of a 356px scroller at 390 — three quarters of the screen
+               spent on the column that never moves, leaving 89px for the other
+               five. Scroll padding alone cannot keep a focused control clear of
+               a column that wide, because a target wider than what is left of
+               the scrollport cannot be placed past the padding at all: the
+               browser fits what it can and the control ends up under the sticky
+               cell anyway. So the two numbers are chosen together — at 390 the
+               scrollport is 356, the sticky column is 189, and CONTACT, the one
+               other column holding something focusable, is 19% (163px), which
+               fits in the 167px that leaves. */
+            stickyColumnWidth={189}
             head={
               <>
-                <Th className="w-[31%]">Company</Th>
-                <Th className="w-[14%]">Status</Th>
-                <Th className="w-[10%]" align="right">
+                <Th className="w-[22%]">Company</Th>
+                <Th className="w-[16%]">Status</Th>
+                <Th className="w-[11%]" align="right">
                   Reps
                 </Th>
-                <Th className="w-[10%]" align="right">
+                <Th className="w-[11%]" align="right">
                   Claims
                 </Th>
-                <Th className="w-[20%]">Contact</Th>
-                <Th className="w-[15%]">Added</Th>
+                <Th className="w-[19%]">Contact</Th>
+                <Th className="w-[21%]">Added</Th>
               </>
             }
           >

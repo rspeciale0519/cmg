@@ -176,7 +176,7 @@ export default async function ActivityPage({
                       {author ? (
                         <span
                           aria-hidden="true"
-                          className="rounded-full bg-ink/8 px-[6px] py-[1px] text-[10px] tracking-[0.06em] text-ink/58"
+                          className="rounded-full bg-ink/8 px-[6px] py-[1px] text-[10px] tracking-[0.06em] text-ink/68"
                         >
                           {initialsFor(author)}
                         </span>
