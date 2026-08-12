@@ -9,6 +9,17 @@ const MONTHS = [
 ] as const;
 
 /**
+ * What the workspace prints where a partner referral has no policy side yet.
+ *
+ * Not "—", which every other absent value in these tables uses. The dash means
+ * "there is nothing to show"; this means "nobody has been asked yet", and the
+ * operator's next move is different in the two cases — one is a claim to work,
+ * the other is a phone call to make. One string, because the intake card and the
+ * claim overview print it side by side in the same session.
+ */
+export const NOT_SUPPLIED = "Not supplied — taken on accept";
+
+/**
  * A Postgres `date` is a calendar day with no time and no zone, and it must not
  * acquire one on the way to the page. `new Date("2026-03-14")` is parsed as
  * midnight *UTC*, so rendering it through any local-time formatter prints

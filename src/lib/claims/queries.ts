@@ -40,14 +40,16 @@ export type ClaimDetail = {
   propertyCity: string;
   propertyState: string;
   propertyZip: string;
-  carrier: string;
-  policyNumber: string;
-  carrierTenure: string;
+  /* Nullable since Phase 6: a partner referral carries no policy side at all
+     until staff supply it on accept (see the 20260812120000 migration). */
+  carrier: string | null;
+  policyNumber: string | null;
+  carrierTenure: string | null;
   priorRoofClaim: boolean;
   priorOutcome: string | null;
   claimNumber: string | null;
   lossDate: string;
-  lossTime: string;
+  lossTime: string | null;
   cause: string;
   description: string;
   assignedAdjusterId: string | null;

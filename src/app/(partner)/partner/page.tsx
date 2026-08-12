@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   PortalCard,
   PortalEmpty,
@@ -62,10 +63,29 @@ export default async function PartnerPage() {
       intro="Status and milestones on every claim your company sent to CMG. Settlement figures appear once a claim settles."
       identity={identity}
     >
+      {/* The route to the surface's only write. It sits above the list rather
+          than in the header, because `PortalShell`'s header is the identity and
+          the sign-out and is shared with the customer portal — and because a rep
+          arriving here to send a job should not have to read a list of other
+          people's roofs first. */}
+      <p className="mb-[clamp(20px,3vh,28px)]">
+        <Link
+          href="/partner/refer"
+          className="inline-flex min-h-11 items-center rounded-md border border-accent px-5 text-sm leading-[1.55] font-medium text-accent no-underline transition-colors duration-200 hover:bg-accent/12"
+        >
+          Refer a claim
+        </Link>
+      </p>
+
       {!summaries || summaries.length === 0 ? (
         <PortalEmpty>
-          No referrals on file yet. Claims you refer appear here as soon as CMG
-          accepts them.
+          {/* "as soon as CMG accepts them" was wrong the moment this surface
+              could create one: public.refresh_claim_partner_summary() projects a
+              claim the instant it carries a partner_company_id, so a referral
+              sent from this portal appears here immediately, reading "new
+              intake". */}
+          No referrals on file yet. A claim you refer appears here straight away,
+          and its status moves as CMG works it.
         </PortalEmpty>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">

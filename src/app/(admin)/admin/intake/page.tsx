@@ -22,6 +22,7 @@ import {
   formatRelative,
   formatTimeOnly,
   humanizeEnum,
+  NOT_SUPPLIED,
 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -170,18 +171,34 @@ export default async function IntakeQueuePage({
                       <span className="tabular-nums">
                         {formatDateOnly(claim.loss_date)}
                       </span>
-                      <span className="text-ink/55">
-                        {" "}
-                        · {formatTimeOnly(claim.loss_time)}
-                      </span>
+                      {/* Dropped rather than dashed when it is absent: a
+                          referral asks for the date only, and "· —" beside the
+                          date reads as a value that failed to load. */}
+                      {claim.loss_time ? (
+                        <span className="text-ink/55">
+                          {" "}
+                          · {formatTimeOnly(claim.loss_time)}
+                        </span>
+                      ) : null}
                     </Fact>
                     <Fact label="Cause">{humanizeEnum(claim.cause)}</Fact>
+                    {/* A partner referral has no policy side at all — §6 does
+                        not ask the rep for it, and this is the card the operator
+                        decides against, so the gap is stated in words. Blank
+                        cells here would read as three fields that failed to
+                        render on a screen whose whole job is triage. */}
                     <Fact label="Carrier">
-                      {claim.carrier}
-                      <span className="block text-[12.5px] text-ink/55">
-                        Policy {claim.policy_number} ·{" "}
-                        {humanizeEnum(claim.carrier_tenure)}
-                      </span>
+                      {claim.carrier ? (
+                        <>
+                          {claim.carrier}
+                          <span className="block text-[12.5px] text-ink/55">
+                            Policy {claim.policy_number ?? "—"} ·{" "}
+                            {humanizeEnum(claim.carrier_tenure)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-ink/58">{NOT_SUPPLIED}</span>
+                      )}
                     </Fact>
 
                     <Fact label="Contact">
@@ -242,6 +259,7 @@ export default async function IntakeQueuePage({
                   adjusters={adjusters}
                   partners={partners}
                   referrerName={claim.referrer_name}
+                  needsPolicyDetails={claim.carrier === null}
                   canAccept={can.canManage}
                   canLinkPartner={can.isOwner}
                 />

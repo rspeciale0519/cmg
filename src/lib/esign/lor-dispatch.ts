@@ -86,8 +86,13 @@ function tokensFor(
 
   return [
     { name: "Claim.Ref", value: claim.claim_ref },
-    { name: "Claim.Carrier", value: claim.carrier },
-    { name: "Claim.PolicyNumber", value: claim.policy_number },
+    /* Empty rather than "null" on the page. Both are nullable since Phase 6 —
+       a partner referral carries no policy side until staff take it on accept —
+       and a Letter of Representation with a blank carrier is a document that
+       visibly needs completing, which is the honest outcome of sending one
+       before the details were collected. */
+    { name: "Claim.Carrier", value: claim.carrier ?? "" },
+    { name: "Claim.PolicyNumber", value: claim.policy_number ?? "" },
     { name: "Claim.ClaimNumber", value: claim.claim_number ?? "" },
     { name: "Claim.LossDate", value: claim.loss_date },
     { name: "Claim.Cause", value: causeLabel(claim.cause) },

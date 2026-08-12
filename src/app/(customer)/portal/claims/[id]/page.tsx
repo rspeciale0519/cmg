@@ -81,7 +81,7 @@ export default async function ClaimOverviewPage({
             <FactList
               items={[
                 { term: "Reference", value: <span className="tabular-nums">{claim.claim_ref}</span> },
-                { term: "Your insurer", value: claim.carrier },
+                { term: "Your insurer", value: claim.carrier ?? "—" },
                 { term: "Date of loss", value: formatDateOnly(claim.loss_date) },
                 { term: "Cause", value: humanizeEnum(claim.cause) },
               ]}

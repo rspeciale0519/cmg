@@ -50,6 +50,55 @@ export const turnstileToken = z
   .min(1, "Complete the verification challenge before submitting.")
   .max(4096);
 
+const EARLIEST_LOSS_DATE = "1990-01-01";
+
+/**
+ * Today in Florida, not today in UTC.
+ *
+ * This bound was `new Date().toISOString().slice(0, 10)`, which between 8pm and
+ * midnight Eastern is already tomorrow's date — so for four hours every evening
+ * the public form accepted a date of loss one day in the future, and the storm
+ * a homeowner is filing about had not happened yet. It was the one date
+ * comparison in the codebase not routed through the business zone; everything
+ * that renders or filters a timestamp goes through `America/New_York` already
+ * (`format.ts`, `audit-range.ts`).
+ *
+ * `en-CA` because it formats as `YYYY-MM-DD`, which is the shape this string is
+ * compared against.
+ */
+function businessToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/**
+ * Here rather than in `./intake`, because two forms now take a date of loss —
+ * the homeowner's and the referring rep's — and a second copy of this bound is
+ * a second place for the zone to be got wrong.
+ */
+export const lossDate = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date of loss.")
+  .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), {
+    message: "Enter a real date.",
+  })
+  .refine((value) => value >= EARLIEST_LOSS_DATE, {
+    message: "Enter a date of loss from 1990 onwards.",
+  })
+  .refine((value) => value <= businessToday(), {
+    message: "The date of loss cannot be in the future.",
+  });
+
+export const zip = z
+  .string()
+  .trim()
+  .regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code.");
+
 /* `US_STATES` moved to `./intake-options`. It is an option list the intake
    form renders, and every module in this file pulls in zod — importing the
    states from here is what put zod in the browser bundle. */

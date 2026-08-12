@@ -44,7 +44,11 @@ export type PortalClaim = {
   property_city: string;
   property_state: string;
   property_zip: string;
-  carrier: string;
+  /* Nullable since Phase 6 — a partner referral has no carrier until staff take
+     it on accept. A homeowner has no account before that point, so in practice
+     this is never null on a claim they can read; typed honestly anyway, because
+     "in practice" is not a guarantee the compiler can hold. */
+  carrier: string | null;
   loss_date: string;
   loss_time: string | null;
   cause: string;

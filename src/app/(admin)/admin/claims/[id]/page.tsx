@@ -9,6 +9,7 @@ import {
   formatTimeOnly,
   formatTimestamp,
   humanizeEnum,
+  NOT_SUPPLIED,
 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,9 +48,20 @@ export default async function ClaimOverviewPage({
         <Panel title="The loss">
           <PanelBody>
             <FactList columns={2}>
-              <Fact label="Date and time of loss">
+              {/* The time is dropped rather than dashed when it is absent. A
+                  partner referral asks for the date only, and "14 Aug 2026 · —"
+                  reads as a missing value in a pair; the date on its own reads
+                  as the whole answer, which it is. */}
+              <Fact
+                label={claim.lossTime ? "Date and time of loss" : "Date of loss"}
+              >
                 <span className="tabular-nums">{formatDateOnly(claim.lossDate)}</span>
-                <span className="text-ink/55"> · {formatTimeOnly(claim.lossTime)}</span>
+                {claim.lossTime ? (
+                  <span className="text-ink/55">
+                    {" "}
+                    · {formatTimeOnly(claim.lossTime)}
+                  </span>
+                ) : null}
               </Fact>
               <Fact label="Cause">{humanizeEnum(claim.cause)}</Fact>
               <Fact label="What happened" wide>
@@ -64,12 +76,26 @@ export default async function ClaimOverviewPage({
         <Panel title="Policy and carrier">
           <PanelBody>
             <FactList columns={2}>
-              <Fact label="Carrier">{claim.carrier}</Fact>
+              {/* All three are absent on a partner referral until staff take
+                  them from the homeowner. Said in words rather than left blank:
+                  an empty cell beside a filled one reads as a rendering fault,
+                  and the operator's next move depends on knowing which it is. */}
+              <Fact label="Carrier">
+                {claim.carrier ?? <span className="text-ink/58">{NOT_SUPPLIED}</span>}
+              </Fact>
               <Fact label="Policy number">
-                <span className="tabular-nums">{claim.policyNumber}</span>
+                {claim.policyNumber ? (
+                  <span className="tabular-nums">{claim.policyNumber}</span>
+                ) : (
+                  <span className="text-ink/58">{NOT_SUPPLIED}</span>
+                )}
               </Fact>
               <Fact label="With this carrier">
-                {humanizeEnum(claim.carrierTenure)}
+                {claim.carrierTenure ? (
+                  humanizeEnum(claim.carrierTenure)
+                ) : (
+                  <span className="text-ink/58">{NOT_SUPPLIED}</span>
+                )}
               </Fact>
               <Fact label="Carrier claim number">
                 {claim.claimNumber ? (

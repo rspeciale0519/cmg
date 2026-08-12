@@ -57,6 +57,16 @@ export const RATE_LIMITS = {
   portalQuestionUser: { scope: "portal-question:user", max: 12, window: "1 hour" },
   portalUploadUser: { scope: "portal-upload:user", max: 20, window: "1 hour" },
   portalPasswordUser: { scope: "portal-password:user", max: 5, window: "15 minutes" },
+
+  /* A referral is a claim file, so this budget is nearer the intake's than the
+     question composer's. Ten an hour is above anything a rep does by hand — the
+     seed's own contractor sends "two or three roof claims a month" — and it
+     bounds a rep whose password has been taken from filling the intake queue
+     with work the desk then has to triage by hand. Keyed on the account, like
+     the portal's own budgets: the caller has signed in, so the identity is
+     known and an IP bucket would merge a whole roofing office behind one
+     router. */
+  partnerReferralUser: { scope: "partner-referral:user", max: 10, window: "1 hour" },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

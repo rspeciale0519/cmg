@@ -8,12 +8,14 @@ import {
   YES_NO_VALUES,
 } from "./intake-options";
 import {
+  lossDate,
   optionalEmail,
   optionalText,
   requiredEmail,
   requiredName,
   requiredPhone,
   turnstileToken,
+  zip,
 } from "./shared";
 
 /* The option tables, the consent snapshot and the literal unions live in
@@ -65,54 +67,10 @@ const initials = z
   .regex(/^[A-Za-z]+$/, "Initials may only contain letters.")
   .transform((value) => value.toUpperCase());
 
-const EARLIEST_LOSS_DATE = "1990-01-01";
-
-/**
- * Today in Florida, not today in UTC.
- *
- * This bound was `new Date().toISOString().slice(0, 10)`, which between 8pm and
- * midnight Eastern is already tomorrow's date — so for four hours every evening
- * the public form accepted a date of loss one day in the future, and the storm
- * a homeowner is filing about had not happened yet. It was the one date
- * comparison in the codebase not routed through the business zone; everything
- * that renders or filters a timestamp goes through `America/New_York` already
- * (`format.ts`, `audit-range.ts`).
- *
- * `en-CA` because it formats as `YYYY-MM-DD`, which is the shape this string is
- * compared against.
- */
-function businessToday(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-const lossDate = z
-  .string()
-  .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date of loss.")
-  .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), {
-    message: "Enter a real date.",
-  })
-  .refine((value) => value >= EARLIEST_LOSS_DATE, {
-    message: "Enter a date of loss from 1990 onwards.",
-  })
-  .refine((value) => value <= businessToday(), {
-    message: "The date of loss cannot be in the future.",
-  });
-
 const lossTime = z
   .string()
   .trim()
   .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Enter an approximate time.");
-
-const zip = z
-  .string()
-  .trim()
-  .regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code.");
 
 const consent = z
   .string()

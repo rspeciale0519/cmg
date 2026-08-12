@@ -11,6 +11,7 @@ import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { CARRIER_TENURE_VALUES } from "@/lib/validators/intake-options";
 import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
 
 /**
@@ -31,6 +32,9 @@ const ACCEPT_FIELDS = [
   "adjusterId",
   "partnerCompanyId",
   "newPartnerName",
+  "carrier",
+  "policyNumber",
+  "carrierTenure",
   "note",
 ] as const;
 
@@ -47,6 +51,11 @@ type QueueClaim = {
   assigned_adjuster_id: string | null;
   referrer_name: string | null;
   referrer_email: string | null;
+  /** Null on a partner referral, which is how this action knows to ask for the
+   *  policy side. Read from the row rather than inferred from the submission:
+   *  the presence of a form field is a client's choice, and the requirement is
+   *  a fact about the claim. */
+  carrier: string | null;
 };
 
 async function loadQueuedClaim(
@@ -59,7 +68,9 @@ async function loadQueuedClaim(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("claims")
-    .select("id, claim_ref, status, assigned_adjuster_id, referrer_name, referrer_email")
+    .select(
+      "id, claim_ref, status, assigned_adjuster_id, referrer_name, referrer_email, carrier",
+    )
     .eq("id", claimId)
     .maybeSingle();
 
@@ -138,6 +149,23 @@ export async function acceptIntake(
     };
   }
 
+  /* The policy side of a partner referral. §6 puts it here — the referring rep
+     is not asked for a carrier or a policy number, so acceptance is the moment
+     CMG has the homeowner on the phone and can take them.
+     `claim.carrier === null` is the test rather than "did the form send these",
+     so a submission that simply omits the fields is refused instead of accepted
+     with the gap intact. */
+  const policyDetails = claim.carrier === null ? readPolicyDetails(formData) : null;
+  if (policyDetails && "fieldErrors" in policyDetails) {
+    const marked = Object.keys(policyDetails.fieldErrors).length;
+    return {
+      status: "error",
+      fieldErrors: policyDetails.fieldErrors,
+      message: `Check the highlighted ${marked === 1 ? "field" : "fields"} and accept again.`,
+      values: typed,
+    };
+  }
+
   const supabase = await createClient();
 
   // ── 1. Partner company ────────────────────────────────────────────────
@@ -210,11 +238,24 @@ export async function acceptIntake(
     return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
-  // ── 3. Commit point: attribution and status in one statement ──────────
-  const update: { status: "under_review"; partner_company_id?: string } = {
-    status: "under_review",
-  };
+  // ── 3. Commit point: attribution, policy and status in one statement ──
+  const update: {
+    status: "under_review";
+    partner_company_id?: string;
+    carrier?: string;
+    policy_number?: string;
+    carrier_tenure?: CarrierTenure;
+  } = { status: "under_review" };
   if (linkedPartnerId) update.partner_company_id = linkedPartnerId;
+  /* Carried by the same statement as the status change, so a referral cannot
+     leave the queue with the gap still in it — the atomicity the comment above
+     describes covers the policy columns for exactly the same reason it covers
+     attribution. */
+  if (policyDetails) {
+    update.carrier = policyDetails.carrier;
+    update.policy_number = policyDetails.policyNumber;
+    update.carrier_tenure = policyDetails.carrierTenure;
+  }
 
   const { data: advanced, error: advanceError } = await supabase
     .from("claims")
@@ -284,6 +325,48 @@ export async function acceptIntake(
     status: "success",
     message: warnings.length > 0 ? `${sentence} ${warnings.join(" ")}` : sentence,
   };
+}
+
+type CarrierTenure = (typeof CARRIER_TENURE_VALUES)[number];
+
+type PolicyDetails = {
+  carrier: string;
+  policyNumber: string;
+  carrierTenure: CarrierTenure;
+};
+
+/**
+ * The three columns a partner referral arrives without.
+ *
+ * Validated here rather than by a zod schema because there is no second caller
+ * and no branching: three required strings, one of which has to be an enum
+ * label. The bounds match `intakeSchema`'s for the same columns — 120 and 80 —
+ * so a carrier the public form would refuse is not admitted through the desk.
+ */
+function readPolicyDetails(
+  formData: FormData,
+): PolicyDetails | { fieldErrors: Record<string, string> } {
+  const carrier = String(formData.get("carrier") ?? "").trim();
+  const policyNumber = String(formData.get("policyNumber") ?? "").trim();
+  const carrierTenure = String(formData.get("carrierTenure") ?? "").trim();
+
+  const fieldErrors: Record<string, string> = {};
+
+  if (carrier.length === 0) fieldErrors.carrier = "Name the insurance company.";
+  else if (carrier.length > 120) fieldErrors.carrier = "Carrier must be 120 characters or fewer.";
+
+  if (policyNumber.length === 0) fieldErrors.policyNumber = "Enter the policy number.";
+  else if (policyNumber.length > 80) {
+    fieldErrors.policyNumber = "Policy number must be 80 characters or fewer.";
+  }
+
+  if (!CARRIER_TENURE_VALUES.includes(carrierTenure as CarrierTenure)) {
+    fieldErrors.carrierTenure = "Say how long they have been with this carrier.";
+  }
+
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+
+  return { carrier, policyNumber, carrierTenure: carrierTenure as CarrierTenure };
 }
 
 async function inviteClaimants(

@@ -94,7 +94,8 @@ export default async function PortalIndexPage() {
                 </p>
 
                 <p className="mt-auto pt-[14px] text-[13px] leading-[1.6] text-ink/55">
-                  {claim.carrier} · loss on {formatDateOnly(claim.loss_date)}
+                  {claim.carrier ? `${claim.carrier} · ` : ""}loss on{" "}
+                  {formatDateOnly(claim.loss_date)}
                 </p>
               </Link>
             </li>

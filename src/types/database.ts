@@ -330,8 +330,8 @@ export type Database = {
       claims: {
         Row: {
           assigned_adjuster_id: string | null
-          carrier: string
-          carrier_tenure: Database["public"]["Enums"]["carrier_tenure"]
+          carrier: string | null
+          carrier_tenure: Database["public"]["Enums"]["carrier_tenure"] | null
           cause: Database["public"]["Enums"]["cause_of_loss"]
           claim_number: string | null
           claim_ref: string
@@ -343,10 +343,10 @@ export type Database = {
           id: string
           lor_signed_at: string | null
           loss_date: string
-          loss_time: string
+          loss_time: string | null
           pandadoc_document_id: string | null
           partner_company_id: string | null
-          policy_number: string
+          policy_number: string | null
           prior_outcome:
             | Database["public"]["Enums"]["prior_claim_outcome"]
             | null
@@ -365,8 +365,8 @@ export type Database = {
         }
         Insert: {
           assigned_adjuster_id?: string | null
-          carrier: string
-          carrier_tenure: Database["public"]["Enums"]["carrier_tenure"]
+          carrier?: string | null
+          carrier_tenure?: Database["public"]["Enums"]["carrier_tenure"] | null
           cause: Database["public"]["Enums"]["cause_of_loss"]
           claim_number?: string | null
           claim_ref: string
@@ -378,10 +378,10 @@ export type Database = {
           id?: string
           lor_signed_at?: string | null
           loss_date: string
-          loss_time?: string
+          loss_time?: string | null
           pandadoc_document_id?: string | null
           partner_company_id?: string | null
-          policy_number: string
+          policy_number?: string | null
           prior_outcome?:
             | Database["public"]["Enums"]["prior_claim_outcome"]
             | null
@@ -400,8 +400,8 @@ export type Database = {
         }
         Update: {
           assigned_adjuster_id?: string | null
-          carrier?: string
-          carrier_tenure?: Database["public"]["Enums"]["carrier_tenure"]
+          carrier?: string | null
+          carrier_tenure?: Database["public"]["Enums"]["carrier_tenure"] | null
           cause?: Database["public"]["Enums"]["cause_of_loss"]
           claim_number?: string | null
           claim_ref?: string
@@ -413,10 +413,10 @@ export type Database = {
           id?: string
           lor_signed_at?: string | null
           loss_date?: string
-          loss_time?: string
+          loss_time?: string | null
           pandadoc_document_id?: string | null
           partner_company_id?: string | null
-          policy_number?: string
+          policy_number?: string | null
           prior_outcome?:
             | Database["public"]["Enums"]["prior_claim_outcome"]
             | null
@@ -923,6 +923,13 @@ export type Database = {
         }[]
       }
       next_claim_ref: { Args: never; Returns: string }
+      partner_referral_company: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
       portal_claim_contact: {
         Args: { p_claim_id: string }
         Returns: {

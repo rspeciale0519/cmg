@@ -5,6 +5,9 @@ import { acceptIntake, rejectIntake } from "@/lib/actions/intake-queue";
 import { idleState, resilient } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
 import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
+/* `intake-options`, not `@/lib/validators/intake` — that module builds the zod
+   schema, and a client component importing from it ships zod to the browser. */
+import { CARRIER_TENURE_OPTIONS } from "@/lib/validators/intake-options";
 import {
   ActionFeedback,
   AdminField,
@@ -34,6 +37,7 @@ export function IntakeActions({
   adjusters,
   partners,
   referrerName,
+  needsPolicyDetails,
   canAccept,
   canLinkPartner,
 }: {
@@ -42,6 +46,9 @@ export function IntakeActions({
   adjusters: AdjusterOption[];
   partners: PartnerOption[];
   referrerName: string | null;
+  /** A partner referral arrives with no carrier, policy number or tenure — §6
+   *  has staff take them from the homeowner at this moment. */
+  needsPolicyDetails: boolean;
   canAccept: boolean;
   canLinkPartner: boolean;
 }) {
@@ -94,6 +101,7 @@ export function IntakeActions({
           adjusters={adjusters}
           partners={partners}
           referrerName={referrerName}
+          needsPolicyDetails={needsPolicyDetails}
           canLinkPartner={canLinkPartner}
         />
       ) : null}
@@ -108,12 +116,14 @@ function AcceptForm({
   adjusters,
   partners,
   referrerName,
+  needsPolicyDetails,
   canLinkPartner,
 }: {
   claimId: string;
   adjusters: AdjusterOption[];
   partners: PartnerOption[];
   referrerName: string | null;
+  needsPolicyDetails: boolean;
   canLinkPartner: boolean;
 }) {
   const [state, formAction] = useActionState(resilient(acceptIntake), idleState);
@@ -245,6 +255,78 @@ function AcceptForm({
           </p>
         )}
       </div>
+
+      {/* Only for a referral. A submission from /file-a-claim already carries
+          all three, and re-asking for them here would invite an operator to
+          overwrite what the homeowner typed with what they remember of a phone
+          call. The condition is the claim's own `carrier`, read on the server —
+          the accept action re-derives it from the row rather than trusting these
+          fields to be present, because a form field is a thing a client can
+          omit. */}
+      {needsPolicyDetails ? (
+        <fieldset className="mt-4 min-w-0 border border-accent/28 bg-accent/5 p-[13px]">
+          <legend className="px-[6px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-accent">
+            Policy — taken on this call
+          </legend>
+          <p className="mb-[10px] text-[12px] leading-[1.6] text-ink/62">
+            This came in as a partner referral, so the referring rep was not asked
+            for the policy. Take these from the homeowner before you accept.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <AdminField
+              name="carrier"
+              label="Carrier"
+              error={state.fieldErrors?.carrier}
+            >
+              <AdminInput
+                name="carrier"
+                required
+                maxLength={120}
+                defaultValue={state.values?.carrier ?? ""}
+                error={state.fieldErrors?.carrier}
+                placeholder="Insurance company"
+              />
+            </AdminField>
+
+            <AdminField
+              name="policyNumber"
+              label="Policy number"
+              error={state.fieldErrors?.policyNumber}
+            >
+              <AdminInput
+                name="policyNumber"
+                required
+                maxLength={80}
+                defaultValue={state.values?.policyNumber ?? ""}
+                error={state.fieldErrors?.policyNumber}
+              />
+            </AdminField>
+
+            <AdminField
+              name="carrierTenure"
+              label="With this carrier"
+              error={state.fieldErrors?.carrierTenure}
+            >
+              <AdminSelect
+                name="carrierTenure"
+                required
+                defaultValue={state.values?.carrierTenure ?? ""}
+                error={state.fieldErrors?.carrierTenure}
+              >
+                <option value="" disabled>
+                  How long…
+                </option>
+                {CARRIER_TENURE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </AdminSelect>
+            </AdminField>
+          </div>
+        </fieldset>
+      ) : null}
 
       <AdminField
         name="note"

@@ -79,3 +79,80 @@ describe("form control invalid state", () => {
     }
   });
 });
+
+/**
+ * An echoed select has to *land* on the echo.
+ *
+ * React re-applies a changed `defaultValue` to an input and a textarea on every
+ * update, and does not do so for an uncontrolled select — `defaultSelected`
+ * stays wherever the first render put it for the life of the element. So the
+ * post-action reset kept restoring the mount-time option, and a refusal on
+ * `/partner/refer` came back with Cause of loss silently changed from
+ * "Wind / hail" to "Wind" while the server's `values.cause` said otherwise. The
+ * fix is a `key` derived from the resolved default, which is the same one
+ * `AdminSelect` already carries; this is the assertion that keeps it.
+ */
+describe("SelectField — a default handed back after a refusal", () => {
+  const OPTIONS = [
+    { value: "wind", label: "Wind" },
+    { value: "hail", label: "Hail" },
+    { value: "wind_hail", label: "Wind / hail" },
+  ];
+
+  it("moves the selection when a later render supplies a different default", () => {
+    const { rerender } = render(
+      <SelectField name="cause" label="Cause of loss" options={OPTIONS} />,
+    );
+
+    const before = screen.getByLabelText("Cause of loss") as HTMLSelectElement;
+    expect(before.value).toBe("");
+
+    rerender(
+      <SelectField
+        name="cause"
+        label="Cause of loss"
+        options={OPTIONS}
+        defaultValue="wind_hail"
+      />,
+    );
+
+    const after = screen.getByLabelText("Cause of loss") as HTMLSelectElement;
+    expect(after.value).toBe("wind_hail");
+    /* The option itself, not just the live value: `defaultSelected` is what the
+       form reset restores, and it is the thing that was never being updated. */
+    expect(
+      [...after.options].find((option) => option.defaultSelected)?.value,
+    ).toBe("wind_hail");
+  });
+
+  /* The other half: a re-render that changes something else must not throw the
+     element away, or every keystroke elsewhere on the form would reset a select
+     the reader had already answered. */
+  it("does not remount when the default is unchanged", () => {
+    const { rerender } = render(
+      <SelectField
+        name="cause"
+        label="Cause of loss"
+        options={OPTIONS}
+        defaultValue="hail"
+      />,
+    );
+
+    const before = screen.getByLabelText("Cause of loss") as HTMLSelectElement;
+    before.value = "wind_hail";
+
+    rerender(
+      <SelectField
+        name="cause"
+        label="Cause of loss"
+        options={OPTIONS}
+        defaultValue="hail"
+        error="Choose the cause of loss."
+      />,
+    );
+
+    const after = screen.getByLabelText("Cause of loss") as HTMLSelectElement;
+    expect(after).toBe(before);
+    expect(after.value).toBe("wind_hail");
+  });
+});

@@ -119,6 +119,7 @@ export function SelectField({
      select and would silently fall back to the first real option. */
   const showPlaceholder =
     placeholder && select.defaultValue === undefined && select.value === undefined;
+  const resolvedDefault = showPlaceholder ? "" : select.defaultValue;
 
   return (
     <Field className={className}>
@@ -126,9 +127,35 @@ export function SelectField({
         {label}
       </FieldLabel>
       <div className="relative mt-[6px]">
+        {/* `key` on the element, for the reason `admin/form-controls.tsx`
+            spells out at `AdminSelect`: React re-applies a changed
+            `defaultValue` to an input or a textarea on every update and does
+            *not* do so for an uncontrolled select, so `defaultSelected` stays
+            wherever the first render put it and the post-action reset keeps
+            landing there. Measured on `/partner/refer`: a referral refused for
+            a bad ZIP came back with Cause of loss silently changed from
+            "Wind / hail" to "Wind" — the server's echo was correct and the
+            control ignored it. The admin surface fixed this once; this is the
+            marketing control, which had the same bug the moment a form here
+            first echoed into a select.
+
+            The key moves only when the server hands back a different default,
+            which is to say only when an action has just resolved — never
+            mid-typing, so nothing being held is thrown away.
+
+            It sits *before* the spread, and that is not style. A `key` written
+            after a spread cannot be lifted out at compile time, so the element
+            falls back to `React.createElement`, whose children are varargs it
+            has to validate one by one — and the option list below then drew
+            "Each child in a list should have a unique key prop. Check the
+            render method of `SelectField`" on every render of this form, for a
+            list whose every entry is keyed. React 19 never reads `key` out of
+            spread props, so putting it first changes nothing about which key is
+            used. */}
         <select
+          key={String(resolvedDefault ?? "")}
           {...select}
-          defaultValue={showPlaceholder ? "" : select.defaultValue}
+          defaultValue={resolvedDefault}
           id={ids.inputId}
           name={name}
           required={required}
