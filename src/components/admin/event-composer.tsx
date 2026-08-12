@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { postClaimEvent } from "@/lib/actions/claims";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
 import {
   ActionFeedback,
@@ -43,7 +43,7 @@ export function EventComposer({
   canPostShared: boolean;
   replyTo?: { id: string; body: string } | null;
 }) {
-  const [state, formAction] = useActionState(postClaimEvent, idleState);
+  const [state, formAction] = useActionState(resilient(postClaimEvent), idleState);
   const [visibility, setVisibility] = useState<Visibility>(
     replyTo ? "customer" : "internal",
   );

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { updateLeadStatus } from "@/lib/actions/leads";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { AdminSelect, SubmitButton } from "./form-controls";
 
 const NEXT_LABEL: Record<string, string> = {
@@ -38,7 +38,7 @@ export function LeadStatusForm({
   status: string;
   canEdit: boolean;
 }) {
-  const [state, formAction] = useActionState(updateLeadStatus, idleState);
+  const [state, formAction] = useActionState(resilient(updateLeadStatus), idleState);
   const [dirty, setDirty] = useState(false);
 
   if (!canEdit) return null;

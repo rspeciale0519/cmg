@@ -78,6 +78,80 @@ export const VERIFICATION_ERROR =
 export const RATE_LIMIT_ERROR =
   "That's several submissions in a short time. Wait a few minutes and try again, or call us directly.";
 
+/**
+ * What the reader is told when the request never completed a round trip.
+ *
+ * It states the uncertainty rather than resolving it, because the client cannot
+ * tell the two cases apart: a rejected `fetch` looks identical whether the POST
+ * never left the machine or whether it arrived, ran, committed, and the response
+ * was lost coming back. "Nothing was saved" would be a guess, and on a claims
+ * desk the guess that is wrong half the time is the one that gets a status
+ * advanced twice.
+ */
+export const CONNECTION_LOST =
+  "The connection dropped before the desk heard back. What you typed is still here — reload the page before you try again, because this may already have been recorded.";
+
+/**
+ * Next signals `redirect()` and `notFound()` by throwing, and both must keep
+ * travelling. `digest` is the documented carrier: `NEXT_REDIRECT;…` and
+ * `NEXT_NOT_FOUND`.
+ */
+function isControlFlow(error: unknown): boolean {
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  return (
+    typeof digest === "string" &&
+    (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND")
+  );
+}
+
+/**
+ * Wraps a server action so a *transport* failure lands as a refusal instead of
+ * as an exception.
+ *
+ * `useActionState` does not catch. A rejected action promise is re-thrown during
+ * render and travels to the nearest error boundary — of which this app has two,
+ * against twenty-eight call sites. Measured on a claim's Overview with `fetch`
+ * stubbed to reject: the note an adjuster had written for the homeowner, the
+ * status radios, and the claim's whole tab strip were replaced by
+ * `admin/error.tsx`, which said "no work has been lost". The note was gone; the
+ * textarea read `""` after Try again.
+ *
+ * Every refusal path in this codebase already threads `values` back so React's
+ * post-action reset lands on what was typed. This puts the one failure mode that
+ * is not a refusal onto the same path. The echo here is every string field in
+ * the submission rather than a named list, because the wrapper does not know the
+ * action's schema and a field it forgot is a field the operator retypes.
+ *
+ * Constrained structurally rather than to `FormState`, because `EnrollmentState`
+ * carries its own status union (`"ready"`, not `"success"`) and so is not one —
+ * and the MFA setup screen is precisely where a dropped connection must not
+ * throw away the secret the operator is halfway through entering.
+ *
+ * `31` call sites, and the count is why this is a wrapper rather than 31 local
+ * try/catches: the next form somebody adds gets it by copying the line above it.
+ */
+export function resilient<S extends { status: string; message?: string }>(
+  action: (previous: S, data: FormData) => Promise<S>,
+): (previous: S, data: FormData) => Promise<S> {
+  return async (previous, data) => {
+    try {
+      return await action(previous, data);
+    } catch (error) {
+      if (isControlFlow(error)) throw error;
+
+      const values: Record<string, string> = {};
+      for (const [key, value] of data.entries()) {
+        if (typeof value === "string") values[key] = value;
+      }
+
+      /* Spread the previous state so a shape this wrapper does not know about —
+         `EnrollmentState`'s `factorId` and `qrCode`, say — survives the failure
+         rather than being replaced by a bare error. */
+      return { ...previous, status: "error", message: CONNECTION_LOST, values };
+    }
+  };
+}
+
 /** First issue per field wins — the form shows one message under each input. */
 export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { recheckIntegrations } from "@/lib/actions/settings";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { SubmitButton } from "./form-controls";
 
 /**
@@ -16,7 +16,7 @@ import { SubmitButton } from "./form-controls";
  * narrating what the reader can see.
  */
 export function RecheckButton() {
-  const [state, formAction] = useActionState(recheckIntegrations, idleState);
+  const [state, formAction] = useActionState(resilient(recheckIntegrations), idleState);
 
   return (
     <form action={formAction}>

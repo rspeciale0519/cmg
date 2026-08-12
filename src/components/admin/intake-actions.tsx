@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { acceptIntake, rejectIntake } from "@/lib/actions/intake-queue";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
 import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
 import {
@@ -116,7 +116,7 @@ function AcceptForm({
   referrerName: string | null;
   canLinkPartner: boolean;
 }) {
-  const [state, formAction] = useActionState(acceptIntake, idleState);
+  const [state, formAction] = useActionState(resilient(acceptIntake), idleState);
 
   // Pre-selected from the intake's own referral fields: if the submission named
   // a referring contractor, the operator is almost always about to link one, and
@@ -265,7 +265,7 @@ function AcceptForm({
 }
 
 function RejectForm({ claimId }: { claimId: string }) {
-  const [state, formAction] = useActionState(rejectIntake, idleState);
+  const [state, formAction] = useActionState(resilient(rejectIntake), idleState);
 
   return (
     <form

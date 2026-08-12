@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { submitContact } from "@/lib/actions/contact";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { site, telHref } from "@/lib/site";
 import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import {
 import { TurnstileWidget } from "./turnstile";
 
 export function ContactForm() {
-  const [state, formAction, pending] = useActionState(submitContact, idleState);
+  const [state, formAction, pending] = useActionState(resilient(submitContact), idleState);
 
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);

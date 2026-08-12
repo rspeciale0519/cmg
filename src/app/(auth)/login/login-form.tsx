@@ -5,10 +5,10 @@ import { TextField } from "@/components/forms/controls";
 import { FormAlert } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/actions/auth";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 
 export function LoginForm({ next }: { next: string | null }) {
-  const [state, formAction, pending] = useActionState(signIn, idleState);
+  const [state, formAction, pending] = useActionState(resilient(signIn), idleState);
   const alertRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import {
   issuePortalDownload,
   uploadPortalDocument,
 } from "@/lib/actions/portal-documents";
-import { idleDownloadState, idleState } from "@/lib/actions/types";
+import { idleDownloadState, idleState, resilient } from "@/lib/actions/types";
 import { PORTAL_DOCUMENT_KINDS } from "@/lib/portal/documents";
 import { FILE_ACCEPT_ATTRIBUTE, FILE_RULES_HINT } from "@/lib/validators/files";
 import { FormFeedback, SubmitButton } from "./form-controls";
@@ -22,7 +22,7 @@ import { FormFeedback, SubmitButton } from "./form-controls";
  * underneath both.
  */
 export function DocumentUpload({ claimId }: { claimId: string }) {
-  const [state, formAction] = useActionState(uploadPortalDocument, idleState);
+  const [state, formAction] = useActionState(resilient(uploadPortalDocument), idleState);
 
   return (
     <form action={formAction} noValidate>
@@ -88,7 +88,7 @@ export function DocumentDownload({
   documentId: string;
   label: string;
 }) {
-  const [state, formAction] = useActionState(issuePortalDownload, idleDownloadState);
+  const [state, formAction] = useActionState(resilient(issuePortalDownload), idleDownloadState);
   const anchor = useRef<HTMLAnchorElement>(null);
   const claimed = useRef<string | null>(null);
 

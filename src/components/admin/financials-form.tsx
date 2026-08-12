@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { saveClaimFinancials } from "@/lib/actions/claims";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { formatMoney } from "@/lib/format";
 import { ActionFeedback, AdminField, AdminInput, AdminTextarea, SubmitButton } from "./form-controls";
 
@@ -24,7 +24,7 @@ export function FinancialsForm({
   feePercent: number | null;
   notes: string | null;
 }) {
-  const [state, formAction] = useActionState(saveClaimFinancials, idleState);
+  const [state, formAction] = useActionState(resilient(saveClaimFinancials), idleState);
   const [amount, setAmount] = useState(settlementAmount?.toString() ?? "");
   const [fee, setFee] = useState(feePercent?.toString() ?? "");
 

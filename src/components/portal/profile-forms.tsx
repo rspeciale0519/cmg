@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { TextField } from "@/components/forms/controls";
 import { changePassword, updateProfile } from "@/lib/actions/portal";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { FormFeedback, SubmitButton } from "./form-controls";
 
 /**
@@ -26,7 +26,7 @@ export function ProfileForm({
   profile: { first_name: string | null; last_name: string | null; phone: string | null };
   email: string | null;
 }) {
-  const [state, formAction] = useActionState(updateProfile, idleState);
+  const [state, formAction] = useActionState(resilient(updateProfile), idleState);
 
   return (
     <form action={formAction} noValidate>
@@ -93,7 +93,7 @@ export function ProfileForm({
  * the stored entry rather than treating this as a second login form.
  */
 export function PasswordForm() {
-  const [state, formAction] = useActionState(changePassword, idleState);
+  const [state, formAction] = useActionState(resilient(changePassword), idleState);
 
   return (
     <form action={formAction} noValidate>

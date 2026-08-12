@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { uploadClaimDocument } from "@/lib/actions/documents";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import {
   DOCUMENT_KIND_LABEL,
   DOCUMENT_KINDS,
@@ -31,7 +31,7 @@ export function DocumentUpload({
   claimId: string;
   canUploadRepresentation: boolean;
 }) {
-  const [state, formAction] = useActionState(uploadClaimDocument, idleState);
+  const [state, formAction] = useActionState(resilient(uploadClaimDocument), idleState);
 
   const kinds = DOCUMENT_KINDS.filter(
     (kind) => canUploadRepresentation || !isRepresentationKind(kind),

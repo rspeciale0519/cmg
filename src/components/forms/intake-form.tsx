@@ -5,7 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
 import { submitIntake } from "@/lib/actions/intake";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { emailHref, site, telHref } from "@/lib/site";
 import { FILE_ACCEPT_ATTRIBUTE } from "@/lib/validators/files";
 /* Not `@/lib/validators/intake` — that module builds the zod schema, and a
@@ -69,7 +69,7 @@ function IntakeSection({
 }
 
 export function IntakeForm() {
-  const [state, formAction, pending] = useActionState(submitIntake, idleState);
+  const [state, formAction, pending] = useActionState(resilient(submitIntake), idleState);
   /* Both start unanswered. These two answers are drafted into the Letter of
      Representation, so a pre-selected "No" would have the form state, on the
      homeowner's behalf, that nobody else is on the policy and that the roof has

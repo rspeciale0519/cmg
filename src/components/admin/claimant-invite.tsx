@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { issueClaimantInvite } from "@/lib/actions/invite";
-import { idleInviteIssueState } from "@/lib/actions/types";
+import { idleInviteIssueState, resilient } from "@/lib/actions/types";
 import { ActionFeedback, SubmitButton } from "./form-controls";
 
 /**
@@ -25,7 +25,7 @@ export function ClaimantInvite({
   canInvite: boolean;
 }) {
   const [state, formAction] = useActionState(
-    issueClaimantInvite,
+    resilient(issueClaimantInvite),
     idleInviteIssueState,
   );
 

@@ -37,10 +37,20 @@ export default function AdminError({
 
   return (
     <>
+      {/* The lede used to end "Nothing you were looking at has been changed, and
+          no work has been lost." Both halves were promises this screen is not in
+          a position to keep. It is reached from a failed *submission* as often
+          as from a failed render — `useActionState` re-throws a rejected action
+          during render — and in that case the note the adjuster had just written
+          was gone, and whether the write committed is exactly what nobody knows:
+          a dropped connection looks the same whether the request never left or
+          its response was lost coming back. `resilient()` now keeps most of
+          those failures out of this boundary entirely; the wording here stops
+          asserting what it cannot check for the rest. */}
       <PageHeader
         eyebrow="Error"
         title="This page didn’t load."
-        lede="Something failed while building the screen. Nothing you were looking at has been changed, and no work has been lost."
+        lede="Something failed while the screen was being put together. If you had just saved something, check whether it went through before you try it again."
       />
 
       <Panel title="What to do">
@@ -57,14 +67,28 @@ export default function AdminError({
             </Link>
           </div>
 
-          <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/58">
-            If it fails again, send this reference to whoever looks after the
-            site — it identifies this exact failure in the server log.
-          </p>
+          {/* Rendered only when there is a reference. A client-side rejection
+              carries no `digest`, so this paragraph used to end by telling the
+              reader to send a reference that its own next line said did not
+              exist — an instruction that cannot be followed, on the screen
+              where the reader is already stuck. */}
+          {error.digest ? (
+            <>
+              <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/58">
+                If it fails again, send this reference to whoever looks after the
+                site — it identifies this exact failure in the server log.
+              </p>
 
-          <p className="mt-[8px] font-mono text-[12px] leading-[1.5] text-ink/62">
-            {error.digest ?? "No reference was recorded for this failure."}
-          </p>
+              <p className="mt-[8px] font-mono text-[12px] leading-[1.5] text-ink/62">
+                {error.digest}
+              </p>
+            </>
+          ) : (
+            <p className="mt-[16px] max-w-[70ch] text-[12.5px] leading-[1.65] text-ink/58">
+              If it keeps happening, check your connection first — then tell
+              whoever looks after the site what you were doing when it failed.
+            </p>
+          )}
         </PanelBody>
       </Panel>
     </>

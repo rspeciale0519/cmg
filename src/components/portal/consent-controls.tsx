@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { withdrawConsent } from "@/lib/actions/portal";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { FormFeedback, SubmitButton } from "./form-controls";
 
 /**
@@ -24,7 +24,7 @@ export function WithdrawConsent({
   consentId: string;
   kind: "sms" | "email";
 }) {
-  const [state, formAction] = useActionState(withdrawConsent, idleState);
+  const [state, formAction] = useActionState(resilient(withdrawConsent), idleState);
 
   return (
     <div>

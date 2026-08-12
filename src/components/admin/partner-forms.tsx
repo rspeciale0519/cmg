@@ -8,7 +8,7 @@ import {
   setPartnerCompanyStatus,
   updatePartnerCompany,
 } from "@/lib/actions/partners";
-import { idleInviteIssueState, idleState } from "@/lib/actions/types";
+import { idleInviteIssueState, idleState, resilient } from "@/lib/actions/types";
 import {
   ActionFeedback,
   AdminField,
@@ -73,7 +73,7 @@ export function PartnerCompanyForm({
   initial?: CompanyValues;
 }) {
   const [state, formAction] = useActionState(
-    companyId ? updatePartnerCompany : createPartnerCompany,
+    resilient(companyId ? updatePartnerCompany : createPartnerCompany),
     idleState,
   );
 
@@ -188,7 +188,7 @@ export function PartnerStatusForm({
   companyId: string;
   status: "active" | "inactive";
 }) {
-  const [state, formAction] = useActionState(setPartnerCompanyStatus, idleState);
+  const [state, formAction] = useActionState(resilient(setPartnerCompanyStatus), idleState);
   const next = status === "active" ? "inactive" : "active";
 
   return (
@@ -225,7 +225,7 @@ export function PartnerDeleteForm({
   companyName: string;
   repCount: number;
 }) {
-  const [state, formAction] = useActionState(deletePartnerCompany, idleState);
+  const [state, formAction] = useActionState(resilient(deletePartnerCompany), idleState);
   const [typed, setTyped] = useState("");
   const armed = typed.trim() === companyName;
 
@@ -277,7 +277,7 @@ export function PartnerDeleteForm({
 }
 
 export function PartnerRepInviteForm({ companyId }: { companyId: string }) {
-  const [state, formAction] = useActionState(invitePartnerRep, idleInviteIssueState);
+  const [state, formAction] = useActionState(resilient(invitePartnerRep), idleInviteIssueState);
 
   return (
     <form action={formAction} noValidate className="max-w-[560px]">

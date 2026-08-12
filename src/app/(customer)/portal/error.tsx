@@ -35,8 +35,15 @@ export default function PortalError({
       <h1 className="text-[clamp(24px,3vw,32px)] font-medium leading-[1.2] tracking-[-0.025em]">
         Something went wrong at our end.
       </h1>
+      {/* "nothing has changed" was a promise this screen cannot keep — it is
+          reached from a failed submission as well as a failed render, and a
+          dropped connection looks the same whether the request never left or
+          its answer was lost on the way back. Your claim being safe is true and
+          worth saying to a homeowner; the rest asks them to check rather than
+          telling them something nobody knows. */}
       <p className="mt-[14px] text-[15px] leading-[1.75] text-ink/72">
-        Your claim is safe and nothing has changed. Try again, and if it happens
+        Your claim is safe. If you had just sent something, check whether it
+        arrived before you send it again — then try again, and if it happens
         twice call us on{" "}
         <a href={telHref} className="text-accent no-underline hover:text-accent-300">
           {site.phone}

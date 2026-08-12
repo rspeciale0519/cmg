@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { advanceClaimStatus } from "@/lib/actions/claims";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { STATUS_LABEL, STATUS_MEANING, type ClaimStatus } from "@/lib/claims/status";
 import type { TransitionBlock } from "@/lib/claims/transitions";
 import { cx } from "@/lib/cx";
@@ -40,7 +40,7 @@ export function StatusAdvance({
   blocked: TransitionBlock[];
   canManage: boolean;
 }) {
-  const [state, formAction] = useActionState(advanceClaimStatus, idleState);
+  const [state, formAction] = useActionState(resilient(advanceClaimStatus), idleState);
   const [selected, setSelected] = useState<ClaimStatus | null>(null);
 
   const blockedFor = (status: ClaimStatus) =>

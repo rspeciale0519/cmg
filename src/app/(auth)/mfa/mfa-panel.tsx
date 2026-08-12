@@ -7,7 +7,7 @@ import { TextField } from "@/components/forms/controls";
 import { FormAlert } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { beginTotpEnrollment, verifyTotp } from "@/lib/actions/mfa";
-import { idleEnrollment, idleState } from "@/lib/actions/types";
+import { idleEnrollment, idleState, resilient } from "@/lib/actions/types";
 
 function CodeForm({
   factorId,
@@ -18,7 +18,7 @@ function CodeForm({
   next: string | null;
   submitLabel: string;
 }) {
-  const [state, formAction, pending] = useActionState(verifyTotp, idleState);
+  const [state, formAction, pending] = useActionState(resilient(verifyTotp), idleState);
   const alertRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ function CodeForm({
  */
 function Enrollment({ next }: { next: string | null }) {
   const [state, formAction, pending] = useActionState(
-    beginTotpEnrollment,
+    resilient(beginTotpEnrollment),
     idleEnrollment,
   );
 

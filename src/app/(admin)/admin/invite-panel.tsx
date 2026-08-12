@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { ActionFeedback, SubmitButton } from "@/components/admin/form-controls";
 import { issueClaimantInvite } from "@/lib/actions/invite";
-import { idleInviteIssueState } from "@/lib/actions/types";
+import { idleInviteIssueState, resilient } from "@/lib/actions/types";
 
 export type InvitableClaimant = {
   id: string;
@@ -41,7 +41,7 @@ export function InvitePanel({
   total: number;
 }) {
   const [state, formAction] = useActionState(
-    issueClaimantInvite,
+    resilient(issueClaimantInvite),
     idleInviteIssueState,
   );
 

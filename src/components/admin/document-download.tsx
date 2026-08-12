@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { issueDocumentDownload } from "@/lib/actions/documents";
-import { idleDownloadState } from "@/lib/actions/types";
+import { idleDownloadState, resilient } from "@/lib/actions/types";
 import { SubmitButton } from "./form-controls";
 
 /**
@@ -30,7 +30,7 @@ export function DocumentDownload({
   label: string;
 }) {
   const [state, formAction] = useActionState(
-    issueDocumentDownload,
+    resilient(issueDocumentDownload),
     idleDownloadState,
   );
   const anchor = useRef<HTMLAnchorElement>(null);

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { TextAreaField } from "@/components/forms/controls";
 import { askQuestion } from "@/lib/actions/portal";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { QUESTION_MAX_LENGTH } from "@/lib/validators/portal";
 import { FormFeedback, SubmitButton } from "./form-controls";
 
@@ -25,7 +25,7 @@ import { FormFeedback, SubmitButton } from "./form-controls";
  * the box.
  */
 export function QuestionComposer({ claimId }: { claimId: string }) {
-  const [state, formAction] = useActionState(askQuestion, idleState);
+  const [state, formAction] = useActionState(resilient(askQuestion), idleState);
 
   return (
     <form action={formAction} noValidate>

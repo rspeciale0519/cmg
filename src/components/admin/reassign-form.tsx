@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { reassignClaimAdjuster } from "@/lib/actions/claims";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import type { AdjusterOption } from "@/lib/claims/queries";
 import { ActionFeedback, AdminField, AdminSelect, SubmitButton } from "./form-controls";
 
@@ -34,7 +34,7 @@ export function ReassignForm({
    */
   isOwnCaseload: boolean;
 }) {
-  const [state, formAction] = useActionState(reassignClaimAdjuster, idleState);
+  const [state, formAction] = useActionState(resilient(reassignClaimAdjuster), idleState);
 
   if (!canManage) {
     return (

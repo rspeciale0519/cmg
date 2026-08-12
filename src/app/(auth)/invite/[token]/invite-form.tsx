@@ -5,7 +5,7 @@ import { TextField } from "@/components/forms/controls";
 import { FormAlert, formAlertMessage } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { acceptInvite } from "@/lib/actions/invite";
-import { idleState } from "@/lib/actions/types";
+import { idleState, resilient } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
 import {
   PASSWORD_MIN_LENGTH,
@@ -70,7 +70,7 @@ export function InviteForm({
   firstName: string;
   lastName: string;
 }) {
-  const [state, formAction, pending] = useActionState(acceptInvite, idleState);
+  const [state, formAction, pending] = useActionState(resilient(acceptInvite), idleState);
   const [password, setPassword] = useState("");
   const alertRef = useRef<HTMLDivElement>(null);
 

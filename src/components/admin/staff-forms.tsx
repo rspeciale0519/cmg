@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { changeStaffRole, inviteStaff, setStaffActive } from "@/lib/actions/staff";
-import { idleInviteIssueState, idleState } from "@/lib/actions/types";
+import { idleInviteIssueState, idleState, resilient } from "@/lib/actions/types";
 import type { AppRole } from "@/lib/auth/roles";
 import {
   ActionFeedback,
@@ -55,7 +55,7 @@ export function StaffRoleForm({
   disabled?: boolean;
   disabledReason?: string;
 }) {
-  const [state, formAction] = useActionState(changeStaffRole, idleState);
+  const [state, formAction] = useActionState(resilient(changeStaffRole), idleState);
   const [dirty, setDirty] = useState(false);
 
   return (
@@ -127,7 +127,7 @@ export function StaffActiveForm({
   disabled?: boolean;
   disabledReason?: string;
 }) {
-  const [state, formAction] = useActionState(setStaffActive, idleState);
+  const [state, formAction] = useActionState(resilient(setStaffActive), idleState);
 
   return (
     <form action={formAction} className="min-w-0">
@@ -161,7 +161,7 @@ export function StaffActiveForm({
 }
 
 export function StaffInviteForm() {
-  const [state, formAction] = useActionState(inviteStaff, idleInviteIssueState);
+  const [state, formAction] = useActionState(resilient(inviteStaff), idleInviteIssueState);
 
   return (
     <form action={formAction} noValidate className="max-w-[720px]">
