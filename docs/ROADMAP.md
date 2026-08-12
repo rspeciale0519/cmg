@@ -63,11 +63,11 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] `/api/cron/outbox` sweeper with backoff + dead-letter, tested
 
 ## Phase 8 — Hardening + cohesion
-- [ ] Security headers/CSP verified; `npm audit` clean or justified
-- [ ] No secret leakage into client bundle (grep proof)
-- [ ] Full unit + pgTAP suites green; `docs/RETENTION.md`
+- [x] Security headers/CSP verified; `npm audit` clean (0 vulns, prod and full tree)
+- [x] No secret leakage into client bundle (no server-only var name in `.next/static`)
+- [x] Full unit + pgTAP suites green (587 / 691); `docs/RETENTION.md` written (policy only — no sweeper is built)
 - [ ] COHESION ROUND converged
-- [ ] Lighthouse re-verified
+- [ ] Lighthouse re-verified (open at 71 vs 85 on this host — see PROGRESS.md)
 
 ## Phase 9 — Launch prep (owner-gated)
 - [ ] `vercel.json` + deploy runbook
