@@ -90,14 +90,32 @@ export default async function AuditPage({
             : listMeta(page.entries.length, page.total, "entry", "entries")
         }
       >
+        {/* `paged` first, for the reason the claims list orders it that way: a
+            cursor past the end of the log took the "nothing recorded" arm and
+            denied the existence of forty-five entries in an append-only
+            compliance trail — with no anchor anywhere on the page, because the
+            pager below is gated on there being rows to page. A stale link or a
+            hand-formed cursor is the whole path, which is why it is a smaller
+            fault than the claims list's, but it is the worse sentence. */}
         {page.entries.length === 0 ? (
-          <EmptyState
-            headline={filtered ? "Nothing matches those filters." : "Nothing recorded yet."}
-          >
-            {filtered
-              ? "Widen the date range, or clear the filters to see the whole trail."
-              : "Accepting an intake, advancing a status, issuing an invitation or opening a document all leave an entry here."}
-          </EmptyState>
+          paged ? (
+            <EmptyState headline="You have reached the end of the log.">
+              <Link
+                href="/admin/audit"
+                className="text-accent no-underline hover:text-accent-300"
+              >
+                Back to the newest entries
+              </Link>
+            </EmptyState>
+          ) : (
+            <EmptyState
+              headline={filtered ? "Nothing matches those filters." : "Nothing recorded yet."}
+            >
+              {filtered
+                ? "Widen the date range, or clear the filters to see the whole trail."
+                : "Accepting an intake, advancing a status, issuing an invitation or opening a document all leave an entry here."}
+            </EmptyState>
+          )
         ) : (
           <ul className="divide-y divide-ink/8">
             {page.entries.map((entry) => (

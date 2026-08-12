@@ -37,6 +37,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/** The shape `generate_claim_ref()` writes, and the only thing the hand-off
+ *  banner below will repeat back from the query string. */
+const CLAIM_REF = /^CMG-\d{4}-\d{4}$/;
+
 /**
  * The three PostgREST builder methods the filter pass uses, written as methods
  * so the concrete builder — whose `eq` is keyed to the row's own column union —
@@ -220,8 +224,14 @@ export default async function ClaimsPage({
 
   /* Read as a claim reference and nothing else — these arrive only from this
      app's own redirect, but a query parameter is a query parameter. */
-  const handedOn = (first("handedOn") ?? "").slice(0, 20);
-  const released = (first("released") ?? "").slice(0, 20);
+  const bannerRef = (kind: "handedOn" | "released") => {
+    const value = first(kind) ?? "";
+    return CLAIM_REF.test(value) ? { kind, ref: value } : null;
+  };
+  const banner =
+    session.role === "adjuster"
+      ? (bannerRef("handedOn") ?? bannerRef("released"))
+      : null;
 
   const scope =
     session.role === "adjuster"
@@ -241,15 +251,25 @@ export default async function ClaimsPage({
       {/* Where an adjuster's own hand-off lands. `reassign_claim` judges the
           caller against the row as it was, so the write succeeds and the claim
           then leaves their view — re-rendering the claim in place showed them
-          the workspace 404 and the success sentence was never read. */}
-      {handedOn || released ? (
+          the workspace 404 and the success sentence was never read.
+
+          Gated on the role and on the shape of the reference, because neither
+          was true when this was written. "…has left your list" is only a fact
+          for an adjuster: an owner reading the same URL was told a claim had
+          left a list it was sitting in as the first row, announced through
+          `role="status"`. And the parameter was echoed after nothing but a
+          length cap, so `?handedOn=Not a claim at all` rendered as a sentence
+          about a claim by that name. A banner URL is a plain GET — it survives
+          the back button, a reload, a bookmark and a pasted link — so it has to
+          hold up outside the one flow that produces it. */}
+      {banner ? (
         <p
           role="status"
           className="mb-[clamp(14px,1.6vw,20px)] border-l-2 border-accent py-[2px] pl-[10px] text-[12.5px] leading-[1.55] text-ink/72"
         >
-          {handedOn
-            ? `${handedOn} is now with another adjuster and has left your list.`
-            : `${released} is back in the intake queue and has left your list.`}
+          {banner.kind === "handedOn"
+            ? `${banner.ref} is now with another adjuster and has left your list.`
+            : `${banner.ref} is back in the intake queue and has left your list.`}
         </p>
       ) : null}
 
@@ -272,16 +292,30 @@ export default async function ClaimsPage({
           whether these rows are the list or a selection out of it. Same pair,
           and same reasoning, as the audit viewer. */}
       <Panel title={hasActiveFilters(filters) ? "Matching claims" : "All claims"}>
+        {/* `paged` is tested before the filters, and the order is the whole
+            point. A filtered list paged past its end took the filter arm and
+            said "Nothing matches those filters" while the header above it
+            counted the matches — because `total` is deliberately counted
+            without the keyset predicate, so it stays right while the window is
+            empty. The reader was told their filter matched nothing, on a screen
+            saying it matched two, with Clear as the only control offered: the
+            one action that throws away the filter they had built. Reachable by
+            paging into a filtered list and having the rows move underneath you,
+            and by any stale link into one. `/admin/leads` has always ordered
+            these two correctly; this is the same order, and the link back keeps
+            the filter. */}
         {rows.length === 0 ? (
-          hasActiveFilters(filters) ? (
-            <EmptyState headline="Nothing matches those filters.">
-              Try a shorter search, or clear the filters to see the whole list.
-            </EmptyState>
-          ) : paged ? (
+          paged ? (
             <EmptyState headline="You have reached the end of the list.">
               <Link href={href()} className="text-accent no-underline hover:text-accent-300">
-                Back to the start
+                {hasActiveFilters(filters)
+                  ? "Back to the first page of these filters"
+                  : "Back to the start"}
               </Link>
+            </EmptyState>
+          ) : hasActiveFilters(filters) ? (
+            <EmptyState headline="Nothing matches those filters.">
+              Try a shorter search, or clear the filters to see the whole list.
             </EmptyState>
           ) : (
             <EmptyState headline="No claims yet.">
