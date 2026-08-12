@@ -48,6 +48,22 @@ const EMPTY: CompanyValues = {
  * component on the record's `updatedAt`, and a successful save re-seeds it with
  * the values that were actually stored rather than snapping back to whatever was
  * on screen when the page first rendered.
+ *
+ * That reset fires on a REFUSAL too, which the paragraph above never accounted
+ * for. `state.values` is what closes it: the action hands the submitted strings
+ * back, they become the defaults, and the reset lands on them. On the create
+ * form the reset used to empty all five fields under a message telling the
+ * owner to check the highlighted one; on the edit form it was worse than loss,
+ * because the defaults are the *stored* values — the flagged Email field came
+ * back holding a perfectly valid address while still wearing the invalid
+ * border, and any other edits made in the same pass were gone.
+ *
+ * `noValidate` for the reason the public forms carry it: `name` is `required`
+ * and `contactEmail` is `type="email"`, so Chrome would otherwise answer an
+ * empty submit with an orange popup in its own UI font, sitting over the two
+ * fields below, and stop at the first offender — the server never runs, no
+ * field is marked, and flagging several at once is unreachable. Validation
+ * belongs to the schema that also guards the database.
  */
 export function PartnerCompanyForm({
   companyId,
@@ -62,7 +78,7 @@ export function PartnerCompanyForm({
   );
 
   return (
-    <form action={formAction} className="max-w-[720px]">
+    <form action={formAction} noValidate className="max-w-[720px]">
       {companyId ? <input type="hidden" name="companyId" value={companyId} /> : null}
 
       <div className="grid gap-x-6 gap-y-[15px] sm:grid-cols-2">
@@ -74,7 +90,7 @@ export function PartnerCompanyForm({
         >
           <AdminInput
             name="name"
-            defaultValue={initial.name}
+            defaultValue={state.values?.name ?? initial.name}
             required
             maxLength={120}
             autoComplete="organization"
@@ -91,7 +107,7 @@ export function PartnerCompanyForm({
         >
           <AdminInput
             name="contactName"
-            defaultValue={initial.contactName}
+            defaultValue={state.values?.contactName ?? initial.contactName}
             maxLength={120}
             autoComplete="off"
             error={state.fieldErrors?.contactName}
@@ -107,7 +123,7 @@ export function PartnerCompanyForm({
           <AdminInput
             name="contactPhone"
             type="tel"
-            defaultValue={initial.contactPhone}
+            defaultValue={state.values?.contactPhone ?? initial.contactPhone}
             maxLength={40}
             autoComplete="off"
             error={state.fieldErrors?.contactPhone}
@@ -124,7 +140,7 @@ export function PartnerCompanyForm({
           <AdminInput
             name="contactEmail"
             type="email"
-            defaultValue={initial.contactEmail}
+            defaultValue={state.values?.contactEmail ?? initial.contactEmail}
             maxLength={254}
             autoComplete="off"
             error={state.fieldErrors?.contactEmail}
@@ -140,7 +156,7 @@ export function PartnerCompanyForm({
         >
           <AdminTextarea
             name="notes"
-            defaultValue={initial.notes}
+            defaultValue={state.values?.notes ?? initial.notes}
             maxLength={2000}
             rows={3}
             error={state.fieldErrors?.notes}
@@ -264,7 +280,7 @@ export function PartnerRepInviteForm({ companyId }: { companyId: string }) {
   const [state, formAction] = useActionState(invitePartnerRep, idleInviteIssueState);
 
   return (
-    <form action={formAction} className="max-w-[560px]">
+    <form action={formAction} noValidate className="max-w-[560px]">
       <input type="hidden" name="companyId" value={companyId} />
 
       <div className="grid gap-x-6 gap-y-[15px] sm:grid-cols-2">
@@ -272,6 +288,7 @@ export function PartnerRepInviteForm({ companyId }: { companyId: string }) {
           <AdminInput
             name="email"
             type="email"
+            defaultValue={state.values?.email ?? ""}
             required
             maxLength={254}
             autoComplete="off"
@@ -288,6 +305,7 @@ export function PartnerRepInviteForm({ companyId }: { companyId: string }) {
         >
           <AdminInput
             name="firstName"
+            defaultValue={state.values?.firstName ?? ""}
             maxLength={80}
             autoComplete="off"
             error={state.fieldErrors?.firstName}

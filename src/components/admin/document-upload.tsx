@@ -38,12 +38,19 @@ export function DocumentUpload({
   );
 
   return (
-    <form action={formAction}>
+    /* `noValidate` for the reason the rest of this workspace carries it: the
+       file input is `required`, and Chrome answered an empty submit with its
+       own popup instead of running the action. The two dropdowns come back
+       holding what was chosen, because the reset that follows a refusal would
+       otherwise quietly return `visibility` to "CMG only" — re-asking a
+       disclosure decision the operator had already made. The file itself
+       cannot be handed back; no page may set a file input's value. */
+    <form action={formAction} noValidate>
       <input type="hidden" name="claimId" value={claimId} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <AdminField name="kind" label="What is it">
-          <AdminSelect name="kind" defaultValue="other">
+          <AdminSelect name="kind" defaultValue={state.values?.kind ?? "other"}>
             {kinds.map((kind) => (
               <option key={kind} value={kind}>
                 {DOCUMENT_KIND_LABEL[kind]}
@@ -53,7 +60,10 @@ export function DocumentUpload({
         </AdminField>
 
         <AdminField name="visibility" label="Who can see it">
-          <AdminSelect name="visibility" defaultValue="internal">
+          <AdminSelect
+            name="visibility"
+            defaultValue={state.values?.visibility ?? "internal"}
+          >
             <option value="internal">CMG only</option>
             <option value="customer">Homeowner can see it</option>
           </AdminSelect>

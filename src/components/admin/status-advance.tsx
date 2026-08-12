@@ -165,9 +165,13 @@ export function StatusAdvance({
         hint="optional — the homeowner reads this"
         className="mt-[15px] max-w-[70ch]"
       >
+        {/* The radio group above is client state and survives the post-action
+            reset on its own. This is not, so a refused move used to discard the
+            sentence the adjuster had just written for the homeowner. */}
         <AdminTextarea
           name="note"
           rows={2}
+          defaultValue={state.values?.note ?? ""}
           placeholder="What changed, in a sentence."
         />
       </AdminField>

@@ -129,6 +129,7 @@ function AcceptForm({
   return (
     <form
       action={formAction}
+      noValidate
       className="border-t border-ink/9 bg-canvas/40 px-[clamp(14px,1.6vw,20px)] py-[16px]"
     >
       <input type="hidden" name="claimId" value={claimId} />
@@ -142,7 +143,7 @@ function AcceptForm({
           <AdminSelect
             name="adjusterId"
             required
-            defaultValue=""
+            defaultValue={state.values?.adjusterId ?? ""}
             error={state.fieldErrors?.adjusterId}
           >
             <option value="" disabled>
@@ -191,7 +192,7 @@ function AcceptForm({
               {choice === "existing" ? (
                 <AdminSelect
                   name="partnerCompanyId"
-                  defaultValue=""
+                  defaultValue={state.values?.partnerCompanyId ?? ""}
                   error={state.fieldErrors?.partnerCompanyId}
                 >
                   <option value="" disabled>
@@ -208,7 +209,7 @@ function AcceptForm({
               {choice === "new" ? (
                 <AdminInput
                   name="newPartnerName"
-                  defaultValue={referrerName ?? ""}
+                  defaultValue={state.values?.newPartnerName ?? referrerName ?? ""}
                   placeholder="Company name"
                   error={state.fieldErrors?.newPartnerName}
                 />
@@ -231,6 +232,7 @@ function AcceptForm({
         <AdminTextarea
           name="note"
           rows={2}
+          defaultValue={state.values?.note ?? ""}
           placeholder="Anything the homeowner should read alongside the update."
         />
       </AdminField>
@@ -255,6 +257,7 @@ function RejectForm({ claimId }: { claimId: string }) {
   return (
     <form
       action={formAction}
+      noValidate
       className="border-t border-ink/9 bg-canvas/40 px-[clamp(14px,1.6vw,20px)] py-[16px]"
     >
       <input type="hidden" name="claimId" value={claimId} />
@@ -268,6 +271,7 @@ function RejectForm({ claimId }: { claimId: string }) {
           name="reason"
           rows={2}
           required
+          defaultValue={state.values?.reason ?? ""}
           error={state.fieldErrors?.reason}
           placeholder="Outside our service area · loss predates the policy · already represented"
         />

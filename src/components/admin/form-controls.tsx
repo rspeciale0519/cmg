@@ -50,6 +50,25 @@ export function AdminLabel({
   );
 }
 
+/**
+ * The one sentence under a refused field. Its `id` is the other half of the
+ * `aria-describedby` the controls below set, so it is a component rather than
+ * markup repeated at each call site — a field whose error paragraph is spelled
+ * out by hand is a field one typo away from describing nothing.
+ */
+export function FieldError({ name, children }: { name: string; children?: string }) {
+  if (!children) return null;
+
+  return (
+    <p
+      id={`admin-${name}-error`}
+      className="mt-[5px] text-[12px] leading-[1.45] text-[#E08C6A]"
+    >
+      {children}
+    </p>
+  );
+}
+
 export function AdminField({
   name,
   label,
@@ -71,14 +90,7 @@ export function AdminField({
         {label}
       </AdminLabel>
       {children}
-      {error ? (
-        <p
-          id={`admin-${name}-error`}
-          className="mt-[5px] text-[12px] leading-[1.45] text-[#E08C6A]"
-        >
-          {error}
-        </p>
-      ) : null}
+      <FieldError name={name}>{error}</FieldError>
     </div>
   );
 }
@@ -137,6 +149,25 @@ export function AdminTextarea({
  * An element also buys something the background could not: `peer-focus` can
  * light it with the border, and `aria-hidden` keeps it out of the accessibility
  * tree, where a decorative glyph on a native `<select>` has no business.
+ *
+ * `key={props.defaultValue}` on the element is the fix for a bug that has no
+ * equivalent on `<input>` or `<textarea>`, and it is not cosmetic.
+ *
+ * React's post-action form reset restores each control to its *default*, which
+ * for a select means whichever `<option>` carries `defaultSelected`. For an
+ * input or a textarea React re-applies a changed `defaultValue` on every
+ * update; for an uncontrolled select it does not — `updateSelect` re-runs
+ * `updateOptions` only when the select is controlled or when `multiple` itself
+ * changed, so `defaultSelected` stays wherever the *first* render put it, for
+ * the life of the element. Handing an echoed value back through `defaultValue`
+ * therefore did nothing at all: the reset kept landing on the mount-time
+ * option, which is how a refused staff invitation turned a chosen Assistant
+ * back into an Adjuster. Keying the element makes a changed default a new
+ * element, so React runs the mount path and sets `defaultSelected` properly.
+ *
+ * The key changes only when the server hands back a different default, which
+ * is to say only when an action has just resolved — never mid-typing, so
+ * nothing the operator is holding is thrown away.
  */
 export function AdminSelect({
   name,
@@ -154,6 +185,7 @@ export function AdminSelect({
     <span className="relative block">
       <select
         {...props}
+        key={String(props.defaultValue ?? "")}
         id={`admin-${name}`}
         name={name}
         aria-invalid={error ? true : undefined}

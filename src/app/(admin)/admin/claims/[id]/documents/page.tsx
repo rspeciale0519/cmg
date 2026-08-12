@@ -107,7 +107,15 @@ export default async function DocumentsPage({
                   className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 px-[clamp(14px,1.6vw,20px)] py-[14px]"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13.5px] leading-[1.4] text-ink/88">
+                    {/* `title` for the reason `CellMeta` states: the line is
+                        `truncate` and nothing on the page can reveal the rest.
+                        Measured at 390px, `letter-of-representation-signed.pdf`
+                        clipped from 224px to 214px with no way to read the end
+                        — and the end of a filename is where the kind lives. */}
+                    <p
+                      title={document.original_name}
+                      className="truncate text-[13.5px] leading-[1.4] text-ink/88"
+                    >
                       {document.original_name}
                     </p>
                     <p className="mt-[5px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] leading-[1.4] text-ink/42">

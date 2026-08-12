@@ -42,7 +42,15 @@ export function ReassignForm({
       <input type="hidden" name="claimId" value={claimId} />
 
       <AdminField name="adjusterId" label="Assigned adjuster">
-        <AdminSelect name="adjusterId" defaultValue={currentAdjusterId ?? ""}>
+        {/* Echoed first, stored second: a refusal that says "A claim can only be
+            assigned to an active adjuster" has to leave the picked adjuster on
+            screen, or it is a sentence about a value the reader can no longer
+            see. A success revalidates, `currentAdjusterId` arrives new, and
+            `state.values` is absent — so the control returns to the server. */}
+        <AdminSelect
+          name="adjusterId"
+          defaultValue={state.values?.adjusterId ?? currentAdjusterId ?? ""}
+        >
           {/* Unassigning is a real move, not an empty state: it returns the
               claim to the intake queue for the owner to route again. */}
           <option value="">Unassigned — back to the queue</option>

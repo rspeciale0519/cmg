@@ -22,6 +22,7 @@ import {
   fieldErrorsFrom,
   GENERIC_ERROR,
   invalid,
+  submittedValues,
   type FormState,
   type InviteIssueState,
 } from "./types";
@@ -284,6 +285,12 @@ export async function inviteStaff(
   formData: FormData,
 ): Promise<InviteIssueState> {
   const session = await requireOwner();
+  /* `role` is here as well as the two text fields: the picker is an
+     uncontrolled `<select>`, and React's post-action reset restores it to the
+     option that was default-selected, so a refusal used to snap a chosen
+     Assistant back to Adjuster — a privilege the operator did not pick,
+     re-offered under an error message about the email address. */
+  const typed = submittedValues(formData, ["email", "firstName", "role"]);
 
   const parsed = staffInviteSchema.safeParse({
     email: formData.get("email") ?? "",
@@ -291,7 +298,7 @@ export async function inviteStaff(
     role: formData.get("role") ?? "",
   });
 
-  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error));
+  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error), typed);
 
   const result = await issueInvite({
     email: parsed.data.email,
@@ -301,7 +308,7 @@ export async function inviteStaff(
     ip: inetOrNull(clientIpFromHeaders(await headers())),
   });
 
-  if (!result.ok) return { status: "error", message: GENERIC_ERROR };
+  if (!result.ok) return { status: "error", message: GENERIC_ERROR, values: typed };
 
   revalidateStaff();
 

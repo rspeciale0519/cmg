@@ -14,7 +14,12 @@ import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { validateUploads } from "@/lib/validators/files";
-import { GENERIC_ERROR, type DownloadState, type FormState } from "./types";
+import {
+  GENERIC_ERROR,
+  submittedValues,
+  type DownloadState,
+  type FormState,
+} from "./types";
 
 const BUCKET = "claim-docs";
 
@@ -46,17 +51,32 @@ export async function uploadClaimDocument(
   const claimId = String(formData.get("claimId") ?? "").trim();
   const kindRaw = String(formData.get("kind") ?? "other");
   const visibilityRaw = String(formData.get("visibility") ?? "internal");
+  /* `files` is deliberately absent: `submittedValues` takes strings only, and
+     no page may set a file input's value. The two dropdowns are the part that
+     can be handed back, and they are the part that matters — `visibility`
+     decides whether a homeowner sees the file the moment it lands, and a reset
+     that quietly returned it to "CMG only" would make the operator re-make a
+     disclosure decision they had already made. */
+  const typed = submittedValues(formData, ["kind", "visibility"]);
 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claimId)) {
-    return { status: "error", message: NOT_YOURS };
+    return { status: "error", message: NOT_YOURS, values: typed };
   }
 
   if (!isDocumentKind(kindRaw)) {
-    return { status: "error", message: "Pick what kind of document this is." };
+    return {
+      status: "error",
+      message: "Pick what kind of document this is.",
+      values: typed,
+    };
   }
 
   if (!isDocumentVisibility(visibilityRaw)) {
-    return { status: "error", message: "Pick who can see this document." };
+    return {
+      status: "error",
+      message: "Pick who can see this document.",
+      values: typed,
+    };
   }
 
   const supabase = await createClient();
@@ -70,12 +90,14 @@ export async function uploadClaimDocument(
     .eq("id", claimId)
     .maybeSingle();
 
-  if (!claim) return { status: "error", message: NOT_YOURS };
+  if (!claim) return { status: "error", message: NOT_YOURS, values: typed };
 
   const validation = validateUploads(formData.getAll("files"));
-  if (!validation.ok) return { status: "error", message: validation.message };
+  if (!validation.ok) {
+    return { status: "error", message: validation.message, values: typed };
+  }
   if (validation.files.length === 0) {
-    return { status: "error", message: "Choose a file to upload." };
+    return { status: "error", message: "Choose a file to upload.", values: typed };
   }
 
   const admin = createAdminClient();
@@ -93,7 +115,7 @@ export async function uploadClaimDocument(
     if (uploadError) {
       console.error("[documents] object upload failed", uploadError.message);
       await admin.storage.from(BUCKET).remove(stored);
-      return { status: "error", message: GENERIC_ERROR };
+      return { status: "error", message: GENERIC_ERROR, values: typed };
     }
 
     stored.push(path);
@@ -125,6 +147,7 @@ export async function uploadClaimDocument(
         message: isRepresentationKind(kindRaw)
           ? "Representation documents are filed by the owner or by the adjuster the claim is assigned to."
           : GENERIC_ERROR,
+        values: typed,
       };
     }
   }

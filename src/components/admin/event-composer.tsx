@@ -4,7 +4,12 @@ import { useActionState, useState } from "react";
 import { postClaimEvent } from "@/lib/actions/claims";
 import { idleState } from "@/lib/actions/types";
 import { cx } from "@/lib/cx";
-import { ActionFeedback, AdminTextarea, SubmitButton } from "./form-controls";
+import {
+  ActionFeedback,
+  AdminTextarea,
+  FieldError,
+  SubmitButton,
+} from "./form-controls";
 
 type Visibility = "internal" | "customer" | "partner" | "shared";
 
@@ -50,7 +55,7 @@ export function EventComposer({
   const active = AUDIENCE.find((option) => option.value === visibility);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} noValidate>
       <input type="hidden" name="claimId" value={claimId} />
       <input type="hidden" name="visibility" value={visibility} />
       <input type="hidden" name="isReply" value={replyTo ? "true" : "false"} />
@@ -106,6 +111,12 @@ export function EventComposer({
         ) : null}
       </fieldset>
 
+      {/* The entry box has no visible label — the fieldset above says what this
+          form is — so it cannot sit in an `AdminField`. It still owes the
+          reader everything `AdminField` provides on a refusal: the ember
+          border via `error`, and the sentence under it carrying the id that
+          `aria-describedby` points at. Without both, "Write something before
+          posting." arrived at the foot of the form with nothing marked. */}
       <div className="mt-[13px]">
         <label htmlFor="admin-body" className="sr-only">
           Entry
@@ -115,12 +126,15 @@ export function EventComposer({
           rows={3}
           required
           maxLength={4000}
+          defaultValue={state.values?.body ?? ""}
+          error={state.fieldErrors?.body}
           placeholder={
             replyTo
               ? "Answer the question in plain terms."
               : "What happened, what you did, what comes next."
           }
         />
+        <FieldError name="body">{state.fieldErrors?.body}</FieldError>
       </div>
 
       <div className="mt-[13px]">

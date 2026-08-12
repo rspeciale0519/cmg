@@ -7,7 +7,7 @@ import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/stat
 import { hasSignedLor, isLegalTransition } from "@/lib/claims/transitions";
 import { requireStaff } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
-import { GENERIC_ERROR, type FormState } from "./types";
+import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
 
 /**
  * Every action here follows the same three steps, in this order:
@@ -76,13 +76,17 @@ export async function advanceClaimStatus(
   const claimId = String(formData.get("claimId") ?? "").trim();
   const requested = String(formData.get("to") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim() || null;
+  /* The radio group is client state and survives the reset on its own; the
+     note is an uncontrolled textarea and did not. A refused move used to
+     discard the sentence the adjuster had written for the homeowner. */
+  const typed = submittedValues(formData, ["note"]);
 
   const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
   if (!isClaimStatus(requested)) {
-    return { status: "error", message: "That is not a claim status." };
+    return { status: "error", message: "That is not a claim status.", values: typed };
   }
 
   const supabase = await createClient();
@@ -94,6 +98,7 @@ export async function advanceClaimStatus(
     return {
       status: "error",
       message: `${STATUS_LABEL[claim.status]} cannot move to ${STATUS_LABEL[requested]}. That is not a step this claim can take.`,
+      values: typed,
     };
   }
 
@@ -106,6 +111,7 @@ export async function advanceClaimStatus(
       status: "error",
       message:
         "This claim cannot be marked LOR signed until a signed letter of representation is on the file. Upload it under Documents with kind “LOR signed”, then advance the status.",
+      values: typed,
     };
   }
 
@@ -117,14 +123,14 @@ export async function advanceClaimStatus(
 
   if (error) {
     console.error("[claims] status update failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   // Zero rows is RLS declining the write, not an error. An assistant reaches
   // this line — `claims_select` shows them every claim — and
   // `claims_update_manage` is what stops them.
   if ((updated?.length ?? 0) === 0) {
-    return { status: "error", message: REFUSED_BY_RLS };
+    return { status: "error", message: REFUSED_BY_RLS, values: typed };
   }
 
   const warnings = await recordTransition(supabase, {
@@ -162,9 +168,10 @@ export async function reassignClaimAdjuster(
   const claimId = String(formData.get("claimId") ?? "").trim();
   const raw = String(formData.get("adjusterId") ?? "").trim();
   const adjusterId = raw.length > 0 ? raw : null;
+  const typed = submittedValues(formData, ["adjusterId"]);
 
   const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
   const supabase = await createClient();
@@ -177,15 +184,18 @@ export async function reassignClaimAdjuster(
     // 42501 is the function's own refusal — "not yours" and "no such claim"
     // deliberately collapsed to one message inside it. 23514 is the active-
     // adjuster check. Anything else is a fault.
-    if (error.code === "42501") return { status: "error", message: REFUSED_BY_RLS };
+    if (error.code === "42501") {
+      return { status: "error", message: REFUSED_BY_RLS, values: typed };
+    }
     if (error.code === "23514") {
       return {
         status: "error",
         message: "A claim can only be assigned to an active adjuster.",
+        values: typed,
       };
     }
     console.error("[claims] reassign failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   revalidateClaim(claimId);
@@ -214,21 +224,40 @@ export async function postClaimEvent(
   const body = String(formData.get("body") ?? "").trim();
   const visibility = String(formData.get("visibility") ?? "internal");
   const isReply = String(formData.get("isReply") ?? "") === "true";
+  const typed = submittedValues(formData, ["body"]);
 
   const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
+  /* Both of these are facts about the textarea, so they arrive as
+     `fieldErrors.body` and the field wears the invalid border like every other
+     refused field in this workspace. They were form-level only: the composer
+     was the one surface that said "Write something before posting." with
+     nothing marked, which reads as a complaint about the form rather than an
+     instruction about the box. */
   if (body.length === 0) {
-    return { status: "error", message: "Write something before posting." };
+    return {
+      status: "error",
+      fieldErrors: { body: "Write something before posting." },
+      message: "Check the highlighted field and post again.",
+      values: typed,
+    };
   }
 
   if (body.length > 4000) {
-    return { status: "error", message: "That is longer than a feed entry can hold (4,000 characters)." };
+    return {
+      status: "error",
+      fieldErrors: {
+        body: "That is longer than a feed entry can hold (4,000 characters).",
+      },
+      message: "Check the highlighted field and post again.",
+      values: typed,
+    };
   }
 
   if (!isEventVisibility(visibility)) {
-    return { status: "error", message: "Pick who should see this entry." };
+    return { status: "error", message: "Pick who should see this entry.", values: typed };
   }
 
   const can = claimCapabilities(
@@ -244,6 +273,7 @@ export async function postClaimEvent(
       status: "error",
       message:
         "Entries visible to the referring partner are posted by the owner or the assigned adjuster.",
+      values: typed,
     };
   }
 
@@ -261,11 +291,11 @@ export async function postClaimEvent(
 
   if (error) {
     console.error("[claims] event insert failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   if ((data?.length ?? 0) === 0) {
-    return { status: "error", message: REFUSED_BY_RLS };
+    return { status: "error", message: REFUSED_BY_RLS, values: typed };
   }
 
   revalidateClaim(claimId);
@@ -284,13 +314,24 @@ export async function saveClaimFinancials(
 ): Promise<FormState> {
   const session = await requireStaff("/admin");
   const claimId = String(formData.get("claimId") ?? "").trim();
+  /* The two figures are controlled inputs and hold their own value across a
+     refusal; `notes` is an uncontrolled textarea and did not, so a rejected fee
+     percentage also erased the paragraph explaining how the figure was reached.
+     All three are echoed so the rule is "the action hands back what it read",
+     not "the action hands back the fields that happen to be uncontrolled
+     today". */
+  const typed = submittedValues(formData, [
+    "settlementAmount",
+    "feePercent",
+    "notes",
+  ]);
 
   const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
   const parsed = parseMoneyFields(formData);
-  if ("error" in parsed) return parsed.error;
+  if ("error" in parsed) return { ...parsed.error, values: typed };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -309,7 +350,7 @@ export async function saveClaimFinancials(
 
   if (error) {
     console.error("[claims] financials upsert failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   if ((data?.length ?? 0) === 0) {
@@ -317,6 +358,7 @@ export async function saveClaimFinancials(
       status: "error",
       message:
         "Settlement figures are recorded by the owner and by the adjuster the claim is assigned to.",
+      values: typed,
     };
   }
 

@@ -160,12 +160,13 @@ export function StaffInviteForm() {
   const [state, formAction] = useActionState(inviteStaff, idleInviteIssueState);
 
   return (
-    <form action={formAction} className="max-w-[720px]">
+    <form action={formAction} noValidate className="max-w-[720px]">
       <div className="grid gap-x-6 gap-y-[15px] sm:grid-cols-3">
         <AdminField name="email" label="Work email" error={state.fieldErrors?.email}>
           <AdminInput
             name="email"
             type="email"
+            defaultValue={state.values?.email ?? ""}
             required
             maxLength={254}
             autoComplete="off"
@@ -182,6 +183,7 @@ export function StaffInviteForm() {
         >
           <AdminInput
             name="firstName"
+            defaultValue={state.values?.firstName ?? ""}
             maxLength={80}
             autoComplete="off"
             error={state.fieldErrors?.firstName}
@@ -189,7 +191,14 @@ export function StaffInviteForm() {
         </AdminField>
 
         <AdminField name="role" label="Joins as" error={state.fieldErrors?.role}>
-          <AdminSelect name="role" defaultValue="adjuster" error={state.fieldErrors?.role}>
+          {/* The role a refusal comes back holding is the role that was
+              submitted, not "adjuster" — see AdminSelect for why an echoed
+              default needs the element re-keyed to take effect. */}
+          <AdminSelect
+            name="role"
+            defaultValue={state.values?.role ?? "adjuster"}
+            error={state.fieldErrors?.role}
+          >
             <option value="adjuster">Adjuster</option>
             <option value="assistant">Assistant</option>
           </AdminSelect>

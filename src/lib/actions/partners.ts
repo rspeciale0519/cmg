@@ -14,6 +14,7 @@ import {
   fieldErrorsFrom,
   GENERIC_ERROR,
   invalid,
+  submittedValues,
   type FormState,
   type InviteIssueState,
 } from "./types";
@@ -55,6 +56,24 @@ function revalidatePartners(companyId?: string) {
   revalidatePath("/admin/claims");
 }
 
+/**
+ * The fields `PartnerCompanyForm` re-seeds from `FormState.values`. Every
+ * refusal in this file returns them, so React's post-action reset lands on what
+ * was typed rather than on an empty create form or — worse on the edit form —
+ * on the stored values, which put a *valid* address back into a field still
+ * wearing the invalid border and message, and threw away two unrelated edits
+ * made in the same pass.
+ */
+const COMPANY_FIELDS = [
+  "name",
+  "contactName",
+  "contactEmail",
+  "contactPhone",
+  "notes",
+] as const;
+
+const REP_INVITE_FIELDS = ["email", "firstName"] as const;
+
 function readCompanyForm(formData: FormData) {
   return partnerCompanySchema.safeParse({
     name: formData.get("name") ?? "",
@@ -86,9 +105,10 @@ export async function createPartnerCompany(
   formData: FormData,
 ): Promise<FormState> {
   const session = await requireOwner();
+  const typed = submittedValues(formData, COMPANY_FIELDS);
 
   const parsed = readCompanyForm(formData);
-  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error));
+  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error), typed);
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -105,11 +125,11 @@ export async function createPartnerCompany(
 
   if (error) {
     console.error("[partners] insert failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   // A policy declining an INSERT returns no row rather than an error.
-  if (!data) return { status: "error", message: REFUSED };
+  if (!data) return { status: "error", message: REFUSED, values: typed };
 
   await auditPartner(session.userId, "partner_company.created", data.id, {
     name: data.name,
@@ -125,10 +145,13 @@ export async function updatePartnerCompany(
 ): Promise<FormState> {
   const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
-  if (!UUID.test(companyId)) return { status: "error", message: NOT_FOUND };
+  const typed = submittedValues(formData, COMPANY_FIELDS);
+  if (!UUID.test(companyId)) {
+    return { status: "error", message: NOT_FOUND, values: typed };
+  }
 
   const parsed = readCompanyForm(formData);
-  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error));
+  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error), typed);
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -146,10 +169,10 @@ export async function updatePartnerCompany(
 
   if (error) {
     console.error("[partners] update failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
-  if (!data) return { status: "error", message: NOT_FOUND };
+  if (!data) return { status: "error", message: NOT_FOUND, values: typed };
 
   await auditPartner(session.userId, "partner_company.updated", companyId, {
     name: data.name,
@@ -290,14 +313,17 @@ export async function invitePartnerRep(
 ): Promise<InviteIssueState> {
   const session = await requireOwner();
   const companyId = String(formData.get("companyId") ?? "").trim();
-  if (!UUID.test(companyId)) return { status: "error", message: NOT_FOUND };
+  const typed = submittedValues(formData, REP_INVITE_FIELDS);
+  if (!UUID.test(companyId)) {
+    return { status: "error", message: NOT_FOUND, values: typed };
+  }
 
   const parsed = partnerRepInviteSchema.safeParse({
     email: formData.get("email") ?? "",
     firstName: formData.get("firstName") ?? "",
   });
 
-  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error));
+  if (!parsed.success) return invalid(fieldErrorsFrom(parsed.error), typed);
 
   // Read through the caller's client so `partner_companies_select` confirms the
   // company, and so a uuid that names nothing gets the same answer as one the
@@ -309,7 +335,7 @@ export async function invitePartnerRep(
     .eq("id", companyId)
     .maybeSingle();
 
-  if (!company) return { status: "error", message: NOT_FOUND };
+  if (!company) return { status: "error", message: NOT_FOUND, values: typed };
 
   // An invitation into an inactive company would complete and then hand the rep
   // a portal that shows nothing: current_partner_company_id() requires the
@@ -319,6 +345,7 @@ export async function invitePartnerRep(
     return {
       status: "error",
       message: `${company.name} is inactive, so a new rep would sign in to an empty portal. Make the company active first.`,
+      values: typed,
     };
   }
 
@@ -332,7 +359,7 @@ export async function invitePartnerRep(
     ip: inetOrNull(clientIpFromHeaders(await headers())),
   });
 
-  if (!result.ok) return { status: "error", message: GENERIC_ERROR };
+  if (!result.ok) return { status: "error", message: GENERIC_ERROR, values: typed };
 
   revalidatePartners(companyId);
 

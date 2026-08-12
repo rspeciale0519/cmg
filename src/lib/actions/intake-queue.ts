@@ -11,7 +11,19 @@ import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { GENERIC_ERROR, type FormState } from "./types";
+import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
+
+/**
+ * What `AcceptForm` re-seeds after a refusal. `partnerChoice` is not here — it
+ * is a client-state radio group and survives React's post-action form reset on
+ * its own; everything below is an uncontrolled control that did not.
+ */
+const ACCEPT_FIELDS = [
+  "adjusterId",
+  "partnerCompanyId",
+  "newPartnerName",
+  "note",
+] as const;
 
 const NOT_IN_QUEUE =
   "That intake is no longer in the queue — someone may have already worked it.";
@@ -95,9 +107,10 @@ export async function acceptIntake(
   const partnerCompanyId = String(formData.get("partnerCompanyId") ?? "").trim();
   const newPartnerName = String(formData.get("newPartnerName") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim() || null;
+  const typed = submittedValues(formData, ACCEPT_FIELDS);
 
   const loaded = await loadQueuedClaim(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
   const can = claimCapabilities(
@@ -105,13 +118,14 @@ export async function acceptIntake(
     { assignedAdjusterId: claim.assigned_adjuster_id },
   );
 
-  if (!can.canManage) return { status: "error", message: NOT_YOURS };
+  if (!can.canManage) return { status: "error", message: NOT_YOURS, values: typed };
 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adjusterId)) {
     return {
       status: "error",
       fieldErrors: { adjusterId: "Choose the adjuster who will carry this claim." },
-      message: "Check the highlighted fields and accept again.",
+      message: "Check the highlighted field and accept again.",
+      values: typed,
     };
   }
 
@@ -125,7 +139,8 @@ export async function acceptIntake(
       return {
         status: "error",
         fieldErrors: { partnerCompanyId: "Pick the referring company." },
-        message: "Check the highlighted fields and accept again.",
+        message: "Check the highlighted field and accept again.",
+        values: typed,
       };
     }
     linkedPartnerId = partnerCompanyId;
@@ -134,7 +149,8 @@ export async function acceptIntake(
       return {
         status: "error",
         fieldErrors: { newPartnerName: "Name the referring company." },
-        message: "Check the highlighted fields and accept again.",
+        message: "Check the highlighted field and accept again.",
+        values: typed,
       };
     }
 
@@ -149,13 +165,14 @@ export async function acceptIntake(
 
     if (companyError) {
       console.error("[intake] partner company insert failed", companyError.message);
-      return { status: "error", message: GENERIC_ERROR };
+      return { status: "error", message: GENERIC_ERROR, values: typed };
     }
 
     if ((created?.length ?? 0) === 0) {
       return {
         status: "error",
         message: "Partner companies are created by the owner.",
+        values: typed,
       };
     }
 
@@ -169,16 +186,19 @@ export async function acceptIntake(
   });
 
   if (assignError) {
-    if (assignError.code === "42501") return { status: "error", message: NOT_YOURS };
+    if (assignError.code === "42501") {
+      return { status: "error", message: NOT_YOURS, values: typed };
+    }
     if (assignError.code === "23514") {
       return {
         status: "error",
         fieldErrors: { adjusterId: "That is not an active adjuster." },
-        message: "Check the highlighted fields and accept again.",
+        message: "Check the highlighted field and accept again.",
+        values: typed,
       };
     }
     console.error("[intake] assignment failed", assignError.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   // ── 3. Commit point: attribution and status in one statement ──────────
@@ -199,11 +219,11 @@ export async function acceptIntake(
 
   if (advanceError) {
     console.error("[intake] accept update failed", advanceError.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   if ((advanced?.length ?? 0) === 0) {
-    return { status: "error", message: NOT_IN_QUEUE };
+    return { status: "error", message: NOT_IN_QUEUE, values: typed };
   }
 
   // ── 4. History, feed, homeowner notification ──────────────────────────
@@ -307,21 +327,23 @@ export async function rejectIntake(
   const session = await requireStaff("/admin");
   const claimId = String(formData.get("claimId") ?? "").trim();
   const reason = String(formData.get("reason") ?? "").trim();
+  const typed = submittedValues(formData, ["reason"]);
 
   const loaded = await loadQueuedClaim(claimId);
-  if ("error" in loaded) return loaded.error;
+  if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
 
   if (reason.length < 4) {
     return {
       status: "error",
       fieldErrors: { reason: "Say why this intake is being declined." },
-      message: "Check the highlighted fields and try again.",
+      message: "Check the highlighted field and try again.",
+      values: typed,
     };
   }
 
   if (!isClaimStatus(claim.status)) {
-    return { status: "error", message: NOT_IN_QUEUE };
+    return { status: "error", message: NOT_IN_QUEUE, values: typed };
   }
 
   const supabase = await createClient();
@@ -334,7 +356,7 @@ export async function rejectIntake(
 
   if (error) {
     console.error("[intake] reject failed", error.message);
-    return { status: "error", message: GENERIC_ERROR };
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   if ((data?.length ?? 0) === 0) {
@@ -342,7 +364,7 @@ export async function rejectIntake(
     // `claims_update_manage` declining the write. Both are honest as one
     // message; separating them would report the policy outcome for a claim the
     // caller may not be entitled to know the state of.
-    return { status: "error", message: NOT_IN_QUEUE };
+    return { status: "error", message: NOT_IN_QUEUE, values: typed };
   }
 
   const warnings = await recordTransition(supabase, {

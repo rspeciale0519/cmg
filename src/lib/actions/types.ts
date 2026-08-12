@@ -5,6 +5,25 @@ export type FormState = {
   /** Shown to the submitter. Always generic about causes we do not want to teach. */
   message?: string;
   fieldErrors?: Record<string, string>;
+  /**
+   * The strings this submission was made with, echoed back on a REFUSAL only,
+   * and the reason every uncontrolled field in this codebase reads
+   * `defaultValue={state.values?.x ?? …}`.
+   *
+   * React 19 resets a `<form action={…}>` when the action *resolves*, not when
+   * it succeeds. For a successful save that is exactly right — the form has
+   * been submitted and should go back to reflecting the server. For a refusal
+   * it was silent data loss: the whole "Add a company" form came back empty
+   * under an ember-bordered Email field, its own error message, and a summary
+   * saying "Check the highlighted fields and submit again" over a blank form
+   * with nothing left highlighted. An instruction that cannot be followed.
+   *
+   * Echoing the submitted strings makes React's reset land on them instead of
+   * on the values that were there at mount. On success `values` is absent, so
+   * a create form still empties and an edit form still re-seeds from the
+   * server — today's correct behaviour is untouched.
+   */
+  values?: Record<string, string>;
   /** `claim_ref` on a successful intake; surfaced in the success panel. */
   reference?: string;
 };
@@ -78,10 +97,46 @@ export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
   return errors;
 }
 
-export function invalid(fieldErrors: Record<string, string>): FormState {
+export function invalid(
+  fieldErrors: Record<string, string>,
+  values?: Record<string, string>,
+): FormState {
   return {
     status: "error",
     message: "Check the highlighted fields and submit again.",
     fieldErrors,
+    values,
   };
+}
+
+/**
+ * The raw submitted strings for the named fields, for `FormState.values`.
+ *
+ * Raw rather than parsed: the point is to hand back what the person typed so
+ * they can correct it, not what the schema made of it. A trimmed or coerced
+ * echo would silently edit their input under the error message telling them to
+ * fix it.
+ *
+ * `FormData.get` answers `File | string | null`, and only strings are taken.
+ * That is the guarantee that no file ever reaches `values`: a `File` has no
+ * `defaultValue` representation, and the one field in this workspace that
+ * carries one — the document upload — must be re-chosen by the operator after
+ * a refusal, because no page may set a file input's value.
+ *
+ * Name only the fields the form re-seeds. Anything a hidden input carries with
+ * an explicit `value` (ids, the delete confirmation's target) survives the
+ * reset already and does not belong here.
+ */
+export function submittedValues(
+  formData: FormData,
+  keys: readonly string[],
+): Record<string, string> {
+  const values: Record<string, string> = {};
+
+  for (const key of keys) {
+    const value = formData.get(key);
+    if (typeof value === "string") values[key] = value;
+  }
+
+  return values;
 }
