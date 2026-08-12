@@ -159,8 +159,12 @@ Remaining:
 - [ ] `vercel.json` (or `vercel.ts` — note the platform now prefers the latter)
       plus a deploy runbook. Must include the cron schedule for
       `/api/cron/outbox`; the route documents what it expects.
-- [ ] `docs/temp/HANDOFF.md` — the owner runbook. Does not exist yet. It must
-      carry the unblock steps for every item in `BLOCKERS.md`.
+- [x] `docs/temp/HANDOFF.md` — the owner runbook. Written: nine owner-supplied
+      steps in dependency order, covering every item in `BLOCKERS.md`, with the
+      six launch-blocking ones separated from the three that have working
+      fallbacks. **It has one forward reference you must satisfy** — it tells the
+      owner that queued email will not send until the `vercel.json` above exists.
+      Update that note when you build it.
 - [ ] `docs/temp/BLOCKERS.md` — exists and is good; re-check it is current at
       the end.
 

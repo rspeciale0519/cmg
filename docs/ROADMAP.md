@@ -74,5 +74,5 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 
 ## Phase 9 — Launch prep (owner-gated)
 - [ ] `vercel.json` + deploy runbook
-- [ ] `docs/temp/HANDOFF.md` complete
+- [x] `docs/temp/HANDOFF.md` complete — nine owner steps in dependency order; one forward reference to the `vercel.json` above
 - [ ] `docs/temp/BLOCKERS.md` owner-only or empty
