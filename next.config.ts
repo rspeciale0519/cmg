@@ -55,7 +55,43 @@ function contentSecurityPolicy(): string {
 }
 
 const SECURITY_HEADERS = [
-  { key: "Content-Security-Policy", value: contentSecurityPolicy() },
+  {
+    /**
+     * **Report-Only, deliberately, and this is not finished work.**
+     *
+     * Enforcing this policy breaks the application. Next emits inline
+     * `<script>` tags for its streaming bootstrap — the `$RC`/`$RV` reveal
+     * pair and every `self.__next_f.push(...)` flight chunk — and a
+     * `script-src` without `'unsafe-inline'`, a nonce or a hash blocks all of
+     * them. Measured on `/file-a-claim` with the policy enforcing: four
+     * distinct "Executing inline script violates the following Content
+     * Security Policy directive" errors, then
+     * `InvariantError: Expected a request ID to be defined`, and no hydration.
+     *
+     * The build succeeded and the headers were served correctly, which is
+     * exactly why this was nearly missed: neither fact says the page works.
+     *
+     * Two ways to finish it, and they trade against each other:
+     *
+     *   1. **Nonce.** Generate one per request in `src/proxy.ts`, put it in the
+     *      CSP header and in `x-nonce`; Next applies it to its own scripts.
+     *      This is the documented approach and keeps `script-src` tight. The
+     *      cost is that every page becomes dynamically rendered, which the
+     *      marketing site currently is not — and its prerendering is what the
+     *      Phase 2 LCP work bought.
+     *   2. **`'unsafe-inline'` on `script-src`.** One word, nothing breaks, and
+     *      it gives up most of what a CSP is for. It also contradicts spec
+     *      §7.6, which names `script-src 'self' https://challenges.cloudflare.com`
+     *      exactly.
+     *
+     * Report-Only in the meantime because it is honest: the browser reports
+     * every violation without blocking, so the policy can be tuned against real
+     * traffic, and nobody reads a header that is silently absent and assumes
+     * protection that is not there. The other six headers below enforce.
+     */
+    key: "Content-Security-Policy-Report-Only",
+    value: contentSecurityPolicy(),
+  },
   {
     /* Two years and preload, which is what the preload list requires. Vercel
        terminates TLS, so this is additive to the platform rather than the only

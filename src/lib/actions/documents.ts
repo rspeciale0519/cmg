@@ -14,6 +14,7 @@ import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { validateUploads } from "@/lib/validators/files";
+import type { Database } from "@/types/database";
 import {
   GENERIC_ERROR,
   submittedValues,
@@ -22,6 +23,10 @@ import {
 } from "./types";
 
 const BUCKET = "claim-docs";
+
+/** One row of the batched insert below, typed from the generated schema so a
+ *  column rename cannot pass through as an untyped object literal. */
+type DocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
 /** Spec §7.5. Long enough to click and download, short enough to be useless if forwarded. */
 const SIGNED_URL_TTL_SECONDS = 300;
@@ -113,8 +118,29 @@ export async function uploadClaimDocument(
     };
   }
 
+  /**
+   * Every object first, then one insert — the shape `submitIntake` already
+   * uses, and the reason it uses it.
+   *
+   * This was a loop that uploaded a file, committed its row, and pushed the
+   * path onto an accumulating list. Both failure branches then removed that
+   * whole list while deleting no rows. Traced with three files failing on the
+   * third: files one and two kept their `documents` rows and lost their bytes.
+   * `issueDocumentDownload` then reads the row, mints a signed URL against an
+   * object that is not there, writes `document.signed_url_issued` into the
+   * audit trail, and hands the operator a link that 404s — with the record
+   * asserting the file was released. `deleteClaimDocument` is the only repair,
+   * and it is refused for an `lor_signed` row once the claim is past the gate.
+   *
+   * The header above this file states the rule this broke: an orphaned object
+   * is invisible and sweepable, an orphaned row is a lie on the page. Batching
+   * makes it structural rather than careful — one `insert` of N rows is one
+   * statement, so it is one transaction, and on any failure at all no row can
+   * have survived, which is what makes removing the whole batch correct.
+   */
   const admin = createAdminClient();
   const stored: string[] = [];
+  const rows: DocumentInsert[] = [];
 
   for (const upload of validation.files) {
     // UUID filename, never the uploaded one (spec §7.4). `documents_storage_path_matches_claim`
@@ -132,37 +158,38 @@ export async function uploadClaimDocument(
     }
 
     stored.push(path);
+    rows.push({
+      claim_id: claimId,
+      storage_path: path,
+      original_name: upload.originalName,
+      kind: kindRaw,
+      mime: upload.mime,
+      size_bytes: upload.size,
+      uploaded_by: session.userId,
+      visibility: visibilityRaw,
+    });
+  }
 
-    const { data: row, error: rowError } = await supabase
-      .from("documents")
-      .insert({
-        claim_id: claimId,
-        storage_path: path,
-        original_name: upload.originalName,
-        kind: kindRaw,
-        mime: upload.mime,
-        size_bytes: upload.size,
-        uploaded_by: session.userId,
-        visibility: visibilityRaw,
-      })
-      .select("id");
+  const { data: inserted, error: rowError } = await supabase
+    .from("documents")
+    .insert(rows)
+    .select("id");
 
-    if (rowError || (row?.length ?? 0) === 0) {
-      if (rowError) console.error("[documents] row insert failed", rowError.message);
-      await admin.storage.from(BUCKET).remove(stored);
+  if (rowError || (inserted?.length ?? 0) !== rows.length) {
+    if (rowError) console.error("[documents] row insert failed", rowError.message);
+    await admin.storage.from(BUCKET).remove(stored);
 
-      // `documents_insert` refuses `lor_unsigned` / `lor_signed` to anyone who
-      // is not the owner or the assigned adjuster: those two kinds arm the
-      // lor_sent → lor_signed gate, so writing one asserts that CMG holds a
-      // signed letter over a homeowner.
-      return {
-        status: "error",
-        message: isRepresentationKind(kindRaw)
-          ? "Representation documents are filed by the owner or by the adjuster the claim is assigned to."
-          : GENERIC_ERROR,
-        values: typed,
-      };
-    }
+    // `documents_insert` refuses `lor_unsigned` / `lor_signed` to anyone who
+    // is not the owner or the assigned adjuster: those two kinds arm the
+    // lor_sent → lor_signed gate, so writing one asserts that CMG holds a
+    // signed letter over a homeowner.
+    return {
+      status: "error",
+      message: isRepresentationKind(kindRaw)
+        ? "Representation documents are filed by the owner or by the adjuster the claim is assigned to."
+        : GENERIC_ERROR,
+      values: typed,
+    };
   }
 
   revalidatePath(`/admin/claims/${claimId}`, "layout");

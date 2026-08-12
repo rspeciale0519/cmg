@@ -16,6 +16,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { validateUploads } from "@/lib/validators/files";
+import type { Database } from "@/types/database";
 import {
   GENERIC_ERROR,
   RATE_LIMIT_ERROR,
@@ -25,6 +26,10 @@ import {
 } from "./types";
 
 const BUCKET = "claim-docs";
+
+/** One row of the batched insert below, typed from the generated schema so a
+ *  column rename cannot pass through as an untyped object literal. */
+type DocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
 /** Spec §7.5. Long enough to click and download, short enough to be useless if forwarded. */
 const SIGNED_URL_TTL_SECONDS = 300;
@@ -112,8 +117,18 @@ export async function uploadPortalDocument(
     };
   }
 
+  /**
+   * Every object first, then one insert. Uploading and committing a row per
+   * iteration, while `stored` accumulated across the whole loop, meant a failure
+   * on file three removed the bytes of files one and two and left their rows —
+   * a homeowner's documents list showing three photos, two of whose download
+   * buttons produce a link that 404s. One `insert` of N rows is one statement,
+   * so it is one transaction: on failure no row survived, which is what makes
+   * removing the whole batch correct rather than merely tidy.
+   */
   const admin = createAdminClient();
   const stored: string[] = [];
+  const rows: DocumentInsert[] = [];
 
   for (const upload of validation.files) {
     // UUID filename, never the uploaded one (spec §7.4).
@@ -131,26 +146,27 @@ export async function uploadPortalDocument(
     }
 
     stored.push(path);
+    rows.push({
+      claim_id: claimId,
+      storage_path: path,
+      original_name: upload.originalName,
+      kind: kindRaw,
+      mime: upload.mime,
+      size_bytes: upload.size,
+      uploaded_by: session.userId,
+      visibility: "customer",
+    });
+  }
 
-    const { data: row, error: rowError } = await supabase
-      .from("documents")
-      .insert({
-        claim_id: claimId,
-        storage_path: path,
-        original_name: upload.originalName,
-        kind: kindRaw,
-        mime: upload.mime,
-        size_bytes: upload.size,
-        uploaded_by: session.userId,
-        visibility: "customer",
-      })
-      .select("id");
+  const { data: inserted, error: rowError } = await supabase
+    .from("documents")
+    .insert(rows)
+    .select("id");
 
-    if (rowError || (row?.length ?? 0) === 0) {
-      if (rowError) console.error("[portal] row insert failed", rowError.message);
-      await admin.storage.from(BUCKET).remove(stored);
-      return { status: "error", message: GENERIC_ERROR, values: typed };
-    }
+  if (rowError || (inserted?.length ?? 0) !== rows.length) {
+    if (rowError) console.error("[portal] row insert failed", rowError.message);
+    await admin.storage.from(BUCKET).remove(stored);
+    return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   revalidatePath(`/portal/claims/${claimId}/documents`);
