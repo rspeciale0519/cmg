@@ -96,6 +96,18 @@ export function StatusAdvance({
   return (
     <form action={formAction}>
       <input type="hidden" name="claimId" value={claimId} />
+      {/* The submitted value comes from this hidden field, and the radios carry
+          a name of their own that nothing reads. React 19 resets the form when
+          the action *resolves*, which clears `.checked` in the DOM — and because
+          `selected` has not changed, React never re-renders to put it back. So
+          after any refusal the pill still had its accent border, the button
+          still read "Move to denied" and was still enabled, and the payload had
+          lost `to` entirely: the next click was refused with "That is not a
+          claim status", which is verbatim the failure the note below says was
+          removed. Mirroring the selection into a hidden input is what
+          `event-composer.tsx` already does with `visibility`, and measured there
+          the choice survives the same reset. */}
+      <input type="hidden" name="to" value={activeSelection ?? ""} />
 
       <p className="text-[13px] leading-[1.65] text-ink/60">
         {STATUS_MEANING[current]}
@@ -127,7 +139,7 @@ export function StatusAdvance({
               >
                 <input
                   type="radio"
-                  name="to"
+                  name="toChoice"
                   value={status}
                   disabled={disabled}
                   checked={isSelected}
@@ -165,9 +177,10 @@ export function StatusAdvance({
         hint="optional — the homeowner reads this"
         className="mt-[15px] max-w-[70ch]"
       >
-        {/* The radio group above is client state and survives the post-action
-            reset on its own. This is not, so a refused move used to discard the
-            sentence the adjuster had just written for the homeowner. */}
+        {/* Echoed, because a refused move used to discard the sentence the
+            adjuster had just written for the homeowner. The radio group above
+            was believed to survive the reset by itself, and it does not — see
+            the hidden `to` field at the top of this form. */}
         <AdminTextarea
           name="note"
           rows={2}

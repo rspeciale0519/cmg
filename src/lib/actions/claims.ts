@@ -77,9 +77,10 @@ export async function advanceClaimStatus(
   const claimId = String(formData.get("claimId") ?? "").trim();
   const requested = String(formData.get("to") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim() || null;
-  /* The radio group is client state and survives the reset on its own; the
-     note is an uncontrolled textarea and did not. A refused move used to
-     discard the sentence the adjuster had written for the homeowner. */
+  /* The note is an uncontrolled textarea, so a refused move used to discard the
+     sentence the adjuster had written for the homeowner. The chosen status is
+     handed back by a hidden field in `StatusAdvance` rather than echoed here —
+     it was assumed to survive the reset as client state, and it does not. */
   const typed = submittedValues(formData, ["note"]);
 
   const loaded = await loadClaimForWrite(claimId);

@@ -496,3 +496,107 @@ details[open]::details-content {
     scroll-behavior: auto;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print.
+
+   A public adjuster prints a claim file into a carrier packet as routine work,
+   and this product is a dark surface: canvas #26292c, ink #f0ede7. Chrome does
+   not paint background colours when printing unless the reader ticks
+   "Background graphics", which is off by default — so every screen here printed
+   as near-white paper carrying near-white text. Measured on /admin/settings
+   before this block: nine distinct text colours in `main`, all between 1.09:1
+   and 2.01:1 against white, with body copy at 1.09. The page came out blank.
+   With backgrounds turned on it came out as full-bleed #26292c, which is not a
+   document anyone files either.
+
+   So print gets its own surface rather than a tweak of this one: white paper,
+   near-black text, grey rules. The workspace chrome goes — a header, a nav rail
+   and a filter bar are ways of reaching this page, not part of what it says —
+   and every clamp on the content comes off, because a truncated address or a
+   line-clamped question is a fact missing from the packet rather than a tidy
+   row.
+
+   Buttons go and form fields stay, which is the line worth stating. A button is
+   an offer and paper cannot take it. A field is where a fact is: a printed
+   `<select>` shows "Dana Reyes", and hiding the form to be rid of the button
+   would take the assigned adjuster off the packet with it.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  :root {
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-ink: #14161a;
+    --panel-fill: #ffffff;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #14161a !important;
+  }
+
+  /* The routes to this page, not the page. */
+  header,
+  nav[aria-label="Workspace"],
+  nav[aria-label="Claim sections"],
+  nav[aria-label="Claims pages"],
+  nav[aria-label="Audit pages"],
+  nav[aria-label="Filter leads"],
+  nav[aria-label="Filter companies"],
+  button {
+    display: none !important;
+  }
+
+  input,
+  select,
+  textarea {
+    border: 1px solid #c8c8c8 !important;
+    background: #fff !important;
+    color: #14161a !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* A packet is read, not scanned: nothing may be clipped, scrolled or hidden
+     behind an overflow. */
+  * {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    -webkit-line-clamp: none !important;
+  }
+
+  table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* A row split across a page break loses the identity column that says whose
+     row it is. */
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  section,
+  [class*="border"] {
+    border-color: #c8c8c8 !important;
+  }
+
+  a {
+    color: #14161a !important;
+    text-decoration: underline;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}

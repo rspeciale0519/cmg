@@ -158,7 +158,7 @@ export default async function QuestionsPage({
                     <span className="line-clamp-3 block max-w-[86ch] text-[13.5px] leading-[1.6] text-ink/85">
                       {event.body}
                     </span>
-                    <span className="mt-[7px] flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] leading-[1.4] text-ink/55">
+                    <span className="mt-[7px] flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] leading-[1.4] text-ink/62">
                       <ClaimRef
                         value={event.claims?.claim_ref ?? "—"}
                         className="text-ink/62"

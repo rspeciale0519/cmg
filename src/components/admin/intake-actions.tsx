@@ -133,6 +133,16 @@ function AcceptForm({
       className="border-t border-ink/9 bg-canvas/40 px-[clamp(14px,1.6vw,20px)] py-[16px]"
     >
       <input type="hidden" name="claimId" value={claimId} />
+      {/* The submitted value, mirrored out of client state — the radios below
+          carry `partnerChoiceUi`, which nothing reads. React 19 clears a
+          controlled radio's `.checked` on the post-action reset without
+          re-rendering, so after the routine refusal "Pick the referring
+          company." the chip still read "Existing", the company select was still
+          on screen holding its choice, and `partnerChoice` was absent from the
+          next submission — which `intake-queue.ts` reads as "none". The intake
+          would have been accepted, successfully and silently, with no referring
+          partner attached to the claim. */}
+      <input type="hidden" name="partnerChoice" value={choice} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <AdminField
@@ -189,7 +199,7 @@ function AcceptForm({
                 >
                   <input
                     type="radio"
-                    name="partnerChoice"
+                    name="partnerChoiceUi"
                     value={value}
                     checked={choice === value}
                     onChange={() => setChoice(value)}

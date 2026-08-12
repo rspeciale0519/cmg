@@ -207,7 +207,7 @@ export default async function AdminDashboard() {
                             ? `${primary.first_name} ${primary.last_name}`.trim()
                             : "Unnamed homeowner"}
                         </span>
-                        <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/55">
+                        <span className="mt-[2px] block truncate text-[12px] leading-[1.4] text-ink/62">
                           {formatAddressLine({
                             street: claim.property_street,
                             city: claim.property_city,
@@ -216,7 +216,7 @@ export default async function AdminDashboard() {
                           })}
                         </span>
                       </span>
-                      <span className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/55">
+                      <span className="flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/62">
                         <ClaimRef value={claim.claim_ref} className="text-ink/62" />
                         {formatRelative(claim.created_at)}
                       </span>
@@ -266,7 +266,7 @@ export default async function AdminDashboard() {
                     <span className="line-clamp-2 block text-[13px] leading-[1.5] text-ink/82">
                       {event.body}
                     </span>
-                    <span className="mt-[5px] flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/55">
+                    <span className="mt-[5px] flex items-baseline gap-3 text-[12px] leading-[1.4] text-ink/62">
                       <ClaimRef
                         value={event.claims?.claim_ref ?? "—"}
                         className="text-ink/58"

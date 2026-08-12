@@ -14,9 +14,18 @@ import { createClient } from "@/lib/supabase/server";
 import { GENERIC_ERROR, submittedValues, type FormState } from "./types";
 
 /**
- * What `AcceptForm` re-seeds after a refusal. `partnerChoice` is not here — it
- * is a client-state radio group and survives React's post-action form reset on
- * its own; everything below is an uncontrolled control that did not.
+ * What `AcceptForm` re-seeds after a refusal — every uncontrolled control on the
+ * form, because React's post-action reset returns each of them to its mount-time
+ * value otherwise.
+ *
+ * `partnerChoice` is not here because it is submitted from a hidden field driven
+ * by client state, not from the radios. It was left out for a different and
+ * wrong reason: a controlled radio was believed to survive the reset. It does
+ * not — React clears `.checked` and, since the state has not changed, never
+ * re-renders to restore it — so after the routine "Pick the referring company."
+ * refusal the chip still read Existing while the field had vanished from the
+ * submission, and this action reads an absent `partnerChoice` as "none". The
+ * intake would have been accepted with no partner attached and nothing said.
  */
 const ACCEPT_FIELDS = [
   "adjusterId",
