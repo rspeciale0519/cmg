@@ -5,6 +5,60 @@ Live log for the autonomous build. Newest first. Roadmap:
 
 ---
 
+## Phase 4 — Admin workspace 🔶 (craft gate open)
+
+**Shipped** — the full staff workspace: dashboard with a pipeline ladder, intake queue,
+leads, questions, the claims list, a claim's six tabs (Overview, Claimants, Documents,
+Activity, Financials, History), partner companies and their detail, staff, the audit
+viewer, and settings — plus the PandaDoc e-signature layer.
+
+**Phase 5** (customer portal) is also shipped, at `88bb28c`. Its own craft gate has not
+been run yet; the two contrast fixes that were obviously shared were applied to it in
+passing (`claim-tabs` counts, `frame`, `error`, activity timestamps).
+
+### Craft gate — rounds 9 to 15
+
+Convergence is two consecutive clean rounds, or three consecutive minor-only. **Not
+reached.** The log matters more than the verdicts, because it shows *why*:
+
+| Round | Verdict | What it went looking at |
+|---|---|---|
+| 9 | major | horizontal scroll strips |
+| 10 | 3 major, 4 minor | layout at 390 |
+| 11 | 1 major, 7 minor | colour, and control ids |
+| 12 | 4 minor | (re-check of the colour pass) |
+| 13 | 7 minor | behaviour: refusals, boundaries, no-op saves |
+| 14 | 2 major, 4 minor | **keyboard** — a new axis |
+| 15 | 1 major, 6 minor | **the adjuster and the assistant** — a new axis |
+
+Rounds 12 and 13 are the shape of a converging surface. Rounds 14 and 15 are not
+regressions: each is the first round to look at an axis nobody had looked at, and each
+found a real major there on the first pass. Colour and layout are now measured clean at
+390 and 1440 — the only text under 4.5:1 anywhere in the workspace is the three cases
+argued in writing in the source (column headers, the em-dash absence mark, the pipeline's
+dimmed empty stages), and no interactive target is under 24px on any route.
+
+**The two majors worth remembering**, because both were invisible to every earlier round:
+
+- **The sticky first column painted over focused controls.** Tab moves focus into an
+  off-screen column, the browser scrolls it into the scrollport and stops — as far as
+  scrolling is concerned it is visible — and then the sticky cell, opaque and above it,
+  covers it. On `/admin/partners` at 390 that was 100% of the control and its focus ring.
+  Fixed with `scroll-padding-inline-start` told the sticky column's width, plus
+  rebalancing the one table whose identity column was 75% of the phone.
+- **An adjuster who reassigned her own claim was stranded.** The write is allowed against
+  the pre-update row; the row then leaves her view, and the success message rendered onto
+  the workspace 404. She is now redirected to the list, and told beforehand.
+
+### What the next round should do
+
+Run round 16. If it is minor-only, rounds 17 and 18 decide the gate. The axes still least
+examined are the **portal** and **partner** surfaces (phases 5 and 6 have had no craft gate
+at all), long/awkward data against real rows rather than injected text, and the intake
+Accept form, which the seed leaves empty so no round has seen it rendered.
+
+---
+
 ## Phase 3 — Auth core ✅
 
 **Shipped** — Next 16 `proxy` gating (`/admin` needs staff role **and** aal2; `/portal` customer;
