@@ -2,21 +2,22 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `1bb7fb6` (working tree contains the continuation implementation)
+HEAD: `7a21209` (Stage 1 checkpoint)
 
 ## Current position
 
-- Stage 1 — Functional and backend completion: **checkpoint preparation complete**
-- Current packet: Stage 1 documentation and local checkpoint commit
+- Stage 1 — Functional and backend completion: **complete**
+- Stage 2 — Architecture convergence: **starting fresh review round 1**
+- Current packet: backend architecture/security review and authorization matrix
 - Final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: rerun the lightweight exact-tree checks after documentation,
-  create the local Stage 1 checkpoint without push, and begin Stage 2 with a
-  fresh backend architecture reviewer and the complete authorization matrix.
+- Next exact action: give a fresh reviewer the committed server actions,
+  authz/RLS, storage, webhook, outbox, public-write, audit, partner projection,
+  and event artifacts; extend the authorization matrix for any uncovered role.
 - Supabase was reset after the latest schema change: **yes** — all 18 migrations
   through `20260815180000_partner_portal_profile.sql` replayed cleanly.
 - Staff MFA after the latest reset: **re-enrolled locally** for owner browser
@@ -36,10 +37,10 @@ HEAD: `1bb7fb6` (working tree contains the continuation implementation)
 - [x] Stage 1 Level C verification
 - [x] Current-build customer/partner/staff browser evidence after the final reset
 - [x] Stage 1 documentation reconciliation
-- [ ] Stage 1 checkpoint commit
+- [x] Stage 1 checkpoint commit — `7a21209`
 
-Packet implementations have no checkpoint hashes yet because they remain in the
-working tree. Historical phase commits through `1bb7fb6` remain intact.
+Packets 1A–1H and their converged e-sign correction are checkpointed together at
+`7a21209`. Historical phase commits through `1bb7fb6` remain intact.
 
 ## Latest verification
 
@@ -59,13 +60,12 @@ working tree. Historical phase commits through `1bb7fb6` remain intact.
 
 ## Open required stages
 
-1. Stage 1 local checkpoint commit.
-2. Stage 2 fresh backend architecture convergence plus the full authorization
+1. Stage 2 fresh backend architecture convergence plus the full authorization
    matrix, Level C, documentation, and checkpoint.
-3. Stage 3 admin/customer/partner craft convergence, all-surface cohesion,
+2. Stage 3 admin/customer/partner craft convergence, all-surface cohesion,
    enforcing CSP confirmation, and two comparable mobile Lighthouse runs with
    lower performance ≥85 and accessibility ≥95; Level C and checkpoint.
-4. Stage 4 truthful final launch documentation, final Level C/browser evidence,
+3. Stage 4 truthful final launch documentation, final Level C/browser evidence,
    and checkpoint.
 
 The prior MVP-only handoff incorrectly called the mandatory Stage 2/3 review,

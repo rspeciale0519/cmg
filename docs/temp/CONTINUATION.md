@@ -2,8 +2,8 @@
 
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
-The feature build and its first consolidated stabilization pass are complete,
-but the full continuation goal is not. Resume the first incomplete requirement
+Stage 1 is complete at local checkpoint `7a21209`, but the full continuation
+goal is not. Resume the first incomplete requirement
 from `GOAL_STATE.md` and `REMAINING_GOAL_SPEC.md`; do not restart completed
 packets. The archived pre-reconciliation continuation is at
 `archive/docs/temp/pre-mvp-final-reconciliation/CONTINUATION.md`.
@@ -34,14 +34,13 @@ differs, diagnose the new failure rather than weakening the assertion.
 
 ## Next required work
 
-1. Create the local Stage 1 checkpoint from the converged, verified tree.
-2. Complete Stage 2 backend architecture convergence and authorization matrix.
-3. Complete Stage 3 admin/customer/partner craft, all-surface cohesion, CSP
+1. Complete Stage 2 backend architecture convergence and authorization matrix.
+2. Complete Stage 3 admin/customer/partner craft, all-surface cohesion, CSP
    evidence, and comparable mobile Lighthouse floors.
-4. Complete Stage 4 final reconciliation, verification, and checkpoint.
-5. Owner acceptance may run in parallel, and any material defect it finds must
+3. Complete Stage 4 final reconciliation, verification, and checkpoint.
+4. Owner acceptance may run in parallel, and any material defect it finds must
    be fixed without weakening auth/RLS, data integrity, or security.
-6. After explicit authorization only, publish or deploy through the project Git
+5. After explicit authorization only, publish or deploy through the project Git
    and launch workflows.
 
 Do not create paid/hosted resources or publish repository changes without owner

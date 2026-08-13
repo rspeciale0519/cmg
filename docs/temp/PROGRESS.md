@@ -34,8 +34,10 @@ and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
   overview, partner list/detail/activity/profile and settlement privacy, and
   owner MFA/admin. Earlier marketing desktop/390px checks drove fixes for
   localhost CSP redirect upgrading and legacy represented-claim e-sign controls.
-- This evidence does not finish the full continuation goal. Stage 1 needs only
-  its local checkpoint commit; Stages 2–4 remain required.
+- Stage 1 checkpoint commit: `7a21209` (`feat(stage-1): complete functional
+  backend continuation`). Nothing was pushed.
+- This evidence does not finish the full continuation goal. Stages 2–4 remain
+  required.
 - No push, PR, merge, deploy, domain/DNS, or hosted/paid resource was created.
 
 Historical progress before reconciliation is preserved at
