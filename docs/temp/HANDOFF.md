@@ -1,6 +1,7 @@
 # CMG launch and browser-test handoff
 
-Last reconciled: 2026-08-13 on `feature/claims-platform`.
+Last reconciled: 2026-08-13 on `feature/claims-platform` at Stage 3 checkpoint
+`bb958a0`; the final Stage 4 documentation checkpoint follows this file.
 
 The application is feature-complete for the agreed functional scope and is
 ready for owner acceptance testing. Architecture, authorization, per-role craft,
@@ -17,13 +18,16 @@ production setup sequence is in the root
   `20260815220000_accept_intake_owner_guard.sql`.
 - Vitest: 75 files, 725 tests passed.
 - pgTAP: 31 files, 915 assertions passed.
-- TypeScript, ESLint, production build, and `git diff --check` passed.
+- TypeScript, ESLint, production build, source-size audit, and
+  `git diff --check` passed.
 - `npm audit --audit-level=high`: zero vulnerabilities.
 - Built client assets contain none of the server-only credential names.
 - Production HTTP smoke: `/`, `/contact`, and `/file-a-claim` return 200;
   `/admin`, `/portal`, and `/partner` redirect unauthenticated visitors to login.
 - CSP is enforcing, nonce-based, and covers every rendered script. Localhost
   omits only `upgrade-insecure-requests`; hosted requests retain it.
+- Mobile Lighthouse comparable runs scored 93/100 and 90/100; the lower
+  performance/accessibility scores are 90/100, above the 85/95 floors.
 - Chrome testing passed at exact desktop and 390px widths for marketing,
   customer, partner, and staff surfaces. The production server remains at
   `http://localhost:3011`; the final reset requires local staff MFA re-enrollment.
@@ -74,10 +78,10 @@ recreates the demo state and invalidates locally enrolled MFA factors.
     PandaDoc/manual-LOR, document download, and cron checks against hosted
     services.
 
-## Required owner-independent work still in progress
+## Owner-independent work at handoff
 
-- Stage 3 and Stage 4 checkpoint commits and final requirement-by-requirement
-  documentation/browser reconciliation.
+- Complete. Stage 3 is checkpointed at `bb958a0`; this reconciled handoff is
+  included in the final Stage 4 documentation checkpoint.
 
 Only replacing the two deliberate photo placeholders is owner-blocked; it needs
 authentic CMG assets rather than generated or misleading stock photography.
@@ -114,6 +118,14 @@ Follow the dependency-ordered runbook in the README. In short:
 7. Point the final domain/DNS and validate TLS.
 8. Supply authentic photos and approve statistics, testimonial, legal copy,
    license display, retention position, and LOR wording.
-9. After the remaining local stages and checkpoint commits complete, run the
-   hosted smoke checklist, document rollback, and monitor dead webhook, outbox,
-   and storage-cleanup rows.
+9. Run the hosted smoke checklist, record the deployment and rollback target,
+   and monitor dead webhook, outbox, storage-cleanup, and e-sign dispatch rows.
+
+## Exact local Git state at handoff
+
+- Branch: `feature/claims-platform`.
+- Stage checkpoints: `7a21209` (Stage 1), `9419994` (Stage 2), `bb958a0`
+  (Stage 3). Documentation handoffs are separate local commits.
+- Before the final Stage 4 checkpoint, the branch was five commits ahead of
+  `origin/feature/claims-platform` and zero behind.
+- Nothing was pushed, merged, deployed, or opened as a PR.

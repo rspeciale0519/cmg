@@ -2,22 +2,22 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `4e67690` (Stage 2 documentation handoff; Stage 3 checkpoint pending)
+HEAD: `bb958a0` (Stage 3 checkpoint; Stage 4 checkpoint pending)
 
 ## Current position
 
 - Stage 1 — Functional and backend completion: **complete**
 - Stage 2 — Architecture convergence: **complete; two consecutive `NO MAJORS` rounds**
-- Stage 3 — Craft, cohesion, CSP, and performance: **complete; checkpoint pending**
-- Current packet: Stage 4 launch preparation and final reconciliation
+- Stage 3 — Craft, cohesion, CSP, and performance: **complete; checkpoint `bb958a0`**
+- Stage 4 — Launch preparation: **complete locally; checkpoint pending**
 - Stage 1 final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: reconcile launch documentation, run final Level C/browser
-  evidence after the latest reset, and create the Stage 3 then Stage 4 checkpoints.
+- Next exact action: create the final Stage 4 documentation checkpoint, confirm
+  the clean local Git state, then report owner-only publication/launch actions.
 - Supabase was reset after the latest schema change: **yes** — all 21 migrations
   through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
 - Staff MFA after the latest reset: **must be re-enrolled locally** before the
@@ -46,10 +46,10 @@ Packets 1A–1H and their converged e-sign correction are checkpointed together 
 
 - `npm run type-check`: pass
 - `npm run lint`: pass
-- `npm test`: 70 files / 712 tests pass
+- `npm test`: 75 files / 725 tests pass
 - `npm run build`: pass
-- clean `npx supabase db reset`: pass, 18 migrations
-- `npx supabase test db`: 25 files / 787 assertions pass
+- clean `npx supabase db reset`: pass, 21 migrations
+- `npx supabase test db`: 31 files / 915 assertions pass
 - `npm audit --audit-level=high`: zero vulnerabilities
 - `.next/static` server-secret-name scan: zero hits
 - production headers/CSP: enforcing nonce CSP, all 12 scripts nonced
@@ -98,10 +98,19 @@ Packets 1A–1H and their converged e-sign correction are checkpointed together 
   client-secret scan, handwritten line cap, and diff check passed.
 - Durable details: `docs/temp/evidence/stage3/verification.md`.
 
-## Open required stage
+## Stage 4 evidence
 
-1. Stage 4 truthful final launch documentation, final Level C/browser evidence,
-   and checkpoint.
+- Supported Vercel cron configuration, route duration bounds, dependency-ordered
+  README runbook, owner-only BLOCKERS, and detailed HANDOFF are reconciled.
+- Final clean reset, pgTAP, production build, type/lint/unit/audit/secret/line
+  gates passed; customer, partner, owner-AAL2, public-form, settings/manual-e-sign,
+  cron-auth, headers, CSP, console, and not-found/error evidence is recorded.
+- Durable details: `docs/temp/evidence/stage4/final-verification.md`.
+
+## Open required work
+
+None inside the repository after the Stage 4 checkpoint. Production publication
+depends only on the owner actions in `BLOCKERS.md`.
 
 The prior MVP-only handoff incorrectly called the mandatory Stage 2/3 review,
 craft, cohesion, and Lighthouse gates optional. Those documents must be
@@ -113,8 +122,8 @@ goal.
 Production Supabase/plan/backups, Vercel/env/domain/TLS, Resend/DNS, real
 Turnstile keys, PandaDoc credentials/templates if electronic signing is chosen,
 authentic photos, business/legal copy approval, and push/merge/deploy authority.
-These do not block remaining local reviews, craft work, performance work, or
-checkpoint commits.
+These do not represent a deferred repository defect; they begin only after the
+final local checkpoint and explicit owner authorization.
 
 ## External-state guardrail
 

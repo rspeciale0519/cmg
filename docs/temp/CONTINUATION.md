@@ -2,10 +2,10 @@
 
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
-Stages 1–3 are complete locally; Stage 2 checkpoint is `9419994` and the Stage 3 checkpoint is pending. The full continuation goal is not.
-Resume the first incomplete requirement
-from `GOAL_STATE.md` and `REMAINING_GOAL_SPEC.md`; do not restart completed
-packets. The archived pre-reconciliation continuation is at
+Stages 1–4 are complete locally. Checkpoints are `7a21209` (Stage 1), `9419994`
+(Stage 2), and `bb958a0` (Stage 3); the final Stage 4 documentation checkpoint
+is the only remaining local action when this paragraph is read. Do not restart
+completed packets. The archived pre-reconciliation continuation is at
 `archive/docs/temp/pre-mvp-final-reconciliation/CONTINUATION.md`.
 
 ## First commands after any interruption
@@ -34,12 +34,11 @@ differs, diagnose the new failure rather than weakening the assertion.
 
 ## Next required work
 
-1. Create the Stage 3 checkpoint after reviewing its reconciled evidence.
-2. Complete Stage 4 final reconciliation, verification, and checkpoint.
-3. Owner acceptance may run in parallel, and any material defect it finds must
-   be fixed without weakening auth/RLS, data integrity, or security.
-4. After explicit authorization only, publish or deploy through the project Git
-   and launch workflows.
+1. Create/confirm the final Stage 4 documentation checkpoint.
+2. Owner acceptance may continue, and any material defect it finds must be fixed
+   without weakening auth/RLS, data integrity, or security.
+3. After explicit authorization only, publish or deploy through the project Git
+   and launch workflows described in README/HANDOFF/BLOCKERS.
 
 Do not create paid/hosted resources or publish repository changes without owner
 authorization. Do not delete files; archive superseded material.

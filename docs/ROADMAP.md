@@ -66,7 +66,7 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] Six security headers enforced; `npm audit` clean (0 vulns, prod and full tree)
 - [x] CSP enforcing with per-request nonce; production and browser verified
 - [x] No secret leakage into client bundle (no server-only var name in `.next/static`)
-- [x] Full suites green (712 Vitest / 787 pgTAP); storage cleanup worker and retention operations documented
+- [x] Full suites green (725 Vitest / 915 pgTAP); storage cleanup worker and retention operations documented
 - [x] Stage 1 integrated review converged — final correction verdict `NO FINDINGS`
 - [x] Consolidated effectiveness, safety, security, database, build, and browser stabilization complete
 - [x] Stage 2 architecture review converged — two consecutive `NO MAJORS` rounds; full authorization matrix green

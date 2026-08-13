@@ -3,6 +3,23 @@
 Newest first. Detailed final evidence is in `GOAL_STATE.md`; owner acceptance
 and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 
+## 2026-08-13 — Stage 4 launch preparation complete locally
+
+- Reconciled the dependency-ordered README deployment/runbook, owner browser
+  checklist, material limitations, actual Git state, retention operations, and
+  owner-only blocker ledger.
+- `vercel.json` carries both cron schedules; outbox/storage routes are bounded to
+  60 seconds and the PandaDoc webhook to 15 seconds.
+- Final local browser smoke after a clean reset covered public validation,
+  customer and partner login/routes, owner MFA enrollment and AAL2 admin,
+  truthful manual e-sign/credential status, cron authentication, console, CSP,
+  headers, and error/not-found behavior.
+- Final Level C passed: type-check, lint, 725 Vitest tests, build, 21-migration
+  reset, 915 pgTAP assertions, zero dependency vulnerabilities, zero client
+  secret-name hits, source-size cap, and diff check.
+- Nothing was pushed, merged, deployed, purchased, or created in a hosted
+  service. Remaining work is owner-controlled and enumerated in BLOCKERS.
+
 ## 2026-08-13 — Stage 3 craft and cohesion converged
 
 - Admin and customer each finished with two consecutive `MINOR GAPS ONLY`
@@ -72,7 +89,7 @@ and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 - Added enforcing nonce CSP, Vercel schedules for outbox and storage cleanup,
   and a dependency-ordered production runbook.
 - Clean migration replay applied all migrations through the partner portal.
-- Final automated evidence: type-check, lint, 712 Vitest tests, 787 pgTAP
+- Final automated evidence at that checkpoint: type-check, lint, 712 Vitest tests, 787 pgTAP
   assertions, production build, zero high-severity dependency vulnerabilities,
   and zero server-secret names in built client assets.
 - Current-build Chrome acceptance after the clean reset covered customer claim
