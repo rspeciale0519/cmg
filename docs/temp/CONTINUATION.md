@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
-Stages 1 and 2 are complete locally, but the full continuation goal is not.
+Stages 1 and 2 are complete locally; Stage 2 checkpoint is `9419994`. The full continuation goal is not.
 Resume the first incomplete requirement
 from `GOAL_STATE.md` and `REMAINING_GOAL_SPEC.md`; do not restart completed
 packets. The archived pre-reconciliation continuation is at

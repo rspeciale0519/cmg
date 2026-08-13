@@ -27,6 +27,8 @@ and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
   no application console errors were observed. The only browser warning was
   the existing non-blocking logo-image preload notice.
 - Nothing was pushed, merged, deployed, or connected to a hosted resource.
+- Stage 2 checkpoint commit: `9419994` (`feat(stage-2): converge architecture
+  and authorization`).
 
 ## 2026-08-13 — Stage 1 converged and checkpoint-ready
 

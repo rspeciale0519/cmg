@@ -2,21 +2,21 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD before Stage 2 checkpoint: `fc52969`
+HEAD: `9419994` (Stage 2 checkpoint)
 
 ## Current position
 
 - Stage 1 — Functional and backend completion: **complete**
 - Stage 2 — Architecture convergence: **complete; two consecutive `NO MAJORS` rounds**
-- Current packet: Stage 2 checkpoint documentation and commit
+- Current packet: Stage 3 live craft, cohesion, CSP, and mobile Lighthouse
 - Stage 1 final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: create the Stage 2 checkpoint, then begin Stage 3 live craft,
-  cohesion, CSP, and mobile Lighthouse work.
+- Next exact action: capture current 1440×900 and 390×844 admin, customer, and
+  partner artifacts; start the fresh per-surface craft reviews.
 - Supabase was reset after the latest schema change: **yes** — all 21 migrations
   through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
 - Staff MFA after the latest reset: **re-enrolled locally** for owner browser
@@ -80,6 +80,7 @@ Packets 1A–1H and their converged e-sign correction are checkpointed together 
 - Stage 2 Level C: type-check pass; lint pass; 718 Vitest pass; build pass;
   clean reset pass; 915 pgTAP pass; audit 0; client secret-name scan 0; enforcing
   CSP/headers pass; marketing/customer/partner/owner browser smoke pass.
+- Stage 2 checkpoint commit: `9419994`.
 
 ## Open required stages
 
