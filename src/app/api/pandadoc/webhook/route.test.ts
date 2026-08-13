@@ -14,7 +14,8 @@ const { signedDelivery, stateChangedEvent } = await import("@/lib/esign/fixtures
 const { WEBHOOK_EVENT_ID_HEADER } = await import("@/lib/esign/webhook");
 const support = await import("@/lib/esign/test-support");
 type TestAdmin = Awaited<ReturnType<typeof support.testAdminClient>>;
-const { POST } = await import("./route");
+const { POST, maxDuration } = await import("./route");
+const { WEBHOOK_ROUTE_MAX_DURATION_SECONDS } = await import("@/lib/esign/webhook-timing");
 
 /**
  * Route-level wiring only: that the raw body reaches verification unparsed,
@@ -38,6 +39,11 @@ describeDb("POST /api/pandadoc/webhook", () => {
   const claims: Array<{ id: string; claimRef: string }> = [];
   const eventIds: string[] = [];
   let previousKey: string | undefined;
+
+  it("exports the bounded platform duration pinned by the timing invariant", () => {
+    expect(maxDuration).toBe(WEBHOOK_ROUTE_MAX_DURATION_SECONDS);
+    expect(maxDuration).toBeLessThanOrEqual(15);
+  });
 
   const request = (body: string, signature: string | null, eventId: string | null) =>
     new Request(signature === null ? ENDPOINT : `${ENDPOINT}?signature=${signature}`, {

@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { Panel, PanelBody } from "@/components/admin/admin-shell";
 import { Fact, FactList } from "@/components/admin/data-table";
+import { ESignPanel } from "@/components/admin/esign-panel";
 import { PolicyForm } from "@/components/admin/policy-form";
 import { ReassignForm } from "@/components/admin/reassign-form";
 import { StatusAdvance } from "@/components/admin/status-advance";
@@ -12,6 +14,7 @@ import {
   humanizeEnum,
 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { esignCapabilities } from "@/lib/esign";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +25,7 @@ export default async function ClaimOverviewPage({
 }) {
   const { id } = await params;
   const { claim, can } = await loadClaimContext(id);
+  const esign = esignCapabilities();
 
   const supabase = await createClient();
   const allowed = await legalTransitions(supabase, claim.status);
@@ -38,7 +42,7 @@ export default async function ClaimOverviewPage({
             <StatusAdvance
               claimId={id}
               current={claim.status}
-              allowed={allowed}
+              allowed={allowed.filter((status) => status !== "lor_sent")}
               blocked={blocked}
               canManage={can.canManage}
             />
@@ -119,6 +123,25 @@ export default async function ClaimOverviewPage({
       </div>
 
       <div className="grid gap-4">
+        <Panel title="Letter of representation">
+          <PanelBody>
+            <ESignPanel
+              claimId={id}
+              requestId={randomUUID()}
+              claimStatus={claim.status}
+              esignStatus={claim.esignStatus}
+              providerDocumentId={claim.pandaDocDocumentId}
+              canManage={can.canManage}
+              electronicReady={esign.canSendElectronically && esign.ready}
+              electronicBlocker={
+                esign.canSendElectronically
+                  ? esign.blocker
+                  : "PandaDoc is not configured; manual signing remains available."
+              }
+            />
+          </PanelBody>
+        </Panel>
+
         <Panel title="Assignment">
           <PanelBody>
             <ReassignForm

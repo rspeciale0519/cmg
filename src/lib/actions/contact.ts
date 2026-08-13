@@ -30,15 +30,6 @@ export async function submitContact(
   const requestHeaders = await headers();
   const ip = clientIpFromHeaders(requestHeaders);
 
-  const turnstile = await verifyTurnstile(
-    formData.get("cf-turnstile-response"),
-    inetOrNull(ip),
-  );
-  if (!turnstile.ok) {
-    console.warn("[contact] turnstile rejected", { reason: turnstile.reason });
-    return { status: "error", message: VERIFICATION_ERROR };
-  }
-
   const rawEmail = String(formData.get("email") ?? "").trim();
   const withinLimits = await checkFormRateLimits({
     ipRule: RATE_LIMITS.contactIp,
@@ -49,6 +40,15 @@ export async function submitContact(
   if (!withinLimits) {
     console.warn("[contact] rate limited");
     return { status: "error", message: RATE_LIMIT_ERROR };
+  }
+
+  const turnstile = await verifyTurnstile(
+    formData.get("cf-turnstile-response"),
+    inetOrNull(ip),
+  );
+  if (!turnstile.ok) {
+    console.warn("[contact] turnstile rejected", { reason: turnstile.reason });
+    return { status: "error", message: VERIFICATION_ERROR };
   }
 
   const parsed = contactSchema.safeParse({

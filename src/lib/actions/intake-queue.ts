@@ -7,13 +7,13 @@ import { requireStaff } from "@/lib/authz";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus } from "@/lib/claims/status";
-import { issueInvite } from "@/lib/invites";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { claimPolicySchema, type ClaimPolicyInput } from "@/lib/validators/claims";
+import type { ClaimPolicyInput } from "@/lib/validators/claims";
+import { inviteIntakeClaimants } from "./intake-invites";
+import { readIntakePolicyDetails } from "./intake-policy";
 import {
-  fieldErrorsFrom,
   GENERIC_ERROR,
   submittedValues,
   type FormState,
@@ -160,7 +160,8 @@ export async function acceptIntake(
      `claim.carrier === null` is the test rather than "did the form send these",
      so a submission that simply omits the fields is refused instead of accepted
      with the gap intact. */
-  const policyDetails = claim.carrier === null ? readPolicyDetails(formData) : null;
+  const policyDetails =
+    claim.carrier === null ? readIntakePolicyDetails(formData) : null;
   if (policyDetails && "fieldErrors" in policyDetails) {
     const marked = Object.keys(policyDetails.fieldErrors).length;
     return {
@@ -293,10 +294,20 @@ export async function acceptIntake(
 
   // ── 5. Invites ────────────────────────────────────────────────────────
   const ip = inetOrNull(clientIpFromHeaders(await headers()));
-  const invited = await inviteClaimants(claimId, claim.claim_ref, session.userId, ip);
+  const invited = await inviteIntakeClaimants(
+    claimId,
+    claim.claim_ref,
+    session.userId,
+    ip,
+  );
   if (invited.failed > 0) {
     warnings.push(
       `${invited.failed} portal invitation${invited.failed === 1 ? "" : "s"} could not be sent. Resend from the Claimants tab.`,
+    );
+  }
+  if (invited.unqueued > 0) {
+    warnings.push(
+      `${invited.unqueued} portal invitation${invited.unqueued === 1 ? " was" : "s were"} created but could not be queued. Recover from the Claimants tab.`,
     );
   }
 
@@ -310,7 +321,9 @@ export async function acceptIntake(
       assigned_adjuster_id: adjusterId,
       partner_company_id: linkedPartnerId,
       partner_choice: partnerChoice,
-      invites_issued: invited.sent,
+      invites_issued: invited.issued,
+      invites_queued: invited.queued,
+      invites_unqueued: invited.unqueued,
       invites_failed: invited.failed,
     },
     ip,
@@ -322,74 +335,14 @@ export async function acceptIntake(
   revalidatePath("/admin");
 
   const sentence =
-    invited.sent > 0
-      ? `${claim.claim_ref} accepted and under review. ${invited.sent} portal invitation${invited.sent === 1 ? "" : "s"} issued.`
+    invited.issued > 0
+      ? `${claim.claim_ref} accepted and under review. ${invited.issued} portal invitation${invited.issued === 1 ? "" : "s"} issued; ${invited.queued} queued for email.`
       : `${claim.claim_ref} accepted and under review.`;
 
   return {
     status: "success",
     message: warnings.length > 0 ? `${sentence} ${warnings.join(" ")}` : sentence,
   };
-}
-
-type PolicyDetails = ClaimPolicyInput;
-
-/**
- * The three columns a partner referral arrives without.
- *
- * The rules moved to `claimPolicySchema` when the Overview's policy panel became
- * the second caller — accept is where the gap is *first* closed and no longer
- * the only place it can be. Two hand-rolled copies of "required, 120
- * characters, one of three enum labels" are two places for a bound to drift, and
- * a carrier the public form would refuse must not be admitted through either
- * desk screen.
- */
-function readPolicyDetails(
-  formData: FormData,
-): PolicyDetails | { fieldErrors: Record<string, string> } {
-  const parsed = claimPolicySchema.safeParse({
-    carrier: formData.get("carrier") ?? "",
-    policyNumber: formData.get("policyNumber") ?? "",
-    carrierTenure: formData.get("carrierTenure") ?? "",
-  });
-
-  if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
-
-  return parsed.data;
-}
-
-async function inviteClaimants(
-  claimId: string,
-  claimRef: string,
-  invitedBy: string,
-  ip: string | null,
-): Promise<{ sent: number; failed: number }> {
-  const supabase = await createClient();
-  const { data: claimants } = await supabase
-    .from("claimants")
-    .select("id, first_name, email, user_id")
-    .eq("claim_id", claimId)
-    .is("user_id", null);
-
-  let sent = 0;
-  let failed = 0;
-
-  for (const claimant of claimants ?? []) {
-    const result = await issueInvite({
-      email: claimant.email,
-      role: "customer",
-      claimId,
-      invitedBy,
-      firstName: claimant.first_name,
-      claimRef,
-      ip,
-    });
-
-    if (result.ok) sent += 1;
-    else failed += 1;
-  }
-
-  return { sent, failed };
 }
 
 /**

@@ -46,10 +46,18 @@ export type PandaDocClientOptions = {
   pollMaxAttempts: number;
   fetchImpl?: FetchLike;
   sleep?: SleepLike;
+  operationTimeoutMs?: number;
+};
+
+export type PandaDocOperation = {
+  signal: AbortSignal;
+  deadlineAt: number;
 };
 
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_TRANSPORT_ATTEMPTS = 4;
+const MAX_RETRY_DELAY_MS = 10_000;
+export const PANDADOC_DISPATCH_TIMEOUT_MS = 90_000;
 
 const defaultSleep: SleepLike = (ms) =>
   new Promise((resolve) => {
@@ -73,12 +81,17 @@ export class PandaDocClient {
   private readonly sleep: SleepLike;
   readonly pollIntervalMs: number;
   readonly pollMaxAttempts: number;
+  readonly operationTimeoutMs: number;
 
   constructor(options: PandaDocClientOptions) {
     this.apiKey = options.apiKey;
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.pollIntervalMs = options.pollIntervalMs;
     this.pollMaxAttempts = options.pollMaxAttempts;
+    this.operationTimeoutMs = Math.min(
+      Math.max(options.operationTimeoutMs ?? PANDADOC_DISPATCH_TIMEOUT_MS, 1),
+      PANDADOC_DISPATCH_TIMEOUT_MS,
+    );
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
     this.sleep = options.sleep ?? defaultSleep;
   }
@@ -87,9 +100,89 @@ export class PandaDocClient {
     const retryAfter = response?.headers.get("retry-after");
     if (retryAfter) {
       const seconds = Number.parseInt(retryAfter, 10);
-      if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+      if (Number.isFinite(seconds) && seconds > 0) {
+        return Math.min(seconds * 1000, MAX_RETRY_DELAY_MS);
+      }
     }
-    return this.pollIntervalMs * 2 ** attempt;
+    return Math.min(this.pollIntervalMs * 2 ** attempt, MAX_RETRY_DELAY_MS);
+  }
+
+  async withOperationDeadline<T>(
+    work: (operation: PandaDocOperation) => Promise<T>,
+  ): Promise<T> {
+    const controller = new AbortController();
+    const deadlineAt = Date.now() + this.operationTimeoutMs;
+    const timer = setTimeout(() => controller.abort(), this.operationTimeoutMs);
+    try {
+      return await work({ signal: controller.signal, deadlineAt });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private timeoutError(deliveryUncertain = false): ESignError {
+    return new ESignError(
+      "send_failed",
+      deliveryUncertain
+        ? "PandaDoc send timed out; delivery may have been accepted."
+        : "PandaDoc dispatch exceeded its safe operation deadline.",
+      undefined,
+      deliveryUncertain,
+    );
+  }
+
+  assertBeforeSend(operation: PandaDocOperation): void {
+    if (operation.signal.aborted || Date.now() >= operation.deadlineAt) {
+      throw this.timeoutError(false);
+    }
+  }
+
+  private async readJson(
+    response: Response,
+    operation: PandaDocOperation,
+    deliveryUncertain = false,
+  ): Promise<unknown> {
+    try {
+      return await this.withinOperation(
+        response.json(),
+        operation,
+        deliveryUncertain,
+      );
+    } catch (cause) {
+      if (!deliveryUncertain || (cause instanceof ESignError && cause.deliveryUncertain)) {
+        throw cause;
+      }
+      throw new ESignError(
+        "send_failed",
+        `PandaDoc accepted the send but returned an unreadable response: ${
+          cause instanceof Error ? cause.message : "invalid response"
+        }`,
+        response.status,
+        true,
+      );
+    }
+  }
+
+  private async withinOperation<T>(
+    promise: Promise<T>,
+    operation: PandaDocOperation,
+    deliveryUncertain = false,
+  ): Promise<T> {
+    if (operation.signal.aborted || Date.now() >= operation.deadlineAt) {
+      throw this.timeoutError(deliveryUncertain);
+    }
+    return new Promise<T>((resolve, reject) => {
+      const abort = () => reject(this.timeoutError(deliveryUncertain));
+      operation.signal.addEventListener("abort", abort, { once: true });
+      promise.then(resolve, reject).finally(() => {
+        operation.signal.removeEventListener("abort", abort);
+      });
+    });
+  }
+
+  private pause(ms: number, operation: PandaDocOperation): Promise<void> {
+    const remaining = Math.max(operation.deadlineAt - Date.now(), 0);
+    return this.withinOperation(this.sleep(Math.min(ms, remaining)), operation);
   }
 
   /**
@@ -102,13 +195,15 @@ export class PandaDocClient {
     path: string,
     init: RequestInit,
     accept: "json" | "binary",
+    operation: PandaDocOperation,
+    sendMayBeAccepted = false,
   ): Promise<Response> {
     let lastError: ESignError | null = null;
 
     for (let attempt = 0; attempt < MAX_TRANSPORT_ATTEMPTS; attempt += 1) {
       let response: Response;
       try {
-        response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+        response = await this.withinOperation(this.fetchImpl(`${this.baseUrl}${path}`, {
           ...init,
           headers: {
             Authorization: `API-Key ${this.apiKey}`,
@@ -117,15 +212,28 @@ export class PandaDocClient {
             ...(init.headers as Record<string, string> | undefined),
           },
           cache: "no-store",
-        });
+          signal: operation.signal,
+        }), operation, sendMayBeAccepted);
       } catch (cause) {
+        if (cause instanceof ESignError && cause.deliveryUncertain) throw cause;
+        if (sendMayBeAccepted) {
+          throw new ESignError(
+            "send_failed",
+            `PandaDoc send to ${path} had no definitive response: ${
+              cause instanceof Error ? cause.message : "network error"
+            }`,
+            undefined,
+            true,
+          );
+        }
         lastError = new ESignError(
           "send_failed",
           `PandaDoc request to ${path} failed: ${
             cause instanceof Error ? cause.message : "network error"
           }`,
         );
-        await this.sleep(this.backoffMs(attempt, null));
+        if (attempt === MAX_TRANSPORT_ATTEMPTS - 1) break;
+        await this.pause(this.backoffMs(attempt, null), operation);
         continue;
       }
 
@@ -139,8 +247,12 @@ export class PandaDocClient {
         response.status,
       );
 
+      if (sendMayBeAccepted && response.status !== 429) {
+        throw new ESignError(lastError.code, lastError.message, response.status, true);
+      }
+
       if (attempt === MAX_TRANSPORT_ATTEMPTS - 1) break;
-      await this.sleep(this.backoffMs(attempt, response));
+      await this.pause(this.backoffMs(attempt, response), operation);
     }
 
     throw lastError ?? new ESignError("send_failed", `PandaDoc request to ${path} failed`);
@@ -150,10 +262,14 @@ export class PandaDocClient {
     response: Response,
     code: ESignError["code"],
     what: string,
+    operation?: PandaDocOperation,
   ): Promise<ESignError> {
     let detail: string | null = null;
     try {
-      detail = readDetail(await response.json());
+      const payload = operation
+        ? await this.withinOperation(response.json(), operation)
+        : await response.json();
+      detail = readDetail(payload);
     } catch {
       detail = null;
     }
@@ -164,38 +280,52 @@ export class PandaDocClient {
     );
   }
 
-  async createDocument(body: CreateDocumentBody): Promise<PandaDocDocument> {
+  async createDocument(
+    body: CreateDocumentBody,
+    operation: PandaDocOperation,
+  ): Promise<PandaDocDocument> {
     const response = await this.request("/documents", {
       method: "POST",
       body: JSON.stringify(body),
-    }, "json");
+    }, "json", operation);
 
     if (!response.ok) {
-      throw await this.failure(response, "creation_failed", "PandaDoc document creation");
+      throw await this.failure(response, "creation_failed", "PandaDoc document creation", operation);
     }
 
-    return (await response.json()) as PandaDocDocument;
+    return await this.readJson(response, operation) as PandaDocDocument;
   }
 
   /** `null` on 404 — the documented answer while creation is still in flight. */
-  async getDocument(documentId: string): Promise<PandaDocDocument | null> {
-    const response = await this.request(`/documents/${documentId}`, { method: "GET" }, "json");
+  async getDocument(
+    documentId: string,
+    operation: PandaDocOperation,
+  ): Promise<PandaDocDocument | null> {
+    const response = await this.request(
+      `/documents/${documentId}`,
+      { method: "GET" },
+      "json",
+      operation,
+    );
 
     if (response.status === 404) return null;
     if (!response.ok) {
-      throw await this.failure(response, "creation_failed", "PandaDoc document status");
+      throw await this.failure(response, "creation_failed", "PandaDoc document status", operation);
     }
 
-    return (await response.json()) as PandaDocDocument;
+    return await this.readJson(response, operation) as PandaDocDocument;
   }
 
   /**
    * Creation is asynchronous: the document is unusable — 404 on read, 409 on
    * send — until it reaches `document.draft`.
    */
-  async waitForDraft(documentId: string): Promise<PandaDocDocument> {
+  async waitForDraft(
+    documentId: string,
+    operation: PandaDocOperation,
+  ): Promise<PandaDocDocument> {
     for (let attempt = 0; attempt < this.pollMaxAttempts; attempt += 1) {
-      const document = await this.getDocument(documentId);
+      const document = await this.getDocument(documentId, operation);
 
       if (document?.status === "document.draft") return document;
 
@@ -206,7 +336,7 @@ export class PandaDocClient {
         );
       }
 
-      await this.sleep(this.pollIntervalMs);
+      await this.pause(this.pollIntervalMs, operation);
     }
 
     throw new ESignError(
@@ -219,20 +349,23 @@ export class PandaDocClient {
   async sendDocument(
     documentId: string,
     body: SendDocumentBody,
+    operation: PandaDocOperation,
   ): Promise<PandaDocDocument> {
     for (let attempt = 0; attempt < this.pollMaxAttempts; attempt += 1) {
       const response = await this.request(`/documents/${documentId}/send`, {
         method: "POST",
         body: JSON.stringify(body),
-      }, "json");
+      }, "json", operation, true);
 
-      if (response.ok) return (await response.json()) as PandaDocDocument;
-
-      if (response.status !== 409) {
-        throw await this.failure(response, "send_failed", "PandaDoc send");
+      if (response.ok) {
+        return await this.readJson(response, operation, true) as PandaDocDocument;
       }
 
-      await this.sleep(this.pollIntervalMs);
+      if (response.status !== 409) {
+        throw await this.failure(response, "send_failed", "PandaDoc send", operation);
+      }
+
+      await this.pause(this.pollIntervalMs, operation);
     }
 
     throw new ESignError(
@@ -250,6 +383,7 @@ export class PandaDocClient {
       `/documents/${documentId}/download-protected`,
       { method: "GET" },
       "binary",
+      { signal: new AbortController().signal, deadlineAt: Number.POSITIVE_INFINITY },
     );
 
     if (!response.ok) {

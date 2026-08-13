@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/authz";
 import { formatDateStamp } from "@/lib/format";
 import { portalProfile } from "@/lib/portal/queries";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,17 @@ export default async function PortalProfilePage() {
      co-homeowner would read the other party's email, phone and submitting IP.
      So this unfiltered select returns exactly this person's own consent
      records, across every claim they are on. */
-  const { data: consents } = await supabase
-    .from("consents")
-    .select("id, kind, consent_text, granted_at, withdrawn_at, claim_id")
-    .order("granted_at", { ascending: false });
+  const consents = await collectPostgrestPages(
+    (from, to) =>
+      supabase
+        .from("consents")
+        .select("id, kind, consent_text, granted_at, withdrawn_at, claim_id")
+        .order("granted_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+  );
 
-  const rows = consents ?? [];
+  const rows = consents;
 
   return (
     <>

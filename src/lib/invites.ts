@@ -42,8 +42,21 @@ export type IssueInviteInput = {
 };
 
 export type IssueInviteResult =
-  | { ok: true; inviteId: string; expiresAt: string; token: string; url: string }
+  | {
+      ok: true;
+      inviteId: string;
+      expiresAt: string;
+      token: string;
+      url: string;
+      queued: boolean;
+    }
   | { ok: false; reason: string };
+
+type InviteOutboxRows = ReturnType<typeof outboxRows>;
+export type IssueInviteDeps = {
+  /** Fault-injection seam; production always inserts the rows returned by outboxRows. */
+  transformOutboxRows?: (rows: InviteOutboxRows) => InviteOutboxRows;
+};
 
 function audienceFor(role: AppRole): InvitePayload["audience"] {
   if (role === "customer") return "customer";
@@ -60,6 +73,7 @@ function audienceFor(role: AppRole): InvitePayload["audience"] {
  */
 export async function issueInvite(
   input: IssueInviteInput,
+  deps: IssueInviteDeps = {},
 ): Promise<IssueInviteResult> {
   const email = input.email.trim().toLowerCase();
   const admin = createAdminClient();
@@ -121,11 +135,15 @@ export async function issueInvite(
     expiresInHours: INVITE_TTL_HOURS,
   };
 
+  const notificationRows = outboxRows([
+    { recipientEmail: email, message: { template: "invite", payload } },
+  ]);
   const { data: queued, error: outboxError } = await admin
     .from("notifications_outbox")
-    .insert(outboxRows([{ recipientEmail: email, message: { template: "invite", payload } }]))
+    .insert(deps.transformOutboxRows?.(notificationRows) ?? notificationRows)
     .select("id");
 
+  const queuedSuccessfully = !outboxError && Boolean(queued && queued.length > 0);
   if (outboxError) {
     console.error("[invite] outbox enqueue failed", outboxError.message);
   }
@@ -149,14 +167,21 @@ export async function issueInvite(
     ip: input.ip ?? null,
   });
 
-  if (queued && queued.length > 0) {
+  if (queuedSuccessfully && queued) {
     await dispatchOutbox(
       admin,
       queued.map((row) => row.id),
     );
   }
 
-  return { ok: true, inviteId: invite.id, expiresAt: invite.expires_at, token, url };
+  return {
+    ok: true,
+    inviteId: invite.id,
+    expiresAt: invite.expires_at,
+    token,
+    url,
+    queued: queuedSuccessfully,
+  };
 }
 
 /**

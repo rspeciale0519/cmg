@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 /**
  * The two account facts that do not live in `public`: the sign-in address and
@@ -27,20 +28,18 @@ export type Directory = ReadonlyMap<string, DirectoryEntry>;
 
 export const loadUserDirectory = cache(async function loadUserDirectory(): Promise<Directory> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("admin_user_directory");
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .rpc("admin_user_directory")
+      .order("user_id", { ascending: true })
+      .range(from, to),
+  );
 
-  // An empty map rather than a throw. Every caller renders a row per *profile*
-  // and looks the account facts up beside it, so a directory that could not be
-  // read degrades to "email and MFA unknown" instead of taking down a screen
-  // whose primary content — who works here, in what role — came from
-  // `profiles` and is intact.
-  if (error) {
-    console.error("[admin] account directory unavailable", error.message);
-    return new Map();
-  }
-
+  // Exhaust the owner-only RPC. A missing or failed page throws rather than
+  // presenting a truncated directory as complete; the staff screen's error
+  // boundary is more honest than false MFA or last-sign-in facts.
   return new Map(
-    (data ?? []).map((row) => [
+    data.map((row) => [
       row.user_id,
       {
         email: row.email,

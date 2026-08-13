@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
+import { resendApiKey } from "@/lib/email/outbox";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -367,13 +368,15 @@ export async function invitePartnerRep(
      the owner who just issued it — the same choice `issueClaimantInvite` makes,
      for the same reason: a UI that claims to have sent an email it could not
      send is worse than one that says so. Withheld the moment delivery works. */
-  const deliverable = Boolean(process.env.RESEND_API_KEY);
+  const deliverable = result.queued && Boolean(resendApiKey());
 
   return {
     status: "success",
-    message: deliverable
-      ? `Invitation sent to ${parsed.data.email}. It expires in 72 hours.`
-      : `Invitation created for ${parsed.data.email}. Email delivery is not configured on this environment, so send them this link — it expires in 72 hours and works once.`,
+    message: !result.queued
+      ? `Invitation created for ${parsed.data.email}, but its email could not be queued. Send them this recovery link — it expires in 72 hours and works once.`
+      : deliverable
+        ? `Invitation queued for email delivery to ${parsed.data.email}. It expires in 72 hours.`
+        : `Invitation created for ${parsed.data.email}. Email delivery is not configured on this environment, so send them this link — it expires in 72 hours and works once.`,
     manualLink: deliverable ? undefined : result.url,
   };
 }

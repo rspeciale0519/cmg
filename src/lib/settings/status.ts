@@ -1,6 +1,6 @@
 import "server-only";
 
-import { countOutboxOwed } from "@/lib/email/outbox";
+import { countOutboxOwed, resendApiKey } from "@/lib/email/outbox";
 import { esignCapabilities } from "@/lib/esign";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +32,7 @@ export async function loadIntegrations(): Promise<Integration[]> {
 
   return buildIntegrations({
     supabase,
-    resendApiKey: nonEmpty(process.env.RESEND_API_KEY),
+    resendApiKey: resendApiKey(),
     emailFrom: nonEmpty(process.env.EMAIL_FROM),
     outboxDue,
     turnstileSiteKey: nonEmpty(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),

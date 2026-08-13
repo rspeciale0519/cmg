@@ -32,6 +32,7 @@ const stub = vi.hoisted(() => {
     OWNER_ID,
     claim,
     session: { userId: OWNER_ID, email: "owner@cmg.test", aal: "aal2", role: "owner" },
+    issueInvite: vi.fn(async () => ({ ok: true, url: "x", queued: false })),
   };
 });
 
@@ -40,7 +41,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn(), notFound: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ writeAudit: vi.fn(async () => {}) }));
-vi.mock("@/lib/invites", () => ({ issueInvite: vi.fn(async () => ({ ok: true, url: "x" })) }));
+vi.mock("@/lib/invites", () => ({ issueInvite: stub.issueInvite }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => ({})) }));
 
 vi.mock("@/lib/authz", () => ({
@@ -160,6 +161,21 @@ describe("inviteStaff", () => {
       firstName: "Sam",
       role: "assistant",
     });
+  });
+
+  it("returns the recovery link and never claims delivery when enqueue failed", async () => {
+    process.env.RESEND_API_KEY = "   ";
+    stub.issueInvite.mockResolvedValueOnce({ ok: true, url: "https://cmg.test/recover", queued: false });
+
+    const state = await inviteStaff(
+      idleInviteIssueState,
+      form({ email: "sam@example.com", firstName: "Sam", role: "assistant" }),
+    );
+
+    expect(state.status).toBe("success");
+    expect(state.message).toMatch(/could not be queued/i);
+    expect(state.message).not.toMatch(/sent/i);
+    expect(state.manualLink).toBe("https://cmg.test/recover");
   });
 });
 

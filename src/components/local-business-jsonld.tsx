@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { site } from "@/lib/site";
 
 /* The payload is a module-level constant — no request, user or CMS data
@@ -49,9 +50,12 @@ const localBusiness = {
   sameAs: [site.url],
 };
 
-export function LocalBusinessJsonLd() {
+export async function LocalBusinessJsonLd() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <script
+      nonce={nonce}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: serialize(localBusiness) }}
     />

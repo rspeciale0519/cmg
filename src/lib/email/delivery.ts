@@ -39,6 +39,8 @@ export const OUTBOX_MAX_ATTEMPTS = 5;
  * with the backoff on failure, or sets `sent` on success.
  */
 export const OUTBOX_LEASE_SECONDS = 300;
+export const OUTBOX_MAX_CONCURRENCY = 4;
+export const OUTBOX_SEND_TIMEOUT_MS = 10_000;
 
 export type OutboxOutcome = "sent" | "failed" | "dead";
 
@@ -93,11 +95,24 @@ export type OutboxStore = {
 };
 
 export type SendMessage = (message: {
+  idempotencyKey: string;
   to: string;
   subject: string;
   html: string;
   text: string;
 }) => Promise<void>;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => reject(new Error("provider send timed out")), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, expired]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 export type DeliveryReport = {
   claimed: number;
@@ -121,7 +136,7 @@ export type DeliveryReport = {
 export async function deliverClaimed(
   store: OutboxStore,
   send: SendMessage,
-  options: { limit: number; ids?: string[] },
+  options: { limit: number; ids?: string[]; concurrency?: number },
 ): Promise<DeliveryReport> {
   const rows = await store.claim(options.limit, options.ids);
   const report: DeliveryReport = {
@@ -131,28 +146,27 @@ export async function deliverClaimed(
     dead: 0,
   };
 
-  for (const row of rows) {
+  const deliver = async (row: ClaimedRow) => {
+    let sendFailure: unknown = null;
     try {
       const rendered = await renderNotification({
         template: row.template,
         payload: row.payload,
       } as NotificationMessage);
 
-      await send({
+      await withTimeout(send({
+        idempotencyKey: row.id,
         to: row.recipient_email,
         subject: rendered.subject,
         html: rendered.html,
         text: rendered.text,
-      });
+      }), OUTBOX_SEND_TIMEOUT_MS);
 
-      await store.settle({
-        id: row.id,
-        outcome: "sent",
-        error: null,
-        retryInSeconds: null,
-      });
-      report.sent += 1;
     } catch (cause) {
+      sendFailure = cause;
+    }
+
+    if (sendFailure !== null) {
       const { outcome, retryInSeconds } = outcomeAfterFailure(row.attempts);
 
       await store.settle({
@@ -162,15 +176,45 @@ export async function deliverClaimed(
            can return a whole HTML error page. The first 500 characters carry the
            status and the reason; the rest is a stylesheet. */
         error:
-          cause instanceof Error
-            ? cause.message.slice(0, 500)
+          sendFailure instanceof Error
+            ? sendFailure.message.slice(0, 500)
             : "unknown delivery error",
         retryInSeconds,
       });
 
       report[outcome] += 1;
+      return;
     }
-  }
+
+    /* A successful provider call is not a provider failure merely because the
+       database could not record it. Let the settlement error reject the sweep;
+       the row retains its lease and Resend's row-id idempotency key makes the
+       later retry safe. Never attempt a second, false `failed` settlement. */
+    await store.settle({
+      id: row.id,
+      outcome: "sent",
+      error: null,
+      retryInSeconds: null,
+    });
+    report.sent += 1;
+  };
+
+  const concurrency = Math.min(
+    Math.max(Math.floor(options.concurrency ?? 1), 1),
+    OUTBOX_MAX_CONCURRENCY,
+  );
+  let cursor = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, rows.length) },
+    async () => {
+      while (cursor < rows.length) {
+        const row = rows[cursor];
+        cursor += 1;
+        if (row) await deliver(row);
+      }
+    },
+  );
+  await Promise.all(workers);
 
   return report;
 }

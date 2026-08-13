@@ -71,8 +71,9 @@ select is_empty(
         and (not exists (select 1 from pg_policy p where p.polrelid = c.oid))
             <> (c.relname in ('claim_ref_counters', 'notifications_outbox',
                               'pandadoc_webhook_events', 'rate_limits',
-                              'storage_cleanup_queue')) $$,
-  'the only tables carrying zero policies are the five service-role ledgers, so RLS-on-with-no-policy is a deliberate lockout on exactly those and every other table is governed by an explicit policy'
+                              'storage_cleanup_queue', 'esign_dispatch_attempts',
+                              'esign_recipient_completions')) $$,
+  'only service-role ledgers carry zero policies, so RLS-on-with-no-policy is a deliberate lockout and every client-facing table has an explicit policy'
 );
 
 select is_empty(

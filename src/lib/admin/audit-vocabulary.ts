@@ -48,6 +48,7 @@ export const AUDIT_ENTITIES: readonly AuditEntity[] = [
       { value: "esign.lor_send_failed", label: "LOR send failed" },
       { value: "esign.lor_signed", label: "LOR signed" },
       { value: "esign.recipient_completed", label: "Signer completed" },
+      { value: "esign.stale_webhook_ignored", label: "Old e-sign event ignored" },
       { value: "esign.state_changed", label: "E-sign state changed" },
       { value: "esign.document_failed", label: "E-sign document failed" },
       { value: "esign.creation_failed", label: "E-sign creation failed" },

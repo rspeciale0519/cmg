@@ -3,9 +3,36 @@ import type { ESignCapabilities } from "@/lib/esign/provider";
 import {
   buildIntegrations,
   classifyTurnstileKey,
+  FEE_PERCENT_DEFAULT,
+  LOR_TEMPLATE_ROLES,
+  LOR_TEMPLATE_TOKENS,
   type IntegrationEnvironment,
   type SupabaseProbe,
 } from "./config";
+
+describe("application settings contract", () => {
+  it("keeps the claim fee default within the persisted field's valid range", () => {
+    expect(FEE_PERCENT_DEFAULT).toBeGreaterThanOrEqual(0);
+    expect(FEE_PERCENT_DEFAULT).toBeLessThanOrEqual(100);
+  });
+
+  it("publishes the exact signer roles and tokens required by LOR dispatch", () => {
+    expect(LOR_TEMPLATE_ROLES).toEqual(["Homeowner1", "Homeowner2"]);
+    expect(LOR_TEMPLATE_TOKENS).toEqual([
+      "Claim.Ref",
+      "Claim.Carrier",
+      "Claim.PolicyNumber",
+      "Claim.ClaimNumber",
+      "Claim.LossDate",
+      "Claim.Cause",
+      "Property.Address",
+      "Homeowner1.Name",
+      "Homeowner2.Name",
+      "Adjuster.Name",
+      "Fee.Percent",
+    ]);
+  });
+});
 
 const HEALTHY_DB: SupabaseProbe = {
   ok: true,

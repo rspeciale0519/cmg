@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  claimSearchClause,
+  applyClaimFilters,
   hasActiveFilters,
   parseClaimFilters,
   sanitiseSearch,
@@ -105,21 +105,37 @@ describe("hasActiveFilters", () => {
   });
 });
 
-describe("claimSearchClause", () => {
-  it("wraps the term for ilike across the claim's own columns", () => {
-    expect(claimSearchClause("bell", [])).toBe(
-      "claim_ref.ilike.*bell*,property_street.ilike.*bell*,property_city.ilike.*bell*,carrier.ilike.*bell*",
-    );
-  });
+describe("applyClaimFilters", () => {
+  it("applies the same parsed filters to list and count query builders", () => {
+    const calls: string[] = [];
+    const query = {
+      eq(column: string, value: string) {
+        calls.push(`eq:${column}:${value}`);
+        return this;
+      },
+      is(column: string, value: null) {
+        calls.push(`is:${column}:${value}`);
+        return this;
+      },
+      ilike(column: string, pattern: string) {
+        calls.push(`ilike:${column}:${pattern}`);
+        return this;
+      },
+    };
 
-  it("adds an id set when claimant names matched separately", () => {
-    const clause = claimSearchClause("bell", ["id-1", "id-2"]);
-    expect(clause).toContain("id.in.(id-1,id-2)");
-  });
-
-  it("omits the id predicate when nothing matched, rather than emitting an empty set", () => {
-    // `id.in.()` is a syntax error to PostgREST, so an empty list has to drop
-    // the predicate entirely instead of rendering it empty.
-    expect(claimSearchClause("bell", [])).not.toContain("id.in.");
+    expect(
+      applyClaimFilters(query, {
+        status: "filed",
+        adjusterId: "unassigned",
+        partnerId: "partner-id",
+        search: "Bell",
+      }),
+    ).toBe(query);
+    expect(calls).toEqual([
+      "eq:status:filed",
+      "is:assigned_adjuster_id:null",
+      "eq:partner_company_id:partner-id",
+      "ilike:claim_search_text:%Bell%",
+    ]);
   });
 });

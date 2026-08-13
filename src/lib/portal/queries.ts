@@ -5,6 +5,7 @@ import { cache } from "react";
 import { requireRole } from "@/lib/authz";
 import type { ClaimStatus } from "@/lib/claims/status";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 import type { Session } from "@/lib/authz";
 
 /**
@@ -68,12 +69,16 @@ export const listPortalClaims = cache(async (): Promise<PortalClaim[]> => {
   await requireRole("customer");
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("claims")
-    .select(CLAIM_COLUMNS)
-    .order("created_at", { ascending: false });
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .from("claims")
+      .select(CLAIM_COLUMNS)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
 
-  return (data ?? []) as PortalClaim[];
+  return data as PortalClaim[];
 });
 
 export type PortalClaimAccess = {

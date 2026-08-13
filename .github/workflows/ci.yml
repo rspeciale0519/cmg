@@ -62,9 +62,9 @@ jobs:
       # properties of Postgres, and a fake would only agree with itself. They
       # skip themselves when no stack is reachable — which is the case in the
       # `verify` job — so this is the run that actually exercises them.
-      - name: E-signature database suites
+      - name: Database-backed Vitest suites
         run: |
           set -euo pipefail
           eval "$(supabase status -o env)"
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
-            npx vitest run src/lib/esign src/app/api/pandadoc
+            npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup

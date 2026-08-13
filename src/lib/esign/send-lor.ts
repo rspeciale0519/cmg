@@ -22,6 +22,7 @@ export type {
  */
 export type SendLorRequest = {
   claimId: string;
+  requestId?: string;
   /** Contingency fee stamped into the letter; falls back to claim_financials. */
   feePercent?: number | null;
   /** Overrides the covering message in the provider's notification email. */
@@ -103,6 +104,7 @@ export async function sendLor(
   return dispatchLorForClaim(
     {
       claimId: claim.id,
+      requestId: request.requestId,
       feePercent: request.feePercent ?? null,
       message: request.message ?? null,
       actorId: session.userId,

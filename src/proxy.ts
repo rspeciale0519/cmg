@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { contentSecurityPolicy } from "@/lib/security/csp";
 import { updateSession } from "@/lib/supabase/proxy";
 
 /**
@@ -13,7 +14,22 @@ import { updateSession } from "@/lib/supabase/proxy";
  * re-authorises through `src/lib/authz.ts`, with RLS beneath that (spec §7.3).
  */
 export async function proxy(request: NextRequest) {
-  return updateSession(request);
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
+    request.nextUrl.hostname,
+  );
+  const policy = contentSecurityPolicy(
+    nonce,
+    process.env.NODE_ENV === "development",
+    !isLoopback,
+  );
+
+  request.headers.set("x-nonce", nonce);
+  request.headers.set("Content-Security-Policy", policy);
+
+  const response = await updateSession(request);
+  response.headers.set("Content-Security-Policy", policy);
+  return response;
 }
 
 export const config = {

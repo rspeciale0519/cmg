@@ -1,14 +1,18 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
 import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
 import type { Database } from "@/types/database";
+import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-ledger";
+import { handleDispatchFailure } from "./lor-dispatch-failure";
 import { createESignProvider } from "./provider";
 import {
   ESignError,
+  PANDADOC_TERMINAL_FAILURE_STATUSES,
   type ESignMode,
   type ESignProvider,
   type LorRole,
@@ -20,6 +24,8 @@ type Admin = SupabaseClient<Database>;
 
 export type SendLorInput = {
   claimId: string;
+  /** Stable per form render, so retries of one POST cannot dispatch twice. */
+  requestId?: string;
   /** Staff profile id — feed author and audit actor. */
   actorId?: string | null;
   /** Contingency fee stamped into the letter; falls back to claim_financials. */
@@ -51,6 +57,8 @@ export type SendLorFailureCode =
   | "not_configured"
   | "provider_error"
   | "persist_failed"
+  | "request_in_progress"
+  | "request_already_processed"
   /** Raised by the authorized entry point in `./send-lor`, never in here. */
   | "not_authorized";
 
@@ -61,6 +69,8 @@ export type SendLorResult = SendLorSuccess | SendLorFailure;
 export type SendLorDeps = {
   admin?: Admin;
   provider?: ESignProvider;
+  /** Fault-injection seam for proving post-send persistence failures stay locked. */
+  beforePersist?: () => Promise<void>;
 };
 
 const ROLES: LorRole[] = ["Homeowner1", "Homeowner2"];
@@ -134,22 +144,8 @@ type ClaimRow = Pick<
 >;
 
 /**
- * ⚠ THE MECHANISM, NOT AN ENTRY POINT. THIS FUNCTION PERFORMS NO
- * AUTHORIZATION.
- *
- * It reads and writes *any* claim by id through the service-role client, so a
- * caller that passes a claim id it was given by the user has handed that user
- * every claim in the business. `sendLor()` in `./send-lor` is the only thing
- * allowed to call it, and it is deliberately absent from `./index`, which is
- * the module the admin UI imports.
- *
- * The split exists because this function was previously the exported one. It
- * was safe only by the accident that no user-reachable caller had been written
- * yet — the LOR-send button is not wired — and "safe until somebody adds a
- * button" is not a property, it is a countdown. Splitting it means the unsafe
- * half cannot be reached by autocomplete from a server action.
- *
- * ---
+ * Service-role mechanism, not an authorization entry point. Only the
+ * authorized `sendLor()` wrapper may call it.
  *
  * Puts the Letter of Representation in front of the claimants and records that
  * it happened (blueprint §"sendLor implementation steps", spec §6 "LOR").
@@ -192,6 +188,21 @@ export async function dispatchLorForClaim(
     };
   }
 
+  const retryable =
+    claim.esign_status === "document.creation_failed" ||
+    (claim.esign_status !== null &&
+      (PANDADOC_TERMINAL_FAILURE_STATUSES as readonly string[]).includes(
+        claim.esign_status,
+      ));
+  if (claim.status === "lor_sent" && !retryable) {
+    return {
+      ok: false,
+      code: "invalid_status",
+      message:
+        "This signing request is still active. Retry is available only after it fails, expires, is declined, or is voided.",
+    };
+  }
+
   /* Refused before the provider is called, not after. The claim's own transition
      to `lor_sent` is gated on these two columns in the app and in
      `public.enforce_claim_status_transition()`, and without this check the
@@ -213,7 +224,9 @@ export async function dispatchLorForClaim(
     .select("first_name, last_name, email, is_primary, created_at")
     .eq("claim_id", claim.id)
     .order("is_primary", { ascending: false })
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(ROLES.length);
 
   if (!claimants || claimants.length === 0) {
     return {
@@ -252,60 +265,108 @@ export async function dispatchLorForClaim(
       : null;
   }
 
+  const requestId = input.requestId ?? randomUUID();
+  const ownership = await claimDispatch(admin, {
+    claimId: claim.id,
+    requestId,
+    actorId: input.actorId ?? null,
+    mode: provider.kind,
+  });
+  if (ownership.status === "busy") {
+    return {
+      ok: false,
+      code: "request_in_progress",
+      message: "Another signing request is already being prepared. Reload before trying again.",
+    };
+  }
+  if (ownership.status === "duplicate") {
+    return {
+      ok: false,
+      code: "request_already_processed",
+      message: "This signing action was already processed. Reload to see its result.",
+    };
+  }
+  if (ownership.status !== "claimed") {
+    return {
+      ok: false,
+      code: "persist_failed",
+      message: "The signing request could not be reserved. Nothing was sent.",
+    };
+  }
+  const claimToken = ownership.token;
+
   let dispatch;
   try {
     dispatch = await provider.dispatchLor({
       claimId: claim.id,
+      dispatchAttemptToken: claimToken,
       claimRef: claim.claim_ref,
       documentName: `LOR — ${claim.claim_ref}`,
       signers,
       tokens: tokensFor(claim, signers, adjusterName, feePercent),
       message: input.message ?? null,
+      beforeSend: async (providerDocumentId) => {
+        const marked = await markDispatchSending(
+          admin,
+          requestId,
+          claimToken,
+          providerDocumentId,
+        );
+        if (!marked) {
+          throw new ESignError(
+            "send_failed",
+            "Signing request ownership was lost before PandaDoc send; nothing was sent.",
+          );
+        }
+      },
     });
   } catch (error) {
-    const code: SendLorFailureCode =
-      error instanceof ESignError && error.code === "not_configured"
-        ? "not_configured"
-        : "provider_error";
-    const message =
-      error instanceof Error ? error.message : "The e-signature provider failed.";
-
-    console.error("[esign] sendLor dispatch failed", {
+    return handleDispatchFailure(admin, {
       claimId: claim.id,
-      mode: provider.kind,
-      message,
-    });
-    await writeAudit(admin, {
       actorId: input.actorId ?? null,
-      action: "esign.lor_send_failed",
-      entity: "claims",
-      entityId: claim.id,
-      meta: { mode: provider.kind, code, message },
+      mode: provider.kind,
+      requestId,
+      claimToken,
+      error,
     });
-
-    return { ok: false, code, message };
   }
 
   const transitioned = claim.status === "under_review";
 
-  const { error: updateError } = await admin
-    .from("claims")
-    .update({
-      ...(transitioned ? { status: "lor_sent" as const } : {}),
-      esign_status: dispatch.esignStatus,
-      pandadoc_document_id: dispatch.providerDocumentId ?? claim.pandadoc_document_id,
-    })
-    .eq("id", claim.id);
+  let updated: { id: string } | null = null;
+  let updateMessage: string | null = null;
+  try {
+    await deps.beforePersist?.();
+    const update = await admin
+      .from("claims")
+      .update({
+        ...(transitioned ? { status: "lor_sent" as const } : {}),
+        esign_status: dispatch.esignStatus,
+        pandadoc_document_id:
+          provider.kind === "manual" ? null : dispatch.providerDocumentId,
+        esign_active_attempt_token:
+          provider.kind === "manual" ? null : claimToken,
+      })
+      .eq("id", claim.id)
+      .eq("esign_dispatch_token", claimToken)
+      .select("id")
+      .maybeSingle();
+    updated = update.data;
+    updateMessage = update.error?.message ?? null;
+  } catch (error) {
+    updateMessage = error instanceof Error ? error.message : "persistence threw";
+  }
 
-  if (updateError) {
+  if (updateMessage || !updated) {
     console.error("[esign] sendLor persist failed", {
       claimId: claim.id,
-      message: updateError.message,
+      message: updateMessage ?? "dispatch ownership was lost",
     });
     return {
       ok: false,
-      code: "persist_failed",
-      message: "The letter was sent but the claim could not be updated.",
+      code: "request_in_progress",
+      message:
+        "PandaDoc sent the letter, but confirmation could not be saved. Automatic retry is locked until a matching webhook reconciles it.",
     };
   }
 
@@ -348,7 +409,7 @@ export async function dispatchLorForClaim(
     },
   });
 
-  return {
+  const result: SendLorSuccess = {
     ok: true,
     mode: provider.kind,
     claimId: claim.id,
@@ -359,4 +420,6 @@ export async function dispatchLorForClaim(
     deliveredByProvider: dispatch.deliveredByProvider,
     recipients: signers.map((signer) => signer.email),
   };
+  await settleDispatch(admin, requestId, claimToken, "completed", result);
+  return result;
 }

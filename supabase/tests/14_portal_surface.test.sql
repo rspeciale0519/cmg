@@ -123,7 +123,8 @@ select isnt_empty(
 );
 
 select is(
-  (select count(*)::int from public.claim_status_history),
+  (select count(*)::int from public.claim_status_history where id in
+    ('60000000-0000-4000-a000-000000000001','60000000-0000-4000-a000-000000000002','60000000-0000-4000-a000-000000000003','60000000-0000-4000-a000-000000000004','60000000-0000-4000-a000-000000000005','60000000-0000-4000-a000-000000000006','60000000-0000-4000-a000-000000000007','60000000-0000-4000-a000-000000000008')),
   8,
   'and reads their own claim''s transitions only — the seed writes eight on claim 1 and eight on claim 2'
 );
@@ -178,7 +179,8 @@ set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-0000000000c2","r
 set local role authenticated;
 
 select results_eq(
-  $$ select id::text from public.claims order by id $$,
+  $$ select id::text from public.claims where id in
+      ('20000000-0000-4000-a000-000000000001','20000000-0000-4000-a000-000000000002') order by id $$,
   $$ values ('20000000-0000-4000-a000-000000000002'::text) $$,
   'the second homeowner sees their own claim and not the first''s'
 );

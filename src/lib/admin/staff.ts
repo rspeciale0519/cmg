@@ -7,6 +7,7 @@ import { isStaffAppRole, type RosterEntry } from "@/lib/staff/guards";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export type StaffMember = {
   id: string;
@@ -38,17 +39,16 @@ export type PendingStaffInvite = {
 export async function loadStaffRoster(
   supabase: SupabaseClient<Database>,
 ): Promise<RosterEntry[]> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, role, is_active")
-    .in("role", [...STAFF_ROLES]);
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .from("profiles")
+      .select("id, role, is_active")
+      .in("role", [...STAFF_ROLES])
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
-  if (error) {
-    console.error("[staff] roster read failed", error.message);
-    return [];
-  }
-
-  return (data ?? [])
+  return data
     .filter((row) => isStaffAppRole(row.role))
     .map((row) => ({ id: row.id, role: row.role, isActive: row.is_active }));
 }
@@ -82,10 +82,8 @@ export const STAFF_PAGE_SIZE = 50;
  * what `loadAdjusters` and the partner rep table already do.
  *
  * `total` and `activeTotal` are `count: "exact"`. `unenrolledTotal` is counted
- * across a roster read rather than by the database, because "has a verified
- * factor" lives in `auth` and cannot be joined here; that read is bounded by
- * PostgREST's `max_rows` of 1000, which is a bound a firm's own staff list
- * cannot reach in the way `claim_events` can.
+ * across an exhaustively paged roster read rather than by the database,
+ * because "has a verified factor" lives in `auth` and cannot be joined here.
  */
 export async function loadStaffDirectory(
   from = 0,
@@ -108,22 +106,30 @@ export async function loadStaffDirectory(
         .range(from, to),
       // Page-independent, because the sole-owner guard and the enrolment tally
       // are facts about the workspace rather than about this window.
-      supabase
-        .from("profiles")
-        .select("id, role, is_active")
-        .in("role", [...STAFF_ROLES]),
+      collectPostgrestPages((rangeFrom, rangeTo) =>
+        supabase
+          .from("profiles")
+          .select("id, role, is_active")
+          .in("role", [...STAFF_ROLES])
+          .order("id", { ascending: true })
+          .range(rangeFrom, rangeTo),
+      ),
       supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .in("role", [...STAFF_ROLES])
         .eq("is_active", true),
-      supabase
-        .from("invites")
-        .select("id, email, role, expires_at")
-        .in("role", ["adjuster", "assistant"])
-        .is("accepted_at", null)
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false }),
+      collectPostgrestPages((rangeFrom, rangeTo) =>
+        supabase
+          .from("invites")
+          .select("id, email, role, expires_at")
+          .in("role", ["adjuster", "assistant"])
+          .is("accepted_at", null)
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(rangeFrom, rangeTo),
+      ),
       loadUserDirectory(),
     ]);
 
@@ -147,11 +153,11 @@ export async function loadStaffDirectory(
       };
     });
 
-  const roster = (rosterResult.data ?? []).filter((row) => isStaffAppRole(row.role));
+  const roster = rosterResult.filter((row) => isStaffAppRole(row.role));
 
   return {
     members,
-    pendingInvites: (invitesResult.data ?? []).map((row) => ({
+    pendingInvites: invitesResult.map((row) => ({
       id: row.id,
       email: row.email,
       role: row.role,

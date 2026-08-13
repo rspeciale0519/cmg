@@ -8,6 +8,12 @@ export type ClaimFilters = {
   search: string;
 };
 
+type ClaimQuery<Q> = {
+  eq(column: string, value: string): Q;
+  is(column: string, value: null): Q;
+  ilike(column: string, pattern: string): Q;
+};
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -70,25 +76,30 @@ export function hasActiveFilters(filters: ClaimFilters): boolean {
   );
 }
 
-/**
- * The `or=` clause matching a claim's own columns. Claimant names are matched
- * separately — they live on another table, and an embedded `or` would turn the
- * whole query into an inner join and drop claims that have no claimant row.
- */
-export function claimSearchClause(search: string, claimIds: string[]): string {
-  const term = `*${search}*`;
-  const predicates = [
-    `claim_ref.ilike.${term}`,
-    `property_street.ilike.${term}`,
-    `property_city.ilike.${term}`,
-    `carrier.ilike.${term}`,
-  ];
+export function applyClaimFilters<Q extends ClaimQuery<Q>>(
+  query: Q,
+  filters: ClaimFilters,
+): Q {
+  let next = query;
+  if (filters.status) next = next.eq("status", filters.status);
 
-  if (claimIds.length > 0) {
-    predicates.push(`id.in.(${claimIds.join(",")})`);
+  if (filters.adjusterId === "unassigned") {
+    next = next.is("assigned_adjuster_id", null);
+  } else if (filters.adjusterId) {
+    next = next.eq("assigned_adjuster_id", filters.adjusterId);
   }
 
-  return predicates.join(",");
+  if (filters.partnerId === "none") {
+    next = next.is("partner_company_id", null);
+  } else if (filters.partnerId) {
+    next = next.eq("partner_company_id", filters.partnerId);
+  }
+
+  if (filters.search) {
+    next = next.ilike("claim_search_text", `%${filters.search}%`);
+  }
+
+  return next;
 }
 
 export const STATUS_FILTER_OPTIONS = ALL_STATUSES;

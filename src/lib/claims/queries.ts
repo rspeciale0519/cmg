@@ -5,6 +5,7 @@ import { cache } from "react";
 import { isStaffRole } from "@/lib/auth/roles";
 import { getSession, requireStaff, type Session } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 import { claimCapabilities, type ClaimCapabilities } from "./capabilities";
 import { isClaimStatus, type ClaimStatus } from "./status";
 
@@ -25,6 +26,7 @@ const CLAIM_DETAIL_SELECT = `
   loss_date, loss_time, cause, description,
   assigned_adjuster_id, partner_company_id,
   requested_adjuster, referrer_name, referrer_email,
+  pandadoc_document_id, esign_status,
   lor_signed_at, filed_at, denied_at, settled_at,
   created_at, updated_at,
   adjuster:profiles!claims_assigned_adjuster_id_fkey(id, first_name, last_name),
@@ -59,6 +61,8 @@ export type ClaimDetail = {
   requestedAdjuster: string | null;
   referrerName: string | null;
   referrerEmail: string | null;
+  pandaDocDocumentId: string | null;
+  esignStatus: string | null;
   lorSignedAt: string | null;
   filedAt: string | null;
   deniedAt: string | null;
@@ -144,6 +148,8 @@ export const loadClaimContext = cache(async function loadClaimContext(
     requestedAdjuster: data.requested_adjuster,
     referrerName: data.referrer_name,
     referrerEmail: data.referrer_email,
+    pandaDocDocumentId: data.pandadoc_document_id,
+    esignStatus: data.esign_status,
     lorSignedAt: data.lor_signed_at,
     filedAt: data.filed_at,
     deniedAt: data.denied_at,
@@ -225,14 +231,18 @@ export type AdjusterOption = { id: string; name: string };
  */
 export async function loadAdjusters(): Promise<AdjusterOption[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name")
-    .eq("role", "adjuster")
-    .eq("is_active", true)
-    .order("last_name", { ascending: true });
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .from("profiles")
+      .select("id, first_name, last_name")
+      .eq("role", "adjuster")
+      .eq("is_active", true)
+      .order("last_name", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
-  return (data ?? []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     name: personName(row) ?? "Unnamed adjuster",
   }));
@@ -242,11 +252,15 @@ export type PartnerOption = { id: string; name: string };
 
 export async function loadPartnerCompanies(): Promise<PartnerOption[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("partner_companies")
-    .select("id, name")
-    .eq("status", "active")
-    .order("name", { ascending: true });
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .from("partner_companies")
+      .select("id, name")
+      .eq("status", "active")
+      .order("name", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
-  return (data ?? []).map((row) => ({ id: row.id, name: row.name }));
+  return data.map((row) => ({ id: row.id, name: row.name }));
 }

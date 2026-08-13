@@ -17,16 +17,18 @@ export function FinancialsForm({
   claimId,
   settlementAmount,
   feePercent,
+  feeDefault,
   notes,
 }: {
   claimId: string;
   settlementAmount: number | null;
   feePercent: number | null;
+  feeDefault: number;
   notes: string | null;
 }) {
   const [state, formAction] = useActionState(resilient(saveClaimFinancials), idleState);
   const [amount, setAmount] = useState(settlementAmount?.toString() ?? "");
-  const [fee, setFee] = useState(feePercent?.toString() ?? "");
+  const [fee, setFee] = useState((feePercent ?? feeDefault).toString());
 
   const parsedAmount = Number(amount.replace(/[$,\s]/g, ""));
   const parsedFee = Number(fee.replace(/[%\s]/g, ""));

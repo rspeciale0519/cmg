@@ -55,6 +55,24 @@ export function claimIdFromEvent(event: PandaDocWebhookEvent): string | null {
   return metadata ? asUuid(metadata.claim_id) : null;
 }
 
+export function dispatchAttemptTokenFromEvent(
+  event: PandaDocWebhookEvent,
+): string | null {
+  const metadata = asRecord(event.data.metadata);
+  return metadata ? asUuid(metadata.dispatch_attempt_token) : null;
+}
+
+const LEGACY_ATTEMPT_TOKEN = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Old PandaDoc documents predate attempt metadata. The database accepts them
+ * only while a claim has no active attempt token; a nil UUID cannot match a
+ * modern attempt and keeps the generated RPC contract non-null.
+ */
+export function dispatchAttemptTokenForRpc(event: PandaDocWebhookEvent): string {
+  return dispatchAttemptTokenFromEvent(event) ?? LEGACY_ATTEMPT_TOKEN;
+}
+
 export function documentIdFromEvent(event: PandaDocWebhookEvent): string | null {
   return asString(event.data.id);
 }
@@ -84,6 +102,17 @@ export function actorNameFromEvent(event: PandaDocWebhookEvent): string {
     if (email) return email;
   }
   return "A signer";
+}
+
+/** Stable provider-side recipient identity for idempotent completion counting. */
+export function actorIdentityFromEvent(event: PandaDocWebhookEvent): string {
+  const actor = asRecord(event.data.action_by);
+  if (!actor) return actorNameFromEvent(event).toLowerCase();
+  return (
+    asString(actor.id) ??
+    asString(actor.email)?.toLowerCase() ??
+    actorNameFromEvent(event).toLowerCase()
+  );
 }
 
 /** A short, non-PII summary kept on the dedupe row for support triage. */

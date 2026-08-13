@@ -74,7 +74,11 @@ vi.mock("@/lib/supabase/server", () => ({
         eq: () => ({
           maybeSingle: async () => ({ data: stub.claim, error: null }),
           /** The claimants read the invite step makes. */
-          is: async () => ({ data: [], error: null }),
+          is: () => ({
+            order: () => ({
+              range: async () => ({ data: [], error: null }),
+            }),
+          }),
         }),
       }),
       update: (patch: unknown) => {

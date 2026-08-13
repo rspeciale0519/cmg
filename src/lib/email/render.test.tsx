@@ -413,4 +413,13 @@ describe("isNotificationTemplate", () => {
     expect(isNotificationTemplate("drop_table")).toBe(false);
     expect(isNotificationTemplate("toString")).toBe(false);
   });
+
+  it.each(["drop_table", "toString", "constructor", "__proto__"])(
+    "refuses the untrusted runtime template name %s before renderer lookup",
+    async (template) => {
+      await expect(
+        renderNotification({ template, payload: {} } as never),
+      ).rejects.toThrow("Unknown notification template");
+    },
+  );
 });

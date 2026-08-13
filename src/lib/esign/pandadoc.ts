@@ -58,7 +58,8 @@ export class PandaDocProvider implements ESignProvider {
       throw new ESignError("creation_failed", "an LOR needs at least one signer");
     }
 
-    const created = await this.client.createDocument({
+    return this.client.withOperationDeadline(async (operation) => {
+      const created = await this.client.createDocument({
       name: request.documentName,
       template_uuid: this.templateFor(request.signers.length),
       recipients: request.signers.map((signer) => ({
@@ -70,23 +71,32 @@ export class PandaDocProvider implements ESignProvider {
       tokens: request.tokens.map((token) => ({ name: token.name, value: token.value })),
       /* Round-trips through every webhook, so the handler never has to guess
          which claim an event belongs to. */
-      metadata: { claim_id: request.claimId },
+      metadata: {
+        claim_id: request.claimId,
+        dispatch_attempt_token: request.dispatchAttemptToken,
+      },
+      }, operation);
+
+      await this.client.waitForDraft(created.id, operation);
+
+      if (request.beforeSend) {
+        await request.beforeSend(created.id);
+      }
+      this.client.assertBeforeSend(operation);
+
+      const sent = await this.client.sendDocument(created.id, {
+        message:
+          request.message ??
+          "Please review and sign the Letter of Representation for your claim.",
+        silent: false,
+      }, operation);
+
+      return {
+        providerDocumentId: created.id,
+        esignStatus: sent.status || "document.sent",
+        deliveredByProvider: true,
+      };
     });
-
-    await this.client.waitForDraft(created.id);
-
-    const sent = await this.client.sendDocument(created.id, {
-      message:
-        request.message ??
-        "Please review and sign the Letter of Representation for your claim.",
-      silent: false,
-    });
-
-    return {
-      providerDocumentId: created.id,
-      esignStatus: sent.status || "document.sent",
-      deliveredByProvider: true,
-    };
   }
 
   downloadSignedPdf(providerDocumentId: string): Promise<Uint8Array> {

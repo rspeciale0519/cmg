@@ -3,8 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
-import { claimCapabilities } from "@/lib/claims/capabilities";
-import { notifyCustomerOfReply } from "@/lib/claims/notify";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/status";
 import {
@@ -23,6 +21,10 @@ import {
   submittedValues,
   type FormState,
 } from "./types";
+import {
+  postClaimEvent as postClaimEventAction,
+  saveClaimFinancials as saveClaimFinancialsAction,
+} from "./claim-feed-financial-actions";
 
 /**
  * Every action here follows the same three steps, in this order:
@@ -394,110 +396,11 @@ export async function saveClaimPolicy(
   };
 }
 
-const EVENT_VISIBILITIES = ["internal", "customer", "partner", "shared"] as const;
-type EventVisibility = (typeof EVENT_VISIBILITIES)[number];
-
-function isEventVisibility(value: string): value is EventVisibility {
-  return (EVENT_VISIBILITIES as readonly string[]).includes(value);
-}
-
 export async function postClaimEvent(
-  _previous: FormState,
+  previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireStaff("/admin");
-  const claimId = String(formData.get("claimId") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  const visibility = String(formData.get("visibility") ?? "internal");
-  const isReply = String(formData.get("isReply") ?? "") === "true";
-  const typed = submittedValues(formData, ["body"]);
-
-  const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return { ...loaded.error, values: typed };
-  const { claim } = loaded;
-
-  /* Both of these are facts about the textarea, so they arrive as
-     `fieldErrors.body` and the field wears the invalid border like every other
-     refused field in this workspace. They were form-level only: the composer
-     was the one surface that said "Write something before posting." with
-     nothing marked, which reads as a complaint about the form rather than an
-     instruction about the box. */
-  if (body.length === 0) {
-    return {
-      status: "error",
-      fieldErrors: { body: "Write something before posting." },
-      message: "Check the highlighted field and post again.",
-      values: typed,
-    };
-  }
-
-  if (body.length > 4000) {
-    return {
-      status: "error",
-      fieldErrors: {
-        body: "That is longer than a feed entry can hold (4,000 characters).",
-      },
-      message: "Check the highlighted field and post again.",
-      values: typed,
-    };
-  }
-
-  if (!isEventVisibility(visibility)) {
-    return { status: "error", message: "Pick who should see this entry.", values: typed };
-  }
-
-  const can = claimCapabilities(
-    { userId: session.userId, role: session.role },
-    { assignedAdjusterId: claim.assigned_adjuster_id },
-  );
-
-  // `claim_events_insert_staff` refuses an assistant a `partner` or `shared`
-  // entry — those are disclosures to a referring contractor, not notes. Checked
-  // here so the refusal names the reason instead of returning an empty insert.
-  if (!can.canPostShared && (visibility === "partner" || visibility === "shared")) {
-    return {
-      status: "error",
-      message:
-        "Entries visible to the referring partner are posted by the owner or the assigned adjuster.",
-      values: typed,
-    };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("claim_events")
-    .insert({
-      claim_id: claimId,
-      type: isReply ? "reply" : "note",
-      body,
-      author_id: session.userId,
-      visibility,
-    })
-    .select("id");
-
-  if (error) {
-    console.error("[claims] event insert failed", error.message);
-    return { status: "error", message: GENERIC_ERROR, values: typed };
-  }
-
-  if ((data?.length ?? 0) === 0) {
-    return { status: "error", message: REFUSED_BY_RLS, values: typed };
-  }
-
-  /* Spec §6's "reply posted (customer)". Driven by whether the homeowner can
-     read the entry rather than by `isReply`: `visibility` is the deliberate
-     choice the composer already forces, and `internal` — its default — is the
-     one that stays silent. `notify.ts` records the reasoning. */
-  const notifyWarning =
-    visibility === "customer" || visibility === "shared"
-      ? await notifyCustomerOfReply({ claimId, body })
-      : null;
-
-  revalidateClaim(claimId);
-  return {
-    status: "success",
-    message: notifyWarning ? `Posted. ${notifyWarning}` : "Posted.",
-  };
+  return postClaimEventAction(previous, formData);
 }
 
 /**
@@ -507,150 +410,8 @@ export async function postClaimEvent(
  * policy on the table at all, so their write returns zero rows.
  */
 export async function saveClaimFinancials(
-  _previous: FormState,
+  previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await requireStaff("/admin");
-  const claimId = String(formData.get("claimId") ?? "").trim();
-  /* The two figures are controlled inputs and hold their own value across a
-     refusal; `notes` is an uncontrolled textarea and did not, so a rejected fee
-     percentage also erased the paragraph explaining how the figure was reached.
-     All three are echoed so the rule is "the action hands back what it read",
-     not "the action hands back the fields that happen to be uncontrolled
-     today". */
-  const typed = submittedValues(formData, [
-    "settlementAmount",
-    "feePercent",
-    "notes",
-  ]);
-
-  const loaded = await loadClaimForWrite(claimId);
-  if ("error" in loaded) return { ...loaded.error, values: typed };
-  const { claim } = loaded;
-
-  const parsed = parseMoneyFields(formData);
-  if ("error" in parsed) return { ...parsed.error, values: typed };
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("claim_financials")
-    .upsert(
-      {
-        claim_id: claimId,
-        settlement_amount: parsed.settlementAmount,
-        fee_percent: parsed.feePercent,
-        notes: parsed.notes,
-        updated_by: session.userId,
-      },
-      { onConflict: "claim_id" },
-    )
-    .select("claim_id");
-
-  if (error) {
-    console.error("[claims] financials upsert failed", error.message);
-    return { status: "error", message: GENERIC_ERROR, values: typed };
-  }
-
-  if ((data?.length ?? 0) === 0) {
-    return {
-      status: "error",
-      message:
-        "Settlement figures are recorded by the owner and by the adjuster the claim is assigned to.",
-      values: typed,
-    };
-  }
-
-  revalidateClaim(claimId);
-  return { status: "success", message: `Figures saved for ${claim.claim_ref}.` };
-}
-
-type MoneyFields = {
-  settlementAmount: number | null;
-  feePercent: number | null;
-  notes: string | null;
-};
-
-/**
- * The largest value `claim_financials.settlement_amount` can hold. The column is
- * `numeric(12, 2)` — twelve significant digits, two of them after the point — so
- * ten digits before it, and this is the last one that fits.
- *
- * Stated here because the bound existed only in the column's precision. The
- * validator below checked `>= 0` and nothing else, so `10000000000` passed every
- * check this process makes, reached Postgres, and came back `numeric field value
- * out of range`. That is not a shape the action recognises, so it fell to the
- * generic handler and the staff member was told "We could not submit that just
- * now… call us and we'll take the details over the phone" — a message written
- * for a homeowner whose network dropped, shown to a colleague at their desk
- * about a number they typed, with no `aria-invalid` on the field, nothing beneath
- * it, and no retry that could ever succeed. The one thing they needed to know —
- * which field, and what range — was the one thing not said.
- *
- * The lower bound has always been here and the upper one belongs beside it.
- */
-const MAX_SETTLEMENT_AMOUNT = 9_999_999_999.99;
-
-/**
- * Blank means "not recorded yet" and is written as NULL, which is different from
- * zero — a settlement of $0 is a real outcome and must survive a round trip.
- * The table states the same bounds — a CHECK for the floor, the column's own
- * `numeric(12, 2)` precision for the ceiling — and these produce the message a
- * person can act on.
- *
- * Both fields are judged before either answer is returned. Returning on the
- * first failure made the form lie about itself: with an out-of-range amount
- * *and* an out-of-range percentage, only the amount came back with an error and
- * an `aria-invalid`, under a summary that said "Check the highlighted fields" —
- * plural, over one highlight. Fixing the amount and saving then surfaced the
- * percentage, so a form the staff member could have corrected in one pass cost
- * two round trips and taught them the summary could not be trusted to be
- * complete.
- *
- * The summary agrees in number with what it is pointing at, for the same reason:
- * "fields" over a single highlighted input is a sentence telling the reader to
- * go looking for something that is not there.
- */
-function parseMoneyFields(formData: FormData): MoneyFields | { error: FormState } {
-  const rawAmount = String(formData.get("settlementAmount") ?? "").trim();
-  const rawFee = String(formData.get("feePercent") ?? "").trim();
-  const notes = String(formData.get("notes") ?? "").trim() || null;
-
-  const fieldErrors: Record<string, string> = {};
-
-  let settlementAmount: number | null = null;
-  if (rawAmount.length > 0) {
-    const value = Number(rawAmount.replace(/[$,\s]/g, ""));
-    if (!Number.isFinite(value) || value < 0 || value > MAX_SETTLEMENT_AMOUNT) {
-      fieldErrors.settlementAmount =
-        "Enter an amount between $0 and $9,999,999,999.99.";
-    } else {
-      settlementAmount = Math.round(value * 100) / 100;
-    }
-  }
-
-  let feePercent: number | null = null;
-  if (rawFee.length > 0) {
-    const value = Number(rawFee.replace(/[%\s]/g, ""));
-    if (!Number.isFinite(value) || value < 0 || value > 100) {
-      fieldErrors.feePercent = "Enter a percentage between 0 and 100.";
-    } else {
-      feePercent = Math.round(value * 100) / 100;
-    }
-  }
-
-  const flagged = Object.keys(fieldErrors).length;
-  if (flagged > 0) {
-    return {
-      error: {
-        status: "error",
-        fieldErrors,
-        message:
-          flagged === 1
-            ? "Check the highlighted field and save again."
-            : "Check the highlighted fields and save again.",
-      },
-    };
-  }
-
-  return { settlementAmount, feePercent, notes };
+  return saveClaimFinancialsAction(previous, formData);
 }

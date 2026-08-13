@@ -1,0 +1,538 @@
+src\components\hero-video-rotator.test.tsx:145:    const videos = () => Array.from(container.querySelectorAll("video"));
+src\components\hero-video-rotator.test.tsx:170:    const videos = Array.from(container.querySelectorAll("video"));
+src\components\hero-video-rotator.test.tsx:191:    const opacities = Array.from(container.querySelectorAll("video")).map(
+src\components\site-header.tsx:106:      ring.push(...Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)));
+src\components\site-header.test.tsx:112:    const stops = Array.from(open.querySelectorAll<HTMLElement>("a[href]"));
+src\lib\audit.ts:28:  const { error } = await admin.from("audit_log").insert({
+src\lib\claims\transitions.ts:30:  const { data, error } = await supabase.rpc("allowed_claim_transitions", {
+src\lib\claims\transitions.ts:74:    .from("documents")
+src\lib\claims\transitions.ts:75:    .select("id")
+src\lib\claims\transitions.ts:78:    .limit(1);
+src\lib\claims\transitions.ts:125:    .from("claims")
+src\lib\claims\transitions.ts:126:    .select("carrier, policy_number")
+src\app\(partner)\partner\page.tsx:51:        .from("claim_partner_summaries")
+src\app\(partner)\partner\page.tsx:52:        .select(
+src\app\(partner)\partner\page.tsx:57:        .range(from, to),
+src\lib\claims\search-query-shape.test.ts:13:    expect(source).not.toContain('.from("claimants")');
+src\lib\claims\record-transition.ts:81:    .from("claim_status_history")
+src\lib\claims\record-transition.ts:102:  const { error: eventError } = await supabase.from("claim_events").insert({
+src\lib\claims\record-transition.ts:154:    .from("claimants")
+src\lib\claims\record-transition.ts:155:    .select("first_name, email")
+src\lib\admin\audit.ts:122:      .from("audit_log")
+src\lib\admin\audit.ts:123:      .select("id, created_at, action, entity, entity_id, actor_id, ip, meta"),
+src\lib\admin\audit.ts:124:  ).limit(AUDIT_PAGE_SIZE + 1);
+src\lib\admin\audit.ts:139:      supabase.from("audit_log").select("id", { count: "exact", head: true }),
+src\lib\admin\audit.ts:209:    .from("profiles")
+src\lib\admin\audit.ts:210:    .select("id, first_name, last_name, role")
+src\lib\admin\audit.ts:256:    .from("claims")
+src\lib\admin\audit.ts:257:    .select("id, claim_ref")
+src\lib\admin\audit.ts:274:      .from("profiles")
+src\lib\admin\audit.ts:275:      .select("id, first_name, last_name, role")
+src\lib\admin\audit.ts:279:      .range(from, to),
+src\lib\admin\directory.ts:33:      .rpc("admin_user_directory")
+src\lib\admin\directory.ts:35:      .range(from, to),
+src\lib\esign\webhook.ts:72:      .from("claims")
+src\lib\esign\webhook.ts:73:      .select(WEBHOOK_CLAIM_COLUMNS)
+src\lib\esign\webhook.ts:83:      .from("claims")
+src\lib\esign\webhook.ts:84:      .select(WEBHOOK_CLAIM_COLUMNS)
+src\app\api\pandadoc\webhook\route.test.ts:81:      .from("claims")
+src\app\api\pandadoc\webhook\route.test.ts:99:      .from("claims")
+src\app\api\pandadoc\webhook\route.test.ts:100:      .select("esign_status")
+src\app\api\pandadoc\webhook\route.test.ts:126:      .from("pandadoc_webhook_events")
+src\app\api\pandadoc\webhook\route.test.ts:127:      .select("event_id")
+src\lib\claims\queries.ts:115:    .from("claims")
+src\lib\claims\queries.ts:116:    .select(CLAIM_DETAIL_SELECT)
+src\lib\claims\queries.ts:204:    .from("claims")
+src\lib\claims\queries.ts:205:    .select("claim_ref, assigned_adjuster_id")
+src\lib\claims\queries.ts:231:      .from("profiles")
+src\lib\claims\queries.ts:232:      .select("id, first_name, last_name")
+src\lib\claims\queries.ts:237:      .range(from, to),
+src\lib\claims\queries.ts:252:      .from("partner_companies")
+src\lib\claims\queries.ts:253:      .select("id, name")
+src\lib\claims\queries.ts:257:      .range(from, to),
+src\lib\esign\webhook.test.ts:77:      .from("claims")
+src\lib\esign\webhook.test.ts:125:      .from("claims")
+src\lib\esign\webhook.test.ts:126:      .select("status, esign_status, lor_signed_at, pandadoc_document_id")
+src\lib\esign\webhook.test.ts:134:      .from("documents")
+src\lib\esign\webhook.test.ts:135:      .select("kind, visibility, mime, size_bytes, storage_path, original_name")
+src\lib\esign\webhook.test.ts:148:      .from("claim-docs")
+src\lib\esign\webhook.test.ts:155:      .from("notifications_outbox")
+src\lib\esign\webhook.test.ts:156:      .select("recipient_email, template, status")
+src\lib\esign\webhook.test.ts:167:      .from("audit_log")
+src\lib\esign\webhook.test.ts:168:      .select("action")
+src\lib\esign\webhook.test.ts:178:      .from("pandadoc_webhook_events")
+src\lib\esign\webhook.test.ts:179:      .select("event_id, payload_summary")
+src\lib\esign\webhook.test.ts:186:      .from("claim_status_history")
+src\lib\esign\webhook.test.ts:187:      .select("from_status, to_status")
+src\lib\esign\webhook.test.ts:211:      .from("documents")
+src\lib\esign\webhook.test.ts:212:      .select("id")
+src\lib\esign\webhook.test.ts:218:      .from("claim_status_history")
+src\lib\esign\webhook.test.ts:219:      .select("id")
+src\lib\esign\webhook.test.ts:225:      .from("audit_log")
+src\lib\esign\webhook.test.ts:226:      .select("id")
+src\lib\esign\webhook.test.ts:260:      .from("pandadoc_webhook_events")
+src\lib\esign\webhook.test.ts:261:      .select("payload_summary")
+src\lib\esign\webhook.test.ts:271:        admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+src\lib\esign\webhook.test.ts:272:        admin.from("claim_status_history").select("id").eq("claim_id", claim.id).eq("to_status", "lor_signed"),
+src\lib\esign\webhook.test.ts:273:        admin.from("claim_events").select("body").eq("claim_id", claim.id),
+src\lib\esign\webhook.test.ts:274:        admin.from("notifications_outbox").select("dedupe_key, status, attempts").like("dedupe_key", `${delivery.eventId}:%`),
+src\lib\esign\webhook.test.ts:284:      .from("audit_log")
+src\lib\esign\webhook.test.ts:285:      .select("id")
+src\lib\esign\webhook.test.ts:324:      admin.from("pandadoc_webhook_events").select("payload_summary").eq("event_id", delivery.eventId).single(),
+src\lib\esign\webhook.test.ts:325:      admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+src\lib\esign\webhook.test.ts:326:      admin.from("notifications_outbox").select("id").like("dedupe_key", `${delivery.eventId}:%`),
+src\lib\esign\webhook.test.ts:365:        admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+src\lib\esign\webhook.test.ts:366:        admin.from("claim_status_history").select("id").eq("claim_id", claim.id).eq("to_status", "lor_signed"),
+src\lib\esign\webhook.test.ts:367:        admin.from("notifications_outbox").select("id").like("dedupe_key", `${delivery.eventId}:%`),
+src\lib\esign\webhook.test.ts:368:        admin.from("audit_log").select("id").eq("entity_id", claim.id).eq("action", "esign.lor_signed").contains("meta", { event_id: delivery.eventId }),
+src\lib\esign\webhook.test.ts:409:      .from("pandadoc_webhook_events")
+src\lib\esign\webhook.test.ts:417:      .from("pandadoc_webhook_events")
+src\lib\esign\webhook.test.ts:418:      .select("payload_summary")
+src\lib\esign\webhook.test.ts:469:      .from("claims")
+src\lib\esign\webhook.test.ts:470:      .select("status")
+src\lib\esign\webhook.test.ts:501:      .from("pandadoc_webhook_events")
+src\lib\esign\webhook.test.ts:502:      .select("event_id")
+src\lib\esign\webhook.test.ts:508:      .from("claim_events")
+src\lib\esign\webhook.test.ts:509:      .select("id")
+src\lib\esign\webhook.test.ts:593:      .from("claims")
+src\lib\esign\webhook.test.ts:594:      .select("esign_status")
+src\lib\esign\webhook.test.ts:611:      .from("claims")
+src\lib\esign\webhook.test.ts:612:      .select("status, esign_status")
+src\lib\esign\webhook.test.ts:618:      .from("claim_events")
+src\lib\esign\webhook.test.ts:619:      .select("visibility, body")
+src\lib\esign\webhook.test.ts:627:      .from("audit_log")
+src\lib\esign\webhook.test.ts:628:      .select("action")
+src\lib\esign\webhook.test.ts:649:      .from("claims")
+src\lib\esign\webhook.test.ts:650:      .select("esign_status")
+src\lib\esign\webhook.test.ts:656:      .from("claim_events")
+src\lib\esign\webhook.test.ts:657:      .select("body")
+src\lib\admin\partners.ts:76:    .from("partner_companies")
+src\lib\admin\partners.ts:77:    .select(
+src\lib\admin\partners.ts:88:    .from("partner_companies")
+src\lib\admin\partners.ts:89:    .select("id", { count: "exact", head: true })
+src\lib\admin\partners.ts:97:      .range(from, to),
+src\lib\admin\partners.ts:165:/** Attributed claims a page. Was a hard `.limit(50)` printed as "50 shown". */
+src\lib\admin\partners.ts:194: * which is what "50 shown" over a `.limit(50)` was contradicting at 51 claims.
+src\lib\admin\partners.ts:207:    .from("claims")
+src\lib\admin\partners.ts:208:    .select("id, claim_ref, status, property_city, property_street, created_at")
+src\lib\admin\partners.ts:212:    .limit(PARTNER_CLAIMS_PAGE_SIZE + 1);
+src\lib\admin\partners.ts:226:      .from("partner_companies")
+src\lib\admin\partners.ts:227:      .select(
+src\lib\admin\partners.ts:233:      .from("profiles")
+src\lib\admin\partners.ts:234:      .select("id, first_name, last_name, phone, is_active", { count: "exact" })
+src\lib\admin\partners.ts:238:      .range(paging.repsFrom, paging.repsTo),
+src\lib\admin\partners.ts:240:      .from("profiles")
+src\lib\admin\partners.ts:241:      .select("id", { count: "exact", head: true })
+src\lib\admin\partners.ts:246:        .from("invites")
+src\lib\admin\partners.ts:247:        .select("id, email, expires_at, created_at")
+src\lib\admin\partners.ts:253:        .range(from, to),
+src\lib\admin\partners.ts:257:      .from("claims")
+src\lib\admin\partners.ts:258:      .select("id", { count: "exact", head: true })
+src\lib\claims\claimants.ts:25:      .from("claimants")
+src\lib\claims\claimants.ts:26:      .select("claim_id, first_name, last_name, email, phone, is_primary")
+src\lib\claims\claimants.ts:32:      .range(from, to),
+src\lib\claims\notify.ts:48:    .from("notifications_outbox")
+src\lib\claims\notify.ts:50:    .select("id");
+src\lib\claims\notify.ts:88:    .from("claims")
+src\lib\claims\notify.ts:89:    .select("claim_ref, assigned_adjuster_id")
+src\lib\claims\notify.ts:97:      .from("claimants")
+src\lib\claims\notify.ts:98:      .select("first_name, last_name")
+src\lib\claims\notify.ts:104:          .from("profiles")
+src\lib\claims\notify.ts:105:          .select("first_name, last_name")
+src\lib\claims\notify.ts:152:    .from("claims")
+src\lib\claims\notify.ts:153:    .select("claim_ref")
+src\lib\claims\notify.ts:160:    .from("claimants")
+src\lib\claims\notify.ts:161:    .select("first_name, email")
+src\lib\claims\notify.ts:206:    .from("claims")
+src\lib\claims\notify.ts:207:    .select("partner_company_id")
+src\lib\claims\notify.ts:214:    .from("partner_companies")
+src\lib\claims\notify.ts:215:    .select("name, contact_email, status")
+src\lib\claims\notify.ts:226:    .from("claimants")
+src\lib\claims\notify.ts:227:    .select("first_name, last_name")
+src\lib\claims\notify.ts:261:    .from("claim_financials")
+src\lib\claims\notify.ts:262:    .select("settlement_amount")
+src\lib\admin\staff.ts:44:      .from("profiles")
+src\lib\admin\staff.ts:45:      .select("id, role, is_active")
+src\lib\admin\staff.ts:48:      .range(from, to),
+src\lib\admin\staff.ts:99:        .from("profiles")
+src\lib\admin\staff.ts:100:        .select("id, first_name, last_name, role, is_active, phone, created_at", {
+src\lib\admin\staff.ts:108:        .range(from, to),
+src\lib\admin\staff.ts:113:          .from("profiles")
+src\lib\admin\staff.ts:114:          .select("id, role, is_active")
+src\lib\admin\staff.ts:117:          .range(rangeFrom, rangeTo),
+src\lib\admin\staff.ts:120:        .from("profiles")
+src\lib\admin\staff.ts:121:        .select("id", { count: "exact", head: true })
+src\lib\admin\staff.ts:126:          .from("invites")
+src\lib\admin\staff.ts:127:          .select("id, email, role, expires_at")
+src\lib\admin\staff.ts:133:          .range(rangeFrom, rangeTo),
+src\lib\authz.ts:36:    .from("profiles")
+src\lib\authz.ts:37:    .select("role")
+src\lib\authz.ts:212:    .from("claims")
+src\lib\authz.ts:213:    .select("id, claim_ref, status")
+src\lib\esign\webhook-ledger.ts:19:  const { data, error } = await admin.rpc("claim_pandadoc_webhook_event", {
+src\lib\esign\webhook-ledger.ts:50:  const { data, error } = await admin.rpc("complete_pandadoc_webhook_event", {
+src\lib\esign\webhook-ledger.ts:70:  const { error: releaseError } = await admin.rpc("release_pandadoc_webhook_event", {
+src\lib\email\outbox.ts:62:      const { data, error } = await admin.rpc("claim_outbox_batch", {
+src\lib\email\outbox.ts:97:        .from("notifications_outbox")
+src\lib\email\outbox.ts:202:    .from("notifications_outbox")
+src\lib\email\outbox.ts:203:    .select("id", { count: "exact", head: true })
+src\lib\email\delivery.test.ts:161:    const rows = Array.from({ length: 12 }, (_, index) =>
+src\lib\email\delivery.test.ts:256:    const rows = Array.from({ length: 6 }, (_, index) =>
+src\lib\email\delivery.ts:207:  const workers = Array.from(
+src\lib\esign\payload.test.ts:114:      JSON.stringify(Array.from({ length: 25 }, () => event())),
+src\lib\esign\lor-dispatch.test.ts:132:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:133:      .select("status, esign_status, pandadoc_document_id")
+src\lib\esign\lor-dispatch.test.ts:157:      .from("claim_status_history")
+src\lib\esign\lor-dispatch.test.ts:158:      .select("from_status, to_status")
+src\lib\esign\lor-dispatch.test.ts:163:      .from("claim_events")
+src\lib\esign\lor-dispatch.test.ts:164:      .select("type, visibility, body")
+src\lib\esign\lor-dispatch.test.ts:173:      .from("audit_log")
+src\lib\esign\lor-dispatch.test.ts:174:      .select("action, meta")
+src\lib\esign\lor-dispatch.test.ts:228:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:229:      .select("status")
+src\lib\esign\lor-dispatch.test.ts:271:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:272:      .select("status, esign_status, pandadoc_document_id")
+src\lib\esign\lor-dispatch.test.ts:282:      .from("audit_log")
+src\lib\esign\lor-dispatch.test.ts:283:      .select("action")
+src\lib\esign\lor-dispatch.test.ts:306:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:307:      .select("status, esign_status, pandadoc_document_id")
+src\lib\esign\lor-dispatch.test.ts:317:      .from("claim_events")
+src\lib\esign\lor-dispatch.test.ts:318:      .select("body")
+src\lib\esign\lor-dispatch.test.ts:334:      .from("claim_status_history")
+src\lib\esign\lor-dispatch.test.ts:335:      .select("to_status")
+src\lib\esign\lor-dispatch.test.ts:343:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:358:      .select("id, claim_ref")
+src\lib\esign\lor-dispatch.test.ts:381:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:395:      .from("claims")
+src\lib\esign\lor-dispatch.test.ts:396:      .select("status")
+src\lib\esign\webhook-handlers.ts:129:      .from("claims")
+src\lib\esign\webhook-handlers.ts:190:    .from("documents")
+src\lib\esign\webhook-handlers.ts:191:    .select("id")
+src\lib\esign\webhook-handlers.ts:194:    .limit(1)
+src\lib\esign\webhook-handlers.ts:212:      .from(CLAIM_DOCS_BUCKET)
+src\lib\esign\webhook-handlers.ts:220:    const { error: rowError } = await admin.from("documents").insert({
+src\lib\esign\webhook-handlers.ts:231:      await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
+src\lib\esign\webhook-handlers.ts:250:      .from("claims")
+src\lib\esign\webhook-handlers.ts:262:    .from("claims")
+src\lib\esign\webhook-handlers.ts:263:    .select("status")
+src\lib\esign\webhook-handlers.ts:270:    .from("claim_status_history")
+src\lib\esign\webhook-handlers.ts:271:    .select("id")
+src\lib\esign\webhook-handlers.ts:275:    .limit(1)
+src\lib\esign\webhook-handlers.ts:281:    const { error: historyError } = await admin.from("claim_status_history").insert({
+src\lib\esign\webhook-handlers.ts:297:    .from("claimants")
+src\lib\esign\webhook-handlers.ts:298:    .select("first_name, email")
+src\lib\esign\webhook-handlers.ts:302:    .limit(1)
+src\lib\esign\webhook-handlers.ts:360:    .from("claims")
+src\lib\esign\lor-query-shape.test.ts:16:    expect(signerRead).toContain(".limit(ROLES.length)");
+src\lib\esign\lor-dispatch.ts:174:    .from("claims")
+src\lib\esign\lor-dispatch.ts:175:    .select(CLAIM_COLUMNS)
+src\lib\esign\lor-dispatch.ts:212:    .from("claimants")
+src\lib\esign\lor-dispatch.ts:213:    .select("first_name, last_name, email, is_primary, created_at")
+src\lib\esign\lor-dispatch.ts:218:    .limit(ROLES.length);
+src\lib\esign\lor-dispatch.ts:238:      .from("claim_financials")
+src\lib\esign\lor-dispatch.ts:239:      .select("fee_percent")
+src\lib\esign\lor-dispatch.ts:248:      .from("profiles")
+src\lib\esign\lor-dispatch.ts:249:      .select("first_name, last_name")
+src\lib\esign\lor-dispatch.ts:294:    .from("claims")
+src\lib\esign\lor-dispatch.ts:315:    await admin.from("claim_status_history").insert({
+src\lib\esign\lor-dispatch.ts:327:  await admin.from("claim_events").insert({
+src\lib\esign\webhook-effects.ts:31:    .from("audit_log")
+src\lib\esign\webhook-effects.ts:32:    .select("id")
+src\lib\esign\webhook-effects.ts:36:    .limit(1)
+src\lib\esign\webhook-effects.ts:41:  const { error: insertError } = await admin.from("audit_log").insert({
+src\lib\esign\webhook-effects.ts:62:    .from("notifications_outbox")
+src\lib\esign\webhook-effects.ts:84:    .from("claim_events")
+src\lib\esign\webhook-effects.ts:85:    .select("id")
+src\lib\esign\webhook-effects.ts:88:    .limit(1)
+src\lib\esign\webhook-effects.ts:93:  const { error } = await admin.from("claim_events").insert({
+src\lib\esign\send-lor.ts:85:    .from("claims")
+src\lib\esign\send-lor.ts:86:    .select("id, assigned_adjuster_id")
+src\lib\esign\test-support.ts:68:      .from("pandadoc_webhook_events")
+src\lib\esign\test-support.ts:69:      .select("event_id")
+src\lib\esign\test-support.ts:70:      .limit(1);
+src\lib\esign\test-support.ts:114:    .from("claims")
+src\lib\esign\test-support.ts:130:    .select("id, claim_ref")
+src\lib\esign\test-support.ts:136:  const emails = Array.from({ length: count }, (_, index) =>
+src\lib\esign\test-support.ts:140:  const { error: claimantError } = await admin.from("claimants").insert(
+src\lib\esign\test-support.ts:157:      .from("claims")
+src\lib\esign\test-support.ts:200:    .from("claim-docs")
+src\lib\esign\test-support.ts:205:      .from("claim-docs")
+src\lib\esign\test-support.ts:211:      .from("notifications_outbox")
+src\lib\esign\test-support.ts:221:    const { data } = await admin.from(table).select("id").eq("claim_id", claimId);
+src\lib\esign\test-support.ts:225:  await admin.from("consents").delete().eq("claim_id", claimId);
+src\lib\esign\test-support.ts:226:  await admin.from("claims").delete().eq("id", claimId);
+src\lib\esign\test-support.ts:227:  await admin.from("audit_log").delete().eq("entity_id", claimId);
+src\lib\esign\test-support.ts:229:    await admin.from("audit_log").delete().in("entity_id", childIds);
+src\lib\esign\test-support.ts:231:  await admin.from("storage_cleanup_queue").delete().eq("claim_id", claimId);
+src\lib\esign\test-support.ts:239:    admin.from("audit_log").delete().eq("entity", "pandadoc_webhook"),
+src\lib\esign\test-support.ts:243:    admin.from("pandadoc_webhook_events").delete().in("event_id", eventIds),
+src\lib\esign\signature.ts:36:  return constantTimeEquals(Buffer.from(signature, "hex"), expected);
+src\lib\rate-limit.ts:273:  const { data, error } = await supabase.rpc("check_rate_limit", {
+src\lib\validators\files.test.ts:95:    const files = Array.from({ length: MAX_FILES + 1 }, (_, index) =>
+src\lib\validators\files.test.ts:104:    const files = Array.from({ length: MAX_FILES }, (_, index) =>
+src\lib\validators\files.ts:61:  const cleaned = Array.from(base)
+src\lib\storage-cleanup\concurrency.test.ts:29:    const rows = Array.from({ length: 12 }, (_, index) => ({
+src\lib\storage-cleanup\concurrency.test.ts:35:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:37:      .select("id");
+src\lib\storage-cleanup\concurrency.test.ts:44:    await first.from("storage_cleanup_queue").delete().in("id", ids);
+src\lib\storage-cleanup\concurrency.test.ts:49:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:55:      .select("id")
+src\lib\storage-cleanup\concurrency.test.ts:64:      first.rpc("claim_storage_cleanup_batch", {
+src\lib\storage-cleanup\concurrency.test.ts:69:      second.rpc("claim_storage_cleanup_batch", {
+src\lib\storage-cleanup\concurrency.test.ts:95:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:105:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:106:      .select("processed_at")
+src\lib\storage-cleanup\concurrency.test.ts:119:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:136:      .from("storage_cleanup_queue")
+src\lib\storage-cleanup\concurrency.test.ts:137:      .select("last_error")
+src\lib\portal\queries.ts:74:      .from("claims")
+src\lib\portal\queries.ts:75:      .select(CLAIM_COLUMNS)
+src\lib\portal\queries.ts:78:      .range(from, to),
+src\lib\portal\queries.ts:114:      .from("claims")
+src\lib\portal\queries.ts:115:      .select(CLAIM_COLUMNS)
+src\lib\portal\queries.ts:141:    .rpc("portal_claim_contact", { p_claim_id: claimId })
+src\lib\portal\queries.ts:187:    .from("profiles")
+src\lib\portal\queries.ts:188:    .select("first_name, last_name, phone")
+src\lib\storage-cleanup\storage.ts:12:  const { error } = await storage.from(bucketId).remove([objectPath]);
+src\lib\settings\status.ts:105:      .from("profiles")
+src\lib\settings\status.ts:106:      .select("id")
+src\lib\storage-cleanup\queue.ts:34:      const { data, error } = await admin.rpc("claim_storage_cleanup_batch", {
+src\lib\storage-cleanup\queue.ts:47:          .from("storage_cleanup_queue")
+src\lib\storage-cleanup\queue.ts:53:          .select("id")
+src\lib\storage-cleanup\queue.ts:74:          .from("storage_cleanup_queue")
+src\lib\storage-cleanup\queue.ts:80:          .select("id")
+src\lib\portal\partner-identity.ts:24:    .from("profiles")
+src\lib\portal\partner-identity.ts:25:    .select("first_name, last_name")
+src\app\(auth)\invite\[token]\page.tsx:60:        .from("claimants")
+src\app\(auth)\invite\[token]\page.tsx:61:        .select("first_name, last_name")
+src\lib\actions\intake-storage.ts:38:      .from(CLAIM_DOCS_BUCKET)
+src\lib\actions\intake-storage.ts:69:    const { error } = await admin.storage.from(CLAIM_DOCS_BUCKET).remove(paths);
+src\lib\invites.test.ts:19:    if (ids.length > 0) await admin.from("invites").delete().in("id", ids);
+src\lib\invites.test.ts:20:    if (emails.length > 0) await admin.from("notifications_outbox").delete().in("recipient_email", emails);
+src\lib\invites.test.ts:49:      .from("invites")
+src\lib\invites.test.ts:50:      .select("id, email, accepted_at")
+src\lib\invites.test.ts:56:      .from("notifications_outbox")
+src\lib\invites.test.ts:57:      .select("id")
+src\lib\invites.ts:91:    .from("invites")
+src\lib\invites.ts:110:    .from("invites")
+src\lib\invites.ts:120:    .select("id, expires_at")
+src\lib\invites.ts:142:    .from("notifications_outbox")
+src\lib\invites.ts:144:    .select("id");
+src\lib\invites.ts:202:    .from("invites")
+src\lib\invites.ts:203:    .select("id, email, role, claim_id, partner_company_id, expires_at, accepted_at")
+src\lib\invites.ts:232:    .from("invites")
+src\lib\invites.ts:236:    .select("id");
+src\lib\invites.ts:249:    .from("invites")
+src\lib\invites.ts:264:    .from("invites")
+src\lib\actions\intake-queue.ts:76:    .from("claims")
+src\lib\actions\intake-queue.ts:77:    .select(
+src\lib\actions\intake-queue.ts:201:      .from("partner_companies")
+src\lib\actions\intake-queue.ts:207:      .select("id");
+src\lib\actions\intake-queue.ts:226:  const { error: assignError } = await supabase.rpc("reassign_claim", {
+src\lib\actions\intake-queue.ts:267:    .from("claims")
+src\lib\actions\intake-queue.ts:274:    .select("id");
+src\lib\actions\intake-queue.ts:378:      .from("claimants")
+src\lib\actions\intake-queue.ts:379:      .select("id, first_name, email, user_id")
+src\lib\actions\intake-queue.ts:383:      .range(from, to),
+src\lib\actions\intake-queue.ts:451:    .from("claims")
+src\lib\actions\intake-queue.ts:455:    .select("id");
+src\lib\actions\partners.ts:116:    .from("partner_companies")
+src\lib\actions\partners.ts:124:    .select("id, name")
+src\lib\actions\partners.ts:159:    .from("partner_companies")
+src\lib\actions\partners.ts:168:    .select("id, name")
+src\lib\actions\partners.ts:208:    .from("partner_companies")
+src\lib\actions\partners.ts:211:    .select("id, name")
+src\lib\actions\partners.ts:260:    .from("partner_companies")
+src\lib\actions\partners.ts:261:    .select("id, name")
+src\lib\actions\partners.ts:268:    .from("partner_companies")
+src\lib\actions\partners.ts:271:    .select("id");
+src\lib\actions\partners.ts:334:    .from("partner_companies")
+src\lib\actions\partners.ts:335:    .select("id, name, status")
+src\lib\actions\leads.ts:57:    .from("leads")
+src\lib\actions\leads.ts:58:    .select("id, name, status")
+src\lib\actions\leads.ts:79:    .from("leads")
+src\lib\actions\leads.ts:82:    .select("id");
+src\lib\actions\invite.ts:62:    .from("claimants")
+src\lib\actions\invite.ts:63:    .select(
+src\lib\actions\invite.ts:259:      .from("profiles")
+src\lib\actions\invite.ts:275:      .from("profiles")
+src\lib\actions\invite.ts:276:      .select("role")
+src\lib\actions\invite.ts:289:      .from("claimants")
+src\lib\actions\portal-documents.ts:96:    .from("claims")
+src\lib\actions\portal-documents.ts:97:    .select("id, claim_ref")
+src\lib\actions\portal-documents.ts:139:      .from(BUCKET)
+src\lib\actions\portal-documents.ts:144:      await admin.storage.from(BUCKET).remove(stored);
+src\lib\actions\portal-documents.ts:162:    .from("documents")
+src\lib\actions\portal-documents.ts:164:    .select("id");
+src\lib\actions\portal-documents.ts:168:    await admin.storage.from(BUCKET).remove(stored);
+src\lib\actions\portal-documents.ts:217:    .from("documents")
+src\lib\actions\portal-documents.ts:218:    .select("id, claim_id, storage_path, original_name, kind, visibility")
+src\lib\actions\portal-documents.ts:228:    .from(BUCKET)
+src\lib\actions\portal.ts:71:    .from("claims")
+src\lib\actions\portal.ts:72:    .select("id")
+src\lib\actions\portal.ts:117:    .from("claim_events")
+src\lib\actions\portal.ts:125:    .select("id");
+src\lib\actions\portal.ts:176:    .from("profiles")
+src\lib\actions\portal.ts:183:    .select("id");
+src\lib\actions\portal.ts:332:    .from("consents")
+src\lib\actions\portal.ts:336:    .select("id, kind");
+src\lib\actions\documents.ts:93:    .from("claims")
+src\lib\actions\documents.ts:94:    .select("id, claim_ref")
+src\lib\actions\documents.ts:151:      .from(BUCKET)
+src\lib\actions\documents.ts:156:      await admin.storage.from(BUCKET).remove(stored);
+src\lib\actions\documents.ts:174:    .from("documents")
+src\lib\actions\documents.ts:176:    .select("id");
+src\lib\actions\documents.ts:180:    await admin.storage.from(BUCKET).remove(stored);
+src\lib\actions\documents.ts:239:    .from("documents")
+src\lib\actions\documents.ts:240:    .select("id, claim_id, storage_path, original_name, mime, kind, visibility")
+src\lib\actions\documents.ts:250:    .from(BUCKET)
+src\lib\actions\documents.ts:301:    .from("documents")
+src\lib\actions\documents.ts:304:    .select("id, claim_id");
+src\lib\supabase\proxy.ts:116:    .from("profiles")
+src\lib\supabase\proxy.ts:117:    .select("role")
+src\lib\actions\referral.ts:135:      supabase.rpc("partner_referral_company"),
+src\lib\actions\referral.ts:137:        .from("profiles")
+src\lib\actions\referral.ts:138:        .select("first_name, last_name")
+src\lib\actions\referral.ts:166:    .from("claims")
+src\lib\actions\referral.ts:196:    .select("id, claim_ref")
+src\lib\actions\referral.ts:215:  const { error: claimantError } = await admin.from("claimants").insert({
+src\lib\actions\referral.ts:237:    await admin.from("claims").delete().eq("id", claim.id);
+src\lib\actions\intake.ts:131:    .from("claims")
+src\lib\actions\intake.ts:156:    .select("id, claim_ref")
+src\lib\actions\intake.ts:176:    await admin.from("consents").delete().eq("claim_id", claim.id);
+src\lib\actions\intake.ts:177:    await admin.from("claims").delete().eq("id", claim.id);
+src\lib\actions\intake.ts:206:  const { error: claimantError } = await admin.from("claimants").insert(claimants);
+src\lib\actions\intake.ts:223:    .from("consents")
+src\lib\actions\intake.ts:233:    const { error: documentError } = await admin.from("documents").insert(
+src\lib\actions\intake.ts:301:    .from("notifications_outbox")
+src\lib\actions\intake.ts:303:    .select("id");
+src\lib\actions\contact.ts:70:    .from("leads")
+src\lib\actions\contact.ts:79:    .select("id")
+src\lib\actions\contact.ts:89:    await admin.from("consents").delete().eq("lead_id", lead.id);
+src\lib\actions\contact.ts:90:    await admin.from("leads").delete().eq("id", lead.id);
+src\lib\actions\contact.ts:99:    const { error: consentError } = await admin.from("consents").insert({
+src\lib\actions\contact.ts:138:    .from("notifications_outbox")
+src\lib\actions\contact.ts:140:    .select("id");
+src\lib\supabase\collect-pages.test.ts:6:    const source = Array.from({ length: 1_001 }, (_, id) => ({ id }));
+src\lib\actions\claims.ts:75:    .from("claims")
+src\lib\actions\claims.ts:76:    .select(
+src\lib\actions\claims.ts:161:    .from("claims")
+src\lib\actions\claims.ts:164:    .select("id");
+src\lib\actions\claims.ts:220:  const { error } = await supabase.rpc("reassign_claim", {
+src\lib\actions\claims.ts:331:    .from("claims")
+src\lib\actions\claims.ts:338:    .select("id");
+src\lib\actions\claims.ts:468:    .from("claim_events")
+src\lib\actions\claims.ts:476:    .select("id");
+src\lib\actions\claims.ts:536:    .from("claim_financials")
+src\lib\actions\claims.ts:547:    .select("claim_id");
+src\lib\actions\auth.ts:67:    .from("profiles")
+src\lib\actions\auth.ts:68:    .select("role")
+src\lib\actions\staff.ts:109:      .from("profiles")
+src\lib\actions\staff.ts:110:      .select("id, first_name, last_name, role, is_active")
+src\lib\actions\staff.ts:161:  const { error } = await supabase.rpc("change_staff_privileges", {
+src\app\(admin)\admin\layout.tsx:30:      .from("profiles")
+src\app\(admin)\admin\layout.tsx:31:      .select("first_name, last_name")
+src\app\(admin)\admin\layout.tsx:35:      .from("claims")
+src\app\(admin)\admin\layout.tsx:36:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\layout.tsx:39:      .from("leads")
+src\app\(admin)\admin\layout.tsx:40:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\page.tsx:31: * `.limit(6)` states a total it has not measured, and at seven uninvited
+src\app\(admin)\admin\page.tsx:57:    // The tally, grouped in Postgres. This used to be `.select("status")` — one
+src\app\(admin)\admin\page.tsx:73:    supabase.rpc("claim_status_counts"),
+src\app\(admin)\admin\page.tsx:75:      .from("claims")
+src\app\(admin)\admin\page.tsx:76:      .select(
+src\app\(admin)\admin\page.tsx:81:      .limit(TRIAGE_EXCERPT),
+src\app\(admin)\admin\page.tsx:83:      .from("claim_events")
+src\app\(admin)\admin\page.tsx:84:      .select("id, body, created_at, claim_id, claims!claim_events_claim_id_fkey(claim_ref)")
+src\app\(admin)\admin\page.tsx:87:      .limit(QUESTION_EXCERPT),
+src\app\(admin)\admin\page.tsx:93:      .from("claim_events")
+src\app\(admin)\admin\page.tsx:94:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\page.tsx:97:      .from("claims")
+src\app\(admin)\admin\page.tsx:98:      .select("id, claim_ref, status, updated_at, property_street, property_city")
+src\app\(admin)\admin\page.tsx:101:      .limit(6),
+src\app\(admin)\admin\page.tsx:103:      .from("claimants")
+src\app\(admin)\admin\page.tsx:104:      .select(
+src\app\(admin)\admin\page.tsx:111:      .limit(INVITE_EXCERPT),
+src\app\(admin)\admin\page.tsx:116:      .from("claimants")
+src\app\(admin)\admin\page.tsx:117:      .select("id, claims!inner(status)", { count: "exact", head: true })
+src\app\(admin)\admin\intake\page.tsx:66:    .from("claims")
+src\app\(admin)\admin\intake\page.tsx:67:    .select(
+src\app\(admin)\admin\intake\page.tsx:77:    .limit(PAGE_SIZE + 1);
+src\app\(admin)\admin\intake\page.tsx:88:      .from("claims")
+src\app\(admin)\admin\intake\page.tsx:89:      .select("id", { count: "exact", head: true })
+src\app\(customer)\portal\profile\page.tsx:37:        .from("consents")
+src\app\(customer)\portal\profile\page.tsx:38:        .select("id, kind, consent_text, granted_at, withdrawn_at, claim_id")
+src\app\(customer)\portal\profile\page.tsx:41:        .range(from, to),
+src\app\(admin)\admin\claims\page.tsx:127:  let query = applyFilters(supabase.from("claims").select(SELECT))
+src\app\(admin)\admin\claims\page.tsx:129:    .limit(CLAIMS_PAGE_SIZE + 1);
+src\app\(admin)\admin\claims\page.tsx:148:      supabase.from("claims").select("id", { count: "exact", head: true }),
+src\app\(admin)\admin\leads\page.tsx:92:    supabase.from("leads").select("id, name, phone, email, message, status, created_at"),
+src\app\(admin)\admin\leads\page.tsx:98:    .limit(LEADS_PAGE_SIZE + 1);
+src\app\(admin)\admin\leads\page.tsx:108:    applyFilter(supabase.from("leads").select("id", { count: "exact", head: true })),
+src\app\(admin)\admin\questions\page.tsx:71:    .from("claim_events")
+src\app\(admin)\admin\questions\page.tsx:72:    .select(
+src\app\(admin)\admin\questions\page.tsx:78:    .limit(PAGE_SIZE + 1);
+src\app\(admin)\admin\questions\page.tsx:87:      .from("claim_events")
+src\app\(admin)\admin\questions\page.tsx:88:      .select("id", { count: "exact", head: true })
+src\app\(customer)\portal\claims\[id]\page.tsx:45:        .from("claim_status_history")
+src\app\(customer)\portal\claims\[id]\page.tsx:46:        .select("to_status, created_at")
+src\app\(customer)\portal\claims\[id]\page.tsx:50:        .range(from, to),
+src\app\(admin)\admin\claims\[id]\layout.tsx:58:      .from("claimants")
+src\app\(admin)\admin\claims\[id]\layout.tsx:59:      .select("id, first_name, last_name, is_primary", { count: "exact" })
+src\app\(admin)\admin\claims\[id]\layout.tsx:63:      .limit(1),
+src\app\(admin)\admin\claims\[id]\layout.tsx:65:      .from("documents")
+src\app\(admin)\admin\claims\[id]\layout.tsx:66:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\layout.tsx:69:      .from("claim_events")
+src\app\(admin)\admin\claims\[id]\layout.tsx:70:      .select("id", { count: "exact", head: true })
+src\app\(customer)\portal\claims\[id]\layout.tsx:65:      .from("claim_events")
+src\app\(customer)\portal\claims\[id]\layout.tsx:66:      .select("id", { count: "exact", head: true })
+src\app\(customer)\portal\claims\[id]\layout.tsx:69:      .from("documents")
+src\app\(customer)\portal\claims\[id]\layout.tsx:70:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:51:    .from("claimants")
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:52:    .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:60:      .from("claimants")
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:61:      .select("id, first_name, last_name, email, phone, initials, is_primary, user_id, created_at")
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:66:      .range(from, to),
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:74:            .from("invites")
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:75:            .select("email, expires_at, accepted_at")
+src\app\(admin)\admin\claims\[id]\claimants\page.tsx:80:            .range(rangeFrom, rangeTo),
+src\app\(customer)\portal\claims\[id]\activity\page.tsx:79:    .from("claim_events")
+src\app\(customer)\portal\claims\[id]\activity\page.tsx:80:    .select("id, type, body, created_at")
+src\app\(customer)\portal\claims\[id]\activity\page.tsx:84:    .limit(PAGE_SIZE + 1);
+src\app\(customer)\portal\claims\[id]\activity\page.tsx:91:      .from("claim_events")
+src\app\(customer)\portal\claims\[id]\activity\page.tsx:92:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\documents\page.tsx:55:    .from("documents")
+src\app\(admin)\admin\claims\[id]\documents\page.tsx:56:    .select(
+src\app\(admin)\admin\claims\[id]\documents\page.tsx:62:    .limit(PAGE_SIZE + 1);
+src\app\(admin)\admin\claims\[id]\documents\page.tsx:70:      .from("documents")
+src\app\(admin)\admin\claims\[id]\documents\page.tsx:71:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:64:    .from("claim_events")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:65:    .select(SELECT)
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:69:    .limit(PAGE_SIZE + 1);
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:78:      .from("claim_events")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:79:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:85:      .from("claim_events")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:86:      .select("id, body, created_at")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:90:      .limit(1)
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:93:      .from("claim_events")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:94:      .select("created_at")
+src\app\(admin)\admin\claims\[id]\activity\page.tsx:98:      .limit(1)
+src\app\(customer)\portal\claims\[id]\documents\page.tsx:59:    .from("documents")
+src\app\(customer)\portal\claims\[id]\documents\page.tsx:60:    .select("id, original_name, kind, size_bytes, created_at, uploaded_by")
+src\app\(customer)\portal\claims\[id]\documents\page.tsx:64:    .limit(PAGE_SIZE + 1);
+src\app\(customer)\portal\claims\[id]\documents\page.tsx:71:      .from("documents")
+src\app\(customer)\portal\claims\[id]\documents\page.tsx:72:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\financials\page.tsx:72:    .from("claim_financials")
+src\app\(admin)\admin\claims\[id]\financials\page.tsx:73:    .select(
+src\app\(admin)\admin\partners\[id]\page.tsx:52:    .from("partner_companies")
+src\app\(admin)\admin\partners\[id]\page.tsx:53:    .select("name")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:99:    .from("claim_status_history")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:100:    .select(
+src\app\(admin)\admin\claims\[id]\history\page.tsx:106:    .limit(PAGE_SIZE + 1);
+src\app\(admin)\admin\claims\[id]\history\page.tsx:120:        .from("audit_log")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:121:        .select("id, action, entity, actor_id, meta, created_at")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:124:        .limit(PAGE_SIZE + 1)
+src\app\(admin)\admin\claims\[id]\history\page.tsx:136:      .from("claim_status_history")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:137:      .select("id", { count: "exact", head: true })
+src\app\(admin)\admin\claims\[id]\history\page.tsx:142:          .from("audit_log")
+src\app\(admin)\admin\claims\[id]\history\page.tsx:143:          .select("id", { count: "exact", head: true })

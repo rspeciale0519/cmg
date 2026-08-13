@@ -6,6 +6,7 @@ import { FinancialsForm } from "@/components/admin/financials-form";
 import { adminTitle, NOT_FOUND_TITLE } from "@/lib/authz";
 import { claimTitleContext, loadClaimContext } from "@/lib/claims/queries";
 import { formatMoney, formatPercent, formatTimestamp } from "@/lib/format";
+import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +98,7 @@ export default async function FinancialsPage({
             claimId={id}
             settlementAmount={numericAmount}
             feePercent={numericFee}
+            feeDefault={FEE_PERCENT_DEFAULT}
             notes={financials?.notes ?? null}
           />
         </PanelBody>

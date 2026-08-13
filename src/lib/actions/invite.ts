@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { hashInviteToken } from "@/lib/auth/invite-token";
+import { resendApiKey } from "@/lib/email/outbox";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { isAppRole, landingPathFor } from "@/lib/auth/roles";
 import { requireStaff } from "@/lib/authz";
@@ -110,13 +111,15 @@ export async function issueClaimantInvite(
      the alternative is a UI that claims to have sent an email it demonstrably
      could not. It is withheld the moment delivery is actually configured, so in
      production the raw token continues to exist only in the recipient's inbox. */
-  const deliverable = Boolean(process.env.RESEND_API_KEY);
+  const deliverable = result.queued && Boolean(resendApiKey());
 
   return {
     status: "success",
-    message: deliverable
-      ? `Invitation sent to ${claimant.email}. It expires in 72 hours.`
-      : `Invitation created for ${claimant.email}. Email delivery is not configured on this environment, so hand them this link — it expires in 72 hours and works once.`,
+    message: !result.queued
+      ? `Invitation created for ${claimant.email}, but its email could not be queued. Hand them this recovery link — it expires in 72 hours and works once.`
+      : deliverable
+        ? `Invitation queued for email delivery to ${claimant.email}. It expires in 72 hours.`
+        : `Invitation created for ${claimant.email}. Email delivery is not configured on this environment, so hand them this link — it expires in 72 hours and works once.`,
     manualLink: deliverable ? undefined : result.url,
   };
 }

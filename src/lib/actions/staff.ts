@@ -8,6 +8,7 @@ import { loadStaffRoster } from "@/lib/admin/staff";
 import type { AppRole } from "@/lib/auth/roles";
 import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
+import { resendApiKey } from "@/lib/email/outbox";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import {
   isStaffAppRole,
@@ -312,14 +313,16 @@ export async function inviteStaff(
 
   revalidateStaff();
 
-  const deliverable = Boolean(process.env.RESEND_API_KEY);
+  const deliverable = result.queued && Boolean(resendApiKey());
   const roleLabel = ROLE_LABEL[parsed.data.role].toLowerCase();
 
   return {
     status: "success",
-    message: deliverable
-      ? `Invitation sent to ${parsed.data.email} as ${roleLabel}. It expires in 72 hours. They will be asked to set up an authenticator before they can open the workspace.`
-      : `Invitation created for ${parsed.data.email} as ${roleLabel}. Email delivery is not configured on this environment, so hand them this link — it expires in 72 hours and works once.`,
+    message: !result.queued
+      ? `Invitation created for ${parsed.data.email} as ${roleLabel}, but its email could not be queued. Hand them this recovery link — it expires in 72 hours and works once.`
+      : deliverable
+        ? `Invitation queued for email delivery to ${parsed.data.email} as ${roleLabel}. It expires in 72 hours. They will be asked to set up an authenticator before they can open the workspace.`
+        : `Invitation created for ${parsed.data.email} as ${roleLabel}. Email delivery is not configured on this environment, so hand them this link — it expires in 72 hours and works once.`,
     manualLink: deliverable ? undefined : result.url,
   };
 }

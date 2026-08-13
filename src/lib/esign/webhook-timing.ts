@@ -1,0 +1,11 @@
+export const WEBHOOK_ROUTE_MAX_DURATION_SECONDS = 15;
+export const WEBHOOK_LEASE_SECONDS = 300;
+export const WEBHOOK_LEASE_MARGIN_SECONDS = 60;
+export const WEBHOOK_PDF_DOWNLOAD_TIMEOUT_MS = 8_000;
+
+export function webhookTimingInvariant(): boolean {
+  return (
+    WEBHOOK_LEASE_SECONDS >=
+    WEBHOOK_ROUTE_MAX_DURATION_SECONDS + WEBHOOK_LEASE_MARGIN_SECONDS
+  );
+}

@@ -147,6 +147,10 @@ export function isNotificationTemplate(value: string): value is NotificationTemp
 export async function renderNotification(
   message: NotificationMessage,
 ): Promise<{ subject: string; html: string; text: string }> {
+  if (!isNotificationTemplate(message.template)) {
+    throw new Error("Unknown notification template");
+  }
+
   const renderer = TEMPLATES[message.template];
   const element = (renderer.element as (payload: unknown) => ReactElement)(
     message.payload,

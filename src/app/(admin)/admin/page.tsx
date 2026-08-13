@@ -8,6 +8,7 @@ import { isClaimStatus } from "@/lib/claims/status";
 import { adminTitle, requireStaff } from "@/lib/authz";
 import { formatAddressLine, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { loadClaimantSummaries } from "@/lib/claims/claimants";
 import { InvitePanel, type InvitableClaimant } from "./invite-panel";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +74,7 @@ export default async function AdminDashboard() {
     supabase
       .from("claims")
       .select(
-        "id, claim_ref, created_at, property_street, property_city, property_state, property_zip, referrer_name, claimants(first_name, last_name, is_primary)",
+        "id, claim_ref, created_at, property_street, property_city, property_state, property_zip, referrer_name",
       )
       .eq("status", "new_intake")
       .order("created_at", { ascending: false })
@@ -94,7 +95,7 @@ export default async function AdminDashboard() {
       .eq("type", "question"),
     supabase
       .from("claims")
-      .select("id, claim_ref, status, updated_at, property_street, property_city, claimants(first_name, last_name, is_primary)")
+      .select("id, claim_ref, status, updated_at, property_street, property_city")
       .neq("status", "rejected")
       .order("updated_at", { ascending: false })
       .limit(6),
@@ -117,6 +118,11 @@ export default async function AdminDashboard() {
       .is("user_id", null)
       .neq("claims.status", "new_intake")
       .neq("claims.status", "rejected"),
+  ]);
+
+  const claimantRows = await loadClaimantSummaries([
+    ...(intake.data ?? []).map((claim) => claim.id),
+    ...(recent.data ?? []).map((claim) => claim.id),
   ]);
 
   if (statuses.error) {
@@ -204,8 +210,8 @@ export default async function AdminDashboard() {
             <ul className="divide-y divide-ink/8">
               {(intake.data ?? []).map((claim) => {
                 const primary =
-                  claim.claimants?.find((person) => person.is_primary) ??
-                  claim.claimants?.[0];
+                  claimantRows.get(claim.id)?.find((person) => person.is_primary) ??
+                  claimantRows.get(claim.id)?.[0];
 
                 return (
                   <li key={claim.id}>
@@ -334,8 +340,8 @@ export default async function AdminDashboard() {
             >
               {(recent.data ?? []).map((claim) => {
                 const primary =
-                  claim.claimants?.find((person) => person.is_primary) ??
-                  claim.claimants?.[0];
+                  claimantRows.get(claim.id)?.find((person) => person.is_primary) ??
+                  claimantRows.get(claim.id)?.[0];
 
                 return (
                   <Tr key={claim.id}>

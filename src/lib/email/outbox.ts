@@ -18,6 +18,7 @@ type Admin = SupabaseClient<Database>;
 export type OutboxEntry = {
   recipientEmail: string;
   message: NotificationMessage;
+  dedupeKey?: string;
 };
 
 export const staffInbox = () =>
@@ -34,6 +35,7 @@ const fromAddress = () =>
 export function outboxRows(entries: OutboxEntry[]) {
   return entries.map((entry) => ({
     recipient_email: entry.recipientEmail,
+    dedupe_key: entry.dedupeKey ?? null,
     template: entry.message.template,
     payload: entry.message.payload as unknown as Json,
   }));
@@ -65,7 +67,7 @@ export function supabaseOutboxStore(admin: Admin): OutboxStore {
 
       if (error) {
         console.error("[outbox] claim failed", error.message);
-        return [];
+        throw new Error(`outbox claim failed: ${error.message}`);
       }
 
       return (data ?? []) as ClaimedRow[];
@@ -101,6 +103,7 @@ export function supabaseOutboxStore(admin: Admin): OutboxStore {
            is the contract, so a lost settle costs a duplicate rather than a lost
            notification — the right way round for this queue. */
         console.error("[outbox] settle failed", { id: result.id, error: error.message });
+        throw new Error(`outbox settle failed: ${error.message}`);
       }
     },
   };
@@ -129,7 +132,7 @@ export async function resendSender(): Promise<SendMessage | null> {
         subject: message.subject,
         html: message.html,
         text: message.text,
-      });
+      }, { idempotencyKey: message.idempotencyKey });
 
       if (result.error) {
         throw new Error(result.error.message);
@@ -179,8 +182,9 @@ export async function sweepOutbox(
   admin: Admin,
   send: SendMessage,
   limit: number,
+  concurrency = 1,
 ): Promise<DeliveryReport> {
-  return deliverClaimed(supabaseOutboxStore(admin), send, { limit });
+  return deliverClaimed(supabaseOutboxStore(admin), send, { limit, concurrency });
 }
 
 /**

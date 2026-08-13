@@ -73,6 +73,7 @@ export type Database = {
           body: string
           claim_id: string
           created_at: string
+          external_event_key: string | null
           id: string
           type: Database["public"]["Enums"]["claim_event_type"]
           visibility: Database["public"]["Enums"]["claim_event_visibility"]
@@ -82,6 +83,7 @@ export type Database = {
           body: string
           claim_id: string
           created_at?: string
+          external_event_key?: string | null
           id?: string
           type: Database["public"]["Enums"]["claim_event_type"]
           visibility?: Database["public"]["Enums"]["claim_event_visibility"]
@@ -91,6 +93,7 @@ export type Database = {
           body?: string
           claim_id?: string
           created_at?: string
+          external_event_key?: string | null
           id?: string
           type?: Database["public"]["Enums"]["claim_event_type"]
           visibility?: Database["public"]["Enums"]["claim_event_visibility"]
@@ -338,6 +341,9 @@ export type Database = {
           created_at: string
           denied_at: string | null
           description: string
+          esign_active_attempt_token: string | null
+          esign_dispatch_started_at: string | null
+          esign_dispatch_token: string | null
           esign_status: string | null
           filed_at: string | null
           id: string
@@ -373,6 +379,9 @@ export type Database = {
           created_at?: string
           denied_at?: string | null
           description: string
+          esign_active_attempt_token?: string | null
+          esign_dispatch_started_at?: string | null
+          esign_dispatch_token?: string | null
           esign_status?: string | null
           filed_at?: string | null
           id?: string
@@ -408,6 +417,9 @@ export type Database = {
           created_at?: string
           denied_at?: string | null
           description?: string
+          esign_active_attempt_token?: string | null
+          esign_dispatch_started_at?: string | null
+          esign_dispatch_token?: string | null
           esign_status?: string | null
           filed_at?: string | null
           id?: string
@@ -511,6 +523,7 @@ export type Database = {
         Row: {
           claim_id: string
           created_at: string
+          external_event_key: string | null
           id: string
           kind: Database["public"]["Enums"]["document_kind"]
           mime: string
@@ -524,6 +537,7 @@ export type Database = {
         Insert: {
           claim_id: string
           created_at?: string
+          external_event_key?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["document_kind"]
           mime: string
@@ -537,6 +551,7 @@ export type Database = {
         Update: {
           claim_id?: string
           created_at?: string
+          external_event_key?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["document_kind"]
           mime?: string
@@ -560,6 +575,92 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_dispatch_attempts: {
+        Row: {
+          actor_id: string | null
+          claim_id: string
+          claim_token: string
+          completed_at: string | null
+          mode: string
+          phase: string
+          provider_document_id: string | null
+          request_id: string
+          result: Json
+          started_at: string
+          state: string
+        }
+        Insert: {
+          actor_id?: string | null
+          claim_id: string
+          claim_token: string
+          completed_at?: string | null
+          mode: string
+          phase?: string
+          provider_document_id?: string | null
+          request_id: string
+          result?: Json
+          started_at?: string
+          state: string
+        }
+        Update: {
+          actor_id?: string | null
+          claim_id?: string
+          claim_token?: string
+          completed_at?: string | null
+          mode?: string
+          phase?: string
+          provider_document_id?: string | null
+          request_id?: string
+          result?: Json
+          started_at?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_dispatch_attempts_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esign_dispatch_attempts_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_recipient_completions: {
+        Row: {
+          claim_id: string
+          completed_at: string
+          document_id: string
+          recipient_hash: string
+        }
+        Insert: {
+          claim_id: string
+          completed_at?: string
+          document_id: string
+          recipient_hash: string
+        }
+        Update: {
+          claim_id?: string
+          completed_at?: string
+          document_id?: string
+          recipient_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_recipient_completions_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
             referencedColumns: ["id"]
           },
         ]
@@ -671,6 +772,7 @@ export type Database = {
         Row: {
           attempts: number
           created_at: string
+          dedupe_key: string | null
           id: string
           last_error: string | null
           next_attempt_at: string
@@ -684,6 +786,7 @@ export type Database = {
         Insert: {
           attempts?: number
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           last_error?: string | null
           next_attempt_at?: string
@@ -697,6 +800,7 @@ export type Database = {
         Update: {
           attempts?: number
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           last_error?: string | null
           next_attempt_at?: string
@@ -833,10 +937,12 @@ export type Database = {
           attempts: number
           bucket_id: string
           claim_id: string | null
+          dead_at: string | null
           document_id: string | null
           enqueued_at: string
           id: number
           last_error: string | null
+          next_attempt_at: string
           object_path: string
           processed_at: string | null
         }
@@ -844,10 +950,12 @@ export type Database = {
           attempts?: number
           bucket_id: string
           claim_id?: string | null
+          dead_at?: string | null
           document_id?: string | null
           enqueued_at?: string
           id?: never
           last_error?: string | null
+          next_attempt_at?: string
           object_path: string
           processed_at?: string | null
         }
@@ -855,10 +963,12 @@ export type Database = {
           attempts?: number
           bucket_id?: string
           claim_id?: string | null
+          dead_at?: string | null
           document_id?: string | null
           enqueued_at?: string
           id?: never
           last_error?: string | null
+          next_attempt_at?: string
           object_path?: string
           processed_at?: string | null
         }
@@ -882,6 +992,15 @@ export type Database = {
       allowed_claim_transitions: {
         Args: { p_from: Database["public"]["Enums"]["claim_status"] }
         Returns: Database["public"]["Enums"]["claim_status"][]
+      }
+      apply_esign_webhook_state: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+          p_status: string
+        }
+        Returns: string
       }
       assert_claim_loss_date: {
         Args: { p_loss_date: string }
@@ -915,6 +1034,17 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
+      claim_esign_dispatch: {
+        Args: {
+          p_actor_id?: string
+          p_claim_id: string
+          p_claim_token: string
+          p_lease_seconds?: number
+          p_mode: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
       claim_outbox_batch: {
         Args: { p_ids?: string[]; p_lease_seconds?: number; p_limit?: number }
         Returns: {
@@ -925,6 +1055,19 @@ export type Database = {
           template: string
         }[]
       }
+      claim_pandadoc_webhook_event: {
+        Args: {
+          p_claim_token: string
+          p_event_id: string
+          p_lease_seconds?: number
+          p_payload_hash: string
+        }
+        Returns: Json
+      }
+      claim_search_text: {
+        Args: { p_claim: Database["public"]["Tables"]["claims"]["Row"] }
+        Returns: string
+      }
       claim_status_counts: {
         Args: never
         Returns: {
@@ -932,7 +1075,66 @@ export type Database = {
           status: Database["public"]["Enums"]["claim_status"]
         }[]
       }
+      claim_storage_cleanup_batch: {
+        Args: {
+          p_lease_seconds?: number
+          p_limit?: number
+          p_max_attempts?: number
+        }
+        Returns: {
+          attempts: number
+          bucket_id: string
+          id: number
+          object_path: string
+        }[]
+      }
+      complete_pandadoc_webhook_event: {
+        Args: {
+          p_claim_token: string
+          p_event_id: string
+          p_payload_summary: Json
+        }
+        Returns: boolean
+      }
+      esign_attempt_is_active: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+        }
+        Returns: boolean
+      }
+      finalize_esign_pdf: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+          p_external_event_key: string
+          p_original_name: string
+          p_size_bytes: number
+          p_storage_path: string
+        }
+        Returns: Json
+      }
+      mark_esign_dispatch_sending: {
+        Args: {
+          p_claim_token: string
+          p_provider_document_id: string
+          p_request_id: string
+        }
+        Returns: boolean
+      }
       next_claim_ref: { Args: never; Returns: string }
+      partner_company_profile: {
+        Args: never
+        Returns: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          id: string
+          name: string
+        }[]
+      }
       partner_referral_company: {
         Args: never
         Returns: {
@@ -951,9 +1153,40 @@ export type Database = {
         Args: { p_claim_id: string; p_new_adjuster: string }
         Returns: undefined
       }
+      record_esign_recipient_completion: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+          p_recipient_hash: string
+        }
+        Returns: Json
+      }
+      reconcile_esign_dispatch: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+          p_outcome: string
+        }
+        Returns: string
+      }
       refresh_claim_partner_summary: {
         Args: { p_claim_id: string }
         Returns: undefined
+      }
+      release_pandadoc_webhook_event: {
+        Args: { p_claim_token: string; p_error: string; p_event_id: string }
+        Returns: boolean
+      }
+      settle_esign_dispatch: {
+        Args: {
+          p_claim_token: string
+          p_request_id: string
+          p_result?: Json
+          p_state: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

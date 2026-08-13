@@ -107,8 +107,74 @@ describe("deliverClaimed", () => {
       },
     ]);
     expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({ to: "dana@example.test" }),
+      expect.objectContaining({
+        idempotencyKey: row().id,
+        to: "dana@example.test",
+      }),
     );
+  });
+
+  it("rejects an unsettled successful send without recording a false provider failure", async () => {
+    const settle = vi.fn(async (result: SettleInput) => {
+      if (result.outcome === "sent") throw new Error("database unavailable");
+    });
+    const store: OutboxStore = {
+      claim: async () => [row()],
+      settle,
+    };
+    const send = vi.fn(async () => {});
+
+    await expect(deliverClaimed(store, send, { limit: 1 })).rejects.toThrow(
+      "database unavailable",
+    );
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(settle).toHaveBeenCalledOnce();
+    expect(settle).toHaveBeenCalledWith(expect.objectContaining({ outcome: "sent" }));
+  });
+
+  it("times out a stuck provider call and leaves the row retryable", async () => {
+    vi.useFakeTimers();
+    try {
+      const { store, settled } = singleClaimStore([row()]);
+      const send = vi.fn(() => new Promise<void>(() => {}));
+
+      const delivery = deliverClaimed(store, send, { limit: 1 });
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      await expect(delivery).resolves.toEqual({
+        claimed: 1,
+        sent: 0,
+        failed: 1,
+        dead: 0,
+      });
+      expect(settled[0]).toMatchObject({
+        outcome: "failed",
+        error: "provider send timed out",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("never exceeds the requested worker-pool concurrency", async () => {
+    const rows = Array.from({ length: 12 }, (_, index) =>
+      row({ id: `1000000${index}-1111-4111-8111-111111111111` }),
+    );
+    const { store } = singleClaimStore(rows);
+    let active = 0;
+    let peak = 0;
+    const send = vi.fn(async () => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      active -= 1;
+    });
+
+    const report = await deliverClaimed(store, send, { limit: 12, concurrency: 3 });
+
+    expect(report.sent).toBe(12);
+    expect(peak).toBe(3);
   });
 
   it("records the provider's message and the next delay when a send fails", async () => {

@@ -1,0 +1,33 @@
+
+> cmg-property-solutions@0.1.0 db:test
+> supabase test db
+
+Connecting to local database...
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/00_schema.test.sql ......................... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/01_claim_ref_and_status.test.sql ........... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/02_partner_projection.test.sql ............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/03_rate_limit.test.sql ..................... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/04_rls_roles.test.sql ...................... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/05_review_regressions.test.sql ............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/06_round2_regressions.test.sql ............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/07_round3_regressions.test.sql ............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/08_round4_regressions.test.sql ............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/09_phase3_auth_isolation.test.sql .......... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/10_admin_directory.test.sql ................ ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/11_last_active_owner.test.sql .............. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/12_staff_mfa_gate.test.sql ................. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/13_claim_status_counts.test.sql ............ ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/14_portal_surface.test.sql ................. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/15_partner_referral.test.sql ............... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/16_lor_policy_gate.test.sql ................ ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/17_outbox_sweeper.test.sql ................. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/18_storage_cleanup_sweeper.test.sql ........ ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/19_pandadoc_webhook_claim.test.sql ......... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/20_claim_lifecycle_invariants.test.sql ..... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/21_claim_search.test.sql ................... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/22_partner_portal.test.sql ................. ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/23_esign_dispatch_lease.test.sql ........... ok
+/Users/rob/Documents/Websites/- Customers/CMGPA/supabase/tests/24_esign_reconciliation_outcomes.test.sql .. ok
+All tests successful.
+Files=25, Tests=787,  8 wallclock secs ( 0.61 usr  0.17 sys +  0.60 cusr  0.66 csys =  2.04 CPU)
+Result: PASS

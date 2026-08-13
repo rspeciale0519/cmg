@@ -1,14 +1,23 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CLAIM_DOCS_BUCKET } from "@/lib/actions/intake-storage";
-import { writeAudit } from "@/lib/audit";
-import { dispatchOutbox, outboxRows, staffInbox } from "@/lib/email/outbox";
+import { staffInbox } from "@/lib/email/outbox";
 import type { OutboxEntry } from "@/lib/email/outbox";
 import type { Database } from "@/types/database";
 import {
+  enqueueWebhookNotifications as enqueue,
+  postFeedEventOnce,
+  propertyAddress,
+  writeWebhookAudit,
+} from "./webhook-effects";
+import { WEBHOOK_PDF_DOWNLOAD_TIMEOUT_MS } from "./webhook-timing";
+import {
   actorNameFromEvent,
+  actorIdentityFromEvent,
   creationErrorFromEvent,
+  dispatchAttemptTokenForRpc,
   documentIdFromEvent,
   documentStatusFromEvent,
 } from "./payload";
@@ -24,6 +33,7 @@ type Admin = SupabaseClient<Database>;
 
 export const WEBHOOK_CLAIM_COLUMNS =
   "id, claim_ref, status, esign_status, pandadoc_document_id, " +
+  "esign_active_attempt_token, esign_dispatch_token, " +
   "property_street, property_street2, property_city, property_state, property_zip";
 
 export type WebhookClaim = Pick<
@@ -33,6 +43,8 @@ export type WebhookClaim = Pick<
   | "status"
   | "esign_status"
   | "pandadoc_document_id"
+  | "esign_active_attempt_token"
+  | "esign_dispatch_token"
   | "property_street"
   | "property_street2"
   | "property_city"
@@ -46,71 +58,29 @@ export type HandlerContext = {
   claim: WebhookClaim;
   event: PandaDocWebhookEvent;
   eventId: string;
+  effectId?: string;
+  beforeEnqueue?: () => Promise<void>;
+  beforeAudit?: () => Promise<void>;
+  downloadTimeoutMs?: number;
 };
 
-const propertyAddress = (claim: WebhookClaim) =>
-  [
-    claim.property_street,
-    claim.property_street2,
-    `${claim.property_city}, ${claim.property_state} ${claim.property_zip}`,
-  ]
-    .filter((part): part is string => Boolean(part))
-    .join(", ");
-
-async function enqueue(admin: Admin, entries: OutboxEntry[]): Promise<void> {
-  if (entries.length === 0) return;
-
-  const { data, error } = await admin
-    .from("notifications_outbox")
-    .insert(outboxRows(entries))
-    .select("id");
-
-  if (error || !data) {
-    console.error("[esign] outbox enqueue failed", error?.message);
-    return;
-  }
-
-  await dispatchOutbox(
-    admin,
-    data.map((row) => row.id),
-  );
-}
-
-/**
- * Feed entries are the one side effect a re-delivery would visibly duplicate,
- * so each is written through this: same claim, same body, already present →
- * nothing happens. Every other side effect below is naturally idempotent
- * (a column set to a value it already holds, a document row guarded by an
- * existence check, a transition the status machine refuses twice).
- */
-async function postFeedEventOnce(
-  admin: Admin,
-  claimId: string,
-  entry: {
-    type: Database["public"]["Enums"]["claim_event_type"];
-    visibility: Database["public"]["Enums"]["claim_event_visibility"];
-    body: string;
-  },
-): Promise<boolean> {
-  const { data: existing } = await admin
-    .from("claim_events")
-    .select("id")
-    .eq("claim_id", claimId)
-    .eq("body", entry.body)
-    .limit(1)
-    .maybeSingle();
-
-  if (existing) return false;
-
-  const { error } = await admin.from("claim_events").insert({
-    claim_id: claimId,
-    type: entry.type,
-    visibility: entry.visibility,
-    body: entry.body,
+async function downloadPdf(
+  provider: ESignProvider,
+  documentId: string,
+  timeoutMs: number,
+): Promise<Uint8Array> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timeout = setTimeout(
+      () => reject(new ESignError("download_failed", "Signed PDF download timed out")),
+      timeoutMs,
+    );
   });
-
-  if (error) throw new Error(`claim_events insert failed: ${error.message}`);
-  return true;
+  try {
+    return await Promise.race([provider.downloadSignedPdf(documentId), expired]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 /** `recipient_completed` — one signer finished. */
@@ -121,15 +91,41 @@ export async function handleRecipientCompleted(
   const who = actorNameFromEvent(event);
   const body = `${who} signed the Letter of Representation.`;
 
+  /* PandaDoc's recipient event still reports the document itself as `sent`,
+     which used to leave the admin screen claiming only that the request had
+     gone out after a homeowner had already signed it. Keep a local, explicit
+     milestone until the provider advances the document to completed. */
+  const documentId = documentIdFromEvent(event) ?? claim.pandadoc_document_id;
+  if (!documentId) return "ignored";
+  const recipientHash = createHash("sha256")
+    .update(`${documentId}:${actorIdentityFromEvent(event)}`)
+    .digest("hex");
+  const { data: completion, error: completionError } = await admin.rpc(
+    "record_esign_recipient_completion",
+    {
+      p_claim_id: claim.id,
+      p_document_id: documentId,
+      p_attempt_token: dispatchAttemptTokenForRpc(event),
+      p_recipient_hash: recipientHash,
+    },
+  );
+  if (completionError) {
+    throw new Error(`recipient completion persist failed: ${completionError.message}`);
+  }
+  if (
+    !completion ||
+    typeof completion !== "object" ||
+    Array.isArray(completion) ||
+    (completion as Record<string, unknown>).status !== "recorded"
+  ) return "ignored";
+
   const posted = await postFeedEventOnce(admin, claim.id, {
     type: "system",
     visibility: "shared",
     body,
-  });
+  }, `${context.effectId ?? context.eventId}:recipient-feed`);
 
-  if (!posted) return "ignored";
-
-  await enqueue(admin, [
+  await enqueue(admin, context.effectId ?? context.eventId, [
     {
       recipientEmail: staffInbox(),
       message: {
@@ -142,16 +138,17 @@ export async function handleRecipientCompleted(
         },
       },
     },
-  ]);
+  ], context.beforeEnqueue);
 
-  await writeAudit(admin, {
+  await context.beforeAudit?.();
+  await writeWebhookAudit(admin, {
     action: "esign.recipient_completed",
     entity: "claims",
     entityId: claim.id,
     meta: { event_id: context.eventId, signer: who },
-  });
+  }, context.effectId ?? context.eventId);
 
-  return "applied";
+  return posted ? "applied" : "ignored";
 }
 
 /** `document_state_changed` — mirror the provider status, flag the bad ones. */
@@ -161,14 +158,20 @@ export async function handleDocumentStateChanged(
   const { admin, claim, event } = context;
   const status = documentStatusFromEvent(event);
   if (!status) return "ignored";
-  if (claim.esign_status === status) return "ignored";
-
-  const { error } = await admin
-    .from("claims")
-    .update({ esign_status: status })
-    .eq("id", claim.id);
-
-  if (error) throw new Error(`esign_status update failed: ${error.message}`);
+  const documentId = documentIdFromEvent(event) ?? claim.pandadoc_document_id;
+  if (!documentId) return "ignored";
+  const { data: stateOutcome, error: stateError } = await admin.rpc(
+    "apply_esign_webhook_state",
+    {
+      p_claim_id: claim.id,
+      p_document_id: documentId,
+      p_attempt_token: dispatchAttemptTokenForRpc(event),
+      p_status: status,
+    },
+  );
+  if (stateError) throw new Error(`esign_status update failed: ${stateError.message}`);
+  if (stateOutcome === "stale") return "ignored";
+  const changed = stateOutcome === "applied";
 
   const failed = (PANDADOC_TERMINAL_FAILURE_STATUSES as readonly string[]).includes(status);
 
@@ -180,7 +183,7 @@ export async function handleDocumentStateChanged(
       body: `${headline}. The claim needs staff attention before representation can proceed.`,
     });
 
-    await enqueue(admin, [
+    await enqueue(admin, context.effectId ?? context.eventId, [
       {
         recipientEmail: staffInbox(),
         message: {
@@ -194,17 +197,18 @@ export async function handleDocumentStateChanged(
           },
         },
       },
-    ]);
+    ], context.beforeEnqueue);
   }
 
-  await writeAudit(admin, {
+  await context.beforeAudit?.();
+  await writeWebhookAudit(admin, {
     action: failed ? "esign.document_failed" : "esign.state_changed",
     entity: "claims",
     entityId: claim.id,
     meta: { event_id: context.eventId, esign_status: status, previous: claim.esign_status },
-  });
+  }, context.effectId ?? context.eventId);
 
-  return "applied";
+  return changed ? "applied" : "ignored";
 }
 
 /**
@@ -218,86 +222,102 @@ export async function handlePdfReady(context: HandlerContext): Promise<EventOutc
 
   const documentId = documentIdFromEvent(event) ?? claim.pandadoc_document_id;
   if (!documentId) return "ignored";
+  const attemptToken = dispatchAttemptTokenForRpc(event);
+  const { data: active, error: activeError } = await admin.rpc(
+    "esign_attempt_is_active",
+    {
+      p_claim_id: claim.id,
+      p_document_id: documentId,
+      p_attempt_token: attemptToken,
+    },
+  );
+  if (activeError) throw new Error(`e-sign attempt check failed: ${activeError.message}`);
+  if (!active) return "ignored";
 
-  const { data: existing } = await admin
-    .from("documents")
-    .select("id")
-    .eq("claim_id", claim.id)
-    .eq("kind", "lor_signed")
-    .limit(1)
-    .maybeSingle();
-
-  if (!existing) {
-    const bytes = await provider.downloadSignedPdf(documentId);
-    if (bytes.length === 0) {
-      throw new ESignError("download_failed", "PandaDoc returned an empty signed PDF");
-    }
-
-    const storagePath = `claims/${claim.id}/${crypto.randomUUID()}.pdf`;
-    const { error: uploadError } = await admin.storage
-      .from(CLAIM_DOCS_BUCKET)
-      .upload(storagePath, bytes, { contentType: "application/pdf", upsert: false });
-
-    if (uploadError) {
-      throw new Error(`signed LOR upload failed: ${uploadError.message}`);
-    }
-
-    const { error: rowError } = await admin.from("documents").insert({
-      claim_id: claim.id,
-      storage_path: storagePath,
-      original_name: `LOR ${claim.claim_ref} (signed).pdf`,
-      kind: "lor_signed",
-      mime: "application/pdf",
-      size_bytes: bytes.length,
-      visibility: "customer",
-    });
-
-    if (rowError) {
-      await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
-      throw new Error(`signed LOR document row failed: ${rowError.message}`);
-    }
-
-    await postFeedEventOnce(admin, claim.id, {
-      type: "document",
-      visibility: "shared",
-      body: "The signed Letter of Representation was filed against this claim.",
-    });
+  const bytes = await downloadPdf(
+    provider,
+    documentId,
+    context.downloadTimeoutMs ?? WEBHOOK_PDF_DOWNLOAD_TIMEOUT_MS,
+  );
+  if (bytes.length === 0) {
+    throw new ESignError("download_failed", "PandaDoc returned an empty signed PDF");
   }
 
-  if (claim.status === "lor_sent") {
-    const { error: transitionError } = await admin
-      .from("claims")
-      .update({ status: "lor_signed", esign_status: "document.completed" })
-      .eq("id", claim.id)
-      .eq("status", "lor_sent");
+  const effectId = context.effectId ?? context.eventId;
+  const storagePath = `claims/${claim.id}/pandadoc-${effectId}.pdf`;
+  const { error: uploadError } = await admin.storage
+    .from(CLAIM_DOCS_BUCKET)
+    .upload(storagePath, bytes, { contentType: "application/pdf", upsert: false });
+  const reusedObject = uploadError?.message.toLowerCase().includes("already exists") ?? false;
+  if (uploadError && !reusedObject) {
+    throw new Error(`signed LOR upload failed: ${uploadError.message}`);
+  }
 
-    if (transitionError) {
-      throw new Error(`lor_signed transition failed: ${transitionError.message}`);
-    }
+  const { data: finalized, error: finalizeError } = await admin.rpc(
+    "finalize_esign_pdf",
+    {
+      p_claim_id: claim.id,
+      p_document_id: documentId,
+      p_attempt_token: attemptToken,
+      p_external_event_key: `${effectId}:signed-pdf`,
+      p_storage_path: storagePath,
+      p_original_name: `LOR ${claim.claim_ref} (signed).pdf`,
+      p_size_bytes: bytes.length,
+    },
+  );
+  if (finalizeError || !finalized || typeof finalized !== "object" || Array.isArray(finalized)) {
+    if (!reusedObject) await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
+    throw new Error(`signed LOR finalization failed: ${finalizeError?.message ?? "invalid result"}`);
+  }
+  if ((finalized as Record<string, unknown>).status !== "recorded") {
+    if (!reusedObject) await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
+    return "ignored";
+  }
 
-    await admin.from("claim_status_history").insert({
+  await postFeedEventOnce(admin, claim.id, {
+    type: "document",
+    visibility: "shared",
+    body: "The signed Letter of Representation was filed against this claim.",
+  }, `${effectId}:document-feed`);
+
+  const { data: history, error: historyLookupError } = await admin
+    .from("claim_status_history")
+    .select("id")
+    .eq("claim_id", claim.id)
+    .eq("from_status", "lor_sent")
+    .eq("to_status", "lor_signed")
+    .limit(1)
+    .maybeSingle();
+  if (historyLookupError) {
+    throw new Error(`status history lookup failed: ${historyLookupError.message}`);
+  }
+  if (!history) {
+    const { error: historyError } = await admin.from("claim_status_history").insert({
       claim_id: claim.id,
       from_status: "lor_sent",
       to_status: "lor_signed",
       note: "Signed Letter of Representation received from the e-signature provider.",
     });
+    if (historyError) throw new Error(`status history insert failed: ${historyError.message}`);
+  }
 
-    await postFeedEventOnce(admin, claim.id, {
-      type: "status",
-      visibility: "shared",
-      body: "Representation is confirmed — the Letter of Representation is signed.",
-    });
+  await postFeedEventOnce(admin, claim.id, {
+    type: "status",
+    visibility: "shared",
+    body: "Representation is confirmed — the Letter of Representation is signed.",
+  }, `${effectId}:status-feed`);
 
-    const { data: primary } = await admin
-      .from("claimants")
-      .select("first_name, email")
-      .eq("claim_id", claim.id)
-      .order("is_primary", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+  const { data: primary, error: claimantError } = await admin
+    .from("claimants")
+    .select("first_name, email")
+    .eq("claim_id", claim.id)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (claimantError) throw new Error(`primary claimant lookup failed: ${claimantError.message}`);
 
-    const entries: OutboxEntry[] = [
+  const entries: OutboxEntry[] = [
       {
         recipientEmail: staffInbox(),
         message: {
@@ -310,10 +330,10 @@ export async function handlePdfReady(context: HandlerContext): Promise<EventOutc
           },
         },
       },
-    ];
+  ];
 
-    if (primary?.email) {
-      entries.push({
+  if (primary?.email) {
+    entries.push({
         recipientEmail: primary.email,
         message: {
           template: "lor_signed",
@@ -323,22 +343,22 @@ export async function handlePdfReady(context: HandlerContext): Promise<EventOutc
             propertyAddress: propertyAddress(claim),
           },
         },
-      });
-    }
-
-    await enqueue(admin, entries);
+    });
   }
 
-  await writeAudit(admin, {
+  await enqueue(admin, context.effectId ?? context.eventId, entries, context.beforeEnqueue);
+
+  await context.beforeAudit?.();
+  await writeWebhookAudit(admin, {
     action: "esign.lor_signed",
     entity: "claims",
     entityId: claim.id,
     meta: {
       event_id: context.eventId,
       provider_document_id: documentId,
-      reused_existing_document: Boolean(existing),
+      reused_storage_object: reusedObject,
     },
-  });
+  }, context.effectId ?? context.eventId);
 
   return "applied";
 }
@@ -349,22 +369,27 @@ export async function handleCreationFailed(
 ): Promise<EventOutcome> {
   const { admin, claim, event } = context;
   const detail = creationErrorFromEvent(event) ?? "PandaDoc did not say why.";
-
-  const { error } = await admin
-    .from("claims")
-    .update({ esign_status: "document.creation_failed" })
-    .eq("id", claim.id);
-
+  const documentId = documentIdFromEvent(event) ?? claim.pandadoc_document_id;
+  if (!documentId) return "ignored";
+  const { data: stateOutcome, error } = await admin.rpc(
+    "apply_esign_webhook_state",
+    {
+      p_claim_id: claim.id,
+      p_document_id: documentId,
+      p_attempt_token: dispatchAttemptTokenForRpc(event),
+      p_status: "document.creation_failed",
+    },
+  );
   if (error) throw new Error(`esign_status update failed: ${error.message}`);
+  if (stateOutcome === "stale") return "ignored";
 
   const posted = await postFeedEventOnce(admin, claim.id, {
     type: "system",
     visibility: "internal",
     body: `The e-signature provider could not create the Letter of Representation: ${detail}`,
-  });
+  }, `${context.effectId ?? context.eventId}:creation-failed-feed`);
 
-  if (posted) {
-    await enqueue(admin, [
+  await enqueue(admin, context.effectId ?? context.eventId, [
       {
         recipientEmail: staffInbox(),
         message: {
@@ -377,15 +402,15 @@ export async function handleCreationFailed(
           },
         },
       },
-    ]);
-  }
+  ], context.beforeEnqueue);
 
-  await writeAudit(admin, {
+  await context.beforeAudit?.();
+  await writeWebhookAudit(admin, {
     action: "esign.creation_failed",
     entity: "claims",
     entityId: claim.id,
     meta: { event_id: context.eventId, detail },
-  });
+  }, context.effectId ?? context.eventId);
 
-  return "applied";
+  return posted ? "applied" : "ignored";
 }

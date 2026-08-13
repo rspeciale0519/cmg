@@ -3,6 +3,7 @@ import "server-only";
 import { ROLE_LABEL } from "@/components/admin/nav";
 import { isAppRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 import type { Json } from "@/types/database";
 import { dayBounds, pageCursors } from "./audit-range";
 import {
@@ -268,13 +269,17 @@ export type ActorOption = { id: string; name: string; role: string };
  */
 export async function loadActorOptions(): Promise<ActorOption[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name, role")
-    .order("role", { ascending: true })
-    .order("last_name", { ascending: true });
+  const data = await collectPostgrestPages((from, to) =>
+    supabase
+      .from("profiles")
+      .select("id, first_name, last_name, role")
+      .order("role", { ascending: true })
+      .order("last_name", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
-  return (data ?? []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     name:
       [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||

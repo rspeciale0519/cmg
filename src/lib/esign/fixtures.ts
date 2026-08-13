@@ -14,6 +14,7 @@ export function sendLorRequestFixture(overrides: Partial<LorRequest> = {}): LorR
 
   return {
     claimId,
+    dispatchAttemptToken: overrides.dispatchAttemptToken ?? randomUUID(),
     claimRef,
     documentName: `LOR — ${claimRef}`,
     signers: [
@@ -42,16 +43,31 @@ export function sendLorRequestFixture(overrides: Partial<LorRequest> = {}): LorR
 
 type EventData = Record<string, unknown>;
 
-const withClaim = (claimId: string, documentId: string, extra: EventData): EventData => ({
+const withClaim = (
+  claimId: string,
+  documentId: string,
+  extra: EventData,
+  dispatchAttemptToken?: string,
+): EventData => ({
   id: documentId,
-  metadata: { claim_id: claimId },
+  metadata: {
+    claim_id: claimId,
+    ...(dispatchAttemptToken
+      ? { dispatch_attempt_token: dispatchAttemptToken }
+      : {}),
+  },
   ...extra,
 });
 
-export function stateChangedEvent(claimId: string, documentId: string, status: string) {
+export function stateChangedEvent(
+  claimId: string,
+  documentId: string,
+  status: string,
+  dispatchAttemptToken?: string,
+) {
   return {
     event: "document_state_changed",
-    data: withClaim(claimId, documentId, { status }),
+    data: withClaim(claimId, documentId, { status }, dispatchAttemptToken),
   };
 }
 
@@ -59,27 +75,47 @@ export function recipientCompletedEvent(
   claimId: string,
   documentId: string,
   signer: { firstName: string; lastName: string },
+  dispatchAttemptToken?: string,
 ) {
   return {
     event: "recipient_completed",
     data: withClaim(claimId, documentId, {
       status: "document.sent",
       action_by: { first_name: signer.firstName, last_name: signer.lastName },
-    }),
+    }, dispatchAttemptToken),
   };
 }
 
-export function pdfReadyEvent(claimId: string, documentId: string) {
+export function pdfReadyEvent(
+  claimId: string,
+  documentId: string,
+  dispatchAttemptToken?: string,
+) {
   return {
     event: "document_completed_pdf_ready",
-    data: withClaim(claimId, documentId, { status: "document.completed" }),
+    data: withClaim(
+      claimId,
+      documentId,
+      { status: "document.completed" },
+      dispatchAttemptToken,
+    ),
   };
 }
 
-export function creationFailedEvent(claimId: string, documentId: string, detail: string) {
+export function creationFailedEvent(
+  claimId: string,
+  documentId: string,
+  detail: string,
+  dispatchAttemptToken?: string,
+) {
   return {
     event: "document_creation_failed",
-    data: withClaim(claimId, documentId, { error: { detail } }),
+    data: withClaim(
+      claimId,
+      documentId,
+      { error: { detail } },
+      dispatchAttemptToken,
+    ),
   };
 }
 

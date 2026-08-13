@@ -6,6 +6,7 @@ import { loadUserDirectory } from "@/lib/admin/directory";
 import { isClaimStatus, type ClaimStatus } from "@/lib/claims/status";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export type PartnerStatus = Database["public"]["Enums"]["partner_company_status"];
 
@@ -240,13 +241,17 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
       .select("id", { count: "exact", head: true })
       .eq("partner_company_id", companyId)
       .eq("is_active", true),
-    supabase
-      .from("invites")
-      .select("id, email, expires_at, created_at")
-      .eq("partner_company_id", companyId)
-      .is("accepted_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false }),
+    collectPostgrestPages((from, to) =>
+      supabase
+        .from("invites")
+        .select("id, email, expires_at, created_at")
+        .eq("partner_company_id", companyId)
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    ),
     claimsQuery,
     supabase
       .from("claims")
@@ -290,7 +295,7 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
     }),
     repTotal: repsResult.count ?? repRows.length,
     activeRepTotal: activeRepsResult.count ?? 0,
-    pendingInvites: (invitesResult.data ?? []).map((row) => ({
+    pendingInvites: invitesResult.map((row) => ({
       id: row.id,
       email: row.email,
       expiresAt: row.expires_at,

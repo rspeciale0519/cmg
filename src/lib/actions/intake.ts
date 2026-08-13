@@ -41,15 +41,6 @@ export async function submitIntake(
   const ip = clientIpFromHeaders(requestHeaders);
   const ipInet = inetOrNull(ip);
 
-  const turnstile = await verifyTurnstile(
-    formData.get("cf-turnstile-response"),
-    ipInet,
-  );
-  if (!turnstile.ok) {
-    console.warn("[intake] turnstile rejected", { reason: turnstile.reason });
-    return { status: "error", message: VERIFICATION_ERROR };
-  }
-
   const rawEmail = String(formData.get("email") ?? "").trim();
   const withinLimits = await checkFormRateLimits({
     ipRule: RATE_LIMITS.intakeIp,
@@ -60,6 +51,15 @@ export async function submitIntake(
   if (!withinLimits) {
     console.warn("[intake] rate limited");
     return { status: "error", message: RATE_LIMIT_ERROR };
+  }
+
+  const turnstile = await verifyTurnstile(
+    formData.get("cf-turnstile-response"),
+    ipInet,
+  );
+  if (!turnstile.ok) {
+    console.warn("[intake] turnstile rejected", { reason: turnstile.reason });
+    return { status: "error", message: VERIFICATION_ERROR };
   }
 
   const text = (name: string) => formData.get(name) ?? "";

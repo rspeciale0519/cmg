@@ -22,11 +22,15 @@ export type LorToken = { name: string; value: string };
 /** What a provider needs in order to put an LOR in front of the claimants. */
 export type LorRequest = {
   claimId: string;
+  /** One-shot dispatch ownership, echoed by PandaDoc in every webhook. */
+  dispatchAttemptToken: string;
   claimRef: string;
   documentName: string;
   signers: LorSigner[];
   tokens: LorToken[];
   message?: string | null;
+  /** Persist provider identity and irreversible-send intent before transport. */
+  beforeSend?: (providerDocumentId: string) => Promise<void>;
 };
 
 /** What a provider gives back once the letter is on its way. */
@@ -65,12 +69,20 @@ export type ESignErrorCode =
 export class ESignError extends Error {
   readonly code: ESignErrorCode;
   readonly httpStatus?: number;
+  /** True when PandaDoc may have accepted a send whose response was lost. */
+  readonly deliveryUncertain: boolean;
 
-  constructor(code: ESignErrorCode, message: string, httpStatus?: number) {
+  constructor(
+    code: ESignErrorCode,
+    message: string,
+    httpStatus?: number,
+    deliveryUncertain = false,
+  ) {
     super(message);
     this.name = "ESignError";
     this.code = code;
     this.httpStatus = httpStatus;
+    this.deliveryUncertain = deliveryUncertain;
   }
 }
 
@@ -78,6 +90,7 @@ export class ESignError extends Error {
 export const PANDADOC_TERMINAL_FAILURE_STATUSES = [
   "document.declined",
   "document.expired",
+  "document.voided",
   "document.cancelled",
   "document.rejected",
 ] as const;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PortalShell } from "@/components/auth/portal-shell";
+import { PartnerNav } from "@/components/partner/partner-nav";
 import { ReferralForm } from "@/components/portal/referral-form";
 import { partnerIdentity } from "@/lib/portal/partner-identity";
 
@@ -29,6 +30,7 @@ export default async function PartnerReferPage() {
       intro="Send us the homeowner and what happened. We take the policy details from them ourselves, so there is nothing here you have to chase before you submit."
       identity={identity}
     >
+      <PartnerNav />
       <p className="mb-[clamp(24px,3vh,32px)] text-[15px] leading-[1.75] text-ink/72">
         <Link
           href="/partner"

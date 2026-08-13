@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { PandaDocClient } = await import("./pandadoc-client");
+const { PandaDocClient, PANDADOC_DISPATCH_TIMEOUT_MS } = await import("./pandadoc-client");
+const { ESIGN_DISPATCH_LEASE_SECONDS } = await import("./dispatch-ledger");
 const { PandaDocProvider } = await import("./pandadoc");
 const { ESignError } = await import("./types");
 const { sendLorRequestFixture } = await import("./fixtures");
@@ -18,7 +19,10 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
 
 const slept: number[] = [];
 
-function providerFrom(responder: (call: Call, index: number) => Response) {
+function providerFrom(
+  responder: (call: Call, index: number) => Response | Promise<Response>,
+  operationTimeoutMs?: number,
+) {
   const calls: Call[] = [];
   const client = new PandaDocClient({
     apiKey: "sandbox-key",
@@ -34,6 +38,7 @@ function providerFrom(responder: (call: Call, index: number) => Response) {
       slept.push(ms);
       return Promise.resolve();
     },
+    operationTimeoutMs,
   });
 
   return {
@@ -73,7 +78,10 @@ describe("PandaDocProvider.dispatchLor", () => {
 
     const create = JSON.parse(String(calls[0].init.body));
     expect(create.template_uuid).toBe("two-signer-template");
-    expect(create.metadata).toEqual({ claim_id: request.claimId });
+    expect(create.metadata).toEqual({
+      claim_id: request.claimId,
+      dispatch_attempt_token: request.dispatchAttemptToken,
+    });
     expect(create.recipients.map((r: { role: string }) => r.role)).toEqual([
       "Homeowner1",
       "Homeowner2",
@@ -165,6 +173,121 @@ describe("PandaDocProvider.dispatchLor", () => {
     expect(createCalls).toBe(2);
     expect(dispatch.providerDocumentId).toBe("doc-1");
     expect(slept).toContain(3000);
+  });
+
+  it("aborts the whole dispatch before its lease and cannot send after timeout", async () => {
+    expect(PANDADOC_DISPATCH_TIMEOUT_MS).toBeLessThan(
+      ESIGN_DISPATCH_LEASE_SECONDS * 1000,
+    );
+    vi.useFakeTimers();
+    try {
+      let releaseStatus: ((response: Response) => void) | undefined;
+      const statusResponse = new Promise<Response>((resolve) => {
+        releaseStatus = resolve;
+      });
+      const { provider, calls } = providerFrom((call) => {
+        if (isCreate(call)) return json(201, { id: "doc-timeout", status: "document.uploaded" });
+        if (isStatus(call)) return statusResponse;
+        return json(200, { id: "doc-timeout", status: "document.sent" });
+      }, 90);
+
+      const dispatch = expect(
+        provider.dispatchLor(sendLorRequestFixture()),
+      ).rejects.toMatchObject({
+        code: "send_failed",
+        deliveryUncertain: false,
+      });
+      await vi.advanceTimersByTimeAsync(91);
+      await dispatch;
+
+      releaseStatus?.(json(200, { id: "doc-timeout", status: "document.draft" }));
+      await vi.runAllTimersAsync();
+      expect(calls.filter(isSend)).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("treats a send with no response as uncertain instead of retrying it", async () => {
+    let sendCalls = 0;
+    const { provider } = providerFrom((call) => {
+      if (isCreate(call)) return json(201, { id: "doc-ambiguous", status: "document.uploaded" });
+      if (isStatus(call)) return json(200, { id: "doc-ambiguous", status: "document.draft" });
+      sendCalls += 1;
+      return Promise.reject(new Error("connection reset after request upload"));
+    });
+
+    await expect(provider.dispatchLor(sendLorRequestFixture())).rejects.toMatchObject({
+      code: "send_failed",
+      deliveryUncertain: true,
+    });
+    expect(sendCalls).toBe(1);
+  });
+
+  it("treats a stalled 2xx send body as uncertain and never sends twice", async () => {
+    vi.useFakeTimers();
+    try {
+      let sendCalls = 0;
+      const stalled = new ReadableStream<Uint8Array>({ start: () => undefined });
+      const { provider } = providerFrom((call) => {
+        if (isCreate(call)) return json(201, { id: "doc-stalled", status: "document.uploaded" });
+        if (isStatus(call)) return json(200, { id: "doc-stalled", status: "document.draft" });
+        sendCalls += 1;
+        return new Response(stalled, {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }, 90);
+
+      const outcome = expect(
+        provider.dispatchLor(sendLorRequestFixture()),
+      ).rejects.toMatchObject({ deliveryUncertain: true });
+      await vi.advanceTimersByTimeAsync(91);
+      await outcome;
+      expect(sendCalls).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("treats an invalid 2xx send body as uncertain and never retries send", async () => {
+    let sendCalls = 0;
+    const { provider } = providerFrom((call) => {
+      if (isCreate(call)) return json(201, { id: "doc-invalid", status: "document.uploaded" });
+      if (isStatus(call)) return json(200, { id: "doc-invalid", status: "document.draft" });
+      sendCalls += 1;
+      return new Response("{", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    await expect(provider.dispatchLor(sendLorRequestFixture())).rejects.toMatchObject({
+      deliveryUncertain: true,
+    });
+    expect(sendCalls).toBe(1);
+  });
+
+  it("does not call send when beforeSend consumes the remaining deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const { provider, calls } = providerFrom((call) => {
+        if (isCreate(call)) return json(201, { id: "doc-before-send", status: "document.uploaded" });
+        if (isStatus(call)) return json(200, { id: "doc-before-send", status: "document.draft" });
+        return json(200, { id: "doc-before-send", status: "document.sent" });
+      }, 90);
+      const request = sendLorRequestFixture();
+      request.beforeSend = async () => {
+        await vi.advanceTimersByTimeAsync(91);
+      };
+
+      await expect(provider.dispatchLor(request)).rejects.toMatchObject({
+        deliveryUncertain: false,
+      });
+      expect(calls.filter(isSend)).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("surfaces a creation failure with the validation detail PandaDoc returned", async () => {

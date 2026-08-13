@@ -24,11 +24,16 @@ import {
   toggledSort,
   type ClaimSortKey,
 } from "@/lib/claims/list";
-import { claimSearchClause, hasActiveFilters, parseClaimFilters } from "@/lib/claims/search";
+import {
+  applyClaimFilters,
+  hasActiveFilters,
+  parseClaimFilters,
+} from "@/lib/claims/search";
 import { isClaimStatus } from "@/lib/claims/status";
 import { requireStaff } from "@/lib/authz";
 import { formatDateOnly, formatRelative } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { loadClaimantSummaries } from "@/lib/claims/claimants";
 
 export const dynamic = "force-dynamic";
 
@@ -41,24 +46,11 @@ export const metadata: Metadata = {
  *  banner below will repeat back from the query string. */
 const CLAIM_REF = /^CMG-\d{4}-\d{4}$/;
 
-/**
- * The three PostgREST builder methods the filter pass uses, written as methods
- * so the concrete builder — whose `eq` is keyed to the row's own column union —
- * still satisfies it. The alternative is spelling the four filters out twice,
- * once per query, which is exactly how a list and its count start disagreeing.
- */
-type ClaimQuery<Q> = {
-  eq(column: string, value: string): Q;
-  is(column: string, value: null): Q;
-  or(filter: string): Q;
-};
-
 const SELECT = `id, claim_ref, status, loss_date, updated_at,
    property_street, property_city, property_state, property_zip,
    assigned_adjuster_id,
    adjuster:profiles!claims_assigned_adjuster_id_fkey(first_name, last_name),
-   partner:partner_companies!claims_partner_company_id_fkey(name),
-   claimants(first_name, last_name, is_primary)`;
+    partner:partner_companies!claims_partner_company_id_fkey(name)`;
 
 export default async function ClaimsPage({
   searchParams,
@@ -95,52 +87,7 @@ export default async function ClaimsPage({
 
   const supabase = await createClient();
 
-  // Claimant names are matched in their own pass. Folding them into the main
-  // query as an embedded filter would make the join inner and silently drop
-  // every claim that has no claimants row — which is exactly the set a staff
-  // member searching for a missing file is most likely to be looking for.
-  let claimantMatches: string[] = [];
-  if (filters.search) {
-    const term = `%${filters.search}%`;
-    const { data } = await supabase
-      .from("claimants")
-      .select("claim_id")
-      .or(
-        `first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term}`,
-      )
-      .limit(200);
-    claimantMatches = [...new Set((data ?? []).map((row) => row.claim_id))];
-  }
-
-  /**
-   * Everything the reader asked for except where they are in the list, applied
-   * to both the page query and the total-count query so the two can never
-   * disagree about what "matching" means.
-   */
-  function applyFilters<Q extends ClaimQuery<Q>>(query: Q): Q {
-    let next = query;
-    if (filters.status) next = next.eq("status", filters.status);
-
-    if (filters.adjusterId === "unassigned") {
-      next = next.is("assigned_adjuster_id", null);
-    } else if (filters.adjusterId) {
-      next = next.eq("assigned_adjuster_id", filters.adjusterId);
-    }
-
-    if (filters.partnerId === "none") {
-      next = next.is("partner_company_id", null);
-    } else if (filters.partnerId) {
-      next = next.eq("partner_company_id", filters.partnerId);
-    }
-
-    if (filters.search) {
-      next = next.or(claimSearchClause(filters.search, claimantMatches));
-    }
-
-    return next;
-  }
-
-  let query = applyFilters(supabase.from("claims").select(SELECT))
+  let query = applyClaimFilters(supabase.from("claims").select(SELECT), filters)
     .order(CLAIM_SORT_COLUMN[sort.key], { ascending })
     .limit(CLAIMS_PAGE_SIZE + 1);
 
@@ -160,8 +107,9 @@ export default async function ClaimsPage({
   // is for.
   const [{ data: claims, error }, { count, error: countError }] = await Promise.all([
     query,
-    applyFilters(
+    applyClaimFilters(
       supabase.from("claims").select("id", { count: "exact", head: true }),
+      filters,
     ),
   ]);
 
@@ -172,6 +120,7 @@ export default async function ClaimsPage({
   const hasMore = fetched.length > CLAIMS_PAGE_SIZE;
   const window = fetched.slice(0, CLAIMS_PAGE_SIZE);
   const rows = reversed ? [...window].reverse() : window;
+  const claimantRows = await loadClaimantSummaries(rows.map((claim) => claim.id));
   const total = count ?? rows.length;
 
   const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
@@ -359,8 +308,8 @@ export default async function ClaimsPage({
           >
             {rows.map((claim) => {
               const primary =
-                claim.claimants?.find((person) => person.is_primary) ??
-                claim.claimants?.[0];
+                claimantRows.get(claim.id)?.find((person) => person.is_primary) ??
+                claimantRows.get(claim.id)?.[0];
               const adjusterName = claim.adjuster
                 ? `${claim.adjuster.first_name ?? ""} ${claim.adjuster.last_name ?? ""}`.trim()
                 : null;

@@ -1,0 +1,15 @@
+Cache-Control: no-store, must-revalidate, no-cache, max-age=0, private
+Connection: keep-alive
+Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-MmVhMTUzZTUtMjJjOC00M2ZiLThhYjYtY2MzZTdiMzVkMjli' 'strict-dynamic' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; media-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'
+Content-Type: text/html; charset=utf-8
+Cross-Origin-Opener-Policy: same-origin
+Date: Thu, 13 Aug 2026 04:18:49 GMT
+Keep-Alive: timeout=5
+Link: </_next/static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2>; rel=preload; as="font"; crossorigin=""; nonce="MmVhMTUzZTUtMjJjOC00M2ZiLThhYjYtY2MzZTdiMzVkMjli"; type="font/woff2", </images/hero-poster.jpg>; rel=preload; as="image"; fetchpriority="high"
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+Transfer-Encoding: chunked
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY

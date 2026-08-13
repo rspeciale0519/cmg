@@ -6,6 +6,7 @@ import { progressFor, type StatusHistoryRow } from "@/lib/portal/progress";
 import { portalAdjusterName, requirePortalClaim } from "@/lib/portal/queries";
 import { emailHref, site, telHref } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
+import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -39,17 +40,21 @@ export default async function ClaimOverviewPage({
        staff `note` column is not selected: those are written for colleagues
        ("Accepted; assigned to Dana Reyes") and are not addressed to the
        homeowner. */
-    supabase
-      .from("claim_status_history")
-      .select("to_status, created_at")
-      .eq("claim_id", id)
-      .order("created_at", { ascending: true }),
+    collectPostgrestPages((from, to) =>
+      supabase
+        .from("claim_status_history")
+        .select("to_status, created_at")
+        .eq("claim_id", id)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
     portalAdjusterName(id),
   ]);
 
   const progress = progressFor(
     claim.status,
-    (history.data ?? []) as StatusHistoryRow[],
+    history as StatusHistoryRow[],
   );
 
   return (

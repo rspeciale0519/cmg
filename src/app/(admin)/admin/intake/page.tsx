@@ -25,6 +25,7 @@ import {
   NOT_SUPPLIED,
 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { loadClaimantSummaries } from "@/lib/claims/claimants";
 
 export const dynamic = "force-dynamic";
 
@@ -68,8 +69,7 @@ export default async function IntakeQueuePage({
        property_street, property_street2, property_city, property_state, property_zip,
        carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome,
        loss_date, loss_time, cause, description,
-       requested_adjuster, referrer_name, referrer_email,
-       claimants(first_name, last_name, email, phone, is_primary)`,
+       requested_adjuster, referrer_name, referrer_email`,
     )
     .eq("status", "new_intake")
     .order("created_at", { ascending: reversed })
@@ -94,6 +94,7 @@ export default async function IntakeQueuePage({
 
   const page = pageSlice(queue.data ?? [], PAGE_SIZE, reversed);
   const claims = page.rows;
+  const claimantRows = await loadClaimantSummaries(claims.map((claim) => claim.id));
   const total = count.count ?? claims.length;
 
   const { olderThan: nextCursor, newerThan: prevCursor } = pageCursors({
@@ -126,9 +127,9 @@ export default async function IntakeQueuePage({
         <div className="grid gap-4">
           {claims.map((claim) => {
             const primary =
-              claim.claimants?.find((person) => person.is_primary) ??
-              claim.claimants?.[0];
-            const others = (claim.claimants ?? []).filter(
+              claimantRows.get(claim.id)?.find((person) => person.is_primary) ??
+              claimantRows.get(claim.id)?.[0];
+            const others = (claimantRows.get(claim.id) ?? []).filter(
               (person) => person !== primary,
             );
             const can = claimCapabilities(

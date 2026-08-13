@@ -19,10 +19,11 @@ import type { ESignCapabilities } from "@/lib/esign/provider";
  *   * The LOR template is a PandaDoc template UUID in `PANDADOC_LOR_TEMPLATE_UUID`,
  *     a server-only secret (§7.8). A settings row cannot hold it without moving
  *     a credential out of the environment and into a table.
- *   * The fee default is the one that could be stored — but the surface that
- *     would consume it, the per-claim Financials tab, is outside this phase's
- *     scope, so a persisted value would change nothing anyone can see. A field
- *     that saves and has no effect is worse than one that is honestly read-only.
+ *   * The fee default is application policy rather than mutable claim data. It
+ *     is used as the starting value on a claim with no fee on record, while the
+ *     value that actually binds the claim is saved in `claim_financials`. A
+ *     policy change is therefore reviewed and deployed from source; an owner
+ *     cannot silently rewrite the starting value from a browser session.
  *
  * So this screen is a configuration console: it reports where each value lives,
  * what it currently is, and what changing it takes. Everything on it is derived
@@ -37,6 +38,28 @@ import type { ESignCapabilities } from "@/lib/esign/provider";
  * agreement is written against.
  */
 export const FEE_PERCENT_DEFAULT = 10;
+
+/**
+ * The exact contract the PandaDoc templates must implement. These names are
+ * consumed by `lib/esign/lor-dispatch.ts`; changing one here is documentation,
+ * not an alias or a runtime mapping, so the Settings screen deliberately names
+ * the implementation file beside them.
+ */
+export const LOR_TEMPLATE_ROLES = ["Homeowner1", "Homeowner2"] as const;
+
+export const LOR_TEMPLATE_TOKENS = [
+  "Claim.Ref",
+  "Claim.Carrier",
+  "Claim.PolicyNumber",
+  "Claim.ClaimNumber",
+  "Claim.LossDate",
+  "Claim.Cause",
+  "Property.Address",
+  "Homeowner1.Name",
+  "Homeowner2.Name",
+  "Adjuster.Name",
+  "Fee.Percent",
+] as const;
 
 export type IntegrationState = "ready" | "attention" | "absent";
 

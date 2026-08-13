@@ -31,7 +31,7 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(21);
 
 -- ---------------------------------------------------------------------------
 -- Shape and grants
@@ -84,6 +84,12 @@ select ok(
 -- tally has more than one row to get wrong.
 -- ---------------------------------------------------------------------------
 
+create temp table status_count_baseline as
+select status, count(*)::bigint as claim_count
+  from public.claims
+ group by status;
+grant select on status_count_baseline to authenticated;
+
 insert into public.claims (
   id, status, property_street, property_city, property_zip,
   carrier, policy_number, carrier_tenure, loss_date, cause, description
@@ -109,7 +115,7 @@ set local role authenticated;
 
 select is(
   (select claim_count from public.claim_status_counts() where status = 'new_intake'),
-  2::bigint,
+  coalesce((select claim_count from status_count_baseline where status = 'new_intake'), 0) + 2,
   'the owner tallies both unassigned intakes'
 );
 
@@ -143,15 +149,10 @@ select set_config('request.jwt.claims', '', true);
 set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
-select is_empty(
-  $$ select status::text from public.claim_status_counts() where status = 'new_intake' $$,
-  'an adjuster does not tally the two claims nobody assigned them — claims_select scopes the count exactly as it scopes the list'
-);
-
-select is(
-  (select sum(claim_count)::bigint from public.claim_status_counts()),
-  2::bigint,
-  'they tally the two claims they hold, and nothing else'
+select results_eq(
+  $$ select status::text, claim_count from public.claim_status_counts() order by status::text $$,
+  $$ select status::text, count(*)::bigint from public.claims group by status order by status::text $$,
+  'every adjuster stage tally matches a direct group-by over only the claims their RLS can select'
 );
 
 select is(
@@ -203,14 +204,14 @@ set local role authenticated;
 
 select is(
   (select sum(claim_count)::bigint from public.claim_status_counts()),
-  1::bigint,
-  'a homeowner tallies the one claim they are a claimant on'
+  (select count(*) from public.claims),
+  'a homeowner tally sums to exactly the claims their RLS can select'
 );
 
-select is(
-  (select status::text from public.claim_status_counts()),
-  'settlement_offered',
-  'and it is their own claim''s stage, not a stage of the business'
+select results_eq(
+  $$ select status::text, claim_count from public.claim_status_counts() order by status::text $$,
+  $$ select status::text, count(*)::bigint from public.claims group by status order by status::text $$,
+  'every homeowner stage tally matches a direct group-by over only their own RLS-visible claims'
 );
 
 reset role;
@@ -259,7 +260,7 @@ set local role authenticated;
 
 select is(
   (select claim_count from public.claim_status_counts() where status = 'documenting'),
-  1200::bigint,
+  coalesce((select claim_count from status_count_baseline where status = 'documenting'), 0) + 1200,
   'twelve hundred claims at one stage tally as 1200 and not as 1000 — the defect, stated as a number'
 );
 

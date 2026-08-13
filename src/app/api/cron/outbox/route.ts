@@ -36,10 +36,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Expected schedule:  */5 * * * *
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /** One batch. Bounded so a backlog is drained over several sweeps rather than
  *  in one invocation that runs into the function timeout and loses its leases. */
-const BATCH_LIMIT = 25;
+const BATCH_LIMIT = 12;
+const DELIVERY_CONCURRENCY = 3;
 
 export async function GET(request: Request): Promise<Response> {
   const verdict = authorizeCronRequest(request.headers);
@@ -80,7 +82,7 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  const report = await sweepOutbox(admin, send, BATCH_LIMIT);
+  const report = await sweepOutbox(admin, send, BATCH_LIMIT, DELIVERY_CONCURRENCY);
 
   return Response.json({
     ok: true,

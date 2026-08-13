@@ -58,7 +58,9 @@ export default async function ClaimLayout({
       .from("claimants")
       .select("id, first_name, last_name, is_primary", { count: "exact" })
       .eq("claim_id", id)
-      .order("is_primary", { ascending: false }),
+      .order("is_primary", { ascending: false })
+      .order("id", { ascending: true })
+      .limit(1),
     supabase
       .from("documents")
       .select("id", { count: "exact", head: true })

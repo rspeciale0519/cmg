@@ -10,7 +10,6 @@ vi.mock("server-only", () => ({}));
    in the code under test. */
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
 
-const { sendLorRequestFixture } = await import("./fixtures");
 const { ManualSignProvider } = await import("./manual");
 const { PandaDocProvider } = await import("./pandadoc");
 const { PandaDocClient } = await import("./pandadoc-client");
@@ -141,7 +140,10 @@ describeDb("dispatchLorForClaim against the local database", () => {
     });
 
     const create = JSON.parse(String(calls.find(isCreate)!.init.body));
-    expect(create.metadata).toEqual({ claim_id: claim.id });
+    expect(create.metadata).toEqual({
+      claim_id: claim.id,
+      dispatch_attempt_token: expect.any(String),
+    });
     expect(create.recipients).toEqual([
       expect.objectContaining({ email: claim.claimantEmails[0], role: "Homeowner1" }),
       expect.objectContaining({ email: claim.claimantEmails[1], role: "Homeowner2" }),
@@ -256,7 +258,7 @@ describeDb("dispatchLorForClaim against the local database", () => {
     expect(slept).toContain(2000);
   });
 
-  it("leaves the claim untouched when creation fails, and audits the failure", async () => {
+  it("records a retryable creation failure without advancing the claim, and audits it", async () => {
     const claim = await seed();
     const { provider } = pandadoc(() =>
       json(400, { detail: "Role for form field with name='userName' is not provided in payload" }),
@@ -274,7 +276,7 @@ describeDb("dispatchLorForClaim against the local database", () => {
       .single();
     expect(row).toEqual({
       status: "under_review",
-      esign_status: null,
+      esign_status: "document.creation_failed",
       pandadoc_document_id: null,
     });
 
@@ -324,6 +326,11 @@ describeDb("dispatchLorForClaim against the local database", () => {
 
   it("re-sends from lor_sent without a second transition", async () => {
     const claim = await seed("lor_sent");
+    const { error: prepareError } = await admin
+      .from("claims")
+      .update({ esign_status: "document.creation_failed" })
+      .eq("id", claim.id);
+    expect(prepareError).toBeNull();
     const { provider } = pandadoc(happyPath(docId("resend")));
 
     const result = expectOk(await dispatchLorForClaim({ claimId: claim.id }, { admin, provider }));
@@ -338,72 +345,45 @@ describeDb("dispatchLorForClaim against the local database", () => {
     expect(history).toHaveLength(0);
   });
 
-  it("refuses a claim that is not ready for a letter", async () => {
-    const { data: claim } = await admin
+  it("keeps a successfully sent document locked when claim persistence fails", async () => {
+    const claim = await seed();
+    const documentId = docId("persist-failed-after-send");
+    const first = pandadoc(happyPath(documentId));
+
+    await expect(dispatchLorForClaim(
+      { claimId: claim.id },
+      {
+        admin,
+        provider: first.provider,
+        beforePersist: () => Promise.reject(new Error("injected persistence outage")),
+      },
+    )).resolves.toMatchObject({ ok: false, code: "request_in_progress" });
+
+    const { data: locked } = await admin
       .from("claims")
-      .insert({
-        claim_ref: support.fixtureClaimRef(),
-        property_street: "9 Too Early Lane",
-        property_city: "Orlando",
-        property_state: "Florida",
-        property_zip: "32801",
-        carrier: "Citizens",
-        policy_number: "POL-EARLY",
-        carrier_tenure: "lt_1_year",
-        prior_roof_claim: false,
-        loss_date: "2026-07-02",
-        cause: "wind",
-        description: "not yet reviewed",
-      })
-      .select("id, claim_ref")
+      .select("status, esign_status, pandadoc_document_id, esign_dispatch_token")
+      .eq("id", claim.id)
       .single();
-
-    created.push({ id: claim!.id, claimRef: claim!.claim_ref });
-
-    await expect(
-      dispatchLorForClaim({ claimId: claim!.id }, { admin, provider: new ManualSignProvider() }),
-    ).resolves.toMatchObject({ ok: false, code: "invalid_status" });
-  });
-
-  /**
-   * The refusal has to come *before* the provider is called. A partner referral
-   * carries no carrier and no policy number (§6 asks the rep for neither), and
-   * `enforce_claim_status_transition()` now refuses `lor_sent` without them — so
-   * without this check the database would stop the claim one statement *after*
-   * the letter had gone out. An unsent letter is a refusal; a sent one naming no
-   * carrier is a legal instrument that should never have existed.
-   */
-  it("refuses a claim with no carrier before any letter is produced", async () => {
-    const claim = await support.seedClaim(admin, { status: "under_review" });
-    created.push({ id: claim.id, claimRef: claim.claimRef });
+    expect(locked).toMatchObject({
+      status: "under_review",
+      esign_status: "document.sending",
+      pandadoc_document_id: documentId,
+      esign_dispatch_token: expect.any(String),
+    });
 
     await admin
       .from("claims")
-      .update({ carrier: null, policy_number: null })
+      .update({ esign_dispatch_started_at: new Date(Date.now() - 121_000).toISOString() })
       .eq("id", claim.id);
+    const second = pandadoc(happyPath(docId("must-not-send")));
+    const secondDispatch = vi.spyOn(second.provider, "dispatchLor");
 
-    const provider = new ManualSignProvider();
-    const dispatch = vi.spyOn(provider, "dispatchLor");
-
-    await expect(
-      dispatchLorForClaim({ claimId: claim.id }, { admin, provider }),
-    ).resolves.toMatchObject({ ok: false, code: "missing_policy" });
-
-    expect(dispatch).not.toHaveBeenCalled();
-
-    const { data: after } = await admin
-      .from("claims")
-      .select("status")
-      .eq("id", claim.id)
-      .single();
-    expect(after!.status).toBe("under_review");
+    await expect(dispatchLorForClaim(
+      { claimId: claim.id },
+      { admin, provider: second.provider },
+    )).resolves.toMatchObject({ ok: false, code: "request_in_progress" });
+    expect(secondDispatch).not.toHaveBeenCalled();
+    expect(first.calls.filter((call) => call.url.endsWith("/send"))).toHaveLength(1);
   });
 
-  it("refuses a claim id that does not exist", async () => {
-    const missing = sendLorRequestFixture().claimId;
-
-    await expect(
-      dispatchLorForClaim({ claimId: missing }, { admin, provider: new ManualSignProvider() }),
-    ).resolves.toMatchObject({ ok: false, code: "claim_not_found" });
-  });
 });

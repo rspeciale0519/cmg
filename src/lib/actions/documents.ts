@@ -322,13 +322,9 @@ export async function deleteClaimDocument(
   // No direct storage removal here: the delete runs under the caller's own
   // client, and removing the object needs the service role, so
   // `documents_enqueue_storage_cleanup` writes the path to
-  // `storage_cleanup_queue` for a worker to pick up.
-  //
-  // That worker does not exist yet — nothing in the repository reads that table,
-  // so the bytes of every deleted document are still in the bucket. Bounded
-  // (private bucket, every read a signed URL behind an authz check, no path from
-  // a deleted row back to its object) but real, and written down in
-  // docs/RETENTION.md rather than left as an assumption in this comment.
+  // `storage_cleanup_queue`. The protected cleanup worker removes the exact
+  // queued object with bounded retries; docs/RETENTION.md records the policy and
+  // the deployment-owned schedule that drives it.
   revalidatePath(`/admin/claims/${data[0].claim_id}`, "layout");
   return { status: "success", message: "Document removed." };
 }

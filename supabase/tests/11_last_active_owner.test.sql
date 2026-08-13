@@ -32,6 +32,15 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(29);
 
+-- Establish the feature's one-owner premise inside this rollback transaction.
+-- A shared database may legitimately carry additional owners; they are not
+-- fixtures for these last-owner scenarios and must not change their meaning.
+update public.profiles
+   set is_active = false
+ where role = 'owner'
+   and is_active
+   and id <> '00000000-0000-4000-a000-000000000001';
+
 -- ---------------------------------------------------------------------------
 -- Shape and grants
 -- ---------------------------------------------------------------------------

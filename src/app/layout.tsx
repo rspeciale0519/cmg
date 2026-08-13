@@ -10,6 +10,10 @@ const inter = Inter({
   display: "swap",
 });
 
+// Next can attach the per-request CSP nonce to its bootstrap scripts only when
+// rendering dynamically. Security is preferred over static marketing output.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {

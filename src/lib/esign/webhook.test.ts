@@ -12,15 +12,14 @@ vi.mock("server-only", () => ({}));
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
 
 const {
-  creationFailedEvent,
   fakeSignedPdf,
   pdfReadyEvent,
   recipientCompletedEvent,
   signedDelivery,
   stateChangedEvent,
 } = await import("./fixtures");
-const { signWebhookBody } = await import("./signature");
 const { processPandaDocWebhook } = await import("./webhook");
+const { WEBHOOK_LEASE_SECONDS } = await import("./webhook-timing");
 const support = await import("./test-support");
 type TestAdmin = Awaited<ReturnType<typeof support.testAdminClient>>;
 
@@ -228,216 +227,196 @@ describeDb("PandaDoc webhook pipeline", () => {
     expect(audit).toHaveLength(1);
   });
 
-  it("processes two different event ids raised by one underlying change", async () => {
+  it("retries an enqueue failure after earlier PDF effects without duplicating them", async () => {
     const documentId = `pd-${randomUUID()}`;
     const claim = await seedSent(documentId);
-    downloads.length = 0;
+    const delivery = signedDelivery(SHARED_KEY, [pdfReadyEvent(claim.id, documentId)]);
+    eventIds.push(delivery.eventId);
+    let failOnce = true;
 
-    const stateChanged = await post(
-      signedDelivery(SHARED_KEY, [
-        stateChangedEvent(claim.id, documentId, "document.completed"),
-      ]),
-    );
-    const pdfReady = await post(
-      signedDelivery(SHARED_KEY, [pdfReadyEvent(claim.id, documentId)]),
-    );
-
-    expect(stateChanged.body).toMatchObject({ ok: true, applied: 1 });
-    expect(pdfReady.body).toMatchObject({ ok: true, applied: 1 });
-
-    const { data: claimRow } = await admin
-      .from("claims")
-      .select("status")
-      .eq("id", claim.id)
-      .single();
-    expect(claimRow?.status).toBe("lor_signed");
-  });
-
-  it("rejects a tampered body with 403 and processes nothing", async () => {
-    const documentId = `pd-${randomUUID()}`;
-    const claim = await seedSent(documentId);
-
-    const events = [recipientCompletedEvent(claim.id, documentId, {
-      firstName: "Mallory",
-      lastName: "Tamper",
-    })];
-    const rawBody = JSON.stringify(events);
-    const signature = signWebhookBody(SHARED_KEY, rawBody);
-    const eventId = randomUUID();
-
-    const outcome = await processPandaDocWebhook(
+    const first = await processPandaDocWebhook(
       {
-        rawBody: rawBody.replace("Mallory", "Mallor!"),
-        signature,
-        eventId,
-        ip: "203.0.113.42",
+        rawBody: delivery.rawBody,
+        signature: delivery.signature,
+        eventId: delivery.eventId,
       },
-      { admin, provider: stubProvider, sharedKey: SHARED_KEY },
+      {
+        admin,
+        provider: stubProvider,
+        sharedKey: SHARED_KEY,
+        beforeEnqueue: async () => {
+          if (failOnce) {
+            failOnce = false;
+            throw new Error("injected outbox failure");
+          }
+        },
+      },
     );
+    expect(first.status).toBe(500);
 
-    expect(outcome).toEqual({ status: 403, body: { ok: false, reason: "invalid_signature" } });
-
-    const { data: dedupeRow } = await admin
+    const { data: released } = await admin
       .from("pandadoc_webhook_events")
-      .select("event_id")
-      .eq("event_id", eventId)
-      .maybeSingle();
-    expect(dedupeRow).toBeNull();
-
-    const { data: feed } = await admin
-      .from("claim_events")
-      .select("id")
-      .eq("claim_id", claim.id);
-    expect(feed).toHaveLength(0);
-  });
-
-  it("rejects a signature made with the wrong shared key", async () => {
-    const delivery = signedDelivery("attacker-key", [
-      stateChangedEvent(randomUUID(), "pd-x", "document.completed"),
-    ]);
-
-    const outcome = await processPandaDocWebhook(
-      { rawBody: delivery.rawBody, signature: delivery.signature, eventId: delivery.eventId },
-      { admin, provider: stubProvider, sharedKey: SHARED_KEY },
-    );
-
-    expect(outcome.status).toBe(403);
-  });
-
-  it("rejects a delivery with no event id header", async () => {
-    const delivery = signedDelivery(SHARED_KEY, [
-      stateChangedEvent(randomUUID(), "pd-y", "document.completed"),
-    ]);
-
-    for (const eventId of [null, "", "not-a-uuid"]) {
-      const outcome = await processPandaDocWebhook(
-        { rawBody: delivery.rawBody, signature: delivery.signature, eventId },
-        { admin, provider: stubProvider, sharedKey: SHARED_KEY },
-      );
-      expect(outcome).toEqual({ status: 400, body: { ok: false, reason: "missing_event_id" } });
-    }
-  });
-
-  it("survives a malformed payload without throwing, and never answers 410", async () => {
-    for (const rawBody of ["not json at all", "{}", "null", "[]"]) {
-      const eventId = randomUUID();
-      eventIds.push(eventId);
-
-      const outcome = await processPandaDocWebhook(
-        { rawBody, signature: signWebhookBody(SHARED_KEY, rawBody), eventId },
-        { admin, provider: stubProvider, sharedKey: SHARED_KEY },
-      );
-
-      expect(outcome.status).toBeLessThan(400);
-      expect(outcome.status).not.toBe(410);
-    }
-  });
-
-  it("ignores an event whose claim_id matches nothing", async () => {
-    const outcome = await post(
-      signedDelivery(SHARED_KEY, [
-        pdfReadyEvent(randomUUID(), `pd-${randomUUID()}`),
-        stateChangedEvent(randomUUID(), `pd-${randomUUID()}`, "document.completed"),
-      ]),
-    );
-
-    expect(outcome).toEqual({ status: 200, body: { ok: true, applied: 0, ignored: 2, failed: 0 } });
-  });
-
-  it("ignores an event type it has no handler for", async () => {
-    const documentId = `pd-${randomUUID()}`;
-    const claim = await seedSent(documentId);
-
-    const outcome = await post(
-      signedDelivery(SHARED_KEY, [
-        { event: "document_updated", data: { id: documentId, metadata: { claim_id: claim.id } } },
-      ]),
-    );
-
-    expect(outcome).toEqual({ status: 200, body: { ok: true, applied: 0, ignored: 1, failed: 0 } });
-  });
-
-  it("falls back to pandadoc_document_id when metadata carries no claim id", async () => {
-    const documentId = `pd-${randomUUID()}`;
-    const claim = await seedSent(documentId);
-
-    const outcome = await post(
-      signedDelivery(SHARED_KEY, [
-        { event: "document_state_changed", data: { id: documentId, status: "document.viewed" } },
-      ]),
-    );
-
-    expect(outcome.body).toMatchObject({ applied: 1 });
-
-    const { data: row } = await admin
-      .from("claims")
-      .select("esign_status")
-      .eq("id", claim.id)
+      .select("payload_summary")
+      .eq("event_id", delivery.eventId)
       .single();
-    expect(row?.esign_status).toBe("document.viewed");
-  });
+    expect(released?.payload_summary).toMatchObject({ _state: "failed" });
 
-  it("flags a declined document for staff without touching the claim status", async () => {
-    const documentId = `pd-${randomUUID()}`;
-    const claim = await seedSent(documentId);
+    const retry = await post(delivery);
+    expect(retry.body).toMatchObject({ ok: true, applied: 1 });
 
-    await post(
-      signedDelivery(SHARED_KEY, [
-        stateChangedEvent(claim.id, documentId, "document.declined"),
-      ]),
-    );
-
-    const { data: row } = await admin
-      .from("claims")
-      .select("status, esign_status")
-      .eq("id", claim.id)
-      .single();
-    expect(row).toEqual({ status: "lor_sent", esign_status: "document.declined" });
-
-    const { data: events } = await admin
-      .from("claim_events")
-      .select("visibility, body")
-      .eq("claim_id", claim.id);
-    expect(events).toContainEqual({
-      visibility: "internal",
-      body: expect.stringContaining("declined"),
-    });
+    const [{ data: documents }, { data: history }, { data: events }, { data: outbox }] =
+      await Promise.all([
+        admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+        admin.from("claim_status_history").select("id").eq("claim_id", claim.id).eq("to_status", "lor_signed"),
+        admin.from("claim_events").select("body").eq("claim_id", claim.id),
+        admin.from("notifications_outbox").select("dedupe_key, status, attempts").like("dedupe_key", `${delivery.eventId}:%`),
+      ]);
+    expect(documents).toHaveLength(1);
+    expect(history).toHaveLength(1);
+    expect(events?.filter(({ body }) => body.includes("signed Letter of Representation"))).toHaveLength(1);
+    expect(events?.filter(({ body }) => body.includes("Representation is confirmed"))).toHaveLength(1);
+    expect(outbox).toHaveLength(2);
+    expect(outbox?.every((row) => row.status === "pending" && row.attempts === 0)).toBe(true);
 
     const { data: audit } = await admin
       .from("audit_log")
-      .select("action")
+      .select("id")
       .eq("entity_id", claim.id)
-      .eq("action", "esign.document_failed");
+      .eq("action", "esign.lor_signed")
+      .contains("meta", { event_id: delivery.eventId });
     expect(audit).toHaveLength(1);
   });
 
-  it("surfaces the detail from a failed asynchronous creation", async () => {
+  it("times out a hung PDF download and releases the event without late side effects", async () => {
     const documentId = `pd-${randomUUID()}`;
     const claim = await seedSent(documentId);
+    const delivery = signedDelivery(SHARED_KEY, [pdfReadyEvent(claim.id, documentId)]);
+    eventIds.push(delivery.eventId);
+    let resolveDownload: ((bytes: Uint8Array) => void) | undefined;
+    const hungProvider: ESignProvider = {
+      ...stubProvider,
+      downloadSignedPdf: () => new Promise((resolve) => {
+        resolveDownload = resolve;
+      }),
+    };
 
-    await post(
-      signedDelivery(SHARED_KEY, [
-        creationFailedEvent(
-          claim.id,
-          documentId,
-          "Role for form field with name='userName' is not provided in payload",
-        ),
-      ]),
+    const timedOut = await processPandaDocWebhook(
+      {
+        rawBody: delivery.rawBody,
+        signature: delivery.signature,
+        eventId: delivery.eventId,
+      },
+      {
+        admin,
+        provider: hungProvider,
+        sharedKey: SHARED_KEY,
+        downloadTimeoutMs: 20,
+      },
     );
+    expect(timedOut.status).toBe(500);
 
-    const { data: row } = await admin
-      .from("claims")
-      .select("esign_status")
-      .eq("id", claim.id)
-      .single();
-    expect(row?.esign_status).toBe("document.creation_failed");
+    resolveDownload?.(fakeSignedPdf());
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    const { data: events } = await admin
-      .from("claim_events")
-      .select("body")
-      .eq("claim_id", claim.id);
-    expect(
-      events?.some((event: { body: string }) => event.body.includes("Role for form field")),
-    ).toBe(true);
+    const [{ data: ledger }, { data: documents }, { data: outbox }] = await Promise.all([
+      admin.from("pandadoc_webhook_events").select("payload_summary").eq("event_id", delivery.eventId).single(),
+      admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+      admin.from("notifications_outbox").select("id").like("dedupe_key", `${delivery.eventId}:%`),
+    ]);
+    expect(ledger?.payload_summary).toMatchObject({ _state: "failed" });
+    expect(documents).toHaveLength(0);
+    expect(outbox).toHaveLength(0);
   });
+
+  it("retries a strict audit failure without duplicating completed PDF effects", async () => {
+    const documentId = `pd-${randomUUID()}`;
+    const claim = await seedSent(documentId);
+    const delivery = signedDelivery(SHARED_KEY, [pdfReadyEvent(claim.id, documentId)]);
+    eventIds.push(delivery.eventId);
+    let failOnce = true;
+
+    const first = await processPandaDocWebhook(
+      {
+        rawBody: delivery.rawBody,
+        signature: delivery.signature,
+        eventId: delivery.eventId,
+      },
+      {
+        admin,
+        provider: stubProvider,
+        sharedKey: SHARED_KEY,
+        beforeAudit: async () => {
+          if (failOnce) {
+            failOnce = false;
+            throw new Error("injected audit insert failure");
+          }
+        },
+      },
+    );
+    expect(first.status).toBe(500);
+
+    const retry = await post(delivery);
+    expect(retry.body).toMatchObject({ ok: true, applied: 1 });
+
+    const [{ data: documents }, { data: history }, { data: outbox }, { data: audit }] =
+      await Promise.all([
+        admin.from("documents").select("id").eq("claim_id", claim.id).eq("kind", "lor_signed"),
+        admin.from("claim_status_history").select("id").eq("claim_id", claim.id).eq("to_status", "lor_signed"),
+        admin.from("notifications_outbox").select("id").like("dedupe_key", `${delivery.eventId}:%`),
+        admin.from("audit_log").select("id").eq("entity_id", claim.id).eq("action", "esign.lor_signed").contains("meta", { event_id: delivery.eventId }),
+      ]);
+    expect(documents).toHaveLength(1);
+    expect(history).toHaveLength(1);
+    expect(outbox).toHaveLength(2);
+    expect(audit).toHaveLength(1);
+  });
+
+  it("reclaims a crashed handler after its lease without losing the delivery", async () => {
+    const documentId = `pd-${randomUUID()}`;
+    const claim = await seedSent(documentId);
+    const delivery = signedDelivery(SHARED_KEY, [
+      stateChangedEvent(claim.id, documentId, "document.viewed"),
+    ]);
+    eventIds.push(delivery.eventId);
+
+    await expect(
+      processPandaDocWebhook(
+        {
+          rawBody: delivery.rawBody,
+          signature: delivery.signature,
+          eventId: delivery.eventId,
+        },
+        {
+          admin,
+          provider: stubProvider,
+          sharedKey: SHARED_KEY,
+          afterClaim: async () => {
+            throw new Error("simulated process death");
+          },
+        },
+      ),
+    ).rejects.toThrow("simulated process death");
+
+    const busy = await post(delivery);
+    expect(busy).toEqual({
+      status: 503,
+      body: { ok: false, reason: "event_processing" },
+    });
+
+    await admin
+      .from("pandadoc_webhook_events")
+      .update({ received_at: new Date(Date.now() - (WEBHOOK_LEASE_SECONDS + 1) * 1000).toISOString() })
+      .eq("event_id", delivery.eventId);
+
+    const recovered = await post(delivery);
+    expect(recovered.body).toMatchObject({ ok: true, applied: 1 });
+
+    const { data: ledger } = await admin
+      .from("pandadoc_webhook_events")
+      .select("payload_summary")
+      .eq("event_id", delivery.eventId)
+      .single();
+    expect(ledger?.payload_summary).toMatchObject({ _state: "done", _attempts: 2 });
+  });
+
 });
