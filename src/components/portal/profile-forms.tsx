@@ -92,11 +92,20 @@ export function ProfileForm({
  * `autoComplete` is spelled out per field so a password manager offers to update
  * the stored entry rather than treating this as a second login form.
  */
-export function PasswordForm() {
+export function PasswordForm({ email }: { email: string | null }) {
   const [state, formAction] = useActionState(resilient(changePassword), idleState);
 
   return (
     <form action={formAction} noValidate>
+      <input
+        type="email"
+        name="username"
+        autoComplete="username"
+        value={email ?? ""}
+        readOnly
+        hidden
+        tabIndex={-1}
+      />
       <div className="grid gap-[18px]">
         <TextField
           name="currentPassword"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, PageHeader, Panel } from "@/components/admin/admin-shell";
+import { AdminClaimCards } from "@/components/admin/admin-claim-cards";
 import { ClaimFilters } from "@/components/admin/claim-filters";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { ListPager } from "@/components/admin/list-pager";
@@ -269,7 +270,14 @@ export default async function ClaimsPage({
             </EmptyState>
           )
         ) : (
-          <DataTable
+          <>
+            <AdminClaimCards
+              claims={rows}
+              claimants={claimantRows}
+              sortLabel={SORT_LABEL[sort.key]}
+            />
+            <div className="hidden xl:block">
+              <DataTable
             stickyColumnWidth={148}
             caption={`Claims, sorted by ${SORT_LABEL[sort.key]}`}
             /* 1080, up from 1040, because REFERENCE and REFERRED BY each gained
@@ -392,7 +400,9 @@ export default async function ClaimsPage({
                 </Tr>
               );
             })}
-          </DataTable>
+              </DataTable>
+            </div>
+          </>
         )}
       </Panel>
 

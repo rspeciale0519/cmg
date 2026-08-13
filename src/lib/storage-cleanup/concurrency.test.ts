@@ -20,7 +20,8 @@ describeDb("storage cleanup claims against the local database", () => {
   let first: TestAdmin;
   let second: TestAdmin;
   let ids: number[] = [];
-  const marker = `claims/cleanup-concurrency/${crypto.randomUUID()}`;
+  const claimId = "20000000-0000-4000-a000-000000000001";
+  const marker = `claims/${claimId}/${crypto.randomUUID()}`;
 
   beforeAll(async () => {
     first = support.testAdminClient();
@@ -92,7 +93,7 @@ describeDb("storage cleanup claims against the local database", () => {
       .insert({
         bucket_id: "claim-docs",
         object_path: path,
-        claim_id: "20000000-0000-4000-a000-000000000001",
+        claim_id: claimId,
         next_attempt_at: new Date(Date.now() - 60_000).toISOString(),
       })
       .select("id")
@@ -109,7 +110,7 @@ describeDb("storage cleanup claims against the local database", () => {
       second
         .from("documents")
         .insert({
-          claim_id: "20000000-0000-4000-a000-000000000001",
+          claim_id: claimId,
           storage_path: path,
           original_name: "claim-vs-document.pdf",
           kind: "other",

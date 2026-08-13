@@ -3,20 +3,20 @@
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
 The application is feature-complete for the agreed functional scope and is
-ready for owner acceptance testing. The broader continuation goal is still in
-progress: architecture convergence, the admin/customer/partner craft and
-all-surface cohesion gates, comparable mobile Lighthouse floors, stage
-checkpoints, and final reconciliation remain mandatory. It has not been pushed,
+ready for owner acceptance testing. Architecture, authorization, per-role craft,
+all-surface cohesion, enforcing CSP, and comparable mobile Lighthouse gates have
+converged locally. Final launch-document reconciliation and hosted owner steps
+remain. It has not been pushed,
 merged, deployed, or connected to production services. The authoritative
 production setup sequence is in the root
 [`README.md`](../../README.md#production-launch-runbook).
 
 ## Verified local state
 
-- Clean local database reset applied all 18 migrations through
-  `20260815180000_partner_portal_profile.sql`.
-- Vitest: 70 files, 712 tests passed.
-- pgTAP: 25 files, 787 assertions passed.
+- Clean local database reset applied all 21 migrations through
+  `20260815220000_accept_intake_owner_guard.sql`.
+- Vitest: 75 files, 725 tests passed.
+- pgTAP: 31 files, 915 assertions passed.
 - TypeScript, ESLint, production build, and `git diff --check` passed.
 - `npm audit --audit-level=high`: zero vulnerabilities.
 - Built client assets contain none of the server-only credential names.
@@ -24,9 +24,9 @@ production setup sequence is in the root
   `/admin`, `/portal`, and `/partner` redirect unauthenticated visitors to login.
 - CSP is enforcing, nonce-based, and covers every rendered script. Localhost
   omits only `upgrade-insecure-requests`; hosted requests retain it.
-- Chrome testing passed at desktop and 390px for marketing, customer, partner,
-  and staff surfaces. The browser and local production server remain open at
-  `http://localhost:3010`.
+- Chrome testing passed at exact desktop and 390px widths for marketing,
+  customer, partner, and staff surfaces. The production server remains at
+  `http://localhost:3011`; the final reset requires local staff MFA re-enrollment.
 
 ## Safe local test accounts
 
@@ -76,13 +76,8 @@ recreates the demo state and invalidates locally enrolled MFA factors.
 
 ## Required owner-independent work still in progress
 
-- Fresh backend architecture convergence and the complete authorization matrix.
-- Admin, customer, and partner craft convergence plus the all-surface cohesion
-  gate, with required live screenshots and fresh critics.
-- Two comparable mobile Lighthouse navigation runs whose lower performance is
-  at least 85 and accessibility at least 95, including any owner-independent
-  performance fixes needed to reach those floors.
-- Stage checkpoint commits and final requirement-by-requirement reconciliation.
+- Stage 3 and Stage 4 checkpoint commits and final requirement-by-requirement
+  documentation/browser reconciliation.
 
 Only replacing the two deliberate photo placeholders is owner-blocked; it needs
 authentic CMG assets rather than generated or misleading stock photography.

@@ -3,6 +3,24 @@
 Newest first. Detailed final evidence is in `GOAL_STATE.md`; owner acceptance
 and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 
+## 2026-08-13 — Stage 3 craft and cohesion converged
+
+- Admin and customer each finished with two consecutive `MINOR GAPS ONLY`
+  verdicts; partner finished with three consecutive `MINOR GAPS ONLY` verdicts.
+- All-surface cohesion across marketing/admin/customer/partner converged with
+  `MINOR GAPS ONLY`, then `MINOR GAPS ONLY` at exact 390 and 1440 CSS widths.
+- Added semantic admin claim cards below `xl`, persistent customer claim
+  navigation, compact consent disclosures, trustworthy office-contact labels,
+  password-manager metadata, and bounded mobile navigation rails.
+- Two comparable mobile simulated Lighthouse navigation runs scored 93/100
+  and 90/100 (performance/accessibility); lower scores clear the 85/95 floors.
+- Enforcing nonce CSP and representative Chrome consoles passed without CSP
+  violations. Evidence and screenshots live under `docs/temp/evidence/stage3`
+  and `docs/temp/media/progress`.
+- Level C passed: type-check, lint, 725 Vitest tests, build, clean 21-migration
+  reset, 915 pgTAP assertions, zero dependency vulnerabilities, zero client
+  secret-name hits, source-size cap, and diff check.
+
 ## 2026-08-13 — Stage 2 architecture converged
 
 - Verbatim final fresh-review verdicts: `NO MAJORS`, then `NO MAJORS`.

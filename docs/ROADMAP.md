@@ -32,7 +32,7 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] BRAND-FIDELITY GATE converged — rounds 9 & 10 consecutive NO MAJORS
 - [x] CRAFT GATE converged — rounds 5 & 6 no major gap, ranked 3rd of 4 vs Stripe/Linear/Vercel
 - [x] Lighthouse a11y ≥ 95 → **100** on Home
-- [ ] Lighthouse performance ≥ 85 in two comparable mobile navigation runs
+- [x] Lighthouse performance ≥ 85 in two comparable mobile navigation runs — **93 / 90**
 
 ## Phase 3 — Auth core ✅
 - [x] Invites, login, staff TOTP MFA, `proxy.ts` gating, authz helpers
@@ -47,16 +47,16 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] PandaDocProvider + ManualSignProvider + webhook route and recovery UX
 - [x] Webhook tests: signature, tamper, replay, crash recovery, stale attempts, PDF finalization
 - [x] Consolidated backend/security stabilization complete for MVP scope
-- [ ] CRAFT GATE converged (admin dashboard)
+- [x] CRAFT GATE converged (admin dashboard) — final rounds `MINOR GAPS ONLY`
 
 ## Phase 5 — Customer portal
 - [x] Progress view, activity feed + questions, documents, profile/consent
-- [ ] CRAFT GATE converged (customer portal)
+- [x] CRAFT GATE converged (customer portal) — final rounds `MINOR GAPS ONLY`
 
 ## Phase 6 — Partner system
 - [x] Partner companies + rep invites, projection trigger (pgTAP verified)
 - [x] Partner portal + refer-a-claim form + claim detail/activity/company profile
-- [ ] CRAFT GATE converged (partner portal)
+- [x] CRAFT GATE converged (partner portal) — three `MINOR GAPS ONLY` rounds
 
 ## Phase 7 — Notifications
 - [x] All templates render; outbox wired to every event
@@ -70,8 +70,8 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] Stage 1 integrated review converged — final correction verdict `NO FINDINGS`
 - [x] Consolidated effectiveness, safety, security, database, build, and browser stabilization complete
 - [x] Stage 2 architecture review converged — two consecutive `NO MAJORS` rounds; full authorization matrix green
-- [ ] COHESION ROUND converged
-- [ ] Lighthouse re-verified: two comparable mobile runs, lower performance ≥85 and a11y ≥95
+- [x] COHESION ROUND converged — `MINOR GAPS ONLY`, `MINOR GAPS ONLY`
+- [x] Lighthouse re-verified: mobile simulated runs **93/100** and **90/100**
 
 ## Phase 9 — Launch prep (owner-gated)
 - [x] `vercel.json` with outbox and storage-cleanup schedules + deploy runbook

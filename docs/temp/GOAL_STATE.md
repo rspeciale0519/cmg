@@ -2,25 +2,26 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `9419994` (Stage 2 checkpoint)
+HEAD: `4e67690` (Stage 2 documentation handoff; Stage 3 checkpoint pending)
 
 ## Current position
 
 - Stage 1 — Functional and backend completion: **complete**
 - Stage 2 — Architecture convergence: **complete; two consecutive `NO MAJORS` rounds**
-- Current packet: Stage 3 live craft, cohesion, CSP, and mobile Lighthouse
+- Stage 3 — Craft, cohesion, CSP, and performance: **complete; checkpoint pending**
+- Current packet: Stage 4 launch preparation and final reconciliation
 - Stage 1 final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: capture current 1440×900 and 390×844 admin, customer, and
-  partner artifacts; start the fresh per-surface craft reviews.
+- Next exact action: reconcile launch documentation, run final Level C/browser
+  evidence after the latest reset, and create the Stage 3 then Stage 4 checkpoints.
 - Supabase was reset after the latest schema change: **yes** — all 21 migrations
   through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
-- Staff MFA after the latest reset: **re-enrolled locally** for owner browser
-  evidence at `http://localhost:3011`; another reset will require enrollment.
+- Staff MFA after the latest reset: **must be re-enrolled locally** before the
+  final owner browser smoke; the clean Stage 3 reset intentionally removed it.
 
 ## Packet ledger
 
@@ -82,12 +83,24 @@ Packets 1A–1H and their converged e-sign correction are checkpointed together 
   CSP/headers pass; marketing/customer/partner/owner browser smoke pass.
 - Stage 2 checkpoint commit: `9419994`.
 
-## Open required stages
+## Stage 3 evidence
 
-1. Stage 3 admin/customer/partner craft convergence, all-surface cohesion,
-   enforcing CSP confirmation, and two comparable mobile Lighthouse runs with
-   lower performance ≥85 and accessibility ≥95; Level C and checkpoint.
-2. Stage 4 truthful final launch documentation, final Level C/browser evidence,
+- Admin final rounds: `MINOR GAPS ONLY`, `MINOR GAPS ONLY`.
+- Customer final rounds: `MINOR GAPS ONLY`, `MINOR GAPS ONLY`.
+- Partner rounds: three consecutive `MINOR GAPS ONLY` verdicts.
+- All-surface cohesion: `MINOR GAPS ONLY`, then `MINOR GAPS ONLY`.
+- Mobile Lighthouse comparable simulated-navigation runs: performance 93 and
+  90; accessibility 100 and 100; lower scores exceed the 85/95 floors.
+- Enforcing nonce CSP: every rendered script nonced; no script
+  `'unsafe-inline'`; representative Chrome console had no CSP violations.
+- Stage 3 Level C: type-check, lint, 75 files / 725 Vitest tests, build, clean
+  21-migration reset, 31 files / 915 pgTAP assertions, dependency audit,
+  client-secret scan, handwritten line cap, and diff check passed.
+- Durable details: `docs/temp/evidence/stage3/verification.md`.
+
+## Open required stage
+
+1. Stage 4 truthful final launch documentation, final Level C/browser evidence,
    and checkpoint.
 
 The prior MVP-only handoff incorrectly called the mandatory Stage 2/3 review,

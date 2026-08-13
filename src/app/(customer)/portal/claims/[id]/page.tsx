@@ -131,15 +131,27 @@ export default async function ClaimOverviewPage({
             <div className="mt-[20px] grid border-t border-ink/9 pt-[10px] text-[14.5px] leading-[1.6]">
               <a
                 href={telHref}
+                aria-label={`Call the CMG office at ${site.phone}`}
                 className="flex min-h-[44px] items-center text-accent no-underline transition-colors duration-200 hover:text-accent-300"
               >
-                {site.phone}
+                <span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/48">
+                    CMG office phone
+                  </span>
+                  {site.phone}
+                </span>
               </a>
               <a
                 href={emailHref}
+                aria-label={`Email the CMG office at ${site.email}`}
                 className="flex min-h-[44px] items-center break-words text-accent no-underline transition-colors duration-200 hover:text-accent-300"
               >
-                {site.email}
+                <span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/48">
+                    CMG office email
+                  </span>
+                  {site.email}
+                </span>
               </a>
               <p className="mt-[8px] text-[12.5px] leading-[1.6] text-ink/58">
                 {site.city} · License #{site.license}

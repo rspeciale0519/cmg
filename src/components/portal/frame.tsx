@@ -28,7 +28,7 @@ export function PortalFrame({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 border-b border-ink/9 bg-canvas/88 backdrop-blur-[14px]">
-        <div className="mx-auto flex min-h-[74px] w-full max-w-[1080px] flex-wrap items-center gap-x-7 gap-y-3 px-[clamp(20px,4vw,48px)] py-[13px]">
+        <div className="mx-auto flex min-h-[74px] w-full max-w-[1080px] flex-wrap items-center gap-x-3 gap-y-3 px-[clamp(20px,4vw,48px)] py-[13px] sm:gap-x-7">
           <Link
             href="/"
             aria-label={`${site.name} — home`}
@@ -48,12 +48,25 @@ export function PortalFrame({
             </span>
           </Link>
 
-          <div className="ml-auto flex items-center gap-4">
+          <nav
+            aria-label="Client portal"
+            className="order-3 w-full border-t border-ink/9 pt-2 sm:order-none sm:ml-auto sm:w-auto sm:border-0 sm:pt-0"
+          >
+            <Link
+              href="/portal"
+              className="inline-flex min-h-11 items-center rounded-md px-1 text-[13px] font-medium leading-[1.4] text-accent no-underline transition-colors duration-200 hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+            >
+              My claim
+            </Link>
+          </nav>
+
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:ml-0 sm:gap-4">
             <Link
               href="/portal/profile"
-              className="min-h-11 rounded-md px-1 py-[10px] text-right text-[13px] leading-[1.4] text-ink/72 no-underline transition-colors duration-200 hover:text-ink"
+              aria-label={`Your account — ${identity.name}`}
+              className="min-h-11 max-w-24 rounded-md px-1 py-[10px] text-right text-[13px] leading-[1.4] text-ink/72 no-underline transition-colors duration-200 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:max-w-44"
             >
-              {identity.name}
+              <span className="block truncate">{identity.name}</span>
               <span className="block text-[11px] uppercase tracking-[0.16em] text-ink/58">
                 Your account
               </span>
@@ -61,7 +74,7 @@ export function PortalFrame({
             <form action={signOut}>
               <button
                 type="submit"
-                className="min-h-11 rounded-md border border-ink/16 px-4 text-sm leading-[1.55] text-ink transition-colors duration-200 hover:bg-ink/7 active:bg-ink/14"
+                className="min-h-11 rounded-md border border-ink/16 px-3 text-sm leading-[1.55] text-ink transition-colors duration-200 hover:bg-ink/7 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent active:bg-ink/14 sm:px-4"
               >
                 Sign out
               </button>

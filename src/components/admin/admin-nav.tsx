@@ -37,11 +37,13 @@ export function AdminNav({
   // scrollLeft 0, so on Partners, Staff, Audit and Settings the marked item sat
   // off-screen and the visible run carried no marker at all — the rail asserted
   // you were on none of the pages it was showing. Bringing the current item into
-  // view is the half that matters; the edge fade below only says there is more.
+  // view is the half that matters; aligning it to the leading edge avoids the
+  // accidental-looking half labels produced by centering it on narrow screens.
+  // The trailing edge fade below still says there is more.
   useEffect(() => {
     rail.current
       ?.querySelector('[aria-current="page"]')
-      ?.scrollIntoView({ inline: "center", block: "nearest" });
+      ?.scrollIntoView({ inline: "start", block: "nearest" });
   }, [pathname]);
 
   return (
@@ -51,7 +53,7 @@ export function AdminNav({
     >
       <div
         ref={rail}
-        className="scroll-x-edged mx-auto w-full max-w-[1440px] px-[clamp(16px,3vw,40px)] [--panel-fill:var(--color-canvas)]"
+        className="scroll-x-edged mx-auto w-full max-w-[1440px] px-[clamp(16px,3vw,40px)] [--panel-fill:var(--color-canvas)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <ul className="flex min-w-max items-stretch gap-1">
           {items.map((item) => {

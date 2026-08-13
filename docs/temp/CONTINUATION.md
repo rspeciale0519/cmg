@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
-Stages 1 and 2 are complete locally; Stage 2 checkpoint is `9419994`. The full continuation goal is not.
+Stages 1–3 are complete locally; Stage 2 checkpoint is `9419994` and the Stage 3 checkpoint is pending. The full continuation goal is not.
 Resume the first incomplete requirement
 from `GOAL_STATE.md` and `REMAINING_GOAL_SPEC.md`; do not restart completed
 packets. The archived pre-reconciliation continuation is at
@@ -29,13 +29,12 @@ differs, diagnose the new failure rather than weakening the assertion.
 - The latest production build is served at `http://localhost:3011`.
 - Chrome has isolated current-build customer, partner, and owner contexts and
   must remain open unless the owner approves closing it.
-- The local owner account was re-enrolled with TOTP after the Stage 2 reset; a
-  later clean database reset removes it.
+- The Stage 3 clean reset removed local MFA factors. Re-enroll the seeded owner
+  before the final authenticated staff browser smoke.
 
 ## Next required work
 
-1. Complete Stage 3 admin/customer/partner craft, all-surface cohesion, CSP
-   evidence, and comparable mobile Lighthouse floors.
+1. Create the Stage 3 checkpoint after reviewing its reconciled evidence.
 2. Complete Stage 4 final reconciliation, verification, and checkpoint.
 3. Owner acceptance may run in parallel, and any material defect it finds must
    be fixed without weakening auth/RLS, data integrity, or security.
