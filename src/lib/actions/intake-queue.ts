@@ -10,7 +10,6 @@ import { isClaimStatus } from "@/lib/claims/status";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { ClaimPolicyInput } from "@/lib/validators/claims";
 import { inviteIntakeClaimants } from "./intake-invites";
 import { readIntakePolicyDetails } from "./intake-policy";
 import {
@@ -175,8 +174,6 @@ export async function acceptIntake(
   const supabase = await createClient();
 
   // ── 1. Partner company ────────────────────────────────────────────────
-  let linkedPartnerId: string | null = null;
-
   if (partnerChoice === "existing") {
     if (!partnerCompanyId) {
       return {
@@ -186,7 +183,6 @@ export async function acceptIntake(
         values: typed,
       };
     }
-    linkedPartnerId = partnerCompanyId;
   } else if (partnerChoice === "new") {
     if (newPartnerName.length === 0) {
       return {
@@ -197,35 +193,23 @@ export async function acceptIntake(
       };
     }
 
-    const { data: created, error: companyError } = await supabase
-      .from("partner_companies")
-      .insert({
-        name: newPartnerName,
-        contact_name: claim.referrer_name,
-        contact_email: claim.referrer_email,
-      })
-      .select("id");
-
-    if (companyError) {
-      console.error("[intake] partner company insert failed", companyError.message);
-      return { status: "error", message: GENERIC_ERROR, values: typed };
-    }
-
-    if ((created?.length ?? 0) === 0) {
-      return {
-        status: "error",
-        message: "Partner companies are created by the owner.",
-        values: typed,
-      };
-    }
-
-    linkedPartnerId = created![0].id;
   }
 
   // ── 2. Assignment ─────────────────────────────────────────────────────
-  const { error: assignError } = await supabase.rpc("reassign_claim", {
+  const ip = inetOrNull(clientIpFromHeaders(await headers()));
+  const { error: assignError } = await supabase.rpc("accept_intake_transaction", {
     p_claim_id: claimId,
-    p_new_adjuster: adjusterId,
+    p_adjuster_id: adjusterId,
+    p_partner_choice: partnerChoice,
+    p_partner_company_id: partnerChoice === "existing" ? partnerCompanyId : null,
+    p_new_partner_name: partnerChoice === "new" ? newPartnerName : null,
+    p_carrier: policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.carrier : null,
+    p_policy_number:
+      policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.policyNumber : null,
+    p_carrier_tenure:
+      policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.carrierTenure : null,
+    p_note: note,
+    p_ip: ip,
   });
 
   if (assignError) {
@@ -240,60 +224,22 @@ export async function acceptIntake(
         values: typed,
       };
     }
-    console.error("[intake] assignment failed", assignError.message);
+    if (assignError.code === "P0002") {
+      return { status: "error", message: NOT_IN_QUEUE, values: typed };
+    }
+    console.error("[intake] atomic acceptance failed", assignError.message);
     return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
   // ── 3. Commit point: attribution, policy and status in one statement ──
-  const update: {
-    status: "under_review";
-    partner_company_id?: string;
-    carrier?: string;
-    policy_number?: string;
-    carrier_tenure?: ClaimPolicyInput["carrierTenure"];
-  } = { status: "under_review" };
-  if (linkedPartnerId) update.partner_company_id = linkedPartnerId;
   /* Carried by the same statement as the status change, so a referral cannot
      leave the queue with the gap still in it — the atomicity the comment above
      describes covers the policy columns for exactly the same reason it covers
      attribution. */
-  if (policyDetails) {
-    update.carrier = policyDetails.carrier;
-    update.policy_number = policyDetails.policyNumber;
-    update.carrier_tenure = policyDetails.carrierTenure;
-  }
-
-  const { data: advanced, error: advanceError } = await supabase
-    .from("claims")
-    .update(update)
-    .eq("id", claimId)
-    // Re-states the precondition inside the statement that depends on it, so two
-    // operators accepting the same intake at once cannot both advance it — the
-    // second matches zero rows instead of racing the read above.
-    .eq("status", "new_intake")
-    .select("id");
-
-  if (advanceError) {
-    console.error("[intake] accept update failed", advanceError.message);
-    return { status: "error", message: GENERIC_ERROR, values: typed };
-  }
-
-  if ((advanced?.length ?? 0) === 0) {
-    return { status: "error", message: NOT_IN_QUEUE, values: typed };
-  }
-
   // ── 4. History, feed, homeowner notification ──────────────────────────
-  const warnings = await recordTransition(supabase, {
-    claimId,
-    claimRef: claim.claim_ref,
-    from: "new_intake",
-    to: "under_review",
-    note,
-    actorId: session.userId,
-  });
+  const warnings: string[] = [];
 
   // ── 5. Invites ────────────────────────────────────────────────────────
-  const ip = inetOrNull(clientIpFromHeaders(await headers()));
   const invited = await inviteIntakeClaimants(
     claimId,
     claim.claim_ref,
@@ -310,24 +256,6 @@ export async function acceptIntake(
       `${invited.unqueued} portal invitation${invited.unqueued === 1 ? " was" : "s were"} created but could not be queued. Recover from the Claimants tab.`,
     );
   }
-
-  await writeAudit(createAdminClient(), {
-    actorId: session.userId,
-    action: "claim.intake_accepted",
-    entity: "claims",
-    entityId: claimId,
-    meta: {
-      claim_ref: claim.claim_ref,
-      assigned_adjuster_id: adjusterId,
-      partner_company_id: linkedPartnerId,
-      partner_choice: partnerChoice,
-      invites_issued: invited.issued,
-      invites_queued: invited.queued,
-      invites_unqueued: invited.unqueued,
-      invites_failed: invited.failed,
-    },
-    ip,
-  });
 
   revalidatePath("/admin/intake");
   revalidatePath("/admin/claims");

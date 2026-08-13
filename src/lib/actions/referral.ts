@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { writeAudit } from "@/lib/audit";
 import { requireRole } from "@/lib/authz";
 import {
   checkRateLimit,
@@ -10,10 +9,10 @@ import {
   inetOrNull,
   RATE_LIMITS,
 } from "@/lib/rate-limit";
-import { enqueueNotifications } from "@/lib/claims/notify";
-import { staffInbox } from "@/lib/email/outbox";
+import { dispatchOutbox, outboxRows, staffInbox } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { submitClaimUnit } from "./submission-transactions";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { CAUSE_OPTIONS, labelFor } from "@/lib/validators/intake";
 import { REFERRAL_FIELDS, referralSchema } from "@/lib/validators/referral";
@@ -162,45 +161,6 @@ export async function referClaim(
 
   const admin = createAdminClient();
 
-  const { data: claim, error: claimError } = await admin
-    .from("claims")
-    .insert({
-      /* Left blank on purpose: public.claims_before_insert() replaces an empty
-         claim_ref with public.next_claim_ref(), and BEFORE ROW triggers run
-         ahead of the claims_claim_ref_shape CHECK. */
-      claim_ref: "",
-      status: "new_intake",
-      property_street: input.street,
-      property_street2: input.street2 ?? null,
-      property_city: input.city,
-      property_state: input.state,
-      property_zip: input.zip,
-      loss_date: input.lossDate,
-      /* Explicitly null rather than omitted. The column still defaults to
-         '12:00:00', and letting it apply would have the triage card print
-         "· 12:00 PM" beside a date nobody gave a time for. */
-      loss_time: null,
-      cause: input.cause,
-      description: input.description,
-      /* Absent, not guessed. §6 has staff supply the carrier, the policy number
-         and the tenure when they accept — the referring rep is not asked for
-         them and would be guessing, and carrier_tenure in particular has no
-         label that means "unknown". */
-      carrier: null,
-      policy_number: null,
-      carrier_tenure: null,
-      partner_company_id: company.id,
-      referrer_name: referrerName,
-      referrer_email: session.email,
-    })
-    .select("id, claim_ref")
-    .single();
-
-  if (claimError || !claim) {
-    console.error("[referral] claim insert failed", claimError?.message);
-    return { status: "error", message: GENERIC_ERROR, values: typed };
-  }
-
   /**
    * The homeowner. Marked primary because they are the only person on the file:
    * a rep is not asked about a second policyholder for the same reason they are
@@ -212,32 +172,6 @@ export async function referClaim(
    * rather than a new assertion, and staff correct it with the homeowner before
    * anything is sent for signature.
    */
-  const { error: claimantError } = await admin.from("claimants").insert({
-    claim_id: claim.id,
-    first_name: input.firstName,
-    last_name: input.lastName,
-    email: input.email,
-    phone: input.phone,
-    initials: `${input.firstName[0]}${input.lastName[0]}`.toUpperCase(),
-    is_primary: true,
-  });
-
-  if (claimantError) {
-    /* Compensating rollback, the same shape `submitIntake` uses and for the same
-       reason: supabase-js has no client-side transaction, so the unit is made
-       atomic in effect instead. A claim with no claimant is a file with nobody
-       on it — it would sit in the intake queue as "Unnamed homeowner" with no
-       contact details and no way to accept it — and no claim ever validly
-       existed, so deleting it erases nothing that happened. There are no
-       consents to clear first, because this action writes none. */
-    console.error(
-      `[referral] claimant insert failed; rolling back ${claim.claim_ref}`,
-      claimantError.message,
-    );
-    await admin.from("claims").delete().eq("id", claim.id);
-    return { status: "error", message: GENERIC_ERROR, values: typed };
-  }
-
   /**
    * **No `consents` row, and the absence is the decision.**
    *
@@ -261,20 +195,6 @@ export async function referClaim(
    * about the claim itself still reach you").
    */
 
-  await writeAudit(admin, {
-    actorId: session.userId,
-    action: "claim.partner_referral",
-    entity: "claims",
-    entityId: claim.id,
-    meta: {
-      claim_ref: claim.claim_ref,
-      partner_company_id: company.id,
-      partner_company_name: company.name,
-      referrer_email: session.email,
-    },
-    ip,
-  });
-
   /**
    * Tell CMG. Nothing else does.
    *
@@ -293,13 +213,13 @@ export async function referClaim(
    * — the referral is committed by now, and a rep who has just submitted a claim
    * must not be told it failed because a mail queue was unreachable.
    */
-  const queued = await enqueueNotifications([
+  const notificationRows = outboxRows([
     {
       recipientEmail: staffInbox(),
       message: {
         template: "referral_staff_alert",
         payload: {
-          claimRef: claim.claim_ref,
+          claimRef: "pending",
           companyName: company.name,
           referrerName,
           referrerEmail: session.email ?? undefined,
@@ -320,6 +240,51 @@ export async function referClaim(
       },
     },
   ]);
+  const claim = await submitClaimUnit(admin, {
+    claim: {
+      status: "new_intake",
+      property_street: input.street,
+      property_street2: input.street2 ?? null,
+      property_city: input.city,
+      property_state: input.state,
+      property_zip: input.zip,
+      loss_date: input.lossDate,
+      loss_time: null,
+      cause: input.cause,
+      description: input.description,
+      carrier: null,
+      policy_number: null,
+      carrier_tenure: null,
+      referrer_name: referrerName,
+      referrer_email: session.email,
+    },
+    claimants: [{
+      first_name: input.firstName,
+      last_name: input.lastName,
+      email: input.email,
+      phone: input.phone,
+      initials: `${input.firstName[0]}${input.lastName[0]}`.toUpperCase(),
+      is_primary: true,
+    }],
+    consents: [],
+    documents: [],
+    outbox: notificationRows,
+    partnerCompanyId: company.id,
+    audit: {
+      actor_id: session.userId,
+      action: "claim.partner_referral",
+      ip,
+      meta: {
+        partner_company_id: company.id,
+        partner_company_name: company.name,
+        referrer_email: session.email,
+      },
+    },
+  });
+  if (!claim?.id || !claim.claim_ref) {
+    return { status: "error", message: GENERIC_ERROR, values: typed };
+  }
+  await dispatchOutbox(admin, claim.outbox_ids);
 
   // The projection trigger has already written this claim's row into
   // `claim_partner_summaries`, so the rep's list shows it on the next render.
@@ -327,9 +292,7 @@ export async function referClaim(
 
   return {
     status: "success",
-    message: queued
-      ? "Referral received."
-      : "Referral received. The alert to the CMG desk could not be queued, so call it in if it is urgent.",
+    message: "Referral received.",
     reference: claim.claim_ref,
   };
 }

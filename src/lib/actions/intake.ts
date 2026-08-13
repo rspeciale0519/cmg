@@ -11,6 +11,7 @@ import {
 } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { submitClaimUnit } from "./submission-transactions";
 import { validateUploads } from "@/lib/validators/files";
 import {
   ADJUSTER_OPTIONS,
@@ -127,41 +128,6 @@ export async function submitIntake(
   const objects: UploadedObject[] = uploaded.objects;
   const storagePaths = objects.map((object) => object.path);
 
-  const { data: claim, error: claimError } = await admin
-    .from("claims")
-    .insert({
-      /* Left blank on purpose: public.claims_before_insert() replaces an empty
-         claim_ref with public.next_claim_ref(), and BEFORE ROW triggers run
-         ahead of the claims_claim_ref_shape CHECK. */
-      claim_ref: "",
-      property_street: input.street,
-      property_street2: input.street2 ?? null,
-      property_city: input.city,
-      property_state: input.state,
-      property_zip: input.zip,
-      carrier: input.carrier,
-      policy_number: input.policyNumber,
-      carrier_tenure: input.carrierTenure,
-      prior_roof_claim: input.priorRoofClaim === "yes",
-      prior_outcome: input.priorRoofClaim === "yes" ? input.priorOutcome! : null,
-      claim_number: input.claimNumber ?? null,
-      loss_date: input.lossDate,
-      loss_time: input.lossTime,
-      cause: input.cause,
-      description: input.description,
-      requested_adjuster: labelFor(ADJUSTER_OPTIONS, input.requestedAdjuster),
-      referrer_name: input.referrerName ?? null,
-      referrer_email: input.referrerEmail ?? null,
-    })
-    .select("id, claim_ref")
-    .single();
-
-  if (claimError || !claim) {
-    console.error("[intake] claim insert failed", claimError?.message);
-    await removeObjects(admin, storagePaths);
-    return { status: "error", message: GENERIC_ERROR };
-  }
-
   /**
    * Compensating rollback. Supabase has no client-side transaction and this
    * task may not add an RPC, so the unit is made atomic-in-effect instead:
@@ -171,17 +137,11 @@ export async function submitIntake(
    * the submission is being abandoned, so no claim and no consent ever
    * validly existed.
    */
-  const rollback = async (stage: string, detail?: string): Promise<FormState> => {
-    console.error(`[intake] ${stage} failed; rolling back claim ${claim.claim_ref}`, detail);
-    await admin.from("consents").delete().eq("claim_id", claim.id);
-    await admin.from("claims").delete().eq("id", claim.id);
-    await removeObjects(admin, storagePaths);
-    return { status: "error", message: GENERIC_ERROR };
-  };
-
-  const claimants = [
+  const claimants: Array<{
+    first_name: string; last_name: string; email: string;
+    phone: string | null; initials: string; is_primary: boolean;
+  }> = [
     {
-      claim_id: claim.id,
       first_name: input.firstName,
       last_name: input.lastName,
       email: input.email,
@@ -193,59 +153,24 @@ export async function submitIntake(
 
   if (input.hasSecondPolicyholder === "yes") {
     claimants.push({
-      claim_id: claim.id,
       first_name: input.secondFirstName!,
       last_name: input.secondLastName!,
       email: input.secondEmail!,
-      phone: null as unknown as string,
+      phone: null,
       initials: input.secondInitials!.toUpperCase(),
       is_primary: false,
     });
-  }
-
-  const { error: claimantError } = await admin.from("claimants").insert(claimants);
-  if (claimantError) {
-    return rollback("claimant insert", claimantError.message);
   }
 
   /* One row per channel the checkbox covers, so SMS can be switched on later
      without re-consent (decision #10). Recorded for the submitter only — the
      second policyholder checked no box, and consent is not transferable. */
   const consentBase = {
-    claim_id: claim.id,
     email: input.email,
     phone: input.phone,
     consent_text: INTAKE_CONSENT_TEXT,
     ip: ipInet,
   };
-
-  const { error: consentError } = await admin
-    .from("consents")
-    .insert([
-      { ...consentBase, kind: "sms" as const },
-      { ...consentBase, kind: "email" as const },
-    ]);
-  if (consentError) {
-    return rollback("consent insert", consentError.message);
-  }
-
-  if (objects.length > 0) {
-    const { error: documentError } = await admin.from("documents").insert(
-      objects.map((object) => ({
-        claim_id: claim.id,
-        storage_path: object.path,
-        original_name: object.originalName,
-        kind: "other" as const,
-        mime: object.mime,
-        size_bytes: object.size,
-        visibility: "customer" as const,
-      })),
-    );
-
-    if (documentError) {
-      return rollback("document insert", documentError.message);
-    }
-  }
 
   const propertyAddress = [
     input.street,
@@ -261,7 +186,7 @@ export async function submitIntake(
       message: {
         template: "intake_staff_alert",
         payload: {
-          claimRef: claim.claim_ref,
+          claimRef: "pending",
           homeownerName: `${input.firstName} ${input.lastName}`,
           email: input.email,
           phone: input.phone,
@@ -290,25 +215,57 @@ export async function submitIntake(
         template: "intake_confirmation",
         payload: {
           firstName: input.firstName,
-          claimRef: claim.claim_ref,
+          claimRef: "pending",
           propertyAddress,
         },
       },
     },
   ];
 
-  const { data: queued, error: outboxError } = await admin
-    .from("notifications_outbox")
-    .insert(outboxRows(entries))
-    .select("id");
-
-  if (outboxError || !queued) {
-    return rollback("outbox enqueue", outboxError?.message);
+  const claim = await submitClaimUnit(admin, {
+    claim: {
+      property_street: input.street,
+      property_street2: input.street2 ?? null,
+      property_city: input.city,
+      property_state: input.state,
+      property_zip: input.zip,
+      carrier: input.carrier,
+      policy_number: input.policyNumber,
+      carrier_tenure: input.carrierTenure,
+      prior_roof_claim: input.priorRoofClaim === "yes",
+      prior_outcome: input.priorRoofClaim === "yes" ? input.priorOutcome! : null,
+      claim_number: input.claimNumber ?? null,
+      loss_date: input.lossDate,
+      loss_time: input.lossTime,
+      cause: input.cause,
+      description: input.description,
+      requested_adjuster: labelFor(ADJUSTER_OPTIONS, input.requestedAdjuster),
+      referrer_name: input.referrerName ?? null,
+      referrer_email: input.referrerEmail ?? null,
+    },
+    claimants,
+    consents: [
+      { ...consentBase, kind: "sms" },
+      { ...consentBase, kind: "email" },
+    ],
+    documents: objects.map((object) => ({
+      storage_path: object.path,
+      original_name: object.originalName,
+      kind: "other",
+      mime: object.mime,
+      size_bytes: object.size,
+      visibility: "customer",
+    })),
+    outbox: outboxRows(entries),
+  });
+  if (!claim?.id || !claim.claim_ref) {
+    await removeObjects(admin, storagePaths);
+    return { status: "error", message: GENERIC_ERROR };
   }
 
   await dispatchOutbox(
     admin,
-    queued.map((row) => row.id),
+    claim.outbox_ids,
   );
 
   return {

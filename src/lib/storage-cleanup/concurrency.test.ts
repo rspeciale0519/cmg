@@ -40,8 +40,8 @@ describeDb("storage cleanup claims against the local database", () => {
   });
 
   afterAll(async () => {
-    if (ids.length === 0) return;
-    await first.from("storage_cleanup_queue").delete().in("id", ids);
+    await first.from("documents").delete().like("storage_path", `${marker}/%`);
+    await first.from("storage_cleanup_queue").delete().like("object_path", `${marker}/%`);
   });
 
   async function insertDue(label: string): Promise<number> {
@@ -83,6 +83,62 @@ describeDb("storage cleanup claims against the local database", () => {
 
     expect(new Set(claimed).size).toBe(claimed.length);
     expect(new Set(claimed)).toEqual(expected);
+  });
+
+  it("serializes a worker claim against document settlement", async () => {
+    const path = `${marker}/claim-vs-document.pdf`;
+    const { data: enqueued, error: enqueueError } = await first
+      .from("storage_cleanup_queue")
+      .insert({
+        bucket_id: "claim-docs",
+        object_path: path,
+        claim_id: "20000000-0000-4000-a000-000000000001",
+        next_attempt_at: new Date(Date.now() - 60_000).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (enqueueError) throw new Error(enqueueError.message);
+    ids.push(enqueued.id);
+
+    const [claim, document] = await Promise.all([
+      first.rpc("claim_storage_cleanup_batch", {
+        p_limit: 1,
+        p_lease_seconds: 300,
+        p_max_attempts: 5,
+      }),
+      second
+        .from("documents")
+        .insert({
+          claim_id: "20000000-0000-4000-a000-000000000001",
+          storage_path: path,
+          original_name: "claim-vs-document.pdf",
+          kind: "other",
+          mime: "application/pdf",
+          size_bytes: 1,
+          visibility: "internal",
+        })
+        .select("id")
+        .maybeSingle(),
+    ]);
+    if (claim.error) throw new Error(claim.error.message);
+
+    const claimed = (claim.data ?? []).some((row) => row.id === enqueued.id);
+    const committed = document.error === null && document.data !== null;
+    expect([claimed, committed].filter(Boolean)).toHaveLength(1);
+
+    const { data: queue } = await first
+      .from("storage_cleanup_queue")
+      .select("attempts, processed_at")
+      .eq("id", enqueued.id)
+      .single();
+    expect(queue).not.toBeNull();
+    if (claimed) {
+      expect(document.error?.message).toBe("storage cleanup already claimed");
+      expect(queue?.attempts).toBe(1);
+    } else {
+      expect(queue?.attempts).toBe(0);
+      expect(queue?.processed_at).not.toBeNull();
+    }
   });
 
   it("rejects a stale success settlement after the attempt token changes", async () => {

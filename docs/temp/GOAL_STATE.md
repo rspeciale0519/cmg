@@ -2,26 +2,25 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `7a21209` (Stage 1 checkpoint)
+HEAD before Stage 2 checkpoint: `fc52969`
 
 ## Current position
 
 - Stage 1 — Functional and backend completion: **complete**
-- Stage 2 — Architecture convergence: **starting fresh review round 1**
-- Current packet: backend architecture/security review and authorization matrix
-- Final fresh correction verdict: `NO FINDINGS`.
+- Stage 2 — Architecture convergence: **complete; two consecutive `NO MAJORS` rounds**
+- Current packet: Stage 2 checkpoint documentation and commit
+- Stage 1 final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: give a fresh reviewer the committed server actions,
-  authz/RLS, storage, webhook, outbox, public-write, audit, partner projection,
-  and event artifacts; extend the authorization matrix for any uncovered role.
-- Supabase was reset after the latest schema change: **yes** — all 18 migrations
-  through `20260815180000_partner_portal_profile.sql` replayed cleanly.
+- Next exact action: create the Stage 2 checkpoint, then begin Stage 3 live craft,
+  cohesion, CSP, and mobile Lighthouse work.
+- Supabase was reset after the latest schema change: **yes** — all 21 migrations
+  through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
 - Staff MFA after the latest reset: **re-enrolled locally** for owner browser
-  evidence; another database reset will require enrollment again.
+  evidence at `http://localhost:3011`; another reset will require enrollment.
 
 ## Packet ledger
 
@@ -58,14 +57,36 @@ Packets 1A–1H and their converged e-sign correction are checkpointed together 
   durable observations are in `docs/temp/evidence/stage1/browser-evidence.md`
 - `git diff --check`: pass
 
+## Stage 2 review ledger
+
+- Round 1 verdict: `MAJORS REMAIN`.
+- Material findings: non-atomic intake acceptance; non-transactional public PII
+  writes with unreliable rollback; upload compensation that can leave unqueued
+  sensitive bytes; swallowed required audit failures; stranded auth users after
+  invite provisioning faults; client-writeable internal dedupe keys; and
+  client-readable e-sign lease tokens.
+- Authorization audit otherwise found substantive coverage for anon, two
+  customers, two partner companies, assistant, assigned/unassigned adjuster,
+  owner, and below-AAL2 staff. The active packet also adds explicit e-sign
+  service-boundary grants, deactivated-staff reads, webhook-completion denial,
+  and non-partner profile assertions.
+- Subsequent fresh reviews found and drove fixes for permanent cleanup-path
+  fencing, invite reservation/supersession recovery, expired-marker recovery,
+  token-safe admin claims search, and the nullable owner guard.
+- Final convergence verdicts: `NO MAJORS`, `NO MAJORS`.
+- Authorization coverage includes anon, two customers, two partner companies,
+  assistant, assigned/unassigned adjuster, owner, below-AAL2 staff,
+  deactivated staff, and authenticated callers with no profile.
+- Stage 2 Level C: type-check pass; lint pass; 718 Vitest pass; build pass;
+  clean reset pass; 915 pgTAP pass; audit 0; client secret-name scan 0; enforcing
+  CSP/headers pass; marketing/customer/partner/owner browser smoke pass.
+
 ## Open required stages
 
-1. Stage 2 fresh backend architecture convergence plus the full authorization
-   matrix, Level C, documentation, and checkpoint.
-2. Stage 3 admin/customer/partner craft convergence, all-surface cohesion,
+1. Stage 3 admin/customer/partner craft convergence, all-surface cohesion,
    enforcing CSP confirmation, and two comparable mobile Lighthouse runs with
    lower performance ≥85 and accessibility ≥95; Level C and checkpoint.
-3. Stage 4 truthful final launch documentation, final Level C/browser evidence,
+2. Stage 4 truthful final launch documentation, final Level C/browser evidence,
    and checkpoint.
 
 The prior MVP-only handoff incorrectly called the mandatory Stage 2/3 review,

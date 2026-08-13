@@ -56,6 +56,7 @@ const stub = vi.hoisted(() => {
     inserted: vi.fn(),
     deleted: vi.fn(),
     audited: vi.fn(),
+    transactionInput: null as Record<string, unknown> | null,
   };
 });
 
@@ -87,6 +88,15 @@ vi.mock("@/lib/turnstile", () => ({
   verifyTurnstile: vi.fn(async () =>
     stub.turnstileOk ? { ok: true } : { ok: false, reason: "rejected" },
   ),
+}));
+
+vi.mock("./submission-transactions", () => ({
+  submitClaimUnit: vi.fn(async (_admin: unknown, input: Record<string, unknown>) => {
+    stub.transactionInput = input;
+    return stub.claimError || stub.claimantError || stub.outboxError
+      ? null
+      : { id: stub.CLAIM.id, claim_ref: stub.CLAIM.claim_ref, outbox_ids: [] };
+  }),
 }));
 
 /** The two writes, recorded rather than performed. */
@@ -172,7 +182,7 @@ function form(overrides: Record<string, string> = {}): FormData {
 }
 
 const claimantInsert = () =>
-  stub.inserted.mock.calls.find(([table]) => table === "claimants")?.[1] as
+  (stub.transactionInput?.claimants as Array<Record<string, unknown>> | undefined)?.[0] as
     | Record<string, unknown>
     | undefined;
 
@@ -186,6 +196,7 @@ beforeEach(() => {
   stub.claimantError = null;
   stub.outboxError = null;
   stub.profile = { first_name: "Tyler", last_name: "Boone" };
+  stub.transactionInput = null;
 });
 
 describe("referClaim — the homeowner", () => {
@@ -193,7 +204,6 @@ describe("referClaim — the homeowner", () => {
     await referClaim(idleState, form());
 
     expect(claimantInsert()).toMatchObject({
-      claim_id: stub.CLAIM.id,
       first_name: "Dana",
       last_name: "Whitfield",
       email: "dana@example.com",
@@ -218,24 +228,18 @@ describe("referClaim — consent", () => {
   it("writes no consent record for a homeowner who is not at the form", async () => {
     await referClaim(idleState, form());
 
-    const tables = stub.inserted.mock.calls.map(([table]) => table);
-    expect(tables).not.toContain("consents");
-    /* Still exhaustive rather than a `toContain`, so a fourth write added later
-       has to be justified here. `notifications_outbox` is the staff alert added
-       in Phase 7 — it is addressed to CMG's own inbox, not to the homeowner, so
-       it asserts nothing on their behalf. */
-    expect(tables).toEqual(["claims", "claimants", "notifications_outbox"]);
+    expect(stub.transactionInput?.consents).toEqual([]);
   });
 });
 
 describe("referClaim — partial failure", () => {
-  it("deletes the claim when the claimant cannot be written, so no file exists with nobody on it", async () => {
+  it("returns failure through the atomic boundary when the claimant cannot be written", async () => {
     stub.claimantError = { message: "duplicate key" };
 
     const state = await referClaim(idleState, form());
 
     expect(state.status).toBe("error");
-    expect(stub.deleted).toHaveBeenCalledWith("claims", "id", stub.CLAIM.id);
+    expect(stub.deleted).not.toHaveBeenCalled();
     expect(state.values?.description).toBe(SUBMISSION.description);
   });
 
@@ -245,7 +249,7 @@ describe("referClaim — partial failure", () => {
     const state = await referClaim(idleState, form());
 
     expect(state.status).toBe("error");
-    expect(stub.inserted.mock.calls.map(([table]) => table)).toEqual(["claims"]);
+    expect(stub.transactionInput).not.toBeNull();
     expect(stub.deleted).not.toHaveBeenCalled();
   });
 });
@@ -254,14 +258,11 @@ describe("referClaim — the record", () => {
   it("audits the referral against the rep, naming the claim and the company", async () => {
     await referClaim(idleState, form());
 
-    expect(stub.audited).toHaveBeenCalledWith(
+    expect(stub.transactionInput?.audit).toEqual(
       expect.objectContaining({
-        actorId: stub.PARTNER_ID,
+        actor_id: stub.PARTNER_ID,
         action: "claim.partner_referral",
-        entity: "claims",
-        entityId: stub.CLAIM.id,
         meta: expect.objectContaining({
-          claim_ref: "CMG-2026-0104",
           partner_company_id: stub.COMPANY.id,
         }),
       }),
@@ -283,8 +284,7 @@ describe("referClaim — the record", () => {
   it("alerts the CMG desk, because nothing else does", async () => {
     await referClaim(idleState, form());
 
-    expect(stub.inserted).toHaveBeenCalledWith(
-      "notifications_outbox",
+    expect(stub.transactionInput?.outbox).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ template: "referral_staff_alert" }),
       ]),
@@ -297,25 +297,19 @@ describe("referClaim — the record", () => {
   it("writes to nobody but the desk", async () => {
     await referClaim(idleState, form());
 
-    const enqueued = stub.inserted.mock.calls.find(
-      ([table]) => table === "notifications_outbox",
-    );
-    const rows = enqueued?.[1] as Array<{ recipient_email: string }>;
+    const rows = stub.transactionInput?.outbox as Array<{ recipient_email: string }>;
 
     expect(rows).toHaveLength(1);
     expect(rows[0].recipient_email).not.toBe(SUBMISSION.email);
   });
 
-  it("still reports the referral received when the alert cannot be queued", async () => {
+  it("fails atomically when the required desk alert cannot be queued", async () => {
     stub.outboxError = { message: "outbox unreachable" };
 
     const state = await referClaim(idleState, form());
 
-    // The claim is committed by then. A rep must not be told their referral
-    // failed because a mail queue was down — but they should be told to call.
-    expect(state.status).toBe("success");
-    expect(state.reference).toBe("CMG-2026-0104");
-    expect(state.message).toMatch(/could not be queued/i);
+    expect(state.status).toBe("error");
+    expect(state.reference).toBeUndefined();
     expect(stub.deleted).not.toHaveBeenCalled();
   });
 });

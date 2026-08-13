@@ -41,3 +41,16 @@ export async function writeAudit(admin: Admin, event: AuditEvent): Promise<void>
     console.error("[audit] write failed", { action: event.action, error: error.message });
   }
 }
+
+/** Required trail write for bearer-capability and invitation boundaries. */
+export async function writeAuditStrict(admin: Admin, event: AuditEvent): Promise<void> {
+  const { error } = await admin.from("audit_log").insert({
+    actor_id: event.actorId ?? null,
+    action: event.action,
+    entity: event.entity,
+    entity_id: event.entityId ?? null,
+    meta: (event.meta ?? {}) as Json,
+    ip: event.ip ?? null,
+  });
+  if (error) throw new Error(`Required audit write failed: ${event.action}: ${error.message}`);
+}

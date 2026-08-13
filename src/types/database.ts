@@ -669,6 +669,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           accepted_by: string | null
+          acceptance_attempt_id: string | null
           claim_id: string | null
           created_at: string
           email: string
@@ -682,6 +683,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           accepted_by?: string | null
+          acceptance_attempt_id?: string | null
           claim_id?: string | null
           created_at?: string
           email: string
@@ -695,6 +697,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           accepted_by?: string | null
+          acceptance_attempt_id?: string | null
           claim_id?: string | null
           created_at?: string
           email?: string
@@ -1045,6 +1048,25 @@ export type Database = {
         }
         Returns: Json
       }
+      accept_intake_transaction: {
+        Args: {
+          p_adjuster_id: string
+          p_carrier: string | null
+          p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"] | null
+          p_claim_id: string
+          p_ip: unknown
+          p_new_partner_name: string | null
+          p_note: string | null
+          p_partner_choice: string
+          p_partner_company_id: string | null
+          p_policy_number: string | null
+        }
+        Returns: Json
+      }
+      begin_invite_acceptance: {
+        Args: { p_attempt_id: string; p_token_hash: string }
+        Returns: Json
+      }
       claim_outbox_batch: {
         Args: { p_ids?: string[]; p_lease_seconds?: number; p_limit?: number }
         Returns: {
@@ -1096,6 +1118,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      enqueue_storage_cleanup_exact: {
+        Args: { p_bucket_id: string; p_claim_id?: string | null; p_object_paths: string[] }
+        Returns: number
+      }
+      staff_claims_projection: {
+        Args: never
+        Returns: {
+          adjuster_name: string | null
+          assigned_adjuster_id: string | null
+          claim_ref: string
+          id: string
+          loss_date: string
+          partner_company_id: string | null
+          partner_name: string | null
+          property_city: string
+          property_state: string
+          property_street: string
+          property_zip: string
+          search_text: string
+          status: Database["public"]["Enums"]["claim_status"]
+          updated_at: string
+        }[]
+      }
       esign_attempt_is_active: {
         Args: {
           p_attempt_token: string
@@ -1116,12 +1161,41 @@ export type Database = {
         }
         Returns: Json
       }
+      finalize_invite_acceptance: {
+        Args: {
+          p_attempt_id: string
+          p_first_name: string
+          p_invite_id: string
+          p_ip: unknown
+          p_last_name: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      issue_invite_transaction: {
+        Args: {
+          p_claim_id: string | null
+          p_email: string
+          p_expires_at: string
+          p_invited_by: string
+          p_ip: unknown
+          p_partner_company_id: string | null
+          p_payload: Json
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_token_hash: string
+        }
+        Returns: Json
+      }
       mark_esign_dispatch_sending: {
         Args: {
           p_claim_token: string
           p_provider_document_id: string
           p_request_id: string
         }
+        Returns: boolean
+      }
+      link_invited_claimant: {
+        Args: { p_claim_id: string; p_email: string; p_user_id: string }
         Returns: boolean
       }
       next_claim_ref: { Args: never; Returns: string }
@@ -1187,6 +1261,22 @@ export type Database = {
           p_state: string
         }
         Returns: boolean
+      }
+      submit_claim_transaction: {
+        Args: {
+          p_claim: Json
+          p_claimants: Json
+          p_consents: Json
+          p_documents: Json
+          p_audit?: Json
+          p_outbox: Json
+          p_partner_company_id?: string | null
+        }
+        Returns: Json
+      }
+      submit_contact_transaction: {
+        Args: { p_consent: Json; p_lead: Json; p_outbox: Json }
+        Returns: Json
       }
     }
     Enums: {

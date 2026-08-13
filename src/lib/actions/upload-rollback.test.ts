@@ -36,6 +36,8 @@ const stub = vi.hoisted(() => {
     objects: new Set<string>(),
     /** `documents` rows that survived their statement. */
     rows: [] as Array<{ claim_id: string; storage_path: string; visibility?: string }>,
+    /** Exact paths durably reserved before their Storage upload. */
+    intents: new Set<string>(),
 
     /* Knobs, reset in beforeEach. */
     failUploadOnCall: 0 as number,
@@ -65,6 +67,12 @@ vi.mock("@/lib/rate-limit", () => ({
 /** The bucket. `upload` writes a path; `remove` deletes the paths it is given. */
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
+    rpc: async (name: string, args: { p_object_paths?: string[] }) => {
+      if (name === "enqueue_storage_cleanup_exact") {
+        for (const path of args.p_object_paths ?? []) stub.intents.add(path);
+      }
+      return { data: 1, error: null };
+    },
     storage: {
       from: () => ({
         upload: async (path: string) => {
@@ -147,6 +155,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   stub.objects = new Set();
   stub.rows = [];
+  stub.intents = new Set();
   stub.failUploadOnCall = 0;
   stub.rowInsertError = null;
   stub.uploadCalls = 0;
@@ -165,6 +174,7 @@ for (const surface of SURFACES) {
       expect(state.status).toBe("success");
       expect(stub.rows).toHaveLength(3);
       expect(stub.objects.size).toBe(3);
+      expect(stub.intents.size).toBe(3);
       expect(everyRowHasItsBytes()).toBe(true);
     });
 
@@ -181,6 +191,7 @@ for (const surface of SURFACES) {
       expect(state.status).toBe("error");
       expect(stub.rows).toHaveLength(0);
       expect(stub.objects.size).toBe(0);
+      expect(stub.intents.size).toBe(3);
       expect(everyRowHasItsBytes()).toBe(true);
     });
 
@@ -197,6 +208,7 @@ for (const surface of SURFACES) {
       expect(state.status).toBe("error");
       expect(stub.rows).toHaveLength(0);
       expect(stub.objects.size).toBe(0);
+      expect(stub.intents.size).toBe(3);
     });
 
     it("holds for a single file, which is the common case", async () => {

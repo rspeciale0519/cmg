@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { writeAudit } from "@/lib/audit";
+import { writeAuditStrict } from "@/lib/audit";
 import { requireRole } from "@/lib/authz";
 import { isPortalDocumentKind } from "@/lib/portal/documents";
 import { site } from "@/lib/site";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
 import type { Database } from "@/types/database";
 import {
@@ -134,6 +135,10 @@ export async function uploadPortalDocument(
     // UUID filename, never the uploaded one (spec §7.4).
     // `documents_storage_path_matches_claim` requires exactly this prefix.
     const path = `claims/${claimId}/${randomUUID()}.${upload.extension}`;
+    if (!(await registerCleanupIntent(admin, BUCKET, path, claimId))) {
+      await removeOrQueueExact(admin, BUCKET, stored, claimId);
+      return { status: "error", message: GENERIC_ERROR, values: typed };
+    }
 
     const { error: uploadError } = await admin.storage
       .from(BUCKET)
@@ -141,7 +146,7 @@ export async function uploadPortalDocument(
 
     if (uploadError) {
       console.error("[portal] object upload failed", uploadError.message);
-      await admin.storage.from(BUCKET).remove(stored);
+      await removeOrQueueExact(admin, BUCKET, stored, claimId);
       return { status: "error", message: GENERIC_ERROR, values: typed };
     }
 
@@ -165,7 +170,7 @@ export async function uploadPortalDocument(
 
   if (rowError || (inserted?.length ?? 0) !== rows.length) {
     if (rowError) console.error("[portal] row insert failed", rowError.message);
-    await admin.storage.from(BUCKET).remove(stored);
+    await removeOrQueueExact(admin, BUCKET, stored, claimId);
     return { status: "error", message: GENERIC_ERROR, values: typed };
   }
 
@@ -250,7 +255,8 @@ export async function issuePortalDownload(
   // credential for the next five minutes and `audit_log` is readable by every
   // owner. `surface` distinguishes a homeowner's download from a staff member's
   // in the one place both are recorded.
-  await writeAudit(admin, {
+  try {
+    await writeAuditStrict(admin, {
     actorId: session.userId,
     action: "document.signed_url_issued",
     entity: "documents",
@@ -266,7 +272,14 @@ export async function issuePortalDownload(
       surface: "portal",
     },
     ip: inetOrNull(clientIpFromHeaders(await headers())),
-  });
+    });
+  } catch (error) {
+    console.error("[portal] signed URL audit failed", error);
+    return {
+      status: "error",
+      message: `We could not open that file just now. Try again, and if it happens twice call us on ${site.phone} and we will email it to you.`,
+    };
+  }
 
   return {
     status: "success",

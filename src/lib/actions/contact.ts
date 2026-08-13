@@ -10,6 +10,7 @@ import {
   RATE_LIMITS,
 } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { submitContactUnit } from "./submission-transactions";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { CONTACT_CONSENT_TEXT, contactSchema } from "@/lib/validators/contact";
 import {
@@ -66,50 +67,10 @@ export async function submitContact(
   const input = parsed.data;
   const admin = createAdminClient();
 
-  const { data: lead, error: leadError } = await admin
-    .from("leads")
-    .insert({
-      name: input.name,
-      phone: input.phone,
-      email: input.email ?? null,
-      message: input.message ?? null,
-      ip: inetOrNull(ip),
-      user_agent: requestHeaders.get("user-agent")?.slice(0, 500) ?? null,
-    })
-    .select("id")
-    .single();
-
-  if (leadError || !lead) {
-    console.error("[contact] lead insert failed", leadError?.message);
-    return { status: "error", message: GENERIC_ERROR };
-  }
-
-  const rollback = async (stage: string, detail?: string) => {
-    console.error(`[contact] ${stage} failed; rolling back lead ${lead.id}`, detail);
-    await admin.from("consents").delete().eq("lead_id", lead.id);
-    await admin.from("leads").delete().eq("id", lead.id);
-    return { status: "error", message: GENERIC_ERROR } satisfies FormState;
-  };
-
   /* `consents.email` is NOT NULL and this form collects no SMS consent, so a
      phone-only submission records the lead with no consent row. There is no
      address to name and no SMS agreement to record; inventing either would put
      a consent on file the submitter never gave. */
-  if (input.email) {
-    const { error: consentError } = await admin.from("consents").insert({
-      lead_id: lead.id,
-      email: input.email,
-      phone: input.phone,
-      kind: "email",
-      consent_text: CONTACT_CONSENT_TEXT,
-      ip: inetOrNull(ip),
-    });
-
-    if (consentError) {
-      return rollback("consent insert", consentError.message);
-    }
-  }
-
   const firstName = input.name.split(/\s+/)[0] || input.name;
   const entries: OutboxEntry[] = [
     {
@@ -134,18 +95,31 @@ export async function submitContact(
     });
   }
 
-  const { data: queued, error: outboxError } = await admin
-    .from("notifications_outbox")
-    .insert(outboxRows(entries))
-    .select("id");
-
-  if (outboxError || !queued) {
-    return rollback("outbox enqueue", outboxError?.message);
-  }
+  const committed = await submitContactUnit(admin, {
+    lead: {
+      name: input.name,
+      phone: input.phone,
+      email: input.email ?? null,
+      message: input.message ?? null,
+      ip: inetOrNull(ip),
+      user_agent: requestHeaders.get("user-agent")?.slice(0, 500) ?? null,
+    },
+    consent: input.email
+      ? {
+          email: input.email,
+          phone: input.phone,
+          kind: "email",
+          consent_text: CONTACT_CONSENT_TEXT,
+          ip: inetOrNull(ip),
+        }
+      : null,
+    outbox: outboxRows(entries),
+  });
+  if (!committed) return { status: "error", message: GENERIC_ERROR };
 
   await dispatchOutbox(
     admin,
-    queued.map((row) => row.id),
+    committed.outbox_ids,
   );
 
   return { status: "success", message: SUCCESS_MESSAGE };

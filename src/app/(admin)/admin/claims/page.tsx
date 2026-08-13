@@ -46,12 +46,6 @@ export const metadata: Metadata = {
  *  banner below will repeat back from the query string. */
 const CLAIM_REF = /^CMG-\d{4}-\d{4}$/;
 
-const SELECT = `id, claim_ref, status, loss_date, updated_at,
-   property_street, property_city, property_state, property_zip,
-   assigned_adjuster_id,
-   adjuster:profiles!claims_assigned_adjuster_id_fkey(first_name, last_name),
-    partner:partner_companies!claims_partner_company_id_fkey(name)`;
-
 export default async function ClaimsPage({
   searchParams,
 }: {
@@ -87,7 +81,7 @@ export default async function ClaimsPage({
 
   const supabase = await createClient();
 
-  let query = applyClaimFilters(supabase.from("claims").select(SELECT), filters)
+  let query = applyClaimFilters(supabase.rpc("staff_claims_projection"), filters)
     .order(CLAIM_SORT_COLUMN[sort.key], { ascending })
     .limit(CLAIMS_PAGE_SIZE + 1);
 
@@ -108,7 +102,10 @@ export default async function ClaimsPage({
   const [{ data: claims, error }, { count, error: countError }] = await Promise.all([
     query,
     applyClaimFilters(
-      supabase.from("claims").select("id", { count: "exact", head: true }),
+      supabase.rpc("staff_claims_projection", undefined, {
+        count: "exact",
+        head: true,
+      }),
       filters,
     ),
   ]);
@@ -310,9 +307,7 @@ export default async function ClaimsPage({
               const primary =
                 claimantRows.get(claim.id)?.find((person) => person.is_primary) ??
                 claimantRows.get(claim.id)?.[0];
-              const adjusterName = claim.adjuster
-                ? `${claim.adjuster.first_name ?? ""} ${claim.adjuster.last_name ?? ""}`.trim()
-                : null;
+              const adjusterName = claim.adjuster_name;
 
               return (
                 <Tr key={claim.id}>
@@ -365,7 +360,7 @@ export default async function ClaimsPage({
                         without this the value is unrecoverable at 390px. */}
                     <span
                       className="block truncate"
-                      title={claim.partner?.name ?? "Direct"}
+                      title={claim.partner_name ?? "Direct"}
                     >
                       {/* `ink/55` — 4.87:1 measured on the panel fill, up from
                           `ink/32` at 2.56:1. "Direct" is a value, not a blank: it
@@ -383,7 +378,7 @@ export default async function ClaimsPage({
                           quieter than both, so the column keeps reading
                           name-first either before or after that collision is
                           sorted out. */}
-                      {claim.partner?.name ?? (
+                      {claim.partner_name ?? (
                         <span className="text-ink/55">Direct</span>
                       )}
                     </span>

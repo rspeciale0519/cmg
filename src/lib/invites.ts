@@ -1,7 +1,6 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { writeAudit } from "@/lib/audit";
 import {
   createInviteToken,
   hashInviteToken,
@@ -11,7 +10,7 @@ import {
   isWellFormedInviteToken,
 } from "@/lib/auth/invite-token";
 import type { AppRole } from "@/lib/auth/roles";
-import { dispatchOutbox, outboxRows } from "@/lib/email/outbox";
+import { dispatchOutbox } from "@/lib/email/outbox";
 import type { InvitePayload } from "@/lib/email/templates/invite";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/database";
@@ -50,13 +49,7 @@ export type IssueInviteResult =
       url: string;
       queued: boolean;
     }
-  | { ok: false; reason: string };
-
-type InviteOutboxRows = ReturnType<typeof outboxRows>;
-export type IssueInviteDeps = {
-  /** Fault-injection seam; production always inserts the rows returned by outboxRows. */
-  transformOutboxRows?: (rows: InviteOutboxRows) => InviteOutboxRows;
-};
+  | { ok: false; reason: "acceptance_in_progress" | "insert_failed" };
 
 function audienceFor(role: AppRole): InvitePayload["audience"] {
   if (role === "customer") return "customer";
@@ -73,58 +66,16 @@ function audienceFor(role: AppRole): InvitePayload["audience"] {
  */
 export async function issueInvite(
   input: IssueInviteInput,
-  deps: IssueInviteDeps = {},
 ): Promise<IssueInviteResult> {
   const email = input.email.trim().toLowerCase();
   const admin = createAdminClient();
   const { token, tokenHash } = createInviteToken();
   const expiresAt = inviteExpiryFrom();
 
-  // Re-inviting supersedes rather than accumulates. Without this, every "resend
-  // invite" click leaves the previous token live for the rest of its 72 hours,
-  // so a link that was forwarded to the wrong address or pasted into a ticket
-  // stays redeemable long after the staff member believed they had replaced it.
-  // Expired rather than deleted: the row is the record that an invitation was
-  // issued, and `expires_at` in the past is what "no longer redeemable" means to
-  // every reader of this table.
-  const supersede = admin
-    .from("invites")
-    .update({ expires_at: new Date().toISOString() })
-    .eq("email", email)
-    .eq("role", input.role)
-    .is("accepted_at", null)
-    .gt("expires_at", new Date().toISOString());
-
-  const { error: supersedeError } = input.claimId
-    ? await supersede.eq("claim_id", input.claimId)
-    : input.partnerCompanyId
-      ? await supersede.eq("partner_company_id", input.partnerCompanyId)
-      : await supersede;
-
-  if (supersedeError) {
-    console.error("[invite] superseding previous invites failed", supersedeError.message);
-    return { ok: false, reason: "supersede_failed" };
-  }
-
-  const { data: invite, error } = await admin
-    .from("invites")
-    .insert({
-      email,
-      role: input.role,
-      claim_id: input.claimId ?? null,
-      partner_company_id: input.partnerCompanyId ?? null,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
-      invited_by: input.invitedBy,
-    })
-    .select("id, expires_at")
-    .single();
-
-  if (error || !invite) {
-    console.error("[invite] insert failed", error?.message);
-    return { ok: false, reason: "insert_failed" };
-  }
-
+  // Re-inviting supersedes an unreserved token rather than accumulating live
+  // links. Once acceptance has reserved a token, the database refuses a resend
+  // until that reservation expires so provisioning cannot finish against a
+  // token the operator believed had been replaced.
   const url = inviteUrl(token);
   const payload: InvitePayload = {
     firstName: input.firstName?.trim() || "there",
@@ -135,52 +86,40 @@ export async function issueInvite(
     expiresInHours: INVITE_TTL_HOURS,
   };
 
-  const notificationRows = outboxRows([
-    { recipientEmail: email, message: { template: "invite", payload } },
-  ]);
-  const { data: queued, error: outboxError } = await admin
-    .from("notifications_outbox")
-    .insert(deps.transformOutboxRows?.(notificationRows) ?? notificationRows)
-    .select("id");
-
-  const queuedSuccessfully = !outboxError && Boolean(queued && queued.length > 0);
-  if (outboxError) {
-    console.error("[invite] outbox enqueue failed", outboxError.message);
-  }
-
-  await writeAudit(admin, {
-    actorId: input.invitedBy,
-    action: "invite.issued",
-    entity: "invites",
-    entityId: invite.id,
-    // The digest, never the token. An owner reading `audit_log` must be able to
-    // tie this entry to the row in `invites` without being handed something
-    // redeemable.
-    meta: {
-      email,
-      role: input.role,
-      claim_id: input.claimId ?? null,
-      partner_company_id: input.partnerCompanyId ?? null,
-      token_hash: tokenHash,
-      expires_at: invite.expires_at,
-    },
-    ip: input.ip ?? null,
+  const { data, error } = await admin.rpc("issue_invite_transaction", {
+    p_email: email,
+    p_role: input.role,
+    p_claim_id: input.claimId ?? null,
+    p_partner_company_id: input.partnerCompanyId ?? null,
+    p_invited_by: input.invitedBy,
+    p_token_hash: tokenHash,
+    p_expires_at: expiresAt,
+    p_payload: payload,
+    p_ip: input.ip ?? null,
   });
-
-  if (queuedSuccessfully && queued) {
-    await dispatchOutbox(
-      admin,
-      queued.map((row) => row.id),
-    );
+  if (error || !data || typeof data !== "object" || Array.isArray(data)) {
+    console.error("[invite] atomic issuance failed", error?.message);
+    return {
+      ok: false,
+      reason:
+        error?.message === "invite acceptance is in progress"
+          ? "acceptance_in_progress"
+          : "insert_failed",
+    };
   }
+  const inviteId = typeof data.invite_id === "string" ? data.invite_id : null;
+  const outboxId = typeof data.outbox_id === "string" ? data.outbox_id : null;
+  const committedExpiry = typeof data.expires_at === "string" ? data.expires_at : null;
+  if (!inviteId || !outboxId || !committedExpiry) return { ok: false, reason: "insert_failed" };
+  await dispatchOutbox(admin, [outboxId]);
 
   return {
     ok: true,
-    inviteId: invite.id,
-    expiresAt: invite.expires_at,
+    inviteId,
+    expiresAt: committedExpiry,
     token,
     url,
-    queued: queuedSuccessfully,
+    queued: true,
   };
 }
 

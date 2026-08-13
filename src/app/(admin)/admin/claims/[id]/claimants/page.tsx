@@ -72,17 +72,22 @@ export default async function ClaimantsPage({
       ? collectPostgrestPages((rangeFrom, rangeTo) =>
           supabase
             .from("invites")
-            .select("email, expires_at, accepted_at")
+            .select("email, expires_at, accepted_at, acceptance_attempt_id")
             .eq("claim_id", id)
             .is("accepted_at", null)
             .gt("expires_at", new Date().toISOString())
             .order("id", { ascending: true })
             .range(rangeFrom, rangeTo),
         )
-      : Promise.resolve([] as { email: string }[]),
+      : Promise.resolve([] as { email: string; acceptance_attempt_id: string | null }[]),
   ]);
 
   const pending = new Set(invites.map((row) => row.email.toLowerCase()));
+  const accepting = new Set(
+    invites
+      .filter((row) => row.acceptance_attempt_id !== null)
+      .map((row) => row.email.toLowerCase()),
+  );
   const rows = claimants.data ?? [];
   const count = total ?? rows.length;
 
@@ -154,6 +159,7 @@ export default async function ClaimantsPage({
                 claimantId={person.id}
                 hasAccount={Boolean(person.user_id)}
                 hasPendingInvite={pending.has(person.email.toLowerCase())}
+                acceptanceInProgress={accepting.has(person.email.toLowerCase())}
                 canInvite={can.canManage}
               />
             </li>

@@ -117,8 +117,8 @@ function form(fields: Record<string, string>): FormData {
   return data;
 }
 
-const claimUpdate = () =>
-  stub.updated.mock.calls.find(([table]) => table === "claims")?.[1] as
+const acceptArgs = () =>
+  stub.rpcCalled.mock.calls.find(([name]) => name === "accept_intake_transaction")?.[1] as
     | Record<string, unknown>
     | undefined;
 
@@ -187,11 +187,12 @@ describe("acceptIntake — a partner referral", () => {
     const state = await acceptIntake(idleState, form(POLICY));
 
     expect(state.status).toBe("success");
-    expect(claimUpdate()).toEqual({
-      status: "under_review",
-      carrier: "Citizens Property Insurance",
-      policy_number: "FL-88213-A",
-      carrier_tenure: "three_plus_years",
+    expect(acceptArgs()).toMatchObject({
+      p_claim_id: stub.CLAIM_ID,
+      p_adjuster_id: stub.ADJUSTER_ID,
+      p_carrier: "Citizens Property Insurance",
+      p_policy_number: "FL-88213-A",
+      p_carrier_tenure: "three_plus_years",
     });
   });
 
@@ -201,7 +202,7 @@ describe("acceptIntake — a partner referral", () => {
       form({ ...POLICY, carrier: "  Citizens Property Insurance  " }),
     );
 
-    expect(claimUpdate()?.carrier).toBe("Citizens Property Insurance");
+    expect(acceptArgs()?.p_carrier).toBe("Citizens Property Insurance");
   });
 });
 
@@ -214,7 +215,11 @@ describe("acceptIntake — a submission from the public form", () => {
     const state = await acceptIntake(idleState, form({}));
 
     expect(state.status).toBe("success");
-    expect(claimUpdate()).toEqual({ status: "under_review" });
+    expect(acceptArgs()).toMatchObject({
+      p_carrier: null,
+      p_policy_number: null,
+      p_carrier_tenure: null,
+    });
   });
 
   /**
@@ -228,6 +233,10 @@ describe("acceptIntake — a submission from the public form", () => {
       form({ carrier: "Somebody Else Insurance", policyNumber: "XX-1", carrierTenure: "lt_1_year" }),
     );
 
-    expect(claimUpdate()).toEqual({ status: "under_review" });
+    expect(acceptArgs()).toMatchObject({
+      p_carrier: null,
+      p_policy_number: null,
+      p_carrier_tenure: null,
+    });
   });
 });

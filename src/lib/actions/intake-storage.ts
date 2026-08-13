@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { ValidatedUpload } from "@/lib/validators/files";
+import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 
 type Admin = SupabaseClient<Database>;
 
@@ -33,6 +34,9 @@ export async function uploadIntakeFiles(
 
   for (const upload of files) {
     const path = `intake/${intakeId}/${crypto.randomUUID()}.${upload.extension}`;
+    if (!(await registerCleanupIntent(admin, CLAIM_DOCS_BUCKET, path))) {
+      return { ok: false, uploaded: objects.map((object) => object.path) };
+    }
 
     const { error } = await admin.storage
       .from(CLAIM_DOCS_BUCKET)
@@ -63,17 +67,5 @@ export async function uploadIntakeFiles(
 /** Best-effort sweep of orphaned bytes. Never throws — the caller is already
  *  on an error path and a failed cleanup must not mask the original fault. */
 export async function removeObjects(admin: Admin, paths: string[]): Promise<void> {
-  if (paths.length === 0) return;
-
-  try {
-    const { error } = await admin.storage.from(CLAIM_DOCS_BUCKET).remove(paths);
-    if (error) {
-      console.error("[intake] orphaned object cleanup failed", {
-        paths,
-        message: error.message,
-      });
-    }
-  } catch (error) {
-    console.error("[intake] orphaned object cleanup threw", error);
-  }
+  await removeOrQueueExact(admin, CLAIM_DOCS_BUCKET, paths);
 }

@@ -120,6 +120,28 @@ describeDb("PandaDoc webhook pipeline", () => {
     });
   });
 
+  it("deduplicates an exact terminal replay but preserves distinct failure events", async () => {
+    const documentId = `pd-${randomUUID()}`;
+    const claim = await seedSent(documentId);
+    const first = signedDelivery(SHARED_KEY, [
+      stateChangedEvent(claim.id, documentId, "document.declined"),
+    ]);
+    const second = signedDelivery(SHARED_KEY, [
+      stateChangedEvent(claim.id, documentId, "document.declined"),
+    ]);
+
+    await post(first);
+    await post(first);
+    await post(second);
+
+    const { data: rows } = await admin.from("claim_events")
+      .select("external_event_key")
+      .eq("claim_id", claim.id)
+      .like("external_event_key", "%:terminal-failure-feed");
+    expect(rows).toHaveLength(2);
+    expect(new Set(rows?.map((row) => row.external_event_key)).size).toBe(2);
+  });
+
   it("processes two different event ids raised by one underlying change", async () => {
     const documentId = `pd-${randomUUID()}`;
     const claim = await seedSent(documentId);

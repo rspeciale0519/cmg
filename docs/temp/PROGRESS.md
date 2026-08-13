@@ -3,6 +3,31 @@
 Newest first. Detailed final evidence is in `GOAL_STATE.md`; owner acceptance
 and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 
+## 2026-08-13 — Stage 2 architecture converged
+
+- Verbatim final fresh-review verdicts: `NO MAJORS`, then `NO MAJORS`.
+- Repaired atomicity and durability across public PII submissions, intake
+  acceptance, required audits, invitation issue/accept/recovery, and failed
+  upload cleanup. Exact-path pre-upload intents now close process-crash and
+  compensation gaps without permitting a cleanup worker to delete a committed
+  document.
+- Hardened server-owned webhook dedupe keys and e-sign lease tokens. The admin
+  claims list now uses a fixed, token-free, AAL2/active-staff projection with
+  consistent search, exact filtered counts, and bounded keyset pagination.
+- Closed the final nullable-owner guard bypass: AAL1, deactivated, and
+  missing-profile callers are denied by a total predicate; an AAL2 active owner
+  remains the positive control.
+- Final checkpoint evidence: type-check passed; full lint passed; 71 Vitest
+  files / 718 tests passed; production build passed; clean reset applied 21
+  migrations through `20260815220000`; 31 pgTAP files / 915 assertions passed;
+  dependency audit found zero vulnerabilities; built-client secret-name scan
+  found zero hits.
+- Production-mode Chrome smoke passed for marketing, customer, partner, and
+  owner/AAL2 claims list. Enforcing nonce CSP and security headers were present;
+  no application console errors were observed. The only browser warning was
+  the existing non-blocking logo-image preload notice.
+- Nothing was pushed, merged, deployed, or connected to a hosted resource.
+
 ## 2026-08-13 — Stage 1 converged and checkpoint-ready
 
 - Final e-sign correction review verdict: `NO FINDINGS`. The converged design
@@ -42,3 +67,16 @@ and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 
 Historical progress before reconciliation is preserved at
 `archive/docs/temp/pre-mvp-final-reconciliation/PROGRESS.md`.
+
+## 2026-08-13 — Stage 2 architecture convergence round 1
+
+- Verbatim fresh-review verdict: `MAJORS REMAIN`.
+- The review found atomicity/durability defects in intake acceptance, public PII
+  submissions, failed-upload cleanup, required explicit audits, and invite
+  provisioning recovery. The separate authorization audit also found that
+  authenticated writes could supply internal external-event keys and that
+  claim reads exposed server-only e-sign lease tokens.
+- A single bounded repair packet is active with additive database boundaries,
+  fault/concurrency regressions, and the missing deactivated-staff/e-sign grant
+  matrix cells. A new critic will review the corrected scope; no finding is
+  waived.

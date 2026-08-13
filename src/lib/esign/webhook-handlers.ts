@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CLAIM_DOCS_BUCKET } from "@/lib/actions/intake-storage";
 import { staffInbox } from "@/lib/email/outbox";
+import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import type { OutboxEntry } from "@/lib/email/outbox";
 import type { Database } from "@/types/database";
 import {
@@ -181,7 +182,7 @@ export async function handleDocumentStateChanged(
       type: "system",
       visibility: "internal",
       body: `${headline}. The claim needs staff attention before representation can proceed.`,
-    });
+    }, `${context.effectId ?? context.eventId}:terminal-failure-feed`);
 
     await enqueue(admin, context.effectId ?? context.eventId, [
       {
@@ -245,6 +246,9 @@ export async function handlePdfReady(context: HandlerContext): Promise<EventOutc
 
   const effectId = context.effectId ?? context.eventId;
   const storagePath = `claims/${claim.id}/pandadoc-${effectId}.pdf`;
+  if (!(await registerCleanupIntent(admin, CLAIM_DOCS_BUCKET, storagePath, claim.id))) {
+    throw new Error("signed LOR cleanup intent could not be saved");
+  }
   const { error: uploadError } = await admin.storage
     .from(CLAIM_DOCS_BUCKET)
     .upload(storagePath, bytes, { contentType: "application/pdf", upsert: false });
@@ -266,11 +270,11 @@ export async function handlePdfReady(context: HandlerContext): Promise<EventOutc
     },
   );
   if (finalizeError || !finalized || typeof finalized !== "object" || Array.isArray(finalized)) {
-    if (!reusedObject) await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
+    if (!reusedObject) await removeOrQueueExact(admin, CLAIM_DOCS_BUCKET, [storagePath], claim.id);
     throw new Error(`signed LOR finalization failed: ${finalizeError?.message ?? "invalid result"}`);
   }
   if ((finalized as Record<string, unknown>).status !== "recorded") {
-    if (!reusedObject) await admin.storage.from(CLAIM_DOCS_BUCKET).remove([storagePath]);
+    if (!reusedObject) await removeOrQueueExact(admin, CLAIM_DOCS_BUCKET, [storagePath], claim.id);
     return "ignored";
   }
 

@@ -96,7 +96,7 @@ export function applyClaimFilters<Q extends ClaimQuery<Q>>(
   }
 
   if (filters.search) {
-    next = next.ilike("claim_search_text", `%${filters.search}%`);
+    next = next.ilike("search_text", `%${filters.search}%`);
   }
 
   return next;

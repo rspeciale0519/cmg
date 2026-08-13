@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { writeAudit } from "@/lib/audit";
+import { writeAuditStrict } from "@/lib/audit";
 import { requireStaff } from "@/lib/authz";
 import {
   isDocumentKind,
@@ -13,6 +13,7 @@ import {
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
 import type { Database } from "@/types/database";
 import {
@@ -146,6 +147,10 @@ export async function uploadClaimDocument(
     // UUID filename, never the uploaded one (spec §7.4). `documents_storage_path_matches_claim`
     // requires exactly this prefix.
     const path = `claims/${claimId}/${randomUUID()}.${upload.extension}`;
+    if (!(await registerCleanupIntent(admin, BUCKET, path, claimId))) {
+      await removeOrQueueExact(admin, BUCKET, stored, claimId);
+      return { status: "error", message: GENERIC_ERROR, values: typed };
+    }
 
     const { error: uploadError } = await admin.storage
       .from(BUCKET)
@@ -153,7 +158,7 @@ export async function uploadClaimDocument(
 
     if (uploadError) {
       console.error("[documents] object upload failed", uploadError.message);
-      await admin.storage.from(BUCKET).remove(stored);
+      await removeOrQueueExact(admin, BUCKET, stored, claimId);
       return { status: "error", message: GENERIC_ERROR, values: typed };
     }
 
@@ -177,7 +182,7 @@ export async function uploadClaimDocument(
 
   if (rowError || (inserted?.length ?? 0) !== rows.length) {
     if (rowError) console.error("[documents] row insert failed", rowError.message);
-    await admin.storage.from(BUCKET).remove(stored);
+    await removeOrQueueExact(admin, BUCKET, stored, claimId);
 
     // `documents_insert` refuses `lor_unsigned` / `lor_signed` to anyone who
     // is not the owner or the assigned adjuster: those two kinds arm the
@@ -260,7 +265,8 @@ export async function issueDocumentDownload(
   // Spec §7.5 / §7.7: every issuance is written to the trail. The path and the
   // TTL, never the signed URL — the URL is a bearer credential for the next
   // five minutes and `audit_log` is readable by every owner.
-  await writeAudit(admin, {
+  try {
+    await writeAuditStrict(admin, {
     actorId: session.userId,
     action: "document.signed_url_issued",
     entity: "documents",
@@ -275,7 +281,11 @@ export async function issueDocumentDownload(
       disposition: "attachment",
     },
     ip: inetOrNull(clientIpFromHeaders(await headers())),
-  });
+    });
+  } catch (error) {
+    console.error("[documents] signed URL audit failed", error);
+    return { status: "error", message: GENERIC_ERROR };
+  }
 
   return {
     status: "success",

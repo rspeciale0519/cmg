@@ -6,22 +6,21 @@ import { idleInviteIssueState, resilient } from "@/lib/actions/types";
 import { ActionFeedback, SubmitButton } from "./form-controls";
 
 /**
- * Re-issuing supersedes rather than accumulates: `issueInvite()` expires every
- * live invitation for the same address and claim before minting the new one, so
- * a link that was forwarded to the wrong inbox stops working the moment a
- * replacement is sent. The button says "Resend" once an invitation exists
- * because that is what the operator is doing, and the wording should not imply
- * the old link survives.
+ * Re-issuing supersedes an unreserved link. Once acceptance is in progress the
+ * database preserves that sole live token until it completes or expires, and
+ * this surface says so instead of offering a misleading replacement action.
  */
 export function ClaimantInvite({
   claimantId,
   hasAccount,
   hasPendingInvite,
+  acceptanceInProgress,
   canInvite,
 }: {
   claimantId: string;
   hasAccount: boolean;
   hasPendingInvite: boolean;
+  acceptanceInProgress: boolean;
   canInvite: boolean;
 }) {
   const [state, formAction] = useActionState(
@@ -52,10 +51,24 @@ export function ClaimantInvite({
     <div className="min-w-0">
       <form action={formAction}>
         <input type="hidden" name="claimantId" value={claimantId} />
-        <SubmitButton variant="secondary" pendingLabel="Sending…">
-          {hasPendingInvite ? "Resend invite" : "Send invite"}
+        <SubmitButton
+          variant="secondary"
+          pendingLabel="Sending…"
+          disabled={acceptanceInProgress}
+        >
+          {acceptanceInProgress
+            ? "Acceptance in progress"
+            : hasPendingInvite
+              ? "Resend invite"
+              : "Send invite"}
         </SubmitButton>
       </form>
+
+      {acceptanceInProgress ? (
+        <p className="mt-[6px] max-w-[38ch] text-[11.5px] leading-[1.5] text-ink/58">
+          Resend is unavailable until this link is accepted or expires.
+        </p>
+      ) : null}
 
       <ActionFeedback state={state} />
 

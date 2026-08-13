@@ -22,7 +22,7 @@ describeDb("issueInvite enqueue failure", () => {
     for (const actorId of actorIds) await admin.auth.admin.deleteUser(actorId);
   });
 
-  it("persists a recoverable invite and reports queued false when the real insert is refused", async () => {
+  it("commits invite, outbox and required audit together", async () => {
     const email = `invite-fault-${randomUUID()}@example.test`;
     emails.push(email);
     const { data: actor, error: actorError } = await admin.auth.admin.createUser({
@@ -36,25 +36,17 @@ describeDb("issueInvite enqueue failure", () => {
     if (!actor.user) return;
     actorIds.push(actor.user.id);
 
-    const result = await issueInvite(
-      {
+    const result = await issueInvite({
         email,
         role: "adjuster",
         invitedBy: actor.user.id,
         firstName: "Fault",
-      },
-      {
-        transformOutboxRows: (rows) => rows.map((row) => ({
-          ...row,
-          recipient_email: null as never,
-        })),
-      },
-    );
+      });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     ids.push(result.inviteId);
-    expect(result.queued).toBe(false);
+    expect(result.queued).toBe(true);
     expect(result.url).toContain(result.token);
 
     const { data: invite } = await admin
@@ -68,6 +60,9 @@ describeDb("issueInvite enqueue failure", () => {
       .from("notifications_outbox")
       .select("id")
       .eq("recipient_email", email);
-    expect(queued).toHaveLength(0);
+    expect(queued).toHaveLength(1);
+    const { data: audit } = await admin.from("audit_log").select("id")
+      .eq("action", "invite.issued").eq("entity_id", result.inviteId);
+    expect(audit).toHaveLength(1);
   });
 });

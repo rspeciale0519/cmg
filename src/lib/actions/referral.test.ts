@@ -56,6 +56,8 @@ const stub = vi.hoisted(() => {
     inserted: vi.fn(),
     deleted: vi.fn(),
     audited: vi.fn(),
+    transactionInput: null as Record<string, unknown> | null,
+    transactionFails: false,
   };
 });
 
@@ -87,6 +89,15 @@ vi.mock("@/lib/turnstile", () => ({
   verifyTurnstile: vi.fn(async () =>
     stub.turnstileOk ? { ok: true } : { ok: false, reason: "rejected" },
   ),
+}));
+
+vi.mock("./submission-transactions", () => ({
+  submitClaimUnit: vi.fn(async (_admin: unknown, input: Record<string, unknown>) => {
+    stub.transactionInput = input;
+    return stub.transactionFails
+      ? null
+      : { id: stub.CLAIM.id, claim_ref: stub.CLAIM.claim_ref, outbox_ids: [] };
+  }),
 }));
 
 /** The two writes, recorded rather than performed. */
@@ -172,7 +183,7 @@ function form(overrides: Record<string, string> = {}): FormData {
 }
 
 const claimInsert = () =>
-  stub.inserted.mock.calls.find(([table]) => table === "claims")?.[1] as
+  stub.transactionInput?.claim as
     | Record<string, unknown>
     | undefined;
 
@@ -186,6 +197,8 @@ beforeEach(() => {
   stub.claimantError = null;
   stub.outboxError = null;
   stub.profile = { first_name: "Tyler", last_name: "Boone" };
+  stub.transactionInput = null;
+  stub.transactionFails = false;
 });
 
 describe("referClaim — the four gates", () => {
@@ -195,7 +208,7 @@ describe("referClaim — the four gates", () => {
     const state = await referClaim(idleState, form());
 
     expect(state.status).toBe("error");
-    expect(stub.inserted).not.toHaveBeenCalled();
+    expect(stub.transactionInput).toBeNull();
     expect(state.values?.description).toBe(SUBMISSION.description);
     expect(state.values?.firstName).toBe("Dana");
   });
@@ -216,7 +229,7 @@ describe("referClaim — the four gates", () => {
 
     expect(state.status).toBe("error");
     expect(state.message).toContain("verify");
-    expect(stub.inserted).not.toHaveBeenCalled();
+    expect(stub.transactionInput).toBeNull();
     expect(state.values?.description).toBe(SUBMISSION.description);
   });
 
@@ -229,7 +242,7 @@ describe("referClaim — the four gates", () => {
     expect(state.status).toBe("error");
     expect(state.fieldErrors?.email).toBeDefined();
     expect(state.fieldErrors?.zip).toBeDefined();
-    expect(stub.inserted).not.toHaveBeenCalled();
+    expect(stub.transactionInput).toBeNull();
     // Untrimmed: the point is to hand back what is in the box, not what the
     // schema would have made of it.
     expect(state.values?.street2).toBe("  Unit 4  ");
@@ -244,7 +257,7 @@ describe("referClaim — the four gates", () => {
 
     expect(state.status).toBe("error");
     expect(state.message).toContain("active partner company");
-    expect(stub.inserted).not.toHaveBeenCalled();
+    expect(stub.transactionInput).toBeNull();
     expect(state.values?.firstName).toBe("Dana");
   });
 
@@ -254,7 +267,7 @@ describe("referClaim — the four gates", () => {
     const state = await referClaim(idleState, form());
 
     expect(state.status).toBe("error");
-    expect(stub.inserted).not.toHaveBeenCalled();
+    expect(stub.transactionInput).toBeNull();
   });
 });
 
@@ -266,8 +279,8 @@ describe("referClaim — what the claim row says", () => {
     expect(state.reference).toBe("CMG-2026-0104");
     expect(claimInsert()).toMatchObject({
       status: "new_intake",
-      partner_company_id: stub.COMPANY.id,
     });
+    expect(stub.transactionInput?.partnerCompanyId).toBe(stub.COMPANY.id);
   });
 
   it("credits the referral to the person submitting it and not to a form field", async () => {
@@ -312,9 +325,9 @@ describe("referClaim — what the claim row says", () => {
     expect(row.loss_time).toBeNull();
   });
 
-  it("leaves claim_ref blank for the trigger that generates it", async () => {
+  it("leaves claim_ref to the database trigger that generates it", async () => {
     expect(claimInsert).toBeDefined();
     await referClaim(idleState, form());
-    expect(claimInsert()!.claim_ref).toBe("");
+    expect(claimInsert()).not.toHaveProperty("claim_ref");
   });
 });

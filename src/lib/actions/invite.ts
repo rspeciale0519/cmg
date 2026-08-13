@@ -2,18 +2,15 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { writeAudit } from "@/lib/audit";
 import { hashInviteToken } from "@/lib/auth/invite-token";
 import { resendApiKey } from "@/lib/email/outbox";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { isAppRole, landingPathFor } from "@/lib/auth/roles";
 import { requireStaff } from "@/lib/authz";
 import {
-  burnInvite,
   findRedeemableInvite,
   issueInvite,
   restoreInvite,
-  stampInviteAcceptedBy,
 } from "@/lib/invites";
 import {
   checkRateLimit,
@@ -102,7 +99,13 @@ export async function issueClaimantInvite(
   });
 
   if (!result.ok) {
-    return { status: "error", message: GENERIC_ERROR };
+    return {
+      status: "error",
+      message:
+        result.reason === "acceptance_in_progress"
+          ? "This invitation is being accepted and cannot be resent yet. Try again after the current link expires."
+          : GENERIC_ERROR,
+    };
   }
 
   /* With no RESEND_API_KEY the outbox row is queued and nothing is delivered —
@@ -174,18 +177,23 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
     };
   }
 
-  // Burn before creating. See `burnInvite` — this ordering can waste an
-  // invitation, which `restoreInvite` undoes, while the other ordering can mint
-  // a second account from one invitation, which nothing undoes.
-  if (!(await burnInvite(admin, invite.id, null))) {
+  const attemptId = crypto.randomUUID();
+  const { data: reservation, error: reserveError } = await admin.rpc(
+    "begin_invite_acceptance",
+    { p_token_hash: hashInviteToken(token), p_attempt_id: attemptId },
+  );
+  if (reserveError || !reservation || typeof reservation !== "object" || Array.isArray(reservation)) {
     return { kind: "failed", state: { status: "error", message: INVITE_GENERIC } };
   }
+  const reservedAttempt = typeof reservation.attempt_id === "string" ? reservation.attempt_id : null;
+  if (!reservedAttempt) return { kind: "failed", state: { status: "error", message: INVITE_GENERIC } };
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email: invite.email,
     password,
     email_confirm: true,
     user_metadata: { first_name: firstName, last_name: lastName },
+    app_metadata: { cmg_invite_id: invite.id, cmg_attempt_id: reservedAttempt },
   });
 
   if (createError && createError.code !== "email_exists") {
@@ -218,8 +226,6 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
     await restoreInvite(admin, invite.id);
     return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
   }
-
-  await stampInviteAcceptedBy(admin, invite.id, userId);
 
   const isNewAccount = Boolean(created?.user);
 
@@ -254,23 +260,7 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
    */
   let keptExistingRole: string | null = null;
 
-  if (isNewAccount) {
-    const { error: profileError } = await admin
-      .from("profiles")
-      .update({
-        role: invite.role,
-        partner_company_id: invite.partner_company_id,
-        first_name: firstName,
-        last_name: lastName,
-      })
-      .eq("id", userId);
-
-    if (profileError) {
-      console.error("[invite] role assignment failed", profileError.message);
-      await restoreInvite(admin, invite.id);
-      return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
-    }
-  } else {
+  if (!isNewAccount) {
     const { data: existing } = await admin
       .from("profiles")
       .select("role")
@@ -284,38 +274,26 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
       existing && existing.role !== invite.role ? existing.role : null;
   }
 
-  if (invite.role === "customer" && invite.claim_id) {
-    const { error: linkError } = await admin
-      .from("claimants")
-      .update({ user_id: userId })
-      .eq("claim_id", invite.claim_id)
-      .eq("email", invite.email);
-
-    if (linkError) {
-      console.error("[invite] claimant link failed", linkError.message);
-      await restoreInvite(admin, invite.id);
-      return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
-    }
-  }
-
-  await writeAudit(admin, {
-    actorId: userId,
-    action: "invite.accepted",
-    entity: "invites",
-    entityId: invite.id,
-    meta: {
-      email: invite.email,
-      role: invite.role,
-      claim_id: invite.claim_id,
-      partner_company_id: invite.partner_company_id,
-      account: isNewAccount ? "created" : "existing",
-      // Says plainly, in the trail an owner reads, that the invitation was
-      // redeemed and the account was deliberately left as it was.
-      profile_applied: isNewAccount,
-      ...(keptExistingRole ? { kept_existing_role: keptExistingRole } : {}),
+  const { data: finalized, error: finalizeError } = await admin.rpc(
+    "finalize_invite_acceptance",
+    {
+      p_invite_id: invite.id,
+      p_attempt_id: reservedAttempt,
+      p_user_id: userId,
+      p_first_name: firstName,
+      p_last_name: lastName,
+      p_ip: inetOrNull(ip),
     },
-    ip: inetOrNull(ip),
-  });
+  );
+  if (finalizeError || !finalized || typeof finalized !== "object" || Array.isArray(finalized)) {
+    console.error("[invite] atomic acceptance finalization failed", finalizeError?.message);
+    return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
+  }
+  if (finalized.state === "blocked_existing") {
+    return { kind: "failed", state: { status: "error", message: INVITE_GENERIC } };
+  }
+  const effectiveRole = isAppRole(finalized.effective_role) ? finalized.effective_role : invite.role;
+  const inviteCreatedAccount = finalized.account_origin === "invite_created";
 
   if (!isNewAccount) {
     /* An existing account keeps its own role, so it keeps its own landing
@@ -324,12 +302,12 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
     const kept = isAppRole(keptExistingRole) ? keptExistingRole : null;
     return {
       kind: "existing_account",
-      destination: landingPathFor(kept ?? invite.role),
+      destination: landingPathFor(effectiveRole),
       notice: kept ? "invite-linked" : "invite-accepted",
     };
   }
 
-  const destination = landingPathFor(invite.role);
+  const destination = landingPathFor(effectiveRole);
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -343,7 +321,9 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
     return { kind: "existing_account", destination };
   }
 
-  return { kind: "signed_in", destination };
+  return inviteCreatedAccount
+    ? { kind: "signed_in", destination }
+    : { kind: "existing_account", destination };
 }
 
 export async function acceptInvite(

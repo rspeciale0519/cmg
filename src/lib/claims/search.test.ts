@@ -135,7 +135,7 @@ describe("applyClaimFilters", () => {
       "eq:status:filed",
       "is:assigned_adjuster_id:null",
       "eq:partner_company_id:partner-id",
-      "ilike:claim_search_text:%Bell%",
+      "ilike:search_text:%Bell%",
     ]);
   });
 });
