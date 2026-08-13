@@ -1,7 +1,7 @@
 # CMG launch and browser-test handoff
 
-Last reconciled: 2026-08-13 on `feature/claims-platform`; HEAD `1d3c30d`
-contains simple release mode, CI fixes, and the launch-preparation evidence.
+Last reconciled: 2026-08-13 on `feature/claims-platform` after the new Vercel
+project and hosted form checks.
 
 The application is feature-complete for the agreed functional scope and is
 ready for owner acceptance testing. The first release can use `SITE_MODE=simple`
@@ -9,10 +9,9 @@ to expose only the marketing site and public forms while keeping required email
 and file-cleanup operations active. Architecture, authorization, per-role craft,
 all-surface cohesion, enforcing CSP, and comparable mobile Lighthouse gates have
 converged locally. Hosted owner steps remain. The feature branch is pushed and
-PR #1 is open. The production
-Supabase schema is applied, but no production users or claims exist. The
-authoritative
-production setup sequence is in the root
+PR #1 is open. The new Vercel Preview works in simple mode. Its hosted Supabase
+database accepted one labeled contact test and one labeled intake test. The
+authoritative production setup sequence is in the root
 [`README.md`](../../README.md#production-launch-runbook).
 
 ## Verified local state
@@ -35,6 +34,10 @@ production setup sequence is in the root
 - Chrome testing passed at exact desktop and 390px widths for marketing,
   customer, partner, and staff surfaces. The production server remains at
   `http://localhost:3011`; the final reset requires local staff MFA re-enrollment.
+- Vercel Preview `cmgps-5o8gs4nr1-robs-projects-c72886ba.vercel.app` is Ready.
+  The hosted home, contact, and intake pages work. Simple mode blocks `/admin`.
+- Hosted contact and full intake submissions passed. The intake reference is
+  `CMG-2026-0001` and uses clear release-test data.
 
 ## Safe local test accounts
 
@@ -92,11 +95,10 @@ authentic CMG assets rather than generated or misleading stock photography.
 
 ## Material limitations visible in the local MVP
 
-- Public forms use Cloudflare's visible test widget and have no real bot
+- Public forms use Cloudflare's test keys and have no real bot
   protection until production Turnstile credentials are installed. This is a
   launch blocker, not deferred engineering work.
-- Email remains queued/manual-link capable without Resend credentials and the
-  deployed cron schedule.
+- Email remains queued/manual-link capable without Resend credentials.
 - Electronic LOR sending remains unavailable without a real PandaDoc account,
   templates, key, and webhook; the secured manual-signing/upload workflow works.
 - Local demo data is not production data, hosted backups are not configured,
@@ -110,20 +112,18 @@ authentic CMG assets rather than generated or misleading stock photography.
 
 Follow the dependency-ordered runbook in the README. In short:
 
-1. Review PR #1 and merge the feature branch into `develop` after the Vercel
-   access step is complete and the required checks remain green.
-2. The hosted Supabase schema is already applied. Bootstrap the first owner,
-   enable TOTP/leaked-password protection, and choose backups/PITR appropriate
-   for claim records.
-3. Give GitHub user `rspeciale0519` access to the CMG Vercel project. Import or
-   connect the app, set every environment variable from `.env.example`, set
-   `SITE_MODE=simple` for the first release, and confirm
-   both cron schedules from `vercel.json`. Public-form templates remain eligible
-   for delivery; private platform messages remain queued until
-   `SITE_MODE=platform` is selected.
+1. Review PR #1 and merge the feature branch into `develop` when the final
+   production release is approved. Confirm that the Git push starts Vercel.
+2. Grant the available Supabase CLI account access to the hosted CMG project.
+   Verify the migration list. Bootstrap the first owner if needed, enable
+   TOTP/leaked-password protection, and choose backups/PITR for claim records.
+3. Keep Vercel project `cmgps` connected to `rspeciale0519/cmg`. Keep
+   `SITE_MODE=simple` for the first release. The Next.js preset and base
+   environment values are already set. Confirm both cron schedules from
+   `vercel.json` after the production deployment.
 4. Verify the Resend domain/DNS and sender/inbox addresses.
 5. Create real production Turnstile keys for the deployed hostnames.
-6. Configure PandaDoc or formally accept the manual-signing launch mode.
+6. Configure PandaDoc with [`PANDADOC_SETUP.md`](PANDADOC_SETUP.md).
 7. Point the final domain/DNS and validate TLS.
 8. Supply authentic photos and approve statistics, testimonial, legal copy,
    license display, retention position, and LOR wording.
@@ -133,11 +133,16 @@ Follow the dependency-ordered runbook in the README. In short:
 ## Exact Git and hosted state at handoff
 
 - Branch: `feature/claims-platform`.
-- The branch is pushed through commit `1d3c30d`. PR #1 is open into `develop`.
-- GitHub `verify` and `database` checks pass. The Vercel check is blocked because
-  `rspeciale0519` does not have access to the CMG Vercel project.
+- The branch is pushed through commit `b5550b4`. PR #1 is open into `develop`.
+- Local verification passes: type-check, lint, 731 Vitest tests, 915 pgTAP
+  assertions, and production build.
+- Vercel project `cmgps` is connected to `rspeciale0519/cmg`. Its framework is
+  Next.js. The current Preview is Ready and its simple-mode forms work.
 - Stage checkpoints: `7a21209` (Stage 1), `9419994` (Stage 2), `bb958a0`
   (Stage 3), and `2be7e6e` (Stage 4). Documentation handoffs are separate local commits.
-- The production Supabase schema is applied through
-  `20260815220000_accept_intake_owner_guard.sql`. Production has no profiles or
-  claims. No Vercel environment variables or deployment exist yet.
+- Vercel has the base simple-mode values. It does not have Resend, PandaDoc API
+  and template values, or real Turnstile keys.
+- The Supabase CLI credentials available here do not list the hosted CMG
+  project. `.env.local` points to the local database. A hosted submission proves
+  that Vercel has a working hosted connection, but the production migration list
+  cannot be audited until Supabase access is granted.

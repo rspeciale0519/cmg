@@ -6,7 +6,7 @@ repository-only work. There is no deferred material application defect.
 
 ## Launch-blocking owner actions
 
-### 1. Hosted Supabase and production data controls
+### 1. Hosted Supabase access and production data controls
 
 - **Impact:** production authentication, claims, documents, RLS, and recovery
   cannot operate until the first owner and production controls are configured.
@@ -14,31 +14,33 @@ repository-only work. There is no deferred material application defect.
   policy, and production-user identity require the owner's account and decision.
 - **Safe fallback:** keep acceptance testing on the disposable local stack; do
   not expose it publicly.
-- **Current state:** the production schema is already applied through
-  `20260815220000_accept_intake_owner_guard.sql`. The database has no profiles
-  or claims.
-- **Steps:** create the first Auth user and matching owner profile; enroll TOTP;
-  enable leaked-password protection; confirm private
-  `claim-docs`; choose backups/PITR and rehearse restore.
+- **Current state:** the Vercel Preview uses a hosted Supabase database. A real
+  contact test and a real intake test both passed. The intake created the clearly
+  labeled test claim `CMG-2026-0001`. The Supabase CLI account available here
+  does not list this project, and `.env.local` contains only the local test URL.
+- **Steps:** grant the current Supabase CLI account access to the CMG project or
+  provide the project reference through the normal Supabase link process. Then
+  verify the migration list, create the first owner if needed, enroll TOTP,
+  enable leaked-password protection, confirm private `claim-docs`, and choose
+  backups/PITR.
 - **Validation:** migration version matches `20260815220000`; demo accounts are
   absent; owner reaches `/admin` only after AAL2; cross-role RLS smoke passes;
   upload/download and restore tests succeed.
 - **Launch blocking:** yes.
 
-### 2. Vercel production project, secrets, and publication authorization
+### 2. Vercel production publication
 
-- **Impact:** the Vercel project has no environment variables or deployment.
-  Its GitHub check cannot run until the repository author has project access.
-- **Why owner-only:** importing the repository, selecting the production branch,
-  storing credentials, and approving publication are external account actions.
-- **Safe fallback:** continue local production-mode testing at port 3011.
-- **Current state:** feature branch `1d3c30d` is pushed and PR #1 is open.
-  GitHub `verify` and `database` checks pass. Vercel reports that
-  `rspeciale0519` must have access to the CMG project.
-- **Steps:** invite or grant `rspeciale0519` access in Vercel; merge PR #1 when
-  approved; set every variable from `.env.example` in the correct Vercel
-  environments; set `SITE_MODE=simple` and `NEXT_PUBLIC_SITE_URL`; deploy only after
-  the other blockers below are resolved.
+- **Impact:** the Preview works, but the verified branch is not yet the approved
+  production release.
+- **Why owner-only:** the final merge and public release are business decisions.
+- **Safe fallback:** use the working Vercel Preview for private acceptance.
+- **Current state:** project `cmgps` belongs to `rspeciale0519`, is linked to
+  `rspeciale0519/cmg`, uses the Next.js preset, and has a Ready Preview.
+  `SITE_MODE=simple` is set. The home, contact, and intake pages return 200.
+  `/admin` redirects to `/platform-disabled`. Both hosted public forms passed.
+- **Steps:** review PR #1, keep `develop` as the production branch, merge when
+  approved, and confirm that the Git push creates the expected Vercel
+  deployment. Promote only after the other launch blockers are complete.
 - **Validation:** Vercel build passes; `/`, `/contact`, and `/file-a-claim` are
   200; protected routes redirect; no secret appears in client assets or logs.
 - **Launch blocking:** yes.
@@ -107,9 +109,10 @@ repository-only work. There is no deferred material application defect.
   require the owner's PandaDoc account.
 - **Fallback:** the secured manual-signing and signed-LOR upload workflow is
   complete and visible in Admin Settings.
-- **Steps/validation:** configure the API key, shared webhook key, one-/two-signer
-  template UUIDs, exact Homeowner roles, and 11 tokens; exercise sent, viewed,
-  failure/recovery, decline, completion, and PDF filing.
+- **Steps/validation:** follow [`PANDADOC_SETUP.md`](PANDADOC_SETUP.md). Configure
+  the API key, shared webhook key, one-/two-signer template UUIDs, exact
+  Homeowner roles, and 11 tokens. Test sent, viewed, failure/recovery, decline,
+  completion, replay, and PDF filing.
 - **Launch blocking:** no, if CMG explicitly accepts manual signing.
 
 ### Authentic photography
@@ -126,9 +129,9 @@ repository-only work. There is no deferred material application defect.
 ### Repository promotion
 
 - **Impact:** the verified branch is not merged or deployed.
-- **Why owner-only:** merge and deploy authority, plus Vercel project access,
-  are external account actions.
+- **Why owner-only:** final merge and public release approval are business
+  decisions. Git push and Vercel access are now available.
 - **Fallback:** preserve the local branch and commits.
-- **Steps/validation:** review PR #1 and the passing GitHub checks; grant Vercel
-  access; merge into `develop`; verify remote commit IDs and the hosted preview.
+- **Steps/validation:** review PR #1 and the passing GitHub checks; merge into
+  `develop`; verify the remote commit and the automatic Vercel deployment.
 - **Launch blocking:** yes for publication, not for local acceptance.

@@ -77,3 +77,6 @@ Each phase ends with: roadmap updated → checkpoint commit on `feature/claims-p
 - [x] `vercel.json` with outbox and storage-cleanup schedules + deploy runbook
 - [x] `docs/temp/HANDOFF.md` reconciled with browser checklist, limitations, and owner steps
 - [x] `docs/temp/BLOCKERS.md` contains owner-only launch actions and decisions
+- [x] New `cmgps` Vercel project connected to `rspeciale0519/cmg` with Next.js preset
+- [x] Hosted simple-mode contact and full intake submissions verified
+- [x] PandaDoc account/template/webhook setup sheet written
