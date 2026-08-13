@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
-import { afterAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -11,10 +11,14 @@ const available = await localSupabaseAvailable();
 const describeDb = available ? describe : describe.skip;
 
 describeDb("issueInvite enqueue failure", () => {
-  const admin = testAdminClient();
+  let admin: ReturnType<typeof testAdminClient>;
   const ids: string[] = [];
   const emails: string[] = [];
   const actorIds: string[] = [];
+
+  beforeAll(() => {
+    admin = testAdminClient();
+  });
 
   afterAll(async () => {
     if (ids.length > 0) await admin.from("invites").delete().in("id", ids);
