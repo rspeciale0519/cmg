@@ -1,7 +1,7 @@
 # CMG launch and browser-test handoff
 
-Last reconciled: 2026-08-13 on `feature/claims-platform` at Stage 3 checkpoint
-`bb958a0`; the final Stage 4 documentation checkpoint follows this file.
+Last reconciled: 2026-08-13 on `feature/claims-platform`; Stage 4 checkpoint
+`2be7e6e` contains the launch-preparation evidence and owner runbook.
 
 The application is feature-complete for the agreed functional scope and is
 ready for owner acceptance testing. Architecture, authorization, per-role craft,
@@ -125,7 +125,7 @@ Follow the dependency-ordered runbook in the README. In short:
 
 - Branch: `feature/claims-platform`.
 - Stage checkpoints: `7a21209` (Stage 1), `9419994` (Stage 2), `bb958a0`
-  (Stage 3). Documentation handoffs are separate local commits.
+  (Stage 3), and `2be7e6e` (Stage 4). Documentation handoffs are separate local commits.
 - Before the final Stage 4 checkpoint, the branch was five commits ahead of
   `origin/feature/claims-platform` and zero behind.
 - Nothing was pushed, merged, deployed, or opened as a PR.

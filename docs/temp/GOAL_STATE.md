@@ -2,22 +2,22 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `bb958a0` (Stage 3 checkpoint; Stage 4 checkpoint pending)
+HEAD: `2be7e6e` (Stage 4 checkpoint)
 
 ## Current position
 
 - Stage 1 — Functional and backend completion: **complete**
 - Stage 2 — Architecture convergence: **complete; two consecutive `NO MAJORS` rounds**
 - Stage 3 — Craft, cohesion, CSP, and performance: **complete; checkpoint `bb958a0`**
-- Stage 4 — Launch preparation: **complete locally; checkpoint pending**
+- Stage 4 — Launch preparation: **complete; checkpoint `2be7e6e`**
 - Stage 1 final fresh correction verdict: `NO FINDINGS`.
 - Review sequence was evidence-driven: initial `MAJORS REMAIN` found the
   PandaDoc lease race; successive fresh reviews caught post-send unlock,
   reconciliation liveness/lifecycle, failure-effect, per-attempt dedupe, and
   line-cap defects. Each was fixed with regressions. The final reviewer found
   no remaining material or minor defect in the corrected scope.
-- Next exact action: create the final Stage 4 documentation checkpoint, confirm
-  the clean local Git state, then report owner-only publication/launch actions.
+- Next exact action: owner review and, only with explicit authorization,
+  publication/launch actions from `HANDOFF.md` and `BLOCKERS.md`.
 - Supabase was reset after the latest schema change: **yes** — all 21 migrations
   through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
 - Staff MFA after the latest reset: **must be re-enrolled locally** before the

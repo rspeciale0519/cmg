@@ -19,6 +19,7 @@ and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
   secret-name hits, source-size cap, and diff check.
 - Nothing was pushed, merged, deployed, purchased, or created in a hosted
   service. Remaining work is owner-controlled and enumerated in BLOCKERS.
+- Stage 4 checkpoint: `2be7e6e` (`docs(stage-4): finalize launch preparation`).
 
 ## 2026-08-13 — Stage 3 craft and cohesion converged
 

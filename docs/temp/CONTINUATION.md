@@ -3,8 +3,7 @@
 Last reconciled: 2026-08-13 on `feature/claims-platform`.
 
 Stages 1–4 are complete locally. Checkpoints are `7a21209` (Stage 1), `9419994`
-(Stage 2), and `bb958a0` (Stage 3); the final Stage 4 documentation checkpoint
-is the only remaining local action when this paragraph is read. Do not restart
+(Stage 2), `bb958a0` (Stage 3), and `2be7e6e` (Stage 4). Do not restart
 completed packets. The archived pre-reconciliation continuation is at
 `archive/docs/temp/pre-mvp-final-reconciliation/CONTINUATION.md`.
 
@@ -34,10 +33,9 @@ differs, diagnose the new failure rather than weakening the assertion.
 
 ## Next required work
 
-1. Create/confirm the final Stage 4 documentation checkpoint.
-2. Owner acceptance may continue, and any material defect it finds must be fixed
+1. Owner acceptance may continue, and any material defect it finds must be fixed
    without weakening auth/RLS, data integrity, or security.
-3. After explicit authorization only, publish or deploy through the project Git
+2. After explicit authorization only, publish or deploy through the project Git
    and launch workflows described in README/HANDOFF/BLOCKERS.
 
 Do not create paid/hosted resources or publish repository changes without owner
