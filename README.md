@@ -65,6 +65,10 @@ deploys automatically. Complete these steps in order:
    `claim-docs` bucket, and enable backups/PITR appropriate to the plan. Verify a
    restore procedure before accepting live claims.
 5. Create a Vercel project and set every required variable from `.env.example`.
+   Set `SITE_MODE=simple` for the first release. This keeps the marketing site,
+   public forms, email delivery, and file cleanup available while the private
+   platform stays closed. Use `SITE_MODE=platform` only after CMG buys and
+   approves the platform features.
    Keep `SUPABASE_SECRET_KEY`, `CRON_SECRET`, Resend, PandaDoc, and Turnstile secrets
    server-only. `vercel.json` schedules outbox delivery every five minutes and storage
    cleanup hourly; Vercel sends `CRON_SECRET` to both protected routes.

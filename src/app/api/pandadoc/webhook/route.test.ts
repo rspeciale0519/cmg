@@ -39,6 +39,7 @@ describeDb("POST /api/pandadoc/webhook", () => {
   const claims: Array<{ id: string; claimRef: string }> = [];
   const eventIds: string[] = [];
   let previousKey: string | undefined;
+  let previousMode: string | undefined;
 
   it("exports the bounded platform duration pinned by the timing invariant", () => {
     expect(maxDuration).toBe(WEBHOOK_ROUTE_MAX_DURATION_SECONDS);
@@ -58,7 +59,9 @@ describeDb("POST /api/pandadoc/webhook", () => {
 
   beforeAll(async () => {
     previousKey = process.env.PANDADOC_WEBHOOK_SHARED_KEY;
+    previousMode = process.env.SITE_MODE;
     process.env.PANDADOC_WEBHOOK_SHARED_KEY = SHARED_KEY;
+    process.env.SITE_MODE = "platform";
     process.env.RESEND_API_KEY = "";
     admin = support.testAdminClient();
   });
@@ -66,6 +69,8 @@ describeDb("POST /api/pandadoc/webhook", () => {
   afterAll(async () => {
     if (previousKey === undefined) delete process.env.PANDADOC_WEBHOOK_SHARED_KEY;
     else process.env.PANDADOC_WEBHOOK_SHARED_KEY = previousKey;
+    if (previousMode === undefined) delete process.env.SITE_MODE;
+    else process.env.SITE_MODE = previousMode;
 
     for (const claim of claims) {
       await support.cleanupClaim(admin, claim.id, claim.claimRef);

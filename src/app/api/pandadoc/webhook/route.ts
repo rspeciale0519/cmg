@@ -4,6 +4,7 @@ import {
   WEBHOOK_SIGNATURE_PARAM,
 } from "@/lib/esign/webhook";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import { isSimpleMode } from "@/lib/site-mode";
 
 /**
  * PandaDoc webhook receiver. Node runtime because verification is
@@ -21,6 +22,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 export async function POST(request: Request): Promise<Response> {
+  if (isSimpleMode()) {
+    return Response.json(
+      { ok: false, reason: "platform_disabled" },
+      { status: 404 },
+    );
+  }
+
   const rawBody = await request.text();
 
   const outcome = await processPandaDocWebhook({

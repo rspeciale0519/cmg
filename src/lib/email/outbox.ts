@@ -12,6 +12,10 @@ import {
   type SettleInput,
 } from "./delivery";
 import type { NotificationMessage } from "./render";
+import {
+  isSimpleMode,
+  PUBLIC_FORM_TEMPLATES,
+} from "@/lib/site-mode";
 
 type Admin = SupabaseClient<Database>;
 
@@ -157,18 +161,38 @@ export async function resendSender(): Promise<SendMessage | null> {
 export async function dispatchOutbox(admin: Admin, ids: string[]): Promise<void> {
   if (ids.length === 0) return;
 
+  let allowedIds = ids;
+  if (isSimpleMode()) {
+    const { data, error } = await admin
+      .from("notifications_outbox")
+      .select("id, template")
+      .in("id", ids);
+
+    if (error) {
+      console.error("[outbox] simple-mode template check failed", error.message);
+      return;
+    }
+
+    const allowed = new Set<string>(PUBLIC_FORM_TEMPLATES);
+    allowedIds = (data ?? [])
+      .filter((row) => allowed.has(row.template))
+      .map((row) => row.id);
+  }
+
+  if (allowedIds.length === 0) return;
+
   const send = await resendSender();
   if (!send) {
     console.info(
-      `[outbox] RESEND_API_KEY not set — ${ids.length} notification(s) queued, not sent`,
+      `[outbox] RESEND_API_KEY not set — ${allowedIds.length} notification(s) queued, not sent`,
     );
     return;
   }
 
   try {
     await deliverClaimed(supabaseOutboxStore(admin), send, {
-      limit: ids.length,
-      ids,
+      limit: allowedIds.length,
+      ids: allowedIds,
     });
   } catch (cause) {
     console.error("[outbox] immediate dispatch failed", cause);
@@ -183,8 +207,31 @@ export async function sweepOutbox(
   send: SendMessage,
   limit: number,
   concurrency = 1,
+  templates?: readonly string[],
 ): Promise<DeliveryReport> {
-  return deliverClaimed(supabaseOutboxStore(admin), send, { limit, concurrency });
+  let ids: string[] | undefined;
+  if (templates) {
+    const { data, error } = await admin
+      .from("notifications_outbox")
+      .select("id")
+      .in("status", ["pending", "failed"])
+      .in("template", [...templates])
+      .lte("next_attempt_at", new Date().toISOString())
+      .order("next_attempt_at", { ascending: true })
+      .limit(Math.max(limit, 0));
+
+    if (error) {
+      throw new Error(`outbox simple-mode filter failed: ${error.message}`);
+    }
+
+    ids = (data ?? []).map((row) => row.id);
+  }
+
+  return deliverClaimed(supabaseOutboxStore(admin), send, {
+    limit,
+    concurrency,
+    ids,
+  });
 }
 
 /**
@@ -197,11 +244,18 @@ export async function sweepOutbox(
  * an operator reading `owed: 12, claimed: 0` needs that to mean "twelve are
  * waiting, none were ready this minute" rather than "the sweeper is broken".
  */
-export async function countOutboxOwed(admin: Admin): Promise<number | null> {
-  const { count, error } = await admin
+export async function countOutboxOwed(
+  admin: Admin,
+  templates?: readonly string[],
+): Promise<number | null> {
+  let query = admin
     .from("notifications_outbox")
     .select("id", { count: "exact", head: true })
     .in("status", ["pending", "failed"]);
+
+  if (templates) query = query.in("template", [...templates]);
+
+  const { count, error } = await query;
 
   if (error) {
     console.error("[outbox] owed count failed", error.message);

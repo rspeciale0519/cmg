@@ -1,6 +1,7 @@
 import { authorizeCronRequest } from "@/lib/cron/auth";
 import { countOutboxOwed, resendSender, sweepOutbox } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSimpleMode, PUBLIC_FORM_TEMPLATES } from "@/lib/site-mode";
 
 /**
  * The outbox sweeper (spec §6).
@@ -53,10 +54,11 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const admin = createAdminClient();
+  const templates = isSimpleMode() ? PUBLIC_FORM_TEMPLATES : undefined;
 
   /* Read before claiming, so the number reported is the backlog this sweep
      found rather than the backlog it left behind. */
-  const owed = await countOutboxOwed(admin);
+  const owed = await countOutboxOwed(admin, templates);
 
   const send = await resendSender();
 
@@ -82,7 +84,13 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  const report = await sweepOutbox(admin, send, BATCH_LIMIT, DELIVERY_CONCURRENCY);
+  const report = await sweepOutbox(
+    admin,
+    send,
+    BATCH_LIMIT,
+    DELIVERY_CONCURRENCY,
+    templates,
+  );
 
   return Response.json({
     ok: true,

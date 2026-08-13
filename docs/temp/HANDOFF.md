@@ -4,7 +4,9 @@ Last reconciled: 2026-08-13 on `feature/claims-platform`; Stage 4 checkpoint
 `2be7e6e` contains the launch-preparation evidence and owner runbook.
 
 The application is feature-complete for the agreed functional scope and is
-ready for owner acceptance testing. Architecture, authorization, per-role craft,
+ready for owner acceptance testing. The first release can use `SITE_MODE=simple`
+to expose only the marketing site and public forms while keeping required email
+and file-cleanup operations active. Architecture, authorization, per-role craft,
 all-surface cohesion, enforcing CSP, and comparable mobile Lighthouse gates have
 converged locally. Final launch-document reconciliation and hosted owner steps
 remain. It has not been pushed,
@@ -111,7 +113,10 @@ Follow the dependency-ordered runbook in the README. In short:
    bootstrap the first owner, enable TOTP/leaked-password protection, and choose
    backups/PITR appropriate for claim records.
 3. Import the app into Vercel, set every environment variable from
-   `.env.example`, and confirm both cron schedules from `vercel.json`.
+   `.env.example`, set `SITE_MODE=simple` for the first release, and confirm
+   both cron schedules from `vercel.json`. Public-form templates remain eligible
+   for delivery; private platform messages remain queued until
+   `SITE_MODE=platform` is selected.
 4. Verify the Resend domain/DNS and sender/inbox addresses.
 5. Create real production Turnstile keys for the deployed hostnames.
 6. Configure PandaDoc or formally accept the manual-signing launch mode.

@@ -9,6 +9,11 @@ import {
   type AppRole,
 } from "@/lib/auth/roles";
 import type { Database } from "@/types/database";
+import {
+  isPlatformPath,
+  isSimpleMode,
+  PLATFORM_DISABLED_PATH,
+} from "@/lib/site-mode";
 
 /**
  * Paths the proxy runs over but never gates. `/api/pandadoc/webhook` is on this
@@ -50,6 +55,15 @@ function redirectPreservingSession(
 }
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
+  const pathname = request.nextUrl.pathname;
+
+  if (isSimpleMode() && isPlatformPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = PLATFORM_DISABLED_PATH;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -79,8 +93,6 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const { data } = await supabase.auth.getClaims();
 
   const claims = data?.claims ?? null;
-  const pathname = request.nextUrl.pathname;
-
   if (isUngated(pathname)) return supabaseResponse;
 
   const surface = surfaceForPath(pathname);
