@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
-HEAD: `2be7e6e` (Stage 4 checkpoint)
+HEAD: `1d3c30d` (simple release mode and CI fixes)
 
 ## Current position
 
@@ -18,6 +18,11 @@ HEAD: `2be7e6e` (Stage 4 checkpoint)
   no remaining material or minor defect in the corrected scope.
 - Next exact action: owner review and, only with explicit authorization,
   publication/launch actions from `HANDOFF.md` and `BLOCKERS.md`.
+- Simple release mode is implemented. Set `SITE_MODE=simple` in Vercel for the
+  first release. It keeps marketing pages, public forms, public-form email, and
+  storage cleanup available. Private platform routes remain closed.
+- PR #1 is open from `feature/claims-platform` to `develop`. GitHub `verify`
+  and `database` checks pass. The Vercel check needs GitHub project access.
 - Supabase was reset after the latest schema change: **yes** — all 21 migrations
   through `20260815220000_accept_intake_owner_guard.sql` replayed cleanly.
 - Staff MFA after the latest reset: **must be re-enrolled locally** before the
@@ -125,7 +130,10 @@ authentic photos, business/legal copy approval, and push/merge/deploy authority.
 These do not represent a deferred repository defect; they begin only after the
 final local checkpoint and explicit owner authorization.
 
-## External-state guardrail
+## External-state status
 
-No push, merge, deploy, PR, hosted resource, paid resource, or DNS change is
-authorized. Never delete files; archive superseded artifacts.
+The feature branch is pushed and PR #1 is open. The production Supabase schema
+is applied, but the production database has no application users or claims.
+The Vercel project has no environment variables and no deployment. Vercel must
+grant `rspeciale0519` project access before its GitHub check can pass. Never
+delete files; archive superseded artifacts.

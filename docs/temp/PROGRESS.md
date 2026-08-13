@@ -3,6 +3,22 @@
 Newest first. Detailed final evidence is in `GOAL_STATE.md`; owner acceptance
 and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 
+## 2026-08-13 — Simple release mode and CI complete
+
+- Added `SITE_MODE=simple`. The first release shows the marketing pages and
+  public claim/contact forms. Private platform routes redirect to the disabled
+  page. Public form email and storage cleanup jobs stay available.
+- Pushed `feature/claims-platform` through commit `1d3c30d` and opened PR #1
+  into `develop`.
+- GitHub `verify` and `database` checks pass. The CodeRabbit check is green but
+  skipped because the repository is larger than its review limit.
+- Applied the production Supabase schema through migration
+  `20260815220000_accept_intake_owner_guard.sql`. The production database has
+  no profiles or claims yet.
+- The Vercel check is still blocked. The GitHub user `rspeciale0519` must first
+  receive access to the CMG Vercel project. No Vercel environment variables
+  or deployment were created.
+
 ## 2026-08-13 — Stage 4 launch preparation complete locally
 
 - Reconciled the dependency-ordered README deployment/runbook, owner browser

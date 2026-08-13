@@ -1,16 +1,17 @@
 # CMG launch and browser-test handoff
 
-Last reconciled: 2026-08-13 on `feature/claims-platform`; Stage 4 checkpoint
-`2be7e6e` contains the launch-preparation evidence and owner runbook.
+Last reconciled: 2026-08-13 on `feature/claims-platform`; HEAD `1d3c30d`
+contains simple release mode, CI fixes, and the launch-preparation evidence.
 
 The application is feature-complete for the agreed functional scope and is
 ready for owner acceptance testing. The first release can use `SITE_MODE=simple`
 to expose only the marketing site and public forms while keeping required email
 and file-cleanup operations active. Architecture, authorization, per-role craft,
 all-surface cohesion, enforcing CSP, and comparable mobile Lighthouse gates have
-converged locally. Final launch-document reconciliation and hosted owner steps
-remain. It has not been pushed,
-merged, deployed, or connected to production services. The authoritative
+converged locally. Hosted owner steps remain. The feature branch is pushed and
+PR #1 is open. The production
+Supabase schema is applied, but no production users or claims exist. The
+authoritative
 production setup sequence is in the root
 [`README.md`](../../README.md#production-launch-runbook).
 
@@ -18,14 +19,15 @@ production setup sequence is in the root
 
 - Clean local database reset applied all 21 migrations through
   `20260815220000_accept_intake_owner_guard.sql`.
-- Vitest: 75 files, 725 tests passed.
+- Vitest: 78 files, 731 tests passed locally; GitHub verify passed.
 - pgTAP: 31 files, 915 assertions passed.
 - TypeScript, ESLint, production build, source-size audit, and
   `git diff --check` passed.
 - `npm audit --audit-level=high`: zero vulnerabilities.
 - Built client assets contain none of the server-only credential names.
-- Production HTTP smoke: `/`, `/contact`, and `/file-a-claim` return 200;
-  `/admin`, `/portal`, and `/partner` redirect unauthenticated visitors to login.
+- Simple-mode HTTP smoke: `/`, `/contact`, and `/file-a-claim` return 200;
+  `/admin`, `/portal`, and `/partner` redirect to `/platform-disabled`.
+  The PandaDoc webhook returns 404 with `platform_disabled` in simple mode.
 - CSP is enforcing, nonce-based, and covers every rendered script. Localhost
   omits only `upgrade-insecure-requests`; hosted requests retain it.
 - Mobile Lighthouse comparable runs scored 93/100 and 90/100; the lower
@@ -108,12 +110,14 @@ authentic CMG assets rather than generated or misleading stock photography.
 
 Follow the dependency-ordered runbook in the README. In short:
 
-1. Approve and publish the Git branch through the repository workflow.
-2. Create/link hosted Supabase, run `supabase db push` without seed data,
-   bootstrap the first owner, enable TOTP/leaked-password protection, and choose
-   backups/PITR appropriate for claim records.
-3. Import the app into Vercel, set every environment variable from
-   `.env.example`, set `SITE_MODE=simple` for the first release, and confirm
+1. Review PR #1 and merge the feature branch into `develop` after the Vercel
+   access step is complete and the required checks remain green.
+2. The hosted Supabase schema is already applied. Bootstrap the first owner,
+   enable TOTP/leaked-password protection, and choose backups/PITR appropriate
+   for claim records.
+3. Give GitHub user `rspeciale0519` access to the CMG Vercel project. Import or
+   connect the app, set every environment variable from `.env.example`, set
+   `SITE_MODE=simple` for the first release, and confirm
    both cron schedules from `vercel.json`. Public-form templates remain eligible
    for delivery; private platform messages remain queued until
    `SITE_MODE=platform` is selected.
@@ -126,11 +130,14 @@ Follow the dependency-ordered runbook in the README. In short:
 9. Run the hosted smoke checklist, record the deployment and rollback target,
    and monitor dead webhook, outbox, storage-cleanup, and e-sign dispatch rows.
 
-## Exact local Git state at handoff
+## Exact Git and hosted state at handoff
 
 - Branch: `feature/claims-platform`.
+- The branch is pushed through commit `1d3c30d`. PR #1 is open into `develop`.
+- GitHub `verify` and `database` checks pass. The Vercel check is blocked because
+  `rspeciale0519` does not have access to the CMG Vercel project.
 - Stage checkpoints: `7a21209` (Stage 1), `9419994` (Stage 2), `bb958a0`
   (Stage 3), and `2be7e6e` (Stage 4). Documentation handoffs are separate local commits.
-- Before the final Stage 4 checkpoint, the branch was five commits ahead of
-  `origin/feature/claims-platform` and zero behind.
-- Nothing was pushed, merged, deployed, or opened as a PR.
+- The production Supabase schema is applied through
+  `20260815220000_accept_intake_owner_guard.sql`. Production has no profiles or
+  claims. No Vercel environment variables or deployment exist yet.

@@ -64,7 +64,8 @@ deploys automatically. Complete these steps in order:
 4. Enable leaked-password protection, require staff MFA, configure the private
    `claim-docs` bucket, and enable backups/PITR appropriate to the plan. Verify a
    restore procedure before accepting live claims.
-5. Create a Vercel project and set every required variable from `.env.example`.
+5. Give the GitHub author access to the CMG Vercel project, then create or
+   connect the Vercel project and set every required variable from `.env.example`.
    Set `SITE_MODE=simple` for the first release. This keeps the marketing site,
    public forms, email delivery, and file cleanup available while the private
    platform stays closed. Use `SITE_MODE=platform` only after CMG buys and
