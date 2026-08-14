@@ -114,9 +114,9 @@ Follow the dependency-ordered runbook in the README. In short:
 
 1. Review PR #1 and merge the feature branch into `develop` when the final
    production release is approved. Confirm that the Git push starts Vercel.
-2. Grant the available Supabase CLI account access to the hosted CMG project.
-   Verify the migration list. Bootstrap the first owner if needed, enable
-   TOTP/leaked-password protection, and choose backups/PITR for claim records.
+2. The hosted database is current through migration `20260815220000`. Create
+   the first owner Auth user and profile, enroll TOTP, enable leaked-password
+   protection, and choose backups/PITR for claim records.
 3. Keep Vercel project `cmgps` connected to `rspeciale0519/cmg`. Keep
    `SITE_MODE=simple` for the first release. The Next.js preset and base
    environment values are already set. Confirm both cron schedules from
@@ -142,7 +142,8 @@ Follow the dependency-ordered runbook in the README. In short:
   (Stage 3), and `2be7e6e` (Stage 4). Documentation handoffs are separate local commits.
 - Vercel has the base simple-mode values. It does not have Resend, PandaDoc API
   and template values, or real Turnstile keys.
-- The Supabase CLI credentials available here do not list the hosted CMG
-  project. `.env.local` points to the local database. A hosted submission proves
-  that Vercel has a working hosted connection, but the production migration list
-  cannot be audited until Supabase access is granted.
+- `.env.local` keeps local application values under the standard Supabase names
+  and production values under `PROD_SUPABASE_*`. The production direct database
+  connection works. All 21 migrations match through `20260815220000`.
+  `claim-docs` is private, every public table has RLS enabled, and production has
+  no Auth users or owner profiles yet.

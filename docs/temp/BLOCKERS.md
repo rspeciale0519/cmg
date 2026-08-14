@@ -14,15 +14,16 @@ repository-only work. There is no deferred material application defect.
   policy, and production-user identity require the owner's account and decision.
 - **Safe fallback:** keep acceptance testing on the disposable local stack; do
   not expose it publicly.
-- **Current state:** the Vercel Preview uses a hosted Supabase database. A real
-  contact test and a real intake test both passed. The intake created the clearly
-  labeled test claim `CMG-2026-0001`. The Supabase CLI account available here
-  does not list this project, and `.env.local` contains only the local test URL.
-- **Steps:** grant the current Supabase CLI account access to the CMG project or
-  provide the project reference through the normal Supabase link process. Then
-  verify the migration list, create the first owner if needed, enroll TOTP,
-  enable leaked-password protection, confirm private `claim-docs`, and choose
-  backups/PITR.
+- **Current state:** `.env.local` contains separate `PROD_SUPABASE_*` values for
+  project `vdtqxglhlgatpbgehsjk`. The direct production connection works. All 21
+  migrations match through `20260815220000_accept_intake_owner_guard.sql`.
+  `claim-docs` exists and is private. Every public table has RLS enabled. A real
+  contact test and a real intake test passed. The intake created the clearly
+  labeled test claim `CMG-2026-0001`. Production has no Auth users or profiles.
+- **Steps:** create the first production Auth user and owner profile, enroll
+  TOTP, enable leaked-password protection, and choose backups/PITR. The owner
+  email and initial password must come from the owner; they must not be invented
+  in repository automation.
 - **Validation:** migration version matches `20260815220000`; demo accounts are
   absent; owner reaches `/admin` only after AAL2; cross-role RLS smoke passes;
   upload/download and restore tests succeed.
