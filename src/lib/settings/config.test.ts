@@ -17,7 +17,7 @@ describe("application settings contract", () => {
   });
 
   it("publishes the exact signer roles and tokens required by LOR dispatch", () => {
-    expect(LOR_TEMPLATE_ROLES).toEqual(["Homeowner1", "Homeowner2"]);
+    expect(LOR_TEMPLATE_ROLES).toEqual(["H1", "H2"]);
     expect(LOR_TEMPLATE_TOKENS).toEqual([
       "Claim.Ref",
       "Claim.Carrier",
@@ -28,6 +28,12 @@ describe("application settings contract", () => {
       "Property.Address",
       "Homeowner1.Name",
       "Homeowner2.Name",
+      "Policyholders.Name",
+      "Homeowner1.Phone",
+      "Homeowner1.Email",
+      "Claim.EmergencyMark",
+      "Claim.NonEmergencyMark",
+      "Claim.SupplementalMark",
       "Adjuster.Name",
       "Fee.Percent",
     ]);
@@ -241,22 +247,21 @@ describe("buildIntegrations — e-signature", () => {
     expect(esign.detail).toMatch(/Nothing is blocked/);
   });
 
-  it("flags a PandaDoc key with no template as blocked, quoting the blocker", () => {
+  it("reports the bundled PandaDoc LOR PDF", () => {
     const esign = pick(
       environment({
         esign: {
           mode: "pandadoc",
           canSendElectronically: true,
-          ready: false,
-          templateConfigured: false,
+          ready: true,
+          templateConfigured: true,
           webhookConfigured: true,
-          blocker: "No PandaDoc LOR template is configured (PANDADOC_LOR_TEMPLATE_UUID).",
+          blocker: null,
         },
       }),
       "esign",
     );
-    expect(esign.state).toBe("attention");
-    expect(esign.detail).toMatch(/PANDADOC_LOR_TEMPLATE_UUID/);
+    expect(esign.facts).toContainEqual({ label: "LOR template", value: "bundled PDF" });
   });
 
   it("flags a sending-capable PandaDoc with no webhook key", () => {

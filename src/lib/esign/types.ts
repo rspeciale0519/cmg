@@ -12,6 +12,7 @@ export type LorRole = "Homeowner1" | "Homeowner2";
 
 export type LorSigner = {
   email: string;
+  phone?: string | null;
   firstName: string;
   lastName: string;
   role: LorRole;

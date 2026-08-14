@@ -71,7 +71,6 @@ describe("createESignProvider", () => {
 
   it("selects PandaDoc the moment an API key exists", () => {
     process.env.PANDADOC_API_KEY = "sandbox-key";
-    process.env.PANDADOC_LOR_TEMPLATE_UUID = "template-uuid";
 
     const provider = createESignProvider();
 
@@ -95,24 +94,24 @@ describe("esignCapabilities", () => {
       mode: "manual",
       canSendElectronically: false,
       ready: true,
-      templateConfigured: false,
+      templateConfigured: true,
       webhookConfigured: false,
       blocker: null,
     });
   });
 
-  it("reports a PandaDoc key with no template as not ready, and says why", () => {
+  it("reports PandaDoc ready because the LOR PDFs are bundled", () => {
     process.env.PANDADOC_API_KEY = "sandbox-key";
 
     const capabilities = esignCapabilities();
     expect(capabilities.mode).toBe("pandadoc");
-    expect(capabilities.ready).toBe(false);
-    expect(capabilities.blocker).toMatch(/PANDADOC_LOR_TEMPLATE_UUID/);
+    expect(capabilities.ready).toBe(true);
+    expect(capabilities.templateConfigured).toBe(true);
+    expect(capabilities.blocker).toBeNull();
   });
 
-  it("counts a single-signer-only template as configured", () => {
+  it("reports the webhook configuration separately from the bundled PDF", () => {
     process.env.PANDADOC_API_KEY = "sandbox-key";
-    process.env.PANDADOC_LOR_TEMPLATE_UUID_SINGLE = "single-template";
     process.env.PANDADOC_WEBHOOK_SHARED_KEY = "shared";
 
     expect(esignCapabilities()).toMatchObject({

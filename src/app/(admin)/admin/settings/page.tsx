@@ -129,12 +129,12 @@ export default async function SettingsPage() {
           <FactList columns={2}>
             <Fact label="Signer roles">{LOR_TEMPLATE_ROLES.join(", ")}</Fact>
             <Fact label="Two-signer template">
-              <code className="text-ink/72">PANDADOC_LOR_TEMPLATE_UUID</code>
+              <code className="text-ink/72">src/lib/esign/templates/CMG_LOR-2026-PandaDoc-Dual.pdf</code>
             </Fact>
             <Fact label="One-signer template">
-              <code className="text-ink/72">PANDADOC_LOR_TEMPLATE_UUID_SINGLE</code>
+              <code className="text-ink/72">src/lib/esign/templates/CMG_LOR-2026-PandaDoc-Single.pdf</code>
             </Fact>
-            <Fact label="Template content">PandaDoc editor</Fact>
+            <Fact label="Template content">Bundled PDF files</Fact>
           </FactList>
 
           <div className="mt-[17px] border-t border-ink/10 pt-[15px]">
@@ -153,13 +153,12 @@ export default async function SettingsPage() {
 
         <PanelBody className="border-t border-ink/10">
           <p className="max-w-[84ch] text-[12.5px] leading-[1.65] text-ink/55">
-            Template wording, signature fields and role assignments live in
-            PandaDoc; the application supplies the values listed above from{" "}
+            Template wording, signature fields and role assignments live in the
+            bundled PDF files. The application supplies the values listed above from{" "}
             <code className="text-ink/72">src/lib/esign/lor-dispatch.ts</code>.
-            Template IDs are server-only environment configuration, so this page
-            reports whether they are present without exposing their values. Edit
-            the provider template and set the matching environment variables,
-            then use Recheck above before sending a live letter.
+            Change a source PDF only through a reviewed deployment. The PandaDoc
+            API key and webhook key stay in the server environment and never
+            appear on this page.
           </p>
         </PanelBody>
       </Panel>

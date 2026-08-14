@@ -43,6 +43,7 @@ const stub = vi.hoisted(() => {
       carrier: null as string | null,
       policy_number: null as string | null,
       carrier_tenure: null as string | null,
+      lor_contract_type: null as "emergency" | "non_emergency" | "supplemental" | null,
     },
     allowed: ["lor_sent", "rejected"] as string[],
     updated: vi.fn(),
@@ -104,6 +105,7 @@ const POLICY = {
   carrier: "Citizens Property Insurance",
   policyNumber: "FL-CPI-4410",
   carrierTenure: "three_plus_years",
+  lorContractType: "non_emergency",
 };
 
 const claimUpdate = () =>
@@ -122,6 +124,7 @@ beforeEach(() => {
     carrier: null,
     policy_number: null,
     carrier_tenure: null,
+    lor_contract_type: null,
   };
 });
 
@@ -261,6 +264,7 @@ describe("saveClaimPolicy — refusals", () => {
       carrier: POLICY.carrier,
       policyNumber: POLICY.policyNumber,
       carrierTenure: POLICY.carrierTenure,
+      lorContractType: POLICY.lorContractType,
     });
     expect(stub.updated).not.toHaveBeenCalled();
   });
@@ -278,6 +282,7 @@ describe("saveClaimPolicy — the write", () => {
       carrier: "Citizens Property Insurance",
       policy_number: "FL-CPI-4410",
       carrier_tenure: "three_plus_years",
+      lor_contract_type: "non_emergency",
     });
   });
 

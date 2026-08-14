@@ -120,6 +120,7 @@ export async function seedClaim(
       property_zip: "32801",
       carrier: "Citizens",
       policy_number: `POL-${tag}`,
+      lor_contract_type: "non_emergency",
       carrier_tenure: "three_plus_years",
       prior_roof_claim: false,
       loss_date: "2026-07-01",

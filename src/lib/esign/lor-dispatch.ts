@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
 import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
 import type { Database } from "@/types/database";
 import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-ledger";
@@ -53,6 +54,7 @@ export type SendLorFailureCode =
   | "invalid_status"
   /** No carrier or no policy number: there is nobody to address the letter to. */
   | "missing_policy"
+  | "missing_lor_type"
   | "no_claimants"
   | "not_configured"
   | "provider_error"
@@ -78,6 +80,11 @@ const ROLES: LorRole[] = ["Homeowner1", "Homeowner2"];
 const causeLabel = (value: string) =>
   CAUSE_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
+const formatLorDate = (value: string) => {
+  const [year, month, day] = value.split("-");
+  return year && month && day ? `${month}/${day}/${year}` : value;
+};
+
 function tokensFor(
   claim: ClaimRow,
   signers: LorSigner[],
@@ -96,6 +103,11 @@ function tokensFor(
     const signer = signers.find((candidate) => candidate.role === role);
     return signer ? `${signer.firstName} ${signer.lastName}` : "";
   };
+  const primary = signers.find((candidate) => candidate.role === "Homeowner1");
+  const policyholderNames = signers
+    .map((signer) => `${signer.firstName} ${signer.lastName}`)
+    .join(" and ");
+  const selected = claim.lor_contract_type;
 
   return [
     { name: "Claim.Ref", value: claim.claim_ref },
@@ -108,20 +120,32 @@ function tokensFor(
     { name: "Claim.Carrier", value: claim.carrier ?? "" },
     { name: "Claim.PolicyNumber", value: claim.policy_number ?? "" },
     { name: "Claim.ClaimNumber", value: claim.claim_number ?? "" },
-    { name: "Claim.LossDate", value: claim.loss_date },
+    { name: "Claim.LossDate", value: formatLorDate(claim.loss_date) },
     { name: "Claim.Cause", value: causeLabel(claim.cause) },
     { name: "Property.Address", value: address },
     { name: "Homeowner1.Name", value: nameFor("Homeowner1") },
     { name: "Homeowner2.Name", value: nameFor("Homeowner2") },
+    { name: "Policyholders.Name", value: policyholderNames },
+    { name: "Homeowner1.Phone", value: primary?.phone ?? "" },
+    { name: "Homeowner1.Email", value: primary?.email ?? "" },
+    { name: "Claim.EmergencyMark", value: selected === "emergency" ? "X" : "" },
+    {
+      name: "Claim.NonEmergencyMark",
+      value: selected === "non_emergency" ? "X" : "",
+    },
+    {
+      name: "Claim.SupplementalMark",
+      value: selected === "supplemental" ? "X" : "",
+    },
     { name: "Adjuster.Name", value: adjusterName ?? "" },
-    { name: "Fee.Percent", value: feePercent === null ? "" : String(feePercent) },
+    { name: "Fee.Percent", value: `${feePercent ?? FEE_PERCENT_DEFAULT}%` },
   ];
 }
 
 const CLAIM_COLUMNS =
-  "id, claim_ref, status, carrier, policy_number, claim_number, loss_date, cause, " +
+  "id, claim_ref, status, carrier, policy_number, claim_number, lor_contract_type, loss_date, cause, " +
   "property_street, property_street2, property_city, property_state, property_zip, " +
-  "assigned_adjuster_id, pandadoc_document_id, esign_status";
+  "assigned_adjuster_id, requested_adjuster, pandadoc_document_id, esign_status";
 
 type ClaimRow = Pick<
   Database["public"]["Tables"]["claims"]["Row"],
@@ -131,6 +155,7 @@ type ClaimRow = Pick<
   | "carrier"
   | "policy_number"
   | "claim_number"
+  | "lor_contract_type"
   | "loss_date"
   | "cause"
   | "property_street"
@@ -139,6 +164,7 @@ type ClaimRow = Pick<
   | "property_state"
   | "property_zip"
   | "assigned_adjuster_id"
+  | "requested_adjuster"
   | "pandadoc_document_id"
   | "esign_status"
 >;
@@ -219,9 +245,18 @@ export async function dispatchLorForClaim(
     };
   }
 
+  if (!claim.lor_contract_type) {
+    return {
+      ok: false,
+      code: "missing_lor_type",
+      message:
+        "This claim has no agreement type. Choose Emergency, Non-emergency, or Supplemental on the claim before you send the letter.",
+    };
+  }
+
   const { data: claimants } = await admin
     .from("claimants")
-    .select("first_name, last_name, email, is_primary, created_at")
+    .select("first_name, last_name, email, phone, is_primary, created_at")
     .eq("claim_id", claim.id)
     .order("is_primary", { ascending: false })
     .order("created_at", { ascending: true })
@@ -238,6 +273,7 @@ export async function dispatchLorForClaim(
 
   const signers: LorSigner[] = claimants.slice(0, ROLES.length).map((claimant, index) => ({
     email: claimant.email,
+    phone: claimant.phone,
     firstName: claimant.first_name,
     lastName: claimant.last_name,
     role: ROLES[index],
@@ -253,7 +289,7 @@ export async function dispatchLorForClaim(
     feePercent = financials?.fee_percent ?? null;
   }
 
-  let adjusterName: string | null = null;
+  let adjusterName: string | null = claim.requested_adjuster;
   if (claim.assigned_adjuster_id) {
     const { data: adjuster } = await admin
       .from("profiles")

@@ -16,6 +16,7 @@ import {
   CARRIER_TENURE_OPTIONS,
   CAUSE_OPTIONS,
   INTAKE_CONSENT_TEXT,
+  LOR_CONTRACT_TYPE_OPTIONS,
   PRIOR_OUTCOME_OPTIONS,
   US_STATES,
   YES_NO_OPTIONS,
@@ -80,6 +81,7 @@ export function IntakeForm() {
      `carrierTenure` selects. */
   const [hasSecond, setHasSecond] = useState("");
   const [priorClaim, setPriorClaim] = useState("");
+  const [lorContractType, setLorContractType] = useState("");
 
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
@@ -221,6 +223,16 @@ export function IntakeForm() {
             name="claimNumber"
             label="Claim number (leave blank if not yet filed)"
             error={errors.claimNumber}
+          />
+          <RadioField
+            className="mt-6"
+            name="lorContractType"
+            label="Which agreement type applies to this claim?"
+            required
+            options={LOR_CONTRACT_TYPE_OPTIONS}
+            value={lorContractType}
+            onValueChange={setLorContractType}
+            error={errors.lorContractType}
           />
         </IntakeSection>
 

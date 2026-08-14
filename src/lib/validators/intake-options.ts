@@ -60,6 +60,12 @@ export const CAUSE_VALUES = [
 
 export const ADJUSTER_VALUES = ["austin-graham", "unsure"] as const;
 
+export const LOR_CONTRACT_TYPE_VALUES = [
+  "emergency",
+  "non_emergency",
+  "supplemental",
+] as const;
+
 /* Both yes/no questions on the intake start unanswered, so `""` is a
    reachable submitted value exactly as it is for the selects — which means
    each needs its own sentence in the schema rather than a shared fallback.
@@ -102,6 +108,12 @@ export const ADJUSTER_OPTIONS = [
   { value: "austin-graham", label: "Austin Graham" },
   { value: "unsure", label: "Not sure yet" },
 ] as const satisfies Options<typeof ADJUSTER_VALUES>;
+
+export const LOR_CONTRACT_TYPE_OPTIONS = [
+  { value: "emergency", label: "Emergency" },
+  { value: "non_emergency", label: "Non-emergency" },
+  { value: "supplemental", label: "Supplemental" },
+] as const satisfies Options<typeof LOR_CONTRACT_TYPE_VALUES>;
 
 export const YES_NO_OPTIONS = [
   { value: "no", label: "No" },

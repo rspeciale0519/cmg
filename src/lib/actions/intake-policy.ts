@@ -8,6 +8,7 @@ export function readIntakePolicyDetails(
     carrier: formData.get("carrier") ?? "",
     policyNumber: formData.get("policyNumber") ?? "",
     carrierTenure: formData.get("carrierTenure") ?? "",
+    lorContractType: formData.get("lorContractType") ?? "",
   });
 
   if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };

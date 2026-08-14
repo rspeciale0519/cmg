@@ -88,6 +88,7 @@ export default async function ClaimOverviewPage({
               carrier={claim.carrier}
               policyNumber={claim.policyNumber}
               carrierTenure={claim.carrierTenure}
+              lorContractType={claim.lorContractType}
               canManage={can.canManage}
             />
 

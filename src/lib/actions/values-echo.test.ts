@@ -249,6 +249,7 @@ describe("saveClaimPolicy", () => {
         carrier: "Citizens Property Insurance",
         policyNumber: "FL-CPI-4410",
         carrierTenure: "",
+        lorContractType: "non_emergency",
       }),
     );
 

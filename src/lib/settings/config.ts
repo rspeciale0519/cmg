@@ -16,9 +16,9 @@ import type { ESignCapabilities } from "@/lib/esign/provider";
  *     make those pages dynamic (losing the static render the build gates on) or
  *     leave an editor whose saves never reach the site anyone reads. Changing
  *     the licence number is a deploy, and the screen says so.
- *   * The LOR template is a PandaDoc template UUID in `PANDADOC_LOR_TEMPLATE_UUID`,
- *     a server-only secret (§7.8). A settings row cannot hold it without moving
- *     a credential out of the environment and into a table.
+ *   * The two LOR source PDFs are bundled with the server code. PandaDoc receives
+ *     the correct one for one or two homeowners. Only the API and webhook keys
+ *     remain in the server environment.
  *   * The fee default is application policy rather than mutable claim data. It
  *     is used as the starting value on a claim with no fee on record, while the
  *     value that actually binds the claim is saved in `claim_financials`. A
@@ -45,7 +45,7 @@ export const FEE_PERCENT_DEFAULT = 10;
  * not an alias or a runtime mapping, so the Settings screen deliberately names
  * the implementation file beside them.
  */
-export const LOR_TEMPLATE_ROLES = ["Homeowner1", "Homeowner2"] as const;
+export const LOR_TEMPLATE_ROLES = ["H1", "H2"] as const;
 
 export const LOR_TEMPLATE_TOKENS = [
   "Claim.Ref",
@@ -57,6 +57,12 @@ export const LOR_TEMPLATE_TOKENS = [
   "Property.Address",
   "Homeowner1.Name",
   "Homeowner2.Name",
+  "Policyholders.Name",
+  "Homeowner1.Phone",
+  "Homeowner1.Email",
+  "Claim.EmergencyMark",
+  "Claim.NonEmergencyMark",
+  "Claim.SupplementalMark",
   "Adjuster.Name",
   "Fee.Percent",
 ] as const;
@@ -308,8 +314,7 @@ function esignIntegration(esign: ESignCapabilities): Integration {
     { label: "Provider", value: esign.mode === "pandadoc" ? "PandaDoc" : "Manual" },
     {
       label: "LOR template",
-      value: esign.templateConfigured ? "configured" : "not set",
-      quiet: !esign.templateConfigured,
+      value: "bundled PDF",
     },
     {
       label: "Webhook key",
@@ -330,19 +335,6 @@ function esignIntegration(esign: ESignCapabilities): Integration {
     };
   }
 
-  if (!esign.ready) {
-    return {
-      key: "esign",
-      name: "E-signature",
-      state: "attention",
-      headline: "PandaDoc key present, but sending is blocked.",
-      detail:
-        esign.blocker ??
-        "The provider is configured but cannot send. Check the template UUID.",
-      facts,
-    };
-  }
-
   return {
     key: "esign",
     name: "E-signature",
@@ -351,7 +343,7 @@ function esignIntegration(esign: ESignCapabilities): Integration {
       ? "PandaDoc — letters are sent and signatures come back automatically."
       : "PandaDoc can send, but signatures will not come back.",
     detail: esign.webhookConfigured
-      ? "Sending creates the document from the template and emails every signer. The signed PDF returns by webhook and advances the claim on its own."
+      ? "Sending uploads the correct bundled LOR PDF, fills the claim fields and emails every signer. The signed PDF returns by webhook and advances the claim on its own."
       : "Without PANDADOC_WEBHOOK_SHARED_KEY the webhook endpoint refuses every delivery, so a completed signature never reaches the claim. Set the shared key to close the loop.",
     facts,
   };

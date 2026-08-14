@@ -42,6 +42,14 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
 const isCreate = (call: Call) => call.url.endsWith("/documents") && call.init.method === "POST";
 const isStatus = (call: Call) => call.init.method === "GET";
 
+function createData(call: Call): Record<string, unknown> {
+  const body = new TextDecoder().decode(call.init.body as Uint8Array);
+  const marker = "Content-Type: application/json\r\n\r\n";
+  const start = body.indexOf(marker) + marker.length;
+  const end = body.indexOf("\r\n--", start);
+  return JSON.parse(body.slice(start, end)) as Record<string, unknown>;
+}
+
 function pandadoc(responder: (call: Call) => Response) {
   const calls: Call[] = [];
   const slept: number[] = [];
@@ -62,8 +70,7 @@ function pandadoc(responder: (call: Call) => Response) {
         return Promise.resolve();
       },
     }),
-    templateUuid: "two-signer-template",
-    templateUuidSingle: "one-signer-template",
+    loadPdf: () => Promise.resolve(new TextEncoder().encode("%PDF-test")),
   });
 
   return { provider, calls, slept };
@@ -139,20 +146,28 @@ describeDb("dispatchLorForClaim against the local database", () => {
       pandadoc_document_id: documentId,
     });
 
-    const create = JSON.parse(String(calls.find(isCreate)!.init.body));
+    const create = createData(calls.find(isCreate)!);
     expect(create.metadata).toEqual({
       claim_id: claim.id,
       dispatch_attempt_token: expect.any(String),
     });
     expect(create.recipients).toEqual([
-      expect.objectContaining({ email: claim.claimantEmails[0], role: "Homeowner1" }),
-      expect.objectContaining({ email: claim.claimantEmails[1], role: "Homeowner2" }),
+      expect.objectContaining({ email: claim.claimantEmails[0], role: "H1" }),
+      expect.objectContaining({ email: claim.claimantEmails[1], role: "H2" }),
     ]);
-    expect(create.tokens).toContainEqual({ name: "Claim.Ref", value: claim.claimRef });
-    expect(create.tokens).toContainEqual({ name: "Claim.Carrier", value: "Citizens" });
-    expect(create.tokens).toContainEqual({
-      name: "Property.Address",
-      value: expect.stringContaining("Orlando, Florida 32801"),
+    expect(create.fields).toMatchObject({
+      carrier: { value: "Citizens", role: "H1" },
+      lossdate: { value: "07/01/2026", role: "H1" },
+      ph: { value: expect.stringContaining("Dana"), role: "H1" },
+      email: { value: claim.claimantEmails[0], role: "H1" },
+      ne: { value: "X", role: "H1" },
+      em: { value: "", role: "H1" },
+      su: { value: "", role: "H1" },
+      fee: { value: "10%", role: "H1" },
+      property: {
+        value: expect.stringContaining("Orlando, Florida 32801"),
+        role: "H1",
+      },
     });
 
     const { data: history } = await admin

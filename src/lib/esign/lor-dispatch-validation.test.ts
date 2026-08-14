@@ -35,6 +35,7 @@ describeDb("LOR dispatch validation", () => {
       property_zip: "32801",
       carrier: "Citizens",
       policy_number: "POL-EARLY",
+      lor_contract_type: "non_emergency",
       carrier_tenure: "lt_1_year",
       prior_roof_claim: false,
       loss_date: "2026-07-02",
@@ -61,6 +62,20 @@ describeDb("LOR dispatch validation", () => {
       { claimId: claim.id },
       { admin, provider },
     )).resolves.toMatchObject({ ok: false, code: "missing_policy" });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("refuses to guess which agreement checkbox applies", async () => {
+    const claim = await support.seedClaim(admin, { status: "under_review" });
+    created.push({ id: claim.id, claimRef: claim.claimRef });
+    await admin.from("claims").update({ lor_contract_type: null }).eq("id", claim.id);
+    const provider = new ManualSignProvider();
+    const dispatch = vi.spyOn(provider, "dispatchLor");
+
+    await expect(dispatchLorForClaim(
+      { claimId: claim.id },
+      { admin, provider },
+    )).resolves.toMatchObject({ ok: false, code: "missing_lor_type" });
     expect(dispatch).not.toHaveBeenCalled();
   });
 

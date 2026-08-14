@@ -24,6 +24,7 @@ const valid = {
   priorRoofClaim: "no",
   priorOutcome: "",
   claimNumber: "",
+  lorContractType: "non_emergency",
   lossDate: "2026-07-14",
   lossTime: "16:30",
   cause: "wind_hail",
@@ -84,6 +85,14 @@ describe("intakeSchema — option values match the database enums", () => {
       "Austin Graham",
       "Not sure yet",
     ]);
+  });
+
+  it("offers only the three agreement choices printed on the LOR", () => {
+    expect(intakeSchema.safeParse({ ...valid, lorContractType: "emergency" }).success).toBe(true);
+    expect(intakeSchema.safeParse({ ...valid, lorContractType: "supplemental" }).success).toBe(true);
+    expect(errorFor({ ...valid, lorContractType: "" }, "lorContractType")?.message).toBe(
+      "Choose the agreement type for this claim.",
+    );
   });
 });
 
@@ -323,6 +332,7 @@ describe("intakeSchema — selects that start empty", () => {
     ["cause", "Choose the cause of loss."],
     ["carrierTenure", "Tell us how long you have been with this carrier."],
     ["requestedAdjuster", "Choose which adjuster you are working with."],
+    ["lorContractType", "Choose the agreement type for this claim."],
   ])("rejects an unanswered %s", (field, message) => {
     const issue = errorFor({ ...valid, [field]: "" }, field);
     expect(issue).toBeDefined();

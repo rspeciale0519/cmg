@@ -14,6 +14,7 @@ import {
 import { requireStaff } from "@/lib/authz";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import { claimPolicySchema, CLAIM_POLICY_FIELDS } from "@/lib/validators/claims";
 import {
   fieldErrorsFrom,
@@ -63,6 +64,7 @@ type ClaimRow = {
   carrier: string | null;
   policy_number: string | null;
   carrier_tenure: string | null;
+  lor_contract_type: Database["public"]["Enums"]["lor_contract_type"] | null;
 };
 
 async function loadClaimForWrite(
@@ -76,7 +78,7 @@ async function loadClaimForWrite(
   const { data, error } = await supabase
     .from("claims")
     .select(
-      "id, claim_ref, status, assigned_adjuster_id, carrier, policy_number, carrier_tenure",
+      "id, claim_ref, status, assigned_adjuster_id, carrier, policy_number, carrier_tenure, lor_contract_type",
     )
     .eq("id", claimId)
     .maybeSingle();
@@ -312,6 +314,7 @@ export async function saveClaimPolicy(
     carrier: formData.get("carrier") ?? "",
     policyNumber: formData.get("policyNumber") ?? "",
     carrierTenure: formData.get("carrierTenure") ?? "",
+    lorContractType: formData.get("lorContractType") ?? "",
   });
 
   if (!parsed.success) {
@@ -335,6 +338,7 @@ export async function saveClaimPolicy(
       carrier: parsed.data.carrier,
       policy_number: parsed.data.policyNumber,
       carrier_tenure: parsed.data.carrierTenure,
+      lor_contract_type: parsed.data.lorContractType,
     })
     .eq("id", claimId)
     .select("id");
@@ -368,6 +372,7 @@ export async function saveClaimPolicy(
       carrier: parsed.data.carrier,
       policy_number: parsed.data.policyNumber,
       carrier_tenure: parsed.data.carrierTenure,
+      lor_contract_type: parsed.data.lorContractType,
       first_entry: !namesAPolicy(claim),
     },
   });

@@ -7,7 +7,10 @@ import { cx } from "@/lib/cx";
 import type { AdjusterOption, PartnerOption } from "@/lib/claims/queries";
 /* `intake-options`, not `@/lib/validators/intake` — that module builds the zod
    schema, and a client component importing from it ships zod to the browser. */
-import { CARRIER_TENURE_OPTIONS } from "@/lib/validators/intake-options";
+import {
+  CARRIER_TENURE_OPTIONS,
+  LOR_CONTRACT_TYPE_OPTIONS,
+} from "@/lib/validators/intake-options";
 import {
   ActionFeedback,
   AdminField,
@@ -273,7 +276,7 @@ function AcceptForm({
             for the policy. Take these from the homeowner before you accept.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <AdminField
               name="carrier"
               label="Carrier"
@@ -318,6 +321,28 @@ function AcceptForm({
                   How long…
                 </option>
                 {CARRIER_TENURE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </AdminSelect>
+            </AdminField>
+
+            <AdminField
+              name="lorContractType"
+              label="Agreement type"
+              error={state.fieldErrors?.lorContractType}
+            >
+              <AdminSelect
+                name="lorContractType"
+                required
+                defaultValue={state.values?.lorContractType ?? ""}
+                error={state.fieldErrors?.lorContractType}
+              >
+                <option value="" disabled>
+                  Choose type…
+                </option>
+                {LOR_CONTRACT_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CARRIER_TENURE_VALUES } from "./intake-options";
+import { CARRIER_TENURE_VALUES, LOR_CONTRACT_TYPE_VALUES } from "./intake-options";
 
 /**
  * The policy side of a claim — the three columns a partner referral arrives
@@ -34,6 +34,9 @@ export const claimPolicySchema = z.object({
   carrierTenure: z.enum(CARRIER_TENURE_VALUES, {
     error: "Say how long they have been with this carrier.",
   }),
+  lorContractType: z.enum(LOR_CONTRACT_TYPE_VALUES, {
+    error: "Choose the agreement type for this claim.",
+  }),
 });
 
 export type ClaimPolicyInput = z.infer<typeof claimPolicySchema>;
@@ -47,4 +50,5 @@ export const CLAIM_POLICY_FIELDS = [
   "carrier",
   "policyNumber",
   "carrierTenure",
+  "lorContractType",
 ] as const;

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { ESignError } from "./types";
 
 /**
@@ -33,6 +34,11 @@ export type CreateDocumentBody = {
   metadata: Record<string, string>;
 };
 
+export type CreateDocumentFromPdfBody = Omit<CreateDocumentBody, "template_uuid" | "tokens"> & {
+  fields: Record<string, { value: string; role: string }>;
+  parse_form_fields: false;
+};
+
 export type SendDocumentBody = {
   message?: string;
   subject?: string;
@@ -63,6 +69,32 @@ const defaultSleep: SleepLike = (ms) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+function multipartDocument(
+  pdf: Uint8Array,
+  filename: string,
+  data: CreateDocumentFromPdfBody,
+  boundary: string,
+): Uint8Array {
+  const encoder = new TextEncoder();
+  const chunks = [
+    encoder.encode(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: application/pdf\r\n\r\n`,
+    ),
+    pdf,
+    encoder.encode(
+      `\r\n--${boundary}\r\nContent-Disposition: form-data; name="data"\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(data)}\r\n--${boundary}--\r\n`,
+    ),
+  ];
+  const size = chunks.reduce((total, chunk) => total + chunk.byteLength, 0);
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
 
 function readDetail(payload: unknown): string | null {
   if (typeof payload !== "object" || payload === null) return null;
@@ -293,6 +325,30 @@ export class PandaDocClient {
       throw await this.failure(response, "creation_failed", "PandaDoc document creation", operation);
     }
 
+    return await this.readJson(response, operation) as PandaDocDocument;
+  }
+
+  async createDocumentFromPdf(
+    pdf: Uint8Array,
+    filename: string,
+    data: CreateDocumentFromPdfBody,
+    operation: PandaDocOperation,
+  ): Promise<PandaDocDocument> {
+    const boundary = `cmg-pandadoc-${randomUUID()}`;
+    const response = await this.request("/documents", {
+      method: "POST",
+      body: multipartDocument(pdf, filename, data, boundary) as BodyInit,
+      headers: { "Content-Type": `multipart/form-data; boundary=${boundary}` },
+    }, "json", operation);
+
+    if (!response.ok) {
+      throw await this.failure(
+        response,
+        "creation_failed",
+        "PandaDoc document creation",
+        operation,
+      );
+    }
     return await this.readJson(response, operation) as PandaDocDocument;
   }
 

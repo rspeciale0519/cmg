@@ -347,6 +347,9 @@ export type Database = {
           esign_status: string | null
           filed_at: string | null
           id: string
+          lor_contract_type:
+            | Database["public"]["Enums"]["lor_contract_type"]
+            | null
           lor_signed_at: string | null
           loss_date: string
           loss_time: string | null
@@ -385,6 +388,9 @@ export type Database = {
           esign_status?: string | null
           filed_at?: string | null
           id?: string
+          lor_contract_type?:
+            | Database["public"]["Enums"]["lor_contract_type"]
+            | null
           lor_signed_at?: string | null
           loss_date: string
           loss_time?: string | null
@@ -423,6 +429,9 @@ export type Database = {
           esign_status?: string | null
           filed_at?: string | null
           id?: string
+          lor_contract_type?:
+            | Database["public"]["Enums"]["lor_contract_type"]
+            | null
           lor_signed_at?: string | null
           loss_date?: string
           loss_time?: string | null
@@ -667,9 +676,9 @@ export type Database = {
       }
       invites: {
         Row: {
+          acceptance_attempt_id: string | null
           accepted_at: string | null
           accepted_by: string | null
-          acceptance_attempt_id: string | null
           claim_id: string | null
           created_at: string
           email: string
@@ -681,9 +690,9 @@ export type Database = {
           token_hash: string
         }
         Insert: {
+          acceptance_attempt_id?: string | null
           accepted_at?: string | null
           accepted_by?: string | null
-          acceptance_attempt_id?: string | null
           claim_id?: string | null
           created_at?: string
           email: string
@@ -695,9 +704,9 @@ export type Database = {
           token_hash: string
         }
         Update: {
+          acceptance_attempt_id?: string | null
           accepted_at?: string | null
           accepted_by?: string | null
-          acceptance_attempt_id?: string | null
           claim_id?: string | null
           created_at?: string
           email?: string
@@ -982,6 +991,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_intake_transaction: {
+        Args: {
+          p_adjuster_id: string
+          p_carrier: string | null
+          p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"] | null
+          p_claim_id: string
+          p_ip: unknown
+          p_lor_contract_type: Database["public"]["Enums"]["lor_contract_type"] | null
+          p_new_partner_name: string | null
+          p_note: string | null
+          p_partner_choice: string
+          p_partner_company_id: string | null
+          p_policy_number: string | null
+        }
+        Returns: Json
+      }
       admin_user_directory: {
         Args: never
         Returns: {
@@ -1008,6 +1033,10 @@ export type Database = {
       assert_claim_loss_date: {
         Args: { p_loss_date: string }
         Returns: undefined
+      }
+      begin_invite_acceptance: {
+        Args: { p_attempt_id: string; p_token_hash: string }
+        Returns: Json
       }
       change_staff_privileges: {
         Args: {
@@ -1046,25 +1075,6 @@ export type Database = {
           p_mode: string
           p_request_id: string
         }
-        Returns: Json
-      }
-      accept_intake_transaction: {
-        Args: {
-          p_adjuster_id: string
-          p_carrier: string | null
-          p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"] | null
-          p_claim_id: string
-          p_ip: unknown
-          p_new_partner_name: string | null
-          p_note: string | null
-          p_partner_choice: string
-          p_partner_company_id: string | null
-          p_policy_number: string | null
-        }
-        Returns: Json
-      }
-      begin_invite_acceptance: {
-        Args: { p_attempt_id: string; p_token_hash: string }
         Returns: Json
       }
       claim_outbox_batch: {
@@ -1119,27 +1129,12 @@ export type Database = {
         Returns: boolean
       }
       enqueue_storage_cleanup_exact: {
-        Args: { p_bucket_id: string; p_claim_id?: string | null; p_object_paths: string[] }
+        Args: {
+          p_bucket_id: string
+          p_claim_id?: string | null
+          p_object_paths: string[]
+        }
         Returns: number
-      }
-      staff_claims_projection: {
-        Args: never
-        Returns: {
-          adjuster_name: string | null
-          assigned_adjuster_id: string | null
-          claim_ref: string
-          id: string
-          loss_date: string
-          partner_company_id: string | null
-          partner_name: string | null
-          property_city: string
-          property_state: string
-          property_street: string
-          property_zip: string
-          search_text: string
-          status: Database["public"]["Enums"]["claim_status"]
-          updated_at: string
-        }[]
       }
       esign_attempt_is_active: {
         Args: {
@@ -1186,16 +1181,16 @@ export type Database = {
         }
         Returns: Json
       }
+      link_invited_claimant: {
+        Args: { p_claim_id: string; p_email: string; p_user_id: string }
+        Returns: boolean
+      }
       mark_esign_dispatch_sending: {
         Args: {
           p_claim_token: string
           p_provider_document_id: string
           p_request_id: string
         }
-        Returns: boolean
-      }
-      link_invited_claimant: {
-        Args: { p_claim_id: string; p_email: string; p_user_id: string }
         Returns: boolean
       }
       next_claim_ref: { Args: never; Returns: string }
@@ -1227,15 +1222,6 @@ export type Database = {
         Args: { p_claim_id: string; p_new_adjuster: string }
         Returns: undefined
       }
-      record_esign_recipient_completion: {
-        Args: {
-          p_attempt_token: string
-          p_claim_id: string
-          p_document_id: string
-          p_recipient_hash: string
-        }
-        Returns: Json
-      }
       reconcile_esign_dispatch: {
         Args: {
           p_attempt_token: string
@@ -1244,6 +1230,15 @@ export type Database = {
           p_outcome: string
         }
         Returns: string
+      }
+      record_esign_recipient_completion: {
+        Args: {
+          p_attempt_token: string
+          p_claim_id: string
+          p_document_id: string
+          p_recipient_hash: string
+        }
+        Returns: Json
       }
       refresh_claim_partner_summary: {
         Args: { p_claim_id: string }
@@ -1262,13 +1257,32 @@ export type Database = {
         }
         Returns: boolean
       }
+      staff_claims_projection: {
+        Args: never
+        Returns: {
+          adjuster_name: string | null
+          assigned_adjuster_id: string | null
+          claim_ref: string
+          id: string
+          loss_date: string
+          partner_company_id: string | null
+          partner_name: string | null
+          property_city: string
+          property_state: string
+          property_street: string
+          property_zip: string
+          search_text: string
+          status: Database["public"]["Enums"]["claim_status"]
+          updated_at: string
+        }[]
+      }
       submit_claim_transaction: {
         Args: {
+          p_audit?: Json | null
           p_claim: Json
           p_claimants: Json
           p_consents: Json
           p_documents: Json
-          p_audit?: Json
           p_outbox: Json
           p_partner_company_id?: string | null
         }
@@ -1327,6 +1341,7 @@ export type Database = {
         | "other"
       document_visibility: "internal" | "customer"
       lead_status: "new" | "contacted" | "converted" | "dismissed"
+      lor_contract_type: "emergency" | "non_emergency" | "supplemental"
       outbox_status: "pending" | "sent" | "failed" | "dead"
       partner_company_status: "active" | "inactive"
       prior_claim_outcome:
@@ -1515,6 +1530,7 @@ export const Constants = {
       ],
       document_visibility: ["internal", "customer"],
       lead_status: ["new", "contacted", "converted", "dismissed"],
+      lor_contract_type: ["emergency", "non_emergency", "supplemental"],
       outbox_status: ["pending", "sent", "failed", "dead"],
       partner_company_status: ["active", "inactive"],
       prior_claim_outcome: [

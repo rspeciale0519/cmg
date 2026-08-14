@@ -53,7 +53,7 @@ set local request.jwt.claims='{"sub":"00000000-0000-4000-a000-000000000001","rol
 set local role authenticated;
 select throws_ok($$select public.accept_intake_transaction(
  '26000000-0000-4000-a000-000000000102','00000000-0000-4000-a000-000000000002',
- 'none',null,null,'Carrier','POL-GUARD','lt_1_year','aal1 denied',null)$$,
+ 'none',null,null,'Carrier','POL-GUARD','lt_1_year','non_emergency','aal1 denied',null)$$,
  '42501','owner required','seeded owner at AAL1 cannot accept intake');
 
 reset role;
@@ -61,7 +61,7 @@ set local request.jwt.claims='{"sub":"26000000-0000-4000-a000-000000000001","rol
 set local role authenticated;
 select throws_ok($$select public.accept_intake_transaction(
  '26000000-0000-4000-a000-000000000102','00000000-0000-4000-a000-000000000002',
- 'none',null,null,'Carrier','POL-GUARD','lt_1_year','inactive denied',null)$$,
+ 'none',null,null,'Carrier','POL-GUARD','lt_1_year','non_emergency','inactive denied',null)$$,
  '42501','owner required','deactivated owner at AAL2 cannot accept intake');
 
 reset role;
@@ -69,7 +69,7 @@ set local request.jwt.claims='{"sub":"26000000-0000-4000-a000-000000000099","rol
 set local role authenticated;
 select throws_ok($$select public.accept_intake_transaction(
  '26000000-0000-4000-a000-000000000102','00000000-0000-4000-a000-000000000002',
- 'none',null,null,'Carrier','POL-GUARD','lt_1_year','missing profile denied',null)$$,
+ 'none',null,null,'Carrier','POL-GUARD','lt_1_year','non_emergency','missing profile denied',null)$$,
  '42501','owner required','authenticated caller without a profile cannot accept intake');
 
 reset role;
@@ -89,7 +89,7 @@ set local request.jwt.claims='{"sub":"00000000-0000-4000-a000-000000000001","rol
 set local role authenticated;
 select is((public.accept_intake_transaction('26000000-0000-4000-a000-000000000102',
  '00000000-0000-4000-a000-000000000002','none',null,null,
- 'Carrier','POL-GUARD','lt_1_year','aal2 accepted',null)->>'claim_ref'),
+ 'Carrier','POL-GUARD','lt_1_year','non_emergency','aal2 accepted',null)->>'claim_ref'),
  'CMG-2026-2612','active owner at AAL2 accepts the same intake');
 reset role;
 set local role service_role;
@@ -108,11 +108,11 @@ set local role authenticated;
 
 select is((public.accept_intake_transaction('26000000-0000-4000-a000-000000000101',
  '00000000-0000-4000-a000-000000000002','new',null,'Atomic Partner 26',
- 'Carrier','POL-26','lt_1_year','accepted atomically',null)->>'claim_ref'),
+ 'Carrier','POL-26','lt_1_year','non_emergency','accepted atomically',null)->>'claim_ref'),
  'CMG-2026-2611','owner atomically accepts the queued claim');
 select throws_ok($$select public.accept_intake_transaction(
  '26000000-0000-4000-a000-000000000101','00000000-0000-4000-a000-000000000003',
- 'new',null,'Loser Orphan Partner','Carrier','POL-LOSER','lt_1_year','loser',null)$$,
+ 'new',null,'Loser Orphan Partner','Carrier','POL-LOSER','lt_1_year','non_emergency','loser',null)$$,
  'P0002','intake unavailable','the losing accept is refused at the locked status');
 reset role;
 set local role service_role;

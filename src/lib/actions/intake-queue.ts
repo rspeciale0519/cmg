@@ -39,6 +39,7 @@ const ACCEPT_FIELDS = [
   "carrier",
   "policyNumber",
   "carrierTenure",
+  "lorContractType",
   "note",
 ] as const;
 
@@ -208,6 +209,8 @@ export async function acceptIntake(
       policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.policyNumber : null,
     p_carrier_tenure:
       policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.carrierTenure : null,
+    p_lor_contract_type:
+      policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.lorContractType : null,
     p_note: note,
     p_ip: ip,
   });

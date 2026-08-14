@@ -1,14 +1,12 @@
 import "server-only";
 
 import { PandaDocClient } from "./pandadoc-client";
+import { buildLorPdfFields, loadLorPdf, lorPdfName, pandaDocRecipients } from "./lor-pdf";
 import { ESignError, type ESignProvider, type LorDispatch, type LorRequest } from "./types";
 
 export type PandaDocProviderOptions = {
   client: PandaDocClient;
-  /** Two-signer template; the only one strictly required. */
-  templateUuid: string | null;
-  /** Optional one-signer variant, used when a claim has a single claimant. */
-  templateUuidSingle: string | null;
+  loadPdf?: (signerCount: number) => Promise<Uint8Array>;
 };
 
 /**
@@ -23,34 +21,11 @@ export class PandaDocProvider implements ESignProvider {
   readonly canSendElectronically = true;
 
   private readonly client: PandaDocClient;
-  private readonly templateUuid: string | null;
-  private readonly templateUuidSingle: string | null;
+  private readonly loadPdf: (signerCount: number) => Promise<Uint8Array>;
 
   constructor(options: PandaDocProviderOptions) {
     this.client = options.client;
-    this.templateUuid = options.templateUuid;
-    this.templateUuidSingle = options.templateUuidSingle;
-  }
-
-  /**
-   * One signer prefers the single-signer template when one is configured,
-   * because a two-role template with an unfilled `Homeowner2` role is rejected
-   * at creation time with a role-not-provided validation error.
-   */
-  private templateFor(signerCount: number): string {
-    const chosen =
-      signerCount <= 1
-        ? (this.templateUuidSingle ?? this.templateUuid)
-        : this.templateUuid;
-
-    if (!chosen) {
-      throw new ESignError(
-        "not_configured",
-        "PANDADOC_LOR_TEMPLATE_UUID is not set; the LOR template must exist before a letter can be created",
-      );
-    }
-
-    return chosen;
+    this.loadPdf = options.loadPdf ?? loadLorPdf;
   }
 
   async dispatchLor(request: LorRequest): Promise<LorDispatch> {
@@ -59,23 +34,22 @@ export class PandaDocProvider implements ESignProvider {
     }
 
     return this.client.withOperationDeadline(async (operation) => {
-      const created = await this.client.createDocument({
-      name: request.documentName,
-      template_uuid: this.templateFor(request.signers.length),
-      recipients: request.signers.map((signer) => ({
-        email: signer.email,
-        first_name: signer.firstName,
-        last_name: signer.lastName,
-        role: signer.role,
-      })),
-      tokens: request.tokens.map((token) => ({ name: token.name, value: token.value })),
-      /* Round-trips through every webhook, so the handler never has to guess
-         which claim an event belongs to. */
-      metadata: {
-        claim_id: request.claimId,
-        dispatch_attempt_token: request.dispatchAttemptToken,
-      },
-      }, operation);
+      const pdf = await this.loadPdf(request.signers.length);
+      const created = await this.client.createDocumentFromPdf(
+        pdf,
+        lorPdfName(request.signers.length),
+        {
+          name: request.documentName,
+          recipients: pandaDocRecipients(request),
+          fields: buildLorPdfFields(request),
+          parse_form_fields: false,
+          metadata: {
+            claim_id: request.claimId,
+            dispatch_attempt_token: request.dispatchAttemptToken,
+          },
+        },
+        operation,
+      );
 
       await this.client.waitForDraft(created.id, operation);
 

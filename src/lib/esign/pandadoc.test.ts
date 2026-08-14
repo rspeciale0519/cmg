@@ -45,8 +45,7 @@ function providerFrom(
     calls,
     provider: new PandaDocProvider({
       client,
-      templateUuid: "two-signer-template",
-      templateUuidSingle: "one-signer-template",
+      loadPdf: () => Promise.resolve(new TextEncoder().encode("%PDF-test")),
     }),
   };
 }
@@ -55,12 +54,20 @@ const isCreate = (call: Call) => call.url.endsWith("/documents") && call.init.me
 const isSend = (call: Call) => call.url.endsWith("/send");
 const isStatus = (call: Call) => call.init.method === "GET";
 
+function createData(call: Call): Record<string, unknown> {
+  const body = new TextDecoder().decode(call.init.body as Uint8Array);
+  const marker = "Content-Type: application/json\r\n\r\n";
+  const start = body.indexOf(marker) + marker.length;
+  const end = body.indexOf("\r\n--", start);
+  return JSON.parse(body.slice(start, end)) as Record<string, unknown>;
+}
+
 beforeEach(() => {
   slept.length = 0;
 });
 
 describe("PandaDocProvider.dispatchLor", () => {
-  it("creates from the template with roles, tokens and metadata.claim_id", async () => {
+  it("uploads the dual PDF with signer roles, fields and claim metadata", async () => {
     const { provider, calls } = providerFrom((call) => {
       if (isCreate(call)) return json(201, { id: "doc-1", status: "document.uploaded" });
       if (isStatus(call)) return json(200, { id: "doc-1", status: "document.draft" });
@@ -76,23 +83,29 @@ describe("PandaDocProvider.dispatchLor", () => {
       deliveredByProvider: true,
     });
 
-    const create = JSON.parse(String(calls[0].init.body));
-    expect(create.template_uuid).toBe("two-signer-template");
+    const create = createData(calls[0]);
     expect(create.metadata).toEqual({
       claim_id: request.claimId,
       dispatch_attempt_token: request.dispatchAttemptToken,
     });
-    expect(create.recipients.map((r: { role: string }) => r.role)).toEqual([
-      "Homeowner1",
-      "Homeowner2",
+    expect((create.recipients as Array<{ role: string }>).map((r) => r.role)).toEqual([
+      "H1",
+      "H2",
     ]);
-    expect(create.tokens).toContainEqual({ name: "Claim.Ref", value: request.claimRef });
+    expect(create.fields).toMatchObject({
+      carrier: { role: "H1", value: "Citizens" },
+      i1: { role: "H1", value: "" },
+      j1: { role: "H2", value: "" },
+    });
+    expect(new TextDecoder().decode(calls[0].init.body as Uint8Array)).toContain(
+      'filename="CMG_LOR-2026-PandaDoc-Dual.pdf"',
+    );
     expect(
       (calls[0].init.headers as Record<string, string>).Authorization,
     ).toBe("API-Key sandbox-key");
   });
 
-  it("prefers the single-signer template for a one-claimant policy", async () => {
+  it("uses the single-owner PDF when a policy has one signer", async () => {
     const { provider, calls } = providerFrom((call) => {
       if (isCreate(call)) return json(201, { id: "doc-1", status: "document.uploaded" });
       if (isStatus(call)) return json(200, { id: "doc-1", status: "document.draft" });
@@ -102,7 +115,9 @@ describe("PandaDocProvider.dispatchLor", () => {
     const request = sendLorRequestFixture();
     await provider.dispatchLor({ ...request, signers: [request.signers[0]] });
 
-    expect(JSON.parse(String(calls[0].init.body)).template_uuid).toBe("one-signer-template");
+    const body = new TextDecoder().decode(calls[0].init.body as Uint8Array);
+    expect(body).toContain('filename="CMG_LOR-2026-PandaDoc-Single.pdf"');
+    expect(createData(calls[0]).fields).not.toHaveProperty("j1");
   });
 
   it("polls until the async creation reaches document.draft before sending", async () => {
@@ -304,7 +319,7 @@ describe("PandaDocProvider.dispatchLor", () => {
     });
   });
 
-  it("refuses to build a letter with no configured template", async () => {
+  it("fails before PandaDoc when the bundled PDF cannot be read", async () => {
     const { PandaDocClient: Client } = await import("./pandadoc-client");
     const provider = new PandaDocProvider({
       client: new Client({
@@ -314,12 +329,11 @@ describe("PandaDocProvider.dispatchLor", () => {
         pollMaxAttempts: 1,
         fetchImpl: () => Promise.reject(new Error("should not be called")),
       }),
-      templateUuid: null,
-      templateUuidSingle: null,
+      loadPdf: () => Promise.reject(new Error("PDF missing")),
     });
 
     await expect(provider.dispatchLor(sendLorRequestFixture())).rejects.toMatchObject({
-      code: "not_configured",
+      message: "PDF missing",
     });
   });
 
@@ -338,8 +352,6 @@ describe("PandaDocProvider.dispatchLor", () => {
     });
     const provider = new PandaDocProvider({
       client,
-      templateUuid: "t",
-      templateUuidSingle: null,
     });
 
     await expect(provider.downloadSignedPdf("doc-1")).resolves.toEqual(pdf);

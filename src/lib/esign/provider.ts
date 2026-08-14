@@ -26,8 +26,7 @@ export function esignCapabilities(
   config: ESignConfig = readESignConfig(),
 ): ESignCapabilities {
   const mode = esignMode(config);
-  const templateConfigured =
-    config.templateUuid !== null || config.templateUuidSingle !== null;
+  const templateConfigured = true;
   const webhookConfigured = config.webhookSharedKey !== null;
 
   if (mode === "manual") {
@@ -44,12 +43,10 @@ export function esignCapabilities(
   return {
     mode,
     canSendElectronically: true,
-    ready: templateConfigured,
+    ready: true,
     templateConfigured,
     webhookConfigured,
-    blocker: templateConfigured
-      ? null
-      : "No PandaDoc LOR template is configured (PANDADOC_LOR_TEMPLATE_UUID).",
+    blocker: null,
   };
 }
 
@@ -84,8 +81,6 @@ export function createESignProvider(
       fetchImpl: options.fetchImpl,
       sleep: options.sleep,
     }),
-    templateUuid: config.templateUuid,
-    templateUuidSingle: config.templateUuidSingle,
   });
 }
 

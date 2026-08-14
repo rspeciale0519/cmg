@@ -3,6 +3,7 @@ import {
   ADJUSTER_VALUES,
   CARRIER_TENURE_VALUES,
   CAUSE_VALUES,
+  LOR_CONTRACT_TYPE_VALUES,
   PRIOR_OUTCOME_VALUES,
   US_STATES,
   YES_NO_VALUES,
@@ -32,6 +33,8 @@ export {
   CAUSE_OPTIONS,
   CAUSE_VALUES,
   INTAKE_CONSENT_TEXT,
+  LOR_CONTRACT_TYPE_OPTIONS,
+  LOR_CONTRACT_TYPE_VALUES,
   labelFor,
   PRIOR_OUTCOME_OPTIONS,
   PRIOR_OUTCOME_VALUES,
@@ -51,6 +54,9 @@ const priorOutcome = z.enum(PRIOR_OUTCOME_VALUES, {
 const cause = z.enum(CAUSE_VALUES, { error: "Choose the cause of loss." });
 const requestedAdjuster = z.enum(ADJUSTER_VALUES, {
   error: "Choose which adjuster you are working with.",
+});
+const lorContractType = z.enum(LOR_CONTRACT_TYPE_VALUES, {
+  error: "Choose the agreement type for this claim.",
 });
 
 const hasSecondPolicyholder = z.enum(YES_NO_VALUES, {
@@ -101,6 +107,7 @@ export const intakeSchema = z
     priorRoofClaim,
     priorOutcome: priorOutcome.optional().or(z.literal("").transform(() => undefined)),
     claimNumber: optionalText(80),
+    lorContractType,
 
     lossDate,
     lossTime,

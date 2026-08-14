@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     "*": ["./design/**", "./temp/**"],
   },
+  outputFileTracingIncludes: {
+    "/*": ["./src/lib/esign/templates/*.pdf"],
+  },
   experimental: {
     serverActions: {
       // Spec §4 routes every intake upload through a Server Action and allows

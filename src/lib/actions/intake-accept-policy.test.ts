@@ -107,6 +107,7 @@ const POLICY = {
   carrier: "Citizens Property Insurance",
   policyNumber: "FL-88213-A",
   carrierTenure: "three_plus_years",
+  lorContractType: "non_emergency",
 };
 
 function form(fields: Record<string, string>): FormData {
@@ -193,6 +194,7 @@ describe("acceptIntake — a partner referral", () => {
       p_carrier: "Citizens Property Insurance",
       p_policy_number: "FL-88213-A",
       p_carrier_tenure: "three_plus_years",
+      p_lor_contract_type: "non_emergency",
     });
   });
 

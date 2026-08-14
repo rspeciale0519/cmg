@@ -6,7 +6,10 @@ import { idleState, resilient } from "@/lib/actions/types";
 import { humanizeEnum, NOT_SUPPLIED } from "@/lib/format";
 /* `intake-options`, not `@/lib/validators/claims` — that module builds the zod
    schema, and a client component importing from it ships zod to the browser. */
-import { CARRIER_TENURE_OPTIONS } from "@/lib/validators/intake-options";
+import {
+  CARRIER_TENURE_OPTIONS,
+  LOR_CONTRACT_TYPE_OPTIONS,
+} from "@/lib/validators/intake-options";
 import { Fact, FactList } from "./data-table";
 import {
   ActionFeedback,
@@ -36,12 +39,14 @@ export function PolicyForm({
   carrier,
   policyNumber,
   carrierTenure,
+  lorContractType,
   canManage,
 }: {
   claimId: string;
   carrier: string | null;
   policyNumber: string | null;
   carrierTenure: string | null;
+  lorContractType: string | null;
   canManage: boolean;
 }) {
   const [state, formAction] = useActionState(resilient(saveClaimPolicy), idleState);
@@ -73,6 +78,13 @@ export function PolicyForm({
               <span className="text-ink/58">{NOT_SUPPLIED}</span>
             )}
           </Fact>
+          <Fact label="Agreement type">
+            {lorContractType ? (
+              humanizeEnum(lorContractType)
+            ) : (
+              <span className="text-ink/58">{NOT_SUPPLIED}</span>
+            )}
+          </Fact>
         </FactList>
         <p className="mt-[13px] text-[12px] leading-[1.55] text-ink/58">
           The carrier and policy are recorded by the owner and by the adjuster the
@@ -82,7 +94,7 @@ export function PolicyForm({
     );
   }
 
-  const missing = !carrier || !policyNumber;
+  const missing = !carrier || !policyNumber || !lorContractType;
 
   return (
     <form action={formAction} noValidate>
@@ -99,7 +111,7 @@ export function PolicyForm({
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminField name="carrier" label="Carrier" error={state.fieldErrors?.carrier}>
           {/* Echoed first, stored second — a refusal has to leave what was typed
               on screen, and React 19's post-action reset lands on whichever
@@ -141,6 +153,27 @@ export function PolicyForm({
               How long…
             </option>
             {CARRIER_TENURE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </AdminSelect>
+        </AdminField>
+
+        <AdminField
+          name="lorContractType"
+          label="Agreement type"
+          error={state.fieldErrors?.lorContractType}
+        >
+          <AdminSelect
+            name="lorContractType"
+            defaultValue={state.values?.lorContractType ?? lorContractType ?? ""}
+            error={state.fieldErrors?.lorContractType}
+          >
+            <option value="" disabled>
+              Select type…
+            </option>
+            {LOR_CONTRACT_TYPE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

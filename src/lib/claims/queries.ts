@@ -6,6 +6,7 @@ import { isStaffRole } from "@/lib/auth/roles";
 import { getSession, requireStaff, type Session } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
 import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
+import type { Database } from "@/types/database";
 import { claimCapabilities, type ClaimCapabilities } from "./capabilities";
 import { isClaimStatus, type ClaimStatus } from "./status";
 
@@ -22,7 +23,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CLAIM_DETAIL_SELECT = `
   id, claim_ref, status,
   property_street, property_street2, property_city, property_state, property_zip,
-  carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome, claim_number,
+  carrier, policy_number, carrier_tenure, lor_contract_type, prior_roof_claim, prior_outcome, claim_number,
   loss_date, loss_time, cause, description,
   assigned_adjuster_id, partner_company_id,
   requested_adjuster, referrer_name, referrer_email,
@@ -47,6 +48,7 @@ export type ClaimDetail = {
   carrier: string | null;
   policyNumber: string | null;
   carrierTenure: string | null;
+  lorContractType: Database["public"]["Enums"]["lor_contract_type"] | null;
   priorRoofClaim: boolean;
   priorOutcome: string | null;
   claimNumber: string | null;
@@ -134,6 +136,7 @@ export const loadClaimContext = cache(async function loadClaimContext(
     carrier: data.carrier,
     policyNumber: data.policy_number,
     carrierTenure: data.carrier_tenure,
+    lorContractType: data.lor_contract_type,
     priorRoofClaim: data.prior_roof_claim,
     priorOutcome: data.prior_outcome,
     claimNumber: data.claim_number,
