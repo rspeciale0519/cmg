@@ -43,7 +43,7 @@ describe("application settings contract", () => {
 const HEALTHY_DB: SupabaseProbe = {
   ok: true,
   latencyMs: 4,
-  origin: "127.0.0.1:54321",
+  origin: "127.0.0.1:15421",
   local: true,
   error: null,
 };
@@ -227,7 +227,7 @@ describe("buildIntegrations — Supabase", () => {
         supabase: {
           ok: false,
           latencyMs: null,
-          origin: "127.0.0.1:54321",
+          origin: "127.0.0.1:15421",
           local: true,
           error: "The database could not be reached: fetch failed",
         },

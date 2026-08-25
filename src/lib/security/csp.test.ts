@@ -16,8 +16,8 @@ describe("contentSecurityPolicy", () => {
     const policy = contentSecurityPolicy("dev", true);
 
     expect(policy).toContain("'unsafe-eval'");
-    expect(policy).toContain("http://127.0.0.1:54321");
-    expect(policy).toContain("ws://127.0.0.1:54321");
+    expect(policy).toContain("http://127.0.0.1:15421");
+    expect(policy).toContain("ws://127.0.0.1:15421");
   });
 
   it("does not upgrade loopback HTTP requests used for local production smoke tests", () => {

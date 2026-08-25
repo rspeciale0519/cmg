@@ -4,7 +4,7 @@ export function contentSecurityPolicy(
   upgradeInsecureRequests = true,
 ): string {
   const localSupabase = development
-    ? " http://127.0.0.1:54321 ws://127.0.0.1:54321"
+    ? " http://127.0.0.1:15421 ws://127.0.0.1:15421"
     : "";
 
   return [
