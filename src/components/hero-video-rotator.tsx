@@ -116,12 +116,23 @@ export function HeroVideoRotator({
       /* Autoplay refused — the gradient stack below stays visible. */
     });
 
-    const known = Number.isFinite(active.duration) && active.duration > 0;
-    const timer = window.setTimeout(
-      advance,
-      known ? (active.duration + 1) * 1000 : FALLBACK_MS,
-    );
-    return () => window.clearTimeout(timer);
+    let timer: number | undefined;
+    const scheduleFallback = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      const known = Number.isFinite(active.duration) && active.duration > 0;
+      const remaining = known
+        ? Math.max(active.duration - active.currentTime + 1, 1) * 1000
+        : FALLBACK_MS;
+      timer = window.setTimeout(advance, remaining);
+    };
+
+    active.addEventListener("loadedmetadata", scheduleFallback);
+    scheduleFallback();
+
+    return () => {
+      active.removeEventListener("loadedmetadata", scheduleFallback);
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
   }, [enabled, idle, index, advance]);
 
   const handleError = useCallback(

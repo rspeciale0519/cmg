@@ -1,6 +1,6 @@
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { HeroVideoRotator } from "./hero-video-rotator";
 
 type ConnectionStub = { saveData?: boolean } | undefined;
@@ -192,5 +192,37 @@ describe("HeroVideoRotator", () => {
       (v) => v.style.opacity,
     );
     expect(opacities).toEqual(["0.62", "0", "0"]);
+  });
+
+  it("reschedules the watchdog when metadata reveals the real duration", () => {
+    vi.useFakeTimers();
+    try {
+      stubEnvironment(false, undefined);
+      stubIdle(true);
+      const { container } = render(<HeroVideoRotator />);
+      const videos = Array.from(container.querySelectorAll("video"));
+
+      Object.defineProperty(videos[0], "duration", {
+        configurable: true,
+        value: 10,
+      });
+      fireEvent.loadedMetadata(videos[0]);
+
+      act(() => vi.advanceTimersByTime(9000));
+      expect(videos.map((video) => video.style.opacity)).toEqual([
+        "0.62",
+        "0",
+        "0",
+      ]);
+
+      act(() => vi.advanceTimersByTime(2000));
+      expect(videos.map((video) => video.style.opacity)).toEqual([
+        "0",
+        "0.62",
+        "0",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
