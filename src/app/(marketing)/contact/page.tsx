@@ -59,7 +59,7 @@ export default function ContactPage() {
             <p className={DETAIL_LABEL}>Call 24/7</p>
             <Link
               href={telHref}
-              className="text-figure-sm font-medium tracking-[-0.025em] text-accent transition-colors duration-200 hover:text-accent-300"
+              className="inline-flex min-h-11 items-center text-figure-sm font-medium tracking-[-0.025em] text-accent transition-colors duration-200 hover:text-accent-300 active:text-accent-200"
             >
               {site.phone}
             </Link>
@@ -73,7 +73,7 @@ export default function ContactPage() {
                 missing is the transition its twin already had. */}
             <Link
               href={emailHref}
-              className="break-words text-[17px] text-accent transition-colors duration-200 hover:text-accent-300"
+              className="inline-flex min-h-11 max-w-full items-center break-words text-[17px] text-accent transition-colors duration-200 hover:text-accent-300 active:text-accent-200"
             >
               {site.email}
             </Link>

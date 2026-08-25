@@ -13,7 +13,7 @@ export function ProseLink({ href, className, children }: ProseLinkProps) {
     <Link
       href={href}
       className={cx(
-        "text-accent underline decoration-accent/40 underline-offset-[3px] transition-colors duration-200",
+        "tap-block text-accent underline decoration-accent/40 underline-offset-[3px] transition-colors duration-200",
         "hover:text-accent-300 hover:decoration-accent-300/70",
         /* On a touch screen hover never fires, so without this the press is
            silent. Same accent ramp the header nav uses: 500 → 300 → 200. */

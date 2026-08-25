@@ -85,7 +85,7 @@ export function Hero({
   return (
     <section
       className={cx(
-        "relative isolate flex min-h-[min(90vh,880px)] items-end overflow-hidden",
+        "relative isolate flex min-h-[min(calc(100svh_-_82px),880px)] items-start overflow-hidden min-[768px]:items-end",
         className,
       )}
     >
@@ -121,11 +121,13 @@ export function Hero({
         className="absolute inset-0 z-[-1] [background:linear-gradient(180deg,rgba(21,23,26,0.74)_0%,rgba(21,23,26,0.32)_34%,rgba(21,23,26,0.88)_78%,var(--color-canvas)_100%)]"
       />
 
-      <div className="relative mx-auto w-full max-w-[1360px] px-[clamp(20px,4vw,56px)] pb-[clamp(56px,7vh,84px)] pt-[clamp(120px,18vh,200px)]">
-        {kicker ? <SectionKicker label={kicker} className="mb-[26px]" /> : null}
+      <div className="relative mx-auto w-full max-w-[1360px] px-[clamp(20px,4vw,56px)] pb-[clamp(56px,7vh,84px)] pt-[clamp(84px,calc(32svh_-_132px),170px)] max-[340px]:pb-10 max-[340px]:pt-12 min-[768px]:pt-[clamp(120px,18vh,200px)]">
+        {kicker ? (
+          <SectionKicker label={kicker} className="mb-[26px] max-[340px]:mb-4" />
+        ) : null}
         <h1
           className={cx(
-            "font-medium tracking-[-0.035em]",
+            "font-medium tracking-[-0.035em] max-[340px]:text-[34px] max-[340px]:leading-[1.02]",
             step.size,
             step.measure,
             step.leading,
@@ -134,12 +136,12 @@ export function Hero({
           {headline}
         </h1>
         {body ? (
-          <p className="mt-[30px] max-w-[56ch] text-lede-lg leading-[1.65] text-ink/85">
+          <p className="mt-[30px] max-w-[56ch] text-lede-lg leading-[1.65] text-ink/85 max-[340px]:mt-4 max-[340px]:text-[16px] max-[340px]:leading-[1.5]">
             {body}
           </p>
         ) : null}
         {actions ? (
-          <div className={cx("mt-[38px]", ACTIONS)}>{actions}</div>
+          <div className={cx("mt-[38px] max-[340px]:mt-5", ACTIONS)}>{actions}</div>
         ) : null}
       </div>
     </section>
