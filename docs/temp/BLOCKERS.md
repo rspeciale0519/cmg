@@ -126,7 +126,7 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 
 ### 8. Separate release approvals
 
-The local fixes are uncommitted.
+Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally and is not pushed.
 PR #1 targets `develop`, and its previous GitHub checks failed.
 The Ready Preview does not contain these fixes.
 The Vercel UI confirms that future Production deployments track `develop`.

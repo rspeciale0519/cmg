@@ -3,7 +3,8 @@
 Last reconciled: 2026-08-31.
 The release target is `SITE_MODE=simple`.
 The current candidate is not ready for release approval.
-Local engineering validation is complete, but fixes remain uncommitted and owner decisions remain open.
+Local engineering validation is complete, and release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally but is not pushed.
+Owner decisions remain open.
 The latest Preview still fails simple-mode acceptance because it is an older platform deployment.
 A Ready Vercel deployment does not prove application acceptance or passing GitHub checks.
 
@@ -17,14 +18,15 @@ The historical appendix preserves earlier evidence without treating it as curren
 
 ## GitHub and Vercel evidence
 
-These facts came from read-only inspection on 2026-08-30.
-No commit, push, PR update, branch-protection change, merge, or deployment occurred during this review.
+These facts came from read-only inspection on 2026-08-31; remote values remain from 2026-08-30.
+The release commit was created locally after review approval.
+No push, PR update, branch-protection change, merge, or deployment occurred during this review.
 
 | Item | Recorded state |
 |---|---|
 | Branch | `feature/claims-platform` |
-| Local HEAD | `d895527834d1eb9690141449c59618766b11ccb9` |
-| Local changes | Uncommitted release fixes and documentation |
+| Local HEAD | `4516a825609dfa325cb150251dceb14e38bdf24b` |
+| Local changes | Clean after the release commit; commit is not pushed |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
 | Previous CI run | [33099790158](https://github.com/rspeciale0519/cmg/actions/runs/33099790158); `verify` and `database` failed |
 | CI failure | The live PandaDoc test loaded missing `.env.local` during discovery |
@@ -51,7 +53,7 @@ Keep the repository private.
 An owner-approved private-repository plan is unresolved.
 Manual check review does not provide branch protection.
 
-The Preview contains the committed head, not the uncommitted fixes.
+The Preview contains the old remote head, not release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
 Its normal GET requests to `/admin`, `/portal`, and `/partner` redirect to `/login`.
 The login page renders, and the invite page renders an expiration message.
 Preview needs an approved `SITE_MODE=simple` change and a new deployment.
@@ -63,7 +65,7 @@ Do not reuse older passing totals as evidence for the changed candidate.
 Fresh read-only `gh pr view` confirms PR #1 is open at `d895527834d1eb9690141449c59618766b11ccb9`, targeting `develop`.
 Its `verify` and `database` checks still show the 2026-08-27 failures.
 Vercel and CodeRabbit report success for that old head.
-Those successes do not cover the uncommitted fixes.
+Those successes do not cover release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
 No GitHub write occurred.
 
 ## Hosted database and service evidence
@@ -244,7 +246,7 @@ The subsequent platform CI selection passed, as recorded below.
 The subsequent full simple-mode run passed 89 files and 884 tests, with one live file and test skipped.
 These checks made no live provider calls or new hosted writes.
 
-## Uncommitted fixes and pending migrations
+## Release fixes and pending migrations
 
 The local candidate addresses these confirmed defects:
 
@@ -510,7 +512,7 @@ The former transport sent file bytes through a Server Action.
 [Vercel limits function request payloads to 4.5 MB](https://vercel.com/docs/functions/limitations).
 The new Server Actions receive only text, file metadata, and session credentials.
 The installed Supabase browser SDK sends file bytes directly to the private bucket.
-The deployed Preview and Production do not contain this uncommitted change.
+The deployed Preview and Production do not contain release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
 Maximum-size hosted acceptance remains open until an approved deployment and approved hosted tests.
 
 The implementation uses these controls:

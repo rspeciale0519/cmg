@@ -3,7 +3,7 @@
 Last reconciled: 2026-08-31.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-Local fixes remain uncommitted, and release acceptance remains incomplete.
+Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally but is not pushed, and release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.
@@ -78,7 +78,8 @@ Those approved local reset checks are complete; they predate the two upload migr
 - [ ] Complete hosted upload boundary acceptance after that transport work.
 - [ ] Obtain separate approval for Vercel Pro commercial hosting and GitHub private-repository protection.
 - [ ] Resolve owner-controlled service, domain, legal, backup, repository-plan, and publication decisions.
-- [ ] Obtain separate commit, push, and PR-update approvals.
+- [x] Obtain commit approval and create the local release commit.
+- [ ] Obtain separate push and PR-update approvals.
 - [ ] Require passing checks and Preview acceptance on the approved remote head.
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.

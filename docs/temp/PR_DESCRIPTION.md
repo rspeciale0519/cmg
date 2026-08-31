@@ -3,7 +3,7 @@
 Local draft for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-08-31.
 This file has not been published to GitHub.
-The candidate contains uncommitted changes and is not ready to merge or deploy.
+Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally, but it is not pushed and is not ready to merge or deploy.
 
 ## Problem
 
@@ -311,10 +311,10 @@ Those partial results do not make the old run green.
 
 Fresh read-only `gh pr view` confirms PR #1 remains open at `d895527834d1eb9690141449c59618766b11ccb9`, targeting `develop`.
 Its `verify` and `database` checks still show the 2026-08-27 failures.
-Vercel and CodeRabbit report success for that old head, which excludes the uncommitted fixes.
+Vercel and CodeRabbit report success for that old head, which excludes release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
 No GitHub write occurred.
 
-The Ready Preview still uses `d895527834d1eb9690141449c59618766b11ccb9` without these local fixes.
+The Ready Preview still uses `d895527834d1eb9690141449c59618766b11ccb9` without release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
 It runs platform mode and failed simple-mode acceptance.
 Its `/admin`, `/portal`, and `/partner` requests reach login; login and invite pages render.
 It needs an approved `SITE_MODE=simple` update and redeployment.
@@ -322,7 +322,8 @@ It needs an approved `SITE_MODE=simple` update and redeployment.
 Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
-No new commit, push, PR update, merge, deployment, or hosted migration has occurred during this review.
+The release commit was created locally after approval.
+No push, PR update, merge, deployment, or hosted migration has occurred during this review.
 
 ## Security review warning
 
