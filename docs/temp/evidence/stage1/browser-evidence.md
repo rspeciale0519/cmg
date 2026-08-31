@@ -1,5 +1,10 @@
 # Stage 1 current-build browser evidence
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](../../HANDOFF.md) for current evidence and [ROADMAP.md](../../../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Recorded 2026-08-13 against the production build served at
 `http://localhost:3010`, after the final clean local database reset. Chrome was
 left open. All observations came from isolated DevTools browser contexts.

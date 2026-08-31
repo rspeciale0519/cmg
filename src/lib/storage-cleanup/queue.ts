@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import {
   CLEANUP_LEASE_SECONDS,
   CLEANUP_MAX_ATTEMPTS,
@@ -86,6 +86,15 @@ export function supabaseCleanupStore(admin: Admin): CleanupStore {
 }
 
 export async function sweepStorageCleanup(admin: Admin, limit: number) {
+  // Signed uploads can finish after an earlier empty-path cleanup succeeded.
+  // Recheck durable path records before taking the next bounded cleanup batch.
+  const reconciliation = await admin.rpc("reconcile_intake_upload_cleanup", { p_limit: limit });
+  if (reconciliation.error) throw new Error("Intake upload cleanup reconciliation failed.");
+  const reconciliationData = reconciliation.data;
+  if (reconciliationData && typeof reconciliationData === "object" && !Array.isArray(reconciliationData) &&
+      typeof reconciliationData.blocked === "number" && reconciliationData.blocked > 0) {
+    console.error("[storage] intake upload paths require cleanup review", { count: reconciliationData.blocked });
+  }
   return drainStorageCleanup(
     supabaseCleanupStore(admin),
     (bucketId, objectPath) =>

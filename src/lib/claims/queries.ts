@@ -6,7 +6,7 @@ import { isStaffRole } from "@/lib/auth/roles";
 import { getSession, requireStaff, type Session } from "@/lib/authz";
 import { createClient } from "@/lib/supabase/server";
 import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { claimCapabilities, type ClaimCapabilities } from "./capabilities";
 import { isClaimStatus, type ClaimStatus } from "./status";
 

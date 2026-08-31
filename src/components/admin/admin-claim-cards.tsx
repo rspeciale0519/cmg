@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { isClaimStatus } from "@/lib/claims/status";
 import { formatRelative } from "@/lib/format";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 type ClaimRow =
   Database["public"]["Functions"]["staff_claims_projection"]["Returns"][number];

@@ -3,14 +3,23 @@ import { loadEnvFile } from "node:process";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-loadEnvFile(".env.local");
+
+// Require the command's opt-in before a local file can supply credentials.
+const liveRequested = process.env.PANDADOC_LIVE_DRAFT_TEST === "1";
+if (liveRequested) {
+  try {
+    loadEnvFile(".env.local");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+}
 
 const { PandaDocClient } = await import("./pandadoc-client");
 const { buildLorPdfFields, loadLorPdf, lorPdfName, pandaDocRecipients } = await import("./lor-pdf");
 const { sendLorRequestFixture } = await import("./fixtures");
 
 const runLive =
-  process.env.PANDADOC_LIVE_DRAFT_TEST === "1" &&
+  liveRequested &&
   Boolean(process.env.PANDADOC_API_KEY) &&
   Boolean(process.env.PANDADOC_DRAFT_TEST_EMAIL);
 

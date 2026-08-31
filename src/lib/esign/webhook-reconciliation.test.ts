@@ -55,8 +55,7 @@ describeDb("ambiguous PandaDoc dispatch reconciliation", () => {
   });
 
   afterAll(async () => {
-    for (const claim of claims) await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    await support.cleanupWebhookEvents(admin, deliveries);
+    await support.cleanupFixtures(admin, claims, deliveries);
   });
 
   it("settles exact creation failure without a false sent transition", async () => {

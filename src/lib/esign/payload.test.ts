@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   actorNameFromEvent,
+  asUuid,
   claimIdFromEvent,
   creationErrorFromEvent,
   documentIdFromEvent,
@@ -57,6 +58,14 @@ describe("parseWebhookEvents", () => {
 });
 
 describe("field readers", () => {
+  it("requires an exact UUID without trailing line terminators", () => {
+    expect(asUuid(CLAIM_ID)).toBe(CLAIM_ID);
+    expect(asUuid(CLAIM_ID.toUpperCase())).toBe(CLAIM_ID.toUpperCase());
+    for (const suffix of ["\n", "\r", "\r\n", "\u2028", "\u2029", " "]) {
+      expect(asUuid(`${CLAIM_ID}${suffix}`)).toBeNull();
+    }
+  });
+
   it("takes claim_id from metadata only when it is a uuid", () => {
     expect(claimIdFromEvent(event())).toBe(CLAIM_ID);
     expect(claimIdFromEvent(event({ metadata: { claim_id: "not-a-uuid" } }))).toBeNull();

@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { isAppRole, isStaffRole, type AppRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { isSimpleMode, PLATFORM_DISABLED_PATH } from "@/lib/site-mode";
 
 export type Session = {
   userId: string;
@@ -27,6 +28,7 @@ export type Session = {
  * different requests never share anything.
  */
 export const getSession = cache(async (): Promise<Session | null> => {
+  if (isSimpleMode()) return null;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
@@ -53,7 +55,13 @@ export const getSession = cache(async (): Promise<Session | null> => {
   };
 });
 
+/** The mode boundary must also run inside pages and actions, not only proxy. */
+export function requirePlatform(): void {
+  if (isSimpleMode()) redirect(PLATFORM_DISABLED_PATH);
+}
+
 export async function requireUser(next?: string): Promise<Session> {
+  requirePlatform();
   const session = await getSession();
   if (session) return session;
 

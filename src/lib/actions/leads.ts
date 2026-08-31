@@ -7,7 +7,7 @@ import { requireStaff } from "@/lib/authz";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { GENERIC_ERROR, type FormState } from "./types";
 
 type LeadStatus = Database["public"]["Enums"]["lead_status"];

@@ -72,7 +72,8 @@ select is_empty(
             <> (c.relname in ('claim_ref_counters', 'notifications_outbox',
                               'pandadoc_webhook_events', 'rate_limits',
                               'storage_cleanup_queue', 'esign_dispatch_attempts',
-                              'esign_recipient_completions')) $$,
+                              'esign_recipient_completions', 'intake_upload_sessions',
+                              'intake_upload_files')) $$,
   'only service-role ledgers carry zero policies, so RLS-on-with-no-policy is a deliberate lockout and every client-facing table has an explicit policy'
 );
 

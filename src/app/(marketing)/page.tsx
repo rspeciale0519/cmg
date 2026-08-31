@@ -80,7 +80,7 @@ export default function HomePage() {
         space="none"
         containerClassName="pb-[clamp(48px,6vw,80px)] pt-[clamp(72px,9vw,128px)]"
       >
-        <div className="mb-[clamp(40px,5vw,64px)] grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-end gap-x-12 gap-y-5">
+        <div className="mb-[clamp(40px,5vw,64px)] grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-end gap-x-12 gap-y-5">
           <div>
             <SectionKicker label="Who we represent" className="mb-[22px]" />
             <h2 className="max-w-[16ch] text-display-4 font-medium leading-[1.1] tracking-[-0.03em]">
@@ -138,7 +138,7 @@ export default function HomePage() {
         </p>
       </Section>
 
-      <Section containerClassName="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-center gap-x-[clamp(32px,5vw,88px)] gap-y-10">
+      <Section containerClassName="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] items-center gap-x-[clamp(32px,5vw,88px)] gap-y-10">
         <div>
           <SectionKicker label="On your side" className="mb-[22px]" />
           <h2 className="max-w-[15ch] text-display-5 font-medium leading-[1.12] tracking-[-0.03em]">

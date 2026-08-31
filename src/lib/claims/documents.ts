@@ -1,4 +1,4 @@
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 export type DocumentKind = Database["public"]["Enums"]["document_kind"];
 export type DocumentVisibility = Database["public"]["Enums"]["document_visibility"];

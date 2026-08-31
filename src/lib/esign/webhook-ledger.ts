@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "@/types/database";
+import type { Database, Json } from "@/types/database-app";
 import { WEBHOOK_LEASE_SECONDS } from "./webhook-timing";
 
 type Admin = SupabaseClient<Database>;

@@ -8,6 +8,7 @@ type TurnstileApi = {
     options: {
       sitekey: string;
       theme?: "light" | "dark" | "auto";
+      size?: "normal" | "flexible" | "compact";
       "response-field-name"?: string;
     },
   ) => string;
@@ -75,8 +76,18 @@ export function TurnstileWidget({ resetOn }: { resetOn?: unknown }) {
   const widgetIdRef = useRef<string | null>(null);
   const isFirstRun = useRef(true);
   const [failed, setFailed] = useState(false);
+  const [compact, setCompact] = useState(false);
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const size = compact ? "compact" : "normal";
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 420px)");
+    const sync = () => setCompact(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     if (!siteKey) return;
@@ -90,6 +101,7 @@ export function TurnstileWidget({ resetOn }: { resetOn?: unknown }) {
         widgetIdRef.current = api.render(containerRef.current, {
           sitekey: siteKey,
           theme: "dark",
+          size,
           "response-field-name": "cf-turnstile-response",
         });
       })
@@ -106,7 +118,7 @@ export function TurnstileWidget({ resetOn }: { resetOn?: unknown }) {
         widgetIdRef.current = null;
       }
     };
-  }, [siteKey]);
+  }, [siteKey, size]);
 
   useEffect(() => {
     if (isFirstRun.current) {

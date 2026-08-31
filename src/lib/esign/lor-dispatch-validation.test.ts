@@ -23,7 +23,7 @@ describeDb("LOR dispatch validation", () => {
   });
 
   afterAll(async () => {
-    for (const claim of created) await support.cleanupClaim(admin, claim.id, claim.claimRef);
+    await support.cleanupFixtures(admin, created);
   });
 
   it("refuses a claim that is not ready for a letter", async () => {

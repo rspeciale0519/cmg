@@ -8,33 +8,20 @@ import { isSimpleMode, PUBLIC_FORM_TEMPLATES } from "@/lib/site-mode";
  *
  * SCHEDULE
  *
- * Every five minutes, as a `crons` entry in `vercel.json` pointing at
- * `/api/cron/outbox` — the literal expression is on the line below this comment,
- * because it contains the two characters that would end this one. It is wired up
- * in Phase 9 with the rest of the deploy configuration.
- *
- * Five minutes is chosen against the retry ladder in `delivery.ts` — the first
- * backoff is one minute,
- * so a sweep this often means a transient failure is retried on the next tick
- * rather than sitting out its own backoff, and the longest gap (~2h) is still
- * measured in sweeps rather than in days. Nothing here depends on the interval
- * for correctness: the claim is atomic and the backoff is a floor, so a slower
- * schedule delays mail and a faster one wastes invocations, and neither
- * duplicates a send.
+ * Daily at 14:00 UTC, as configured in `vercel.json` for `/api/cron/outbox`.
+ * Retry delays in `delivery.ts` are minimum delays. A due retry waits for a
+ * later sweep, so daily processing can delay mail until the following day.
  *
  * Node runtime: the claim goes through the service-role client, and
  * `constantTimeEquals` behind the auth gate is `node:crypto`.
  *
  * SAFE TO RUN CONCURRENTLY WITH ITSELF
  *
- * A sweep that overruns its interval will be running when the next one starts,
- * and on Vercel neither knows about the other. `claim_outbox_batch` is what
- * makes that harmless — `for update skip locked` partitions the due rows between
- * whoever asks, so the second sweeper takes the rows the first one did not, and
- * a row that is already claimed has been pushed out of the due window by its
- * lease. The same claim covers the post-commit `dispatchOutbox` racing a sweep.
+ * `claim_outbox_batch` uses `for update skip locked` to partition due rows
+ * between workers. Its lease excludes a claimed row until that lease expires.
+ * The same claim covers `dispatchOutbox` after commit racing a sweep.
  */
-// Expected schedule:  */5 * * * *
+// Expected schedule: 0 14 * * *
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;

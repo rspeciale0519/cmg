@@ -70,7 +70,7 @@ export default function AboutPage() {
         <h1 className="max-w-[16ch] text-display-3 font-medium leading-[1.05] tracking-[-0.035em]">
           Licensed adjusters on the policyholder&apos;s side.
         </h1>
-        <div className="mt-9 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-x-[clamp(32px,5vw,88px)] gap-y-6">
+        <div className="mt-9 grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-[clamp(32px,5vw,88px)] gap-y-6">
           <p className="text-lede leading-[1.7] text-ink/85">
             After a catastrophe, insurance carriers field thousands of claims at
             once &mdash; often with new, hurried adjusters. Things get missed,
@@ -104,7 +104,7 @@ export default function AboutPage() {
 
       <Section
         space="none"
-        containerClassName="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-center gap-x-[clamp(32px,5vw,88px)] gap-y-10 pb-[clamp(56px,7vw,96px)]"
+        containerClassName="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] items-center gap-x-[clamp(32px,5vw,88px)] gap-y-10 pb-[clamp(56px,7vw,96px)]"
       >
         <div>
           <SectionKicker label="The team" className="mb-[22px]" />

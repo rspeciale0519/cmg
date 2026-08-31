@@ -1,5 +1,10 @@
 # AUTOPILOT SPEC — CMG Claims Platform Build
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](HANDOFF.md) for current evidence and [ROADMAP.md](../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Execution spec for the autonomous `/goal` run. The **design authority** is
 [`.claude/plans/feature-claims-platform.md`](../../.claude/plans/feature-claims-platform.md)
 (data model §4, lifecycle §5, flows §6, security §7, surfaces §8–11). PandaDoc specifics:

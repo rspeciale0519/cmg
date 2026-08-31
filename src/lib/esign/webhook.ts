@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database, Json } from "@/types/database";
+import type { Database, Json } from "@/types/database-app";
 import { readESignConfig } from "./config";
 import {
   asUuid,

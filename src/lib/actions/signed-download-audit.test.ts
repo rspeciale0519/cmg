@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const stub = vi.hoisted(() => ({
   auditFails: false,
   audited: vi.fn(),
+  signUrl: vi.fn(async () => ({
+    data: { signedUrl: "https://storage.example.test/signed-secret" },
+    error: null,
+  })),
   document: {
     id: "29000000-0000-4000-a000-000000000001",
     claim_id: "20000000-0000-4000-a000-000000000001",
@@ -53,10 +57,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     storage: {
       from: () => ({
-        createSignedUrl: async () => ({
-          data: { signedUrl: "https://storage.example.test/signed-secret" },
-          error: null,
-        }),
+        createSignedUrl: stub.signUrl,
       }),
     },
   })),
@@ -74,12 +75,24 @@ function form(): FormData {
 beforeEach(() => {
   vi.clearAllMocks();
   stub.auditFails = false;
+  stub.document.storage_path = `claims/${stub.document.claim_id}/evidence.pdf`;
 });
 
 describe.each([
   ["admin", issueDocumentDownload],
   ["portal", issuePortalDownload],
 ] as const)("%s signed download", (_surface, action) => {
+  it("does not sign a stored path that fails canonical validation", async () => {
+    stub.document.storage_path = `claims/${stub.document.claim_id}/./evidence.pdf`;
+
+    const result = await action({ status: "idle" }, form());
+
+    expect(result.status).toBe("error");
+    expect(result.url).toBeUndefined();
+    expect(stub.signUrl).not.toHaveBeenCalled();
+    expect(stub.audited).not.toHaveBeenCalled();
+  });
+
   it("returns the bearer URL only after its required audit succeeds", async () => {
     const result = await action({ status: "idle" }, form());
 

@@ -13,7 +13,7 @@ import type { AppRole } from "@/lib/auth/roles";
 import { dispatchOutbox } from "@/lib/email/outbox";
 import type { InvitePayload } from "@/lib/email/templates/invite";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 type Admin = SupabaseClient<Database>;
 

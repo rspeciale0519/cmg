@@ -1,5 +1,10 @@
 # Build progress — CMG Property Solutions
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](HANDOFF.md) for current evidence and [ROADMAP.md](../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Newest first. Detailed final evidence is in `GOAL_STATE.md`; owner acceptance
 and production setup are in `HANDOFF.md` and `BLOCKERS.md`.
 

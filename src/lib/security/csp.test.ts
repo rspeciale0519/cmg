@@ -10,6 +10,7 @@ describe("contentSecurityPolicy", () => {
     expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(policy).toContain("frame-ancestors 'none'");
     expect(policy).toContain("upgrade-insecure-requests");
+    expect(policy).not.toContain("127.0.0.1");
   });
 
   it("allows only local development transports in development", () => {
@@ -24,5 +25,7 @@ describe("contentSecurityPolicy", () => {
     const policy = contentSecurityPolicy("local", false, false);
 
     expect(policy).not.toContain("upgrade-insecure-requests");
+    expect(policy).toContain("http://127.0.0.1:15421");
+    expect(policy).not.toContain("'unsafe-eval'");
   });
 });

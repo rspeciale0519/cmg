@@ -1,5 +1,10 @@
 # PostgREST growing-read inventory — Packet 1D
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](HANDOFF.md) for current evidence and [ROADMAP.md](../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Audited 2026-08-12 after searching every `.from(`, `.rpc(`, `.select(`,
 one-to-many embed, and direct `fetch` under `src/`. The classifications below
 state why the server's 1,000-row response ceiling cannot silently turn a

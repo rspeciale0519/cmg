@@ -6,7 +6,7 @@ import { CLAIM_DOCS_BUCKET } from "@/lib/actions/intake-storage";
 import { staffInbox } from "@/lib/email/outbox";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import type { OutboxEntry } from "@/lib/email/outbox";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import {
   enqueueWebhookNotifications as enqueue,
   postFeedEventOnce,

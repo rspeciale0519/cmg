@@ -1,4 +1,4 @@
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 

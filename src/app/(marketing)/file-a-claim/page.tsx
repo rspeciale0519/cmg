@@ -5,6 +5,9 @@ import { Section } from "@/components/ui/section";
 import { SectionKicker } from "@/components/ui/section-kicker";
 import { site } from "@/lib/site";
 
+// Each action verifies at most one 25 MiB file with a shorter bounded read budget.
+export const maxDuration = 300;
+
 const DESCRIPTION =
   "Start your claim with CMG Property Solutions. Complete the intake and we'll prepare the Letter of Representation for signature by every party on the policy.";
 

@@ -55,6 +55,7 @@ describeDb("PandaDoc webhook pipeline", () => {
   let admin: TestAdmin;
   const claims: Array<{ id: string; claimRef: string }> = [];
   const eventIds: string[] = [];
+  const auditIds: number[] = [];
 
   const post = (delivery: { rawBody: string; signature: string; eventId: string }) => {
     eventIds.push(delivery.eventId);
@@ -87,10 +88,7 @@ describeDb("PandaDoc webhook pipeline", () => {
   /* pgTAP runs against this same live database and asserts against the seed,
      so the suite has to leave nothing of its own behind. */
   afterAll(async () => {
-    for (const claim of claims) {
-      await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    }
-    await support.cleanupWebhookEvents(admin, eventIds);
+    await support.cleanupFixtures(admin, claims, eventIds, auditIds);
   });
 
   it("rejects reuse of a completed event id with different signed bytes", async () => {
@@ -179,14 +177,16 @@ describeDb("PandaDoc webhook pipeline", () => {
     const signature = signWebhookBody(SHARED_KEY, rawBody);
     const eventId = randomUUID();
 
-    const outcome = await processPandaDocWebhook(
-      {
-        rawBody: rawBody.replace("Mallory", "Mallor!"),
-        signature,
-        eventId,
-        ip: "203.0.113.42",
-      },
-      { admin, provider: stubProvider, sharedKey: SHARED_KEY },
+    const outcome = await support.captureWebhookRejectionAudit(admin, auditIds, (ip) =>
+      processPandaDocWebhook(
+        {
+          rawBody: rawBody.replace("Mallory", "Mallor!"),
+          signature,
+          eventId,
+          ip,
+        },
+        { admin, provider: stubProvider, sharedKey: SHARED_KEY },
+      ),
     );
 
     expect(outcome).toEqual({ status: 403, body: { ok: false, reason: "invalid_signature" } });
@@ -210,9 +210,11 @@ describeDb("PandaDoc webhook pipeline", () => {
       stateChangedEvent(randomUUID(), "pd-x", "document.completed"),
     ]);
 
-    const outcome = await processPandaDocWebhook(
-      { rawBody: delivery.rawBody, signature: delivery.signature, eventId: delivery.eventId },
-      { admin, provider: stubProvider, sharedKey: SHARED_KEY },
+    const outcome = await support.captureWebhookRejectionAudit(admin, auditIds, (ip) =>
+      processPandaDocWebhook(
+        { rawBody: delivery.rawBody, signature: delivery.signature, eventId: delivery.eventId, ip },
+        { admin, provider: stubProvider, sharedKey: SHARED_KEY },
+      ),
     );
 
     expect(outcome.status).toBe(403);

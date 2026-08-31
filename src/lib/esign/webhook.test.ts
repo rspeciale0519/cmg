@@ -86,10 +86,7 @@ describeDb("PandaDoc webhook pipeline", () => {
   /* pgTAP runs against this same live database and asserts against the seed,
      so the suite has to leave nothing of its own behind. */
   afterAll(async () => {
-    for (const claim of claims) {
-      await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    }
-    await support.cleanupWebhookEvents(admin, eventIds);
+    await support.cleanupFixtures(admin, claims, eventIds);
   });
 
   it("drives a real claim from lor_sent to lor_signed across the webhook chain", async () => {

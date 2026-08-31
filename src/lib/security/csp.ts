@@ -3,7 +3,9 @@ export function contentSecurityPolicy(
   development: boolean,
   upgradeInsecureRequests = true,
 ): string {
-  const localSupabase = development
+  // The proxy disables upgrading only for a loopback application origin.
+  // Local production builds need the same private Storage endpoint as dev.
+  const localSupabase = development || !upgradeInsecureRequests
     ? " http://127.0.0.1:15421 ws://127.0.0.1:15421"
     : "";
 

@@ -674,6 +674,95 @@ export type Database = {
           },
         ]
       }
+      intake_upload_files: {
+        Row: {
+          copy_started_at: string | null
+          index: number
+          last_reconciled_at: string | null
+          mime: string
+          original_name: string
+          session_id: string
+          size_bytes: number
+          storage_path: string
+          upload_path: string
+          verification: Json | null
+        }
+        Insert: {
+          copy_started_at?: string | null
+          index: number
+          last_reconciled_at?: string | null
+          mime: string
+          original_name: string
+          session_id: string
+          size_bytes: number
+          storage_path: string
+          upload_path: string
+          verification?: Json | null
+        }
+        Update: {
+          copy_started_at?: string | null
+          index?: number
+          last_reconciled_at?: string | null
+          mime?: string
+          original_name?: string
+          session_id?: string
+          size_bytes?: number
+          storage_path?: string
+          upload_path?: string
+          verification?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_upload_files_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intake_upload_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intake_upload_sessions: {
+        Row: {
+          cleanup_after: string
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          file_count: number
+          id: string
+          result: Json | null
+          sign_until: string
+          status: string
+          submission: Json
+          token_hash: string
+        }
+        Insert: {
+          cleanup_after: string
+          completed_at?: string | null
+          created_at: string
+          expires_at: string
+          file_count: number
+          id: string
+          result?: Json | null
+          sign_until: string
+          status?: string
+          submission: Json
+          token_hash: string
+        }
+        Update: {
+          cleanup_after?: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          file_count?: number
+          id?: string
+          result?: Json | null
+          sign_until?: string
+          status?: string
+          submission?: Json
+          token_hash?: string
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           acceptance_attempt_id: string | null
@@ -994,16 +1083,16 @@ export type Database = {
       accept_intake_transaction: {
         Args: {
           p_adjuster_id: string
-          p_carrier: string | null
-          p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"] | null
+          p_carrier: string
+          p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"]
           p_claim_id: string
           p_ip: unknown
-          p_lor_contract_type: Database["public"]["Enums"]["lor_contract_type"] | null
-          p_new_partner_name: string | null
-          p_note: string | null
+          p_lor_contract_type: Database["public"]["Enums"]["lor_contract_type"]
+          p_new_partner_name: string
+          p_note: string
           p_partner_choice: string
-          p_partner_company_id: string | null
-          p_policy_number: string | null
+          p_partner_company_id: string
+          p_policy_number: string
         }
         Returns: Json
       }
@@ -1034,8 +1123,21 @@ export type Database = {
         Args: { p_loss_date: string }
         Returns: undefined
       }
+      begin_intake_upload_session: {
+        Args: {
+          p_files: Json
+          p_id: string
+          p_submission: Json
+          p_token_hash: string
+        }
+        Returns: Json
+      }
       begin_invite_acceptance: {
         Args: { p_attempt_id: string; p_token_hash: string }
+        Returns: Json
+      }
+      cancel_intake_upload_session: {
+        Args: { p_id: string; p_token_hash: string }
         Returns: Json
       }
       change_staff_privileges: {
@@ -1075,6 +1177,10 @@ export type Database = {
           p_mode: string
           p_request_id: string
         }
+        Returns: Json
+      }
+      claim_intake_upload_copy: {
+        Args: { p_id: string; p_index: number; p_token_hash: string }
         Returns: Json
       }
       claim_outbox_batch: {
@@ -1131,7 +1237,7 @@ export type Database = {
       enqueue_storage_cleanup_exact: {
         Args: {
           p_bucket_id: string
-          p_claim_id?: string | null
+          p_claim_id?: string
           p_object_paths: string[]
         }
         Returns: number
@@ -1156,6 +1262,10 @@ export type Database = {
         }
         Returns: Json
       }
+      finalize_intake_upload_session: {
+        Args: { p_id: string; p_token_hash: string; p_verified: Json }
+        Returns: Json
+      }
       finalize_invite_acceptance: {
         Args: {
           p_attempt_id: string
@@ -1169,12 +1279,12 @@ export type Database = {
       }
       issue_invite_transaction: {
         Args: {
-          p_claim_id: string | null
+          p_claim_id: string
           p_email: string
           p_expires_at: string
           p_invited_by: string
           p_ip: unknown
-          p_partner_company_id: string | null
+          p_partner_company_id: string
           p_payload: Json
           p_role: Database["public"]["Enums"]["app_role"]
           p_token_hash: string
@@ -1231,6 +1341,10 @@ export type Database = {
         }
         Returns: string
       }
+      reconcile_intake_upload_cleanup: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       record_esign_recipient_completion: {
         Args: {
           p_attempt_token: string
@@ -1260,13 +1374,13 @@ export type Database = {
       staff_claims_projection: {
         Args: never
         Returns: {
-          adjuster_name: string | null
-          assigned_adjuster_id: string | null
+          adjuster_name: string
+          assigned_adjuster_id: string
           claim_ref: string
           id: string
           loss_date: string
-          partner_company_id: string | null
-          partner_name: string | null
+          partner_company_id: string
+          partner_name: string
           property_city: string
           property_state: string
           property_street: string
@@ -1278,13 +1392,13 @@ export type Database = {
       }
       submit_claim_transaction: {
         Args: {
-          p_audit?: Json | null
+          p_audit?: Json
           p_claim: Json
           p_claimants: Json
           p_consents: Json
           p_documents: Json
           p_outbox: Json
-          p_partner_company_id?: string | null
+          p_partner_company_id?: string
         }
         Returns: Json
       }

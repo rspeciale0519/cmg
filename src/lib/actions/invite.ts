@@ -6,7 +6,7 @@ import { hashInviteToken } from "@/lib/auth/invite-token";
 import { resendApiKey } from "@/lib/email/outbox";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { isAppRole, landingPathFor } from "@/lib/auth/roles";
-import { requireStaff } from "@/lib/authz";
+import { requirePlatform, requireStaff } from "@/lib/authz";
 import {
   findRedeemableInvite,
   issueInvite,
@@ -330,6 +330,7 @@ export async function acceptInvite(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  requirePlatform();
   // `redirect()` throws to unwind, so it is kept out of the body above: a
   // `catch` anywhere in that flow would swallow NEXT_REDIRECT and turn a
   // successful acceptance into a generic error.

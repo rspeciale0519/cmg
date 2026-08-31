@@ -66,6 +66,31 @@ describe("submitLorRecovery", () => {
   });
 
   it.each([
+    ["provider_error", "The signing request could not be completed. Check the request status before you try again."],
+    ["not_configured", "Electronic signing is not configured. Contact the site administrator before you try again."],
+  ])("does not return provider details for %s", async (code, message) => {
+    const vendorDetail = "private-recipient@example.test fake-provider-key-do-not-expose";
+    mocks.sendLor.mockResolvedValue({ ok: false, code, message: vendorDetail });
+
+    const state = await submitLorRecovery({ status: "idle" }, form("electronic"));
+
+    expect(state).toEqual({ status: "error", message });
+    expect(JSON.stringify(state)).not.toContain(vendorDetail);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("preserves the operator warning when an uncertain send remains locked", async () => {
+    const message =
+      "PandaDoc may have accepted this letter. Automatic retry is locked to prevent a duplicate. Check the request in PandaDoc before manual recovery.";
+    mocks.sendLor.mockResolvedValue({ ok: false, code: "request_in_progress", message });
+
+    const state = await submitLorRecovery({ status: "idle" }, form("electronic"));
+
+    expect(state).toEqual({ status: "error", message });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it.each([
     ["arbitrary-provider", {}],
     ["manual", { claimId: "not-a-uuid" }],
     ["manual", { requestId: "not-a-uuid" }],

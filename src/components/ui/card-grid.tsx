@@ -5,7 +5,7 @@ import { cx } from "@/lib/cx";
 const TRACK = {
   sm: "grid-cols-[repeat(auto-fit,minmax(230px,1fr))]",
   md: "grid-cols-[repeat(auto-fit,minmax(260px,1fr))]",
-  lg: "grid-cols-[repeat(auto-fit,minmax(270px,1fr))]",
+  lg: "grid-cols-[repeat(auto-fit,minmax(min(100%,270px),1fr))]",
 } as const;
 
 /* Each size is one prototype grid: sm = the four-step process, md = the values

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   isPlatformPath,
   isSimpleMode,
@@ -8,9 +8,14 @@ import {
 
 describe("site mode", () => {
   it("uses simple mode for missing and invalid values", () => {
-    expect(siteMode(undefined)).toBe("simple");
-    expect(siteMode("unknown")).toBe("simple");
-    expect(isSimpleMode(" ")).toBe(true);
+    vi.stubEnv("SITE_MODE", "");
+    try {
+      expect(siteMode(undefined)).toBe("simple");
+      expect(siteMode("unknown")).toBe("simple");
+      expect(isSimpleMode(" ")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("accepts platform mode only when explicitly configured", () => {

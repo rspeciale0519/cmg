@@ -1,5 +1,10 @@
 # CMG continuation goal state
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](HANDOFF.md) for current evidence and [ROADMAP.md](../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Last reconciled: 2026-08-13
 Branch: `feature/claims-platform`
 HEAD: `1d3c30d` (simple release mode and CI fixes)

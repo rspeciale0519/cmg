@@ -24,7 +24,7 @@ const UUID =
 
 export function asUuid(value: unknown): string | null {
   const text = asString(value);
-  return text !== null && UUID.test(text) ? text : null;
+  return text !== null && text.length === 36 && UUID.test(text) ? text : null;
 }
 
 /** `null` when the body is not JSON, or is JSON that is not an event array. */

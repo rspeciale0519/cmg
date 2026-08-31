@@ -1,126 +1,167 @@
-# CMG Integration Blueprint — PandaDoc LOR Flow
+# CMG PandaDoc integration
 
-How PandaDoc plugs into the claims platform designed in
-[`.claude/plans/feature-claims-platform.md`](../../../.claude/plans/feature-claims-platform.md).
-This replaces the v1 "manual send + upload signed copy" plan wherever a PandaDoc key is
-configured; the ManualSignProvider remains as the no-key fallback.
+The current LOR flow uploads bundled PDFs to PandaDoc.
+It does not require a PandaDoc template UUID.
+`SITE_MODE=simple` keeps PandaDoc webhook processing disabled.
+Platform activation remains a separate release.
 
-## Prerequisites (account side — Austin/Rob)
+[HANDOFF.md](../../temp/HANDOFF.md) contains current release evidence and unresolved risks.
+[PandaDoc setup](../../temp/PANDADOC_SETUP.md) contains the approved test procedure.
+The [original platform plan](../../../.claude/plans/feature-claims-platform.md) records earlier design decisions.
+Current code and tests take priority.
 
-1. PandaDoc **Business or Enterprise** account (trial works for dev) → generate **Sandbox key**
-   in the Developer Dashboard (`app.pandadoc.com/a/#/settings/api-dashboard`).
-2. Key owner should be a stable admin account (key dies if the owning user is removed).
-3. Build the **LOR template** in the PandaDoc editor:
-   - Roles: `Homeowner1`, `Homeowner2` (role names: no underscores).
-   - **Tokens** (variables) for data we push: `Claim.Ref`, `Claim.Carrier`, `Claim.PolicyNumber`,
-     `Claim.LossDate`, `Claim.Cause`, `Property.Address`, `Homeowner1.Name`, `Homeowner2.Name`,
-     `Adjuster.Name`, `Fee.Percent`, plus whatever the final legal text needs.
-   - **Fields** per role: signature, date-signed, initials (merge-field names like
-     `H1.Signature`, `H1.DateSigned`, `H1.Initials`, same for H2).
-   - Both roles unordered / same `signing_order` → spouses sign in parallel.
-   - Template with only `Homeowner1` filled works for single-claimant policies **if** the
-     template keeps `Homeowner2` fields optional — simplest: maintain TWO template UUIDs
-     (1-signer and 2-signer) and pick by claimant count. Decision at template-build time.
-4. Create the **webhook subscription** (dashboard or API) → copy the **shared key**.
-5. Before launch: sales conversation for **Production key** (Enterprise/API contract; billed
-   per document created — one LOR per claim ≈ one billed document).
+## Sources of truth
 
-## Environment variables (all server-only)
+| Source | Responsibility |
+|---|---|
+| [types.ts](../../../src/lib/esign/types.ts) | `ESignProvider`, requests, dispatch results, and errors |
+| [provider.ts](../../../src/lib/esign/provider.ts) | PandaDoc or manual provider selection |
+| [lor-dispatch.ts](../../../src/lib/esign/lor-dispatch.ts) | Validation, dispatch ownership, and claim effects |
+| [pandadoc.ts](../../../src/lib/esign/pandadoc.ts) | Create from PDF, wait for draft, and send |
+| [lor-pdf.ts](../../../src/lib/esign/lor-pdf.ts) | Bundled files, fields, and signer roles |
+| [pandadoc-client.ts](../../../src/lib/esign/pandadoc-client.ts) | API requests, deadlines, and provider errors |
+| [webhook.ts](../../../src/lib/esign/webhook.ts) | HMAC, event leases, claim resolution, and dispatch reconciliation |
+| [webhook-handlers.ts](../../../src/lib/esign/webhook-handlers.ts) | Recipient, document state, and completed-PDF handling |
 
-```
-PANDADOC_API_KEY=                 # sandbox in dev, production at launch
-PANDADOC_LOR_TEMPLATE_UUID=       # 2-signer template
-PANDADOC_LOR_TEMPLATE_UUID_SINGLE=# 1-signer template (optional, see above)
-PANDADOC_WEBHOOK_SHARED_KEY=      # HMAC shared key for /api/pandadoc/webhook
-```
+The provider interface exposes `dispatchLor()` and `downloadSignedPdf()`.
+It also exposes `kind` and `canSendElectronically`.
+Claim authorization and database effects belong outside the transport provider.
 
-No `NEXT_PUBLIC_` PandaDoc values exist. Missing `PANDADOC_API_KEY` → ESignProvider factory
-returns ManualSignProvider (graceful degradation, admin UI shows the manual path).
+## PDF and role mapping
 
-## Provider interface mapping
+| Claimants | Bundled PDF | External roles |
+|---|---|---|
+| One | `CMG_LOR-2026-PandaDoc-Single.pdf` | `H1` |
+| Two | `CMG_LOR-2026-PandaDoc-Dual.pdf` | `H1`, `H2` |
 
-```ts
-// lib/esign/provider.ts
-interface ESignProvider {
-  kind: "pandadoc" | "manual";
-  sendLor(input: {
-    claim: Claim; claimants: Claimant[];      // 1 or 2 signers
-    fee: { percent: number };
-    sentBy: StaffProfile;
-  }): Promise<{ providerDocumentId: string }>;
-  // webhook route calls these:
-  verifyAndParseWebhook(rawBody: string, signature: string, eventId: string):
-    Promise<PandaDocEvent[] | "invalid">;
-  downloadSignedPdf(providerDocumentId: string): Promise<ReadableStream>;
-}
-```
+Both files reside in `src/lib/esign/templates/`.
+Next.js file tracing includes these PDFs in server output.
+The internal roles remain `Homeowner1` and `Homeowner2`.
+`pandaDocRecipients()` maps them to `H1` and `H2`.
 
-### `sendLor` implementation steps (PandaDocProvider)
+| PDF field IDs | Application values |
+|---|---|
+| `ph`, `accepted` | `Policyholders.Name` |
+| `carrier`, `policy`, `claimno` | Carrier, policy number, and claim number |
+| `property`, `lossdate`, `cause` | Property address, loss date, and cause |
+| `fee`, `adjuster` | Fee percent and adjuster name |
+| `phone`, `email` | Primary policyholder contact details |
+| `em`, `ne`, `su` | Selected agreement category |
+| `d1` through `d8`, `d9a`, `d9b` | Dispatch date in `America/New_York` |
+| `i1`, `i2`, `i3`, `i4`, `i8` | Blank `H1` initials |
+| `s5`, `s6`, `s7`, `s9` | Blank `H1` signatures |
+| `j1`, `j2`, `j3`, `j4`, `j8` | Blank `H2` initials in the dual PDF |
+| `t5`, `t6`, `t7`, `t9` | Blank `H2` signatures in the dual PDF |
 
-1. `POST /documents` with `template_uuid`, `recipients` (role ↔ claimant mapping),
-   `tokens` (claim data), `metadata: { claim_id }`, name `LOR — {claim_ref}`.
-2. Poll `GET /documents/{id}` until `document.draft` (500 ms interval, ~20 tries, backoff on
-   429; abort → surface error). (We poll rather than wait for the webhook so the admin gets a
-   synchronous success/failure in the UI; the `document_creation_failed` webhook is the async
-   safety net.)
-3. `POST /documents/{id}/send` with a short message; `silent: false` (PandaDoc emails signers).
-4. Persist: `claims.pandadoc_document_id = id`; claim status → `lor_sent`; feed event
-   (`shared`): "Letter of Representation sent for signature."
-5. Optionally `GET /documents/{id}/download` → store as `lor_unsigned` for the claim file.
+Prefilled date text is not evidence of the signature time.
+Legal review must cover these fields and both agreement variants.
+The selected `lor_contract_type` determines the emergency, non-emergency, or supplemental mark.
+Dispatch refuses a missing agreement category.
 
-### Webhook route `app/api/pandadoc/webhook/route.ts`
+The source PDF is `temp/docs/CMG_Blank-LOR-2026.pdf`.
+`scripts/build-lor-tagged-pdfs.py` produces both variants under `temp/docs/`.
+It does not update the bundled copies automatically.
+Review regenerated pages before replacing release assets.
+Do not change approved legal wording as part of routine setup.
 
-Order of operations (must-follow):
+## Environment
 
-1. Read **raw body** (`await req.text()`) — never parse first.
-2. Verify HMAC-SHA256 (`?signature=` query param, shared key, timing-safe). Fail → 403 + audit.
-3. Dedupe: `X-PandaDoc-Webhook-Event-Id` → `pandadoc_webhook_events` insert-if-absent
-   (unique PK) in the same transaction as side effects; duplicate → 200, stop.
-4. Parse array; for each event, resolve claim via `data.metadata.claim_id`
-   (fallback: `claims.pandadoc_document_id = data.id`); unknown → log, continue.
-5. Apply (idempotent, service-role, audited):
-   - `recipient_completed` → feed event "{action_by} signed" + staff notification.
-   - `document_state_changed`:
-     - `document.completed` → nothing yet (wait for PDF-ready)
-     - `document.declined` / `document.expired` / `document.cancelled` → flag claim, notify staff
-     - creation-side states → update esign tracking column
-   - `document_completed_pdf_ready` → `GET /download-protected` → Supabase Storage
-     `claims/{claim_id}/…pdf` + `documents` row (`kind='lor_signed'`, `visibility='customer'`)
-     → claim transition `lor_sent → lor_signed` (status machine) → notifications (customer +
-     partner-visible milestone).
-   - `document_creation_failed` → admin alert with `data.error.detail`.
-6. Return 200 fast (< 20 s budget; our work is small — do it inline, transactionally).
+| Variable | Current use |
+|---|---|
+| `SITE_MODE` | Keep `simple` until platform activation is approved |
+| `PANDADOC_API_KEY` | Selects PandaDoc instead of the manual provider |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | Verifies inbound HMAC signatures |
+| `PANDADOC_API_BASE_URL` | Optional API URL override |
+| `PANDADOC_POLL_INTERVAL_MS` | Optional polling interval; default 2000 ms |
+| `PANDADOC_POLL_MAX_ATTEMPTS` | Optional poll count; default 20 |
+| `PANDADOC_LOR_TEMPLATE_UUID`, `PANDADOC_LOR_TEMPLATE_UUID_SINGLE` | Legacy optional configuration; unused by current PDF dispatch |
 
-### Schema additions to the platform spec
+Keep PandaDoc credentials server-only.
+Confirm account access and provider limits before any live test.
+An available API key does not prove that the complete workflow is ready.
+A missing webhook key prevents completed signatures from returning through the webhook.
+Vercel environment changes require redeployment.
+See [Vercel environment behavior](https://vercel.com/docs/environment-variables).
 
-- `claims.pandadoc_document_id text unique null`
-- `claims.esign_status text null`   -- provider-side status mirror for admin UI
-- `pandadoc_webhook_events` (`event_id uuid primary key`, `received_at`, `payload_summary jsonb`)
-  — RLS: no client access (service-role only)
+## Dispatch sequence
 
-## Sandbox testing plan
+1. Authorize the staff caller and require AAL2.
+2. Verify claim access, status, policy facts, agreement category, and signers.
+3. Claim dispatch ownership through the database ledger.
+4. Load the single or dual PDF.
+5. Create the PandaDoc document with recipients, mapped fields, and `parse_form_fields: false`.
+6. Include the claim ID and dispatch attempt token in provider metadata.
+7. Wait for `document.draft` within the operation deadline.
+8. Record provider identity and send intent before sending.
+9. Send with `silent: false`.
+10. Record the outcome through the dispatch and claim state controls.
 
-- Sandbox key: **10 req/min total** — keep polling gentle (the 500 ms × 20 poll burns the
-  budget; in dev, poll at 2 s).
-- Sandbox can only email **recipients on the sender's own email domain** → test signers must be
-  aliases on the account's domain (e.g. `austin+h1@…`, `austin+h2@…`). Gmail-style `+` aliases
-  on the same domain work.
-- Docs get `[DEV]` prefix + watermarked PDFs — expected, ignore in dev assertions.
-- Local webhooks: run `cloudflared tunnel` (or ngrok) → tunnel URL into a dev webhook
-  subscription. Keep a separate subscription per environment.
-- E2E happy path to verify: intake → accept → Send LOR → both sandbox signers sign →
-  webhook chain → signed PDF lands in Supabase → claim shows `lor_signed` → partner sees the
-  milestone; plus: decline path, dedupe (manual retry from dashboard), bad-signature 403.
+The transport uses a 90-second operation deadline.
+Its retry logic does not justify sending another LOR after an uncertain result.
+Preserve the dispatch attempt and reconcile with provider evidence first.
+The manual provider leaves delivery to staff in platform mode.
 
-## Spec deltas this document implies
+## Webhook sequence
 
-1. Decision #9 becomes: **PandaDoc** behind `ESignProvider` (ManualSignProvider = no-key fallback).
-2. pdf-lib LOR generation is **dropped from v1** — the PandaDoc template replaces it (the
-   `lib/pdf/` module dies; less code, no template-drift between two renderings).
-3. `api/esign/webhook` route → `api/pandadoc/webhook` (implemented, not 501).
-4. Status gate unchanged: `lor_sent → lor_signed` still requires the `lor_signed` document —
-   now attached automatically by the webhook (manual upload path still satisfies it).
-5. CSP `connect-src` unchanged (API calls are server-side); if embedded signing is added later,
-   allow `https://app.pandadoc.com` in `frame-src` on the portal page that hosts it.
-6. Launch checklist additions: production key contract, production webhook subscription +
-   shared key, template UUIDs configured, Resend unaffected.
+The route is `/api/pandadoc/webhook`.
+Simple mode returns 404 before reading the body.
+Platform mode processes the following sequence:
+
+1. Read the original body.
+2. Verify its HMAC-SHA256 signature using `PANDADOC_WEBHOOK_SHARED_KEY`.
+3. Validate `X-PandaDoc-Webhook-Event-Id`.
+4. Claim the event ID and payload hash through the event ledger.
+5. Parse events and resolve the claim.
+6. Verify the active dispatch attempt.
+7. Apply idempotent event effects.
+8. Mark completed work or release failed work for recovery.
+
+Signature failure returns 403.
+A completed duplicate returns 200.
+A concurrent active lease returns 503.
+An event ID with a different payload hash returns 409.
+These outcomes preserve retry and duplicate-detection state.
+
+| Event | Current handling |
+|---|---|
+| `recipient_completed` | Record recipient completion and related effects |
+| `document_state_changed` | Track provider state and reconcile dispatch |
+| `document_completed_pdf_ready` | Download the protected PDF and complete claim filing |
+| `document_creation_failed` | Record failure and recovery state |
+
+Completed PDFs use private `claim-docs` storage.
+The document row uses `kind=lor_signed` and `visibility=customer`.
+Status advancement requires the signed document.
+Storage, provider calls, and database work do not form one external transaction.
+Database leases, idempotent operations, and exact cleanup paths support recovery.
+
+## Required verification
+
+Run normal unit tests without live opt-in.
+Run the CI database-backed selection only against disposable local data.
+No routine check should create a real PandaDoc document.
+
+The draft test needs shell-only `PANDADOC_LIVE_DRAFT_TEST=1`.
+It also needs `PANDADOC_API_KEY` and `PANDADOC_DRAFT_TEST_EMAIL`.
+After opt-in, an optional `.env.local` can supply credentials.
+A missing local file is allowed.
+The test creates a real single-signer draft and does not send it.
+Obtain approval before running it.
+
+The draft assertion checks only `document.draft`.
+Hosted acceptance must also cover field placement, both signer counts, legal text, email, completed PDFs, and access control.
+Test duplicate events, concurrent processing, creation failure, terminal states, delayed events, and uncertain sends.
+Keep test results and skips in HANDOFF.
+
+## Activation and recovery gates
+
+Keep the platform disabled during the simple-mode release.
+Require owner MFA, AAL2, role checks, and hosted integration acceptance before activation.
+Complete retention, export, erasure, and legal-hold work before activation.
+Public legal approval remains required before launching the public forms.
+
+Back up both database data and Storage objects before approved production migrations.
+Never seed production.
+Preserve provider and database ledgers during recovery.
+Use the [README release and recovery order](../../../README.md#simple-mode-production-runbook).
+Recheck cron jobs after deployment or rollback.

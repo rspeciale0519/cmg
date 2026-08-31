@@ -1,213 +1,177 @@
 # Data retention
 
-What CMG Property Solutions keeps, for how long, and why — table by table.
+This document separates proposed retention periods from implemented cleanup.
+CMG must approve the policy with counsel.
+These engineering proposals do not establish legal retention duties.
 
-This document separates policy from mechanism. Most retention periods below
-still need sweepers, and are named as unbuilt rather than described as if they
-exist. Rate-limit rows self-prune, and deleted document objects now have a
-service-role cleanup worker; those mechanisms are called out explicitly.
+Public legal approval is required before the simple-mode launch.
+Retention automation, export, erasure, and platform access remain separate work.
+[HANDOFF.md](temp/HANDOFF.md) records current release evidence and open decisions.
 
-The shape of the reasoning is the same throughout. A public adjuster's file is
-evidence — of what a homeowner agreed to, of what was sent to a carrier, and of
-what CMG did on someone's behalf. Florida's statute of limitations for a
-property-insurance claim, and the licensing record a public adjuster is expected
-to be able to produce, both argue for keeping claim material for years rather
-than months. Everything that is *not* claim material should go early, because
-holding a stranger's phone number for six years is a liability with no
-corresponding benefit.
+## Proposed policy
 
-**Nothing here is legal advice.** The periods below are engineering defaults
-chosen to be defensible; CMG's own counsel should confirm them before the first
-sweeper is switched on, and the numbers are deliberately easy to change in one
-place when they do.
+The periods below are proposals.
+No general retention or archive job currently enforces them.
+Legal holds and unresolved delivery or recovery work take priority over proposed deletion dates.
 
----
-
-## Summary
-
-| Table | Keep | Then | Built? |
+| Records | Proposed period | Proposed next action | Implemented? |
 |---|---|---|---|
-| `claims`, `claimants`, `claim_financials`, `claim_status_history` | 7 years after close | review, then archive | no |
-| `documents` + storage objects | 7 years after close | archive with the claim | no |
-| `claim_events` | with the claim | archive with the claim | no |
-| `consents` | 7 years after the claim closes | archive — never delete while the claim lives | no |
-| `audit_log` | 7 years, append-only | archive to cold storage | no |
-| `leads` | 24 months from last touch | delete | no |
-| `invites` | 90 days after expiry or acceptance | delete | no |
-| `notifications_outbox` | 90 days after `sent` or `dead` | delete | no |
-| `pandadoc_webhook_events` | 90 days | delete | no |
-| `rate_limits` | 24 hours | delete | **yes** — self-pruning |
-| `storage_cleanup_queue` | until drained | set `processed_at`; retain dead rows for operator recovery | **yes** — protected worker |
-| `claim_partner_summaries` | derived | rebuilt by trigger; never archived | n/a |
-| `profiles`, `partner_companies` | life of the relationship | deactivate, do not delete | n/a |
-| `claim_ref_counters` | forever | — | n/a |
+| `claims`, `claimants`, `claim_financials`, `claim_status_history`, `claim_events` | Seven years after approved closure | Review and archive together | No |
+| `documents` and Storage objects | With the claim | Export both rows and file contents | No |
+| `consents` | With the related claim; counsel must define detached and lead-only cases | Preserve evidence and withdrawal records | No |
+| `audit_log` | Seven years, subject to legal review | Archive without changing recorded events | No |
+| `leads` | 24 months after the last update | Review before deletion | No |
+| `invites` | 90 days after expiry or acceptance | Review recovery dependencies before deletion | No |
+| `notifications_outbox` | 90 days after resolved `sent` or `dead` state | Review before deletion | No |
+| `pandadoc_webhook_events` | 90 days after completed processing, subject to replay requirements | Preserve required duplicate-detection evidence | No |
+| `esign_dispatch_attempts`, `esign_recipient_completions` | With the claim until policy approval | Preserve reconciliation evidence | No |
+| `rate_limits` | A strict age limit needs approval | Current pruning is opportunistic | Partial |
+| `storage_cleanup_queue` | Until cleanup and recovery are complete | Mark processed; retain unresolved and dead rows | Worker exists |
+| `claim_partner_summaries` | While the claim exists | Maintain the derived projection | Database triggers |
+| `profiles`, `partner_companies` | Life of the relationship, subject to policy | Deactivate access | Existing controls |
+| `claim_ref_counters` | Retain permanently | Preserve reference uniqueness | Existing counter |
 
----
+A status change alone does not prove that archive or deletion is legally allowed.
+Counsel must define the clock for rejected, reopened, and disputed claims.
+Keep the records until an approved policy and procedure apply.
 
-## Claim material — 7 years after the claim closes
+## Claim files and consent evidence
 
-`claims`, `claimants`, `claim_financials`, `claim_status_history`,
-`claim_events`, `documents` and the storage objects they point at.
+A claim file includes its database records and document bytes.
+An archive must preserve both.
+A `documents` row alone cannot recover a deleted file.
+Do not start cleanup until the archive has been verified.
 
-Seven years is chosen to sit beyond Florida's five-year limitation period for an
-action on a written contract, with room for a claim that closes long after the
-loss date. The clock starts at close (`status` reaching `closed` or `rejected`),
-not at creation, because a claim that runs for three years is the one most likely
-to be argued about afterwards.
+Consent records retain the submitted text, subject details, and timestamps.
+Where present, they also retain the originating IP address.
+`guard_consent_immutable()` protects the original record.
+Withdrawal uses `withdrawn_at`; it does not remove the original evidence.
+A claim or lead deletion can detach consent through its foreign key.
+Detached consent therefore needs its own approved retention rule.
 
-These tables are a unit and must be archived as one. A `claims` row without its
-`claim_status_history` is a record that something happened without a record of
-what; a `documents` row without its storage object is a filename.
+A withdrawal record does not prove that every delivery path applies the required contact restrictions.
+Confirm those rules before platform activation or any new messaging use.
+Do not erase claim evidence automatically after a subject request.
 
-**Not built.** When it is, three things matter:
+## Audit records
 
-- **Storage objects and rows must go together.** `storage_cleanup_queue` already
-  exists for exactly this problem in the other direction (an object whose row is
-  gone) — an archival sweeper should enqueue there rather than delete an object
-  inline, so a failure is recorded rather than lost. The queue drainer exists;
-  the archival selection/export job itself remains unbuilt.
-- **`audit_log` is not part of the unit.** It has its own clock and its own rule
-  (below). Archiving a claim must not remove the record that it existed.
-- **Archive means archive.** Export to cold storage before deletion. A public
-  adjuster asked to produce a seven-year-old file and answering "we deleted it on
-  schedule" is in a worse position than one who can produce it slowly.
+Application users have no UPDATE or DELETE grant on `audit_log`.
+Audit retention must preserve event history and attribution.
+An approved archive must record its scope and recovery location.
+Keep operational records outside client access.
 
-## `consents` — with the claim, and never before it
+Database administration and service credentials remain privileged.
+Do not describe the audit table as immune to privileged database changes.
+Any approved repair must preserve evidence of the original event and the repair.
 
-A consent row carries the checkbox text verbatim, the subject's phone and email,
-their IP, and the moment they ticked it. `guard_consent_immutable()` already
-prevents it being edited, and a withdrawal is recorded as a withdrawal rather
-than as a deletion — the row stays, `withdrawn_at` is set.
+## Email and e-signature records
 
-That is deliberate and it is the whole point: the value of a consent record is
-that it proves what was agreed at a moment in the past. Deleting one when a
-homeowner withdraws would destroy the evidence that they had consented before
-they withdrew, which is the fact most likely to be needed.
+`notifications_outbox` stores the recipient, template name, payload, delivery state, and retry details.
+The worker renders the message when it processes the row.
+It does not store only a rendered message body.
 
-So consents follow the claim's clock and never lead it. A withdrawal stops future
-contact; it does not shorten retention.
+Preserve `pending`, `failed`, and unresolved `dead` rows.
+A missing Resend key leaves messages queued.
+The current claim function bounds delivery attempts, including expired final leases.
+Hosted migration status remains a separate verification item in HANDOFF.
+A recorded `sent` state means the provider accepted the send request.
+It does not prove inbox delivery.
 
-## `audit_log` — 7 years, append-only, archive rather than delete
+A provider timeout can leave delivery uncertain.
+Check provider evidence before retrying such a row.
+Do not erase the row to clear a warning.
 
-The table has no UPDATE and no DELETE policy, and `authenticated` holds no grant
-beyond SELECT. That is structural and must not change: an audit trail that can be
-edited is not one.
+PandaDoc event IDs, payload hashes, leases, dispatch attempts, and recipient records support duplicate detection and recovery.
+Removing those records can permit old events to run again.
+Do not assume that a provider can no longer replay an old event.
+Define archive and replay rules before adding a cleanup job.
+Keep unresolved attempts and related evidence regardless of age.
 
-Retention therefore means **archival**, not deletion — export a date range to
-cold storage, and only then remove it, if ever. The engineering default is to
-keep seven years hot and archive beyond that, but the honest position is that
-this table is small (one row per consequential write) and the cheapest correct
-answer is to keep all of it until volume argues otherwise.
+## Implemented rate-limit pruning
 
-If a sweeper is ever built for this table it must be service-role only, must
-itself write an audit entry recording what range it removed, and must be
-impossible to invoke from any user surface.
+`check_rate_limit()` attempts cleanup on approximately one percent of limiter calls.
+It removes older history for the current key after ten of that rule's windows.
+It also removes rows whose window started more than seven days earlier.
 
-## `leads` — 24 months from last touch
+Cleanup depends on later calls and the random check.
+The code does not guarantee deletion within 24 hours or seven days.
+Rows can remain when traffic stops.
+A strict retention deadline needs a separate approved mechanism.
 
-A lead is a stranger's name, phone number and message. It is not claim material,
-and most leads never become claims. Twenty-four months from `updated_at` covers a
-realistic re-engagement window and a full storm season on either side.
+See [the database implementation](../supabase/migrations/20260809120000_initial_schema.sql)
+and [application rate-limit rules](../src/lib/rate-limit.ts).
 
-A lead that *became* a claim is a different thing: `leads.status = 'converted'`
-means the material now lives on the claim, and the lead row can go on the shorter
-clock without losing anything.
+## Implemented Storage cleanup
 
-**Not built.** A monthly job deleting `where updated_at < now() - interval '24
-months'` is the whole of it.
+Deleted document rows add exact object paths to `storage_cleanup_queue`.
+Uploads also register cleanup intent before writing bytes.
+The document insert settles that intent when the database transaction commits.
+Uncommitted uploads remain eligible for later cleanup.
 
-## `invites` — 90 days after expiry or acceptance
+`/api/cron/storage-cleanup` requires `CRON_SECRET`.
+The worker claims a bounded batch through `claim_storage_cleanup_batch()`.
+Concurrent workers use database locks to divide due work.
+Each claim sets a five-minute lease.
+Settlement checks the row ID and attempt number.
+This prevents a stale worker from replacing a newer result.
 
-An invite holds an email address and a SHA-256 digest of a single-use token. The
-token is already dead after 72 hours or one use, so the row's remaining value is
-purely diagnostic: "we did send them an invitation". Ninety days is enough for
-that conversation.
+The worker marks `processed_at` after Storage reports successful removal.
+An already-absent object can complete successfully.
+Error responses remain failures.
+Retry delays are one, five, 25, and 125 minutes.
+The attempt limit is five.
+A final failure or expired final lease moves the record to `dead_at`.
+Dead records remain for operator recovery.
 
-`audit_log` independently records every issuance, so deleting the row does not
-lose the fact.
+These delays are minimum wait times.
+They are not execution schedules.
+[vercel.json](../vercel.json) schedules outbox processing daily at 14:00 UTC.
+It schedules Storage cleanup daily at 14:17 UTC.
+Daily batches can delay retries or cleanup until later days.
+Hobby execution can vary within the scheduled hour.
+See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
-## `notifications_outbox` — 90 days after `sent` or `dead`
+Verify active production jobs and queue age after deployment.
+A local worker test does not prove that cron is configured.
+An Instant Rollback does not update active cron jobs.
+Recheck schedules and authorization after rollback.
+See [Vercel cron rollback behavior](https://vercel.com/docs/cron-jobs/manage-cron-jobs).
 
-A row holds a recipient address and the rendered body of a message. Once it has
-been sent, its value is diagnostic and short-lived. A `dead` row is worth keeping
-a little longer than a sent one — it is the record of a message CMG owed somebody
-and never delivered — but ninety days covers the investigation.
+## Backup and recovery
 
-Rows in `pending` are never swept, whatever their age. A backlog is a symptom to
-be fixed, not tidied away.
+Database backups do not contain Storage file contents.
+Use a separate object backup with the database backup.
+See [Supabase backup scope](https://supabase.com/docs/guides/platform/backups).
 
-## `pandadoc_webhook_events` — 90 days
+Before an approved production migration:
 
-Delivery deduplication by `X-PandaDoc-Webhook-Event-Id`. Its only job is to
-recognise a replay, and PandaDoc does not replay events months later. Ninety days
-is generous.
+1. Confirm the target project and pending migrations.
+2. Obtain production backup and write approvals.
+3. Back up database data and Storage objects.
+4. Verify the backup and restore procedure.
+5. Record recovery identifiers in HANDOFF without secrets.
 
-## Already self-managing
+Never seed or reset production.
+Do not delete recovery ledgers during a release.
+Follow the [README recovery order](../README.md#recovery-order) if a release fails.
+Coordinate database and object restore points before reopening submissions or cleanup.
 
-- **`rate_limits`** — windows are pruned as they are read; nothing accumulates
-  beyond a day.
+## Subject requests and platform activation
 
-## `storage_cleanup_queue` — deleted document objects
+There is no self-service export or erasure workflow.
+CMG must handle requests through an approved manual process until those features exist.
+Do not promise deletion that conflicts with an approved hold or retention duty.
+Do not deny a request based only on the engineering periods in this file.
 
-`tg_enqueue_storage_cleanup()`, on the `documents_enqueue_storage_cleanup`
-trigger, fires after delete and writes the object's path here. That is the
-correct shape — the row is deleted through the caller's own client under RLS, and
-the object must then be removed by something holding the service role, because
-`storage.objects` carries no policy for `authenticated`. The queue is the handoff
-between the two.
+Before platform activation:
 
-`/api/cron/storage-cleanup` is a `CRON_SECRET`-protected route that claims a
-bounded batch through `claim_storage_cleanup_batch()`, then uses the service-role
-Storage client to remove exactly the queued bucket/path. Concurrent runs
-partition due work with `for update skip locked`; each claim installs a
-five-minute crash lease. Settlement compares both row ID and claimed attempt, so
-a stale worker cannot overwrite a newer worker's outcome.
+1. Approve retention periods, legal holds, and subject-request procedures.
+2. Define exports that include database records and document bytes.
+3. Test export completeness and access control.
+4. Define erasure, backup expiry, provider data, and audit requirements with counsel.
+5. Test approved cleanup and recovery against a hosted test environment.
+6. Verify owner MFA, AAL2, roles, customer isolation, and partner isolation.
+7. Complete hosted e-signature, webhook, email, and storage checks.
+8. Record results before requesting activation.
 
-The worker stamps `processed_at` only after Storage confirms deletion. The
-Storage API reports an already-absent object as a successful empty removal, so
-that idempotent case completes normally; error responses, including ambiguous
-404s, are retried rather than assumed safe. Failures record a truncated
-`last_error`, increment the attempt count at claim time, and retry on a 1m, 5m,
-25m, then 125m ladder. Five
-failed or crashed attempts is the bound. A final explicit failure sets `dead_at`;
-if the process dies during its final attempt, the next claim call marks that row
-dead after its lease expires. In either crash ordering the storage state is safe:
-the object is either still present for operator retry, or was already removed.
-Dead rows remain visible for operator recovery and are never silently discarded.
-
-The recurring schedule is deployment configuration and is intentionally added
-only in launch preparation. Until that schedule is installed, an operator can
-invoke the protected route with the cron bearer secret; the worker mechanism is
-built, but unattended cleanup depends on that owner-controlled deployment step.
-
-## Not retention questions
-
-- **`claim_partner_summaries`** is a projection, rebuilt by trigger from the
-  claim. It is never archived; if a claim is archived, its projection goes with
-  it automatically.
-- **`profiles` and `partner_companies`** are relationships, not events. Ending
-  one is `is_active = false` or `status = 'inactive'`, never a delete —
-  `guard_partner_company_delete()` already refuses to delete a company that has
-  reps, and deleting a profile would orphan the authorship of everything that
-  person did. A departed staff member's name on a three-year-old status change is
-  part of the record.
-- **`claim_ref_counters`** is a sequence. Deleting a row would re-issue a claim
-  reference that already exists.
-
----
-
-## Subject requests
-
-A homeowner asking what CMG holds about them, or asking for it to be removed, is
-answered by hand today; there is no self-service export or erasure. Two things
-constrain the answer and should be said out loud to anyone who asks:
-
-- Claim material cannot be erased on request while the claim is live or within
-  the retention period, because CMG is a party to it and holds it as its own
-  business record.
-- `audit_log` cannot be edited by anyone, including CMG. An erasure request
-  cannot be satisfied by rewriting history; it is satisfied, where it applies at
-  all, by removing the material the log points at.
-
-Building an export is a reasonable Phase-10 task. Building an erasure button is
-not, until counsel has drawn the line above precisely.
+Keep `SITE_MODE=simple` until those activation gates pass.

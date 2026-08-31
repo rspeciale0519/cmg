@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sendLor } from "@/lib/esign";
+import {
+  PROVIDER_FAILURE_MESSAGE,
+  SIGNING_NOT_CONFIGURED_MESSAGE,
+} from "@/lib/esign/lor-dispatch-failure";
 import { ManualSignProvider } from "@/lib/esign/manual";
 import type { FormState } from "./types";
 
@@ -33,7 +37,12 @@ export async function submitLorRecovery(
   );
 
   if (!result.ok) {
-    return { status: "error", message: result.message };
+    const message = result.code === "provider_error"
+      ? PROVIDER_FAILURE_MESSAGE
+      : result.code === "not_configured"
+        ? SIGNING_NOT_CONFIGURED_MESSAGE
+        : result.message;
+    return { status: "error", message };
   }
 
   revalidatePath(`/admin/claims/${parsed.data.claimId}`, "layout");

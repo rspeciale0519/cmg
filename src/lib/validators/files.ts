@@ -56,7 +56,7 @@ export type FileValidationResult =
  * under a UUID (spec §7.4). Drop path separators and control characters so a
  * crafted name cannot travel anywhere it is later interpolated.
  */
-function safeOriginalName(name: string): string {
+export function safeOriginalName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "upload";
   const cleaned = Array.from(base)
     .filter((character) => {

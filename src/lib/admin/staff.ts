@@ -6,7 +6,7 @@ import { STAFF_ROLES } from "@/lib/auth/roles";
 import { isStaffAppRole, type RosterEntry } from "@/lib/staff/guards";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export type StaffMember = {

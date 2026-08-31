@@ -1,5 +1,10 @@
 # CMG Claims Platform — Remaining Goal Specification
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](HANDOFF.md) for current evidence and [ROADMAP.md](../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 ## Objective
 
 Finish the existing CMG Property Solutions claims platform from its current state. Do not restart, re-scaffold, or reproduce completed work. This is a resumable four-stage continuation. Do not claim completion until every final exit criterion below is met.

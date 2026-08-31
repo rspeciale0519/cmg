@@ -14,7 +14,7 @@ import {
 import { requireStaff } from "@/lib/authz";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { claimPolicySchema, CLAIM_POLICY_FIELDS } from "@/lib/validators/claims";
 import {
   fieldErrorsFrom,

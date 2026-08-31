@@ -1,86 +1,127 @@
 # PandaDoc setup for CMG
 
-Last checked: 2026-08-13.
+PandaDoc is deferred while `SITE_MODE=simple`.
+Do not enable platform mode to complete the public launch.
+[HANDOFF.md](HANDOFF.md) contains current account, deployment, migration, and verification evidence.
+This guide describes setup requirements, not proof that a hosted environment meets them.
 
-The CMG code is ready for PandaDoc. The PandaDoc account, templates, and API
-values do not exist in this project yet. Complete the steps below in order.
+## Bundled LOR documents
 
-## 1. Confirm API access
+The current provider uploads a PDF to PandaDoc.
+It does not create the LOR from a PandaDoc template UUID.
 
-1. Sign in to the CMG PandaDoc account.
-2. Confirm that the plan includes API access.
-3. Create a sandbox API key for the first test.
-4. Keep the key owner as a stable CMG administrator.
+| Signers | Bundled file | PandaDoc roles |
+|---|---|---|
+| One | `src/lib/esign/templates/CMG_LOR-2026-PandaDoc-Single.pdf` | `H1` |
+| Two | `src/lib/esign/templates/CMG_LOR-2026-PandaDoc-Dual.pdf` | `H1`, `H2` |
 
-## 2. Build two LOR templates
+Internal roles `Homeowner1` and `Homeowner2` map to `H1` and `H2`.
+[src/lib/esign/lor-pdf.ts](../../src/lib/esign/lor-pdf.ts) controls fields and recipients.
+Signatures and initials remain blank for each signer.
+Date text uses the dispatch date in `America/New_York`.
+It is not proof of the signature date.
 
-Create one template for one signer and one template for two signers.
+The retained source is `temp/docs/CMG_Blank-LOR-2026.pdf`.
+`scripts/build-lor-tagged-pdfs.py` builds both variants under `temp/docs/`.
+Its Python libraries are `pypdfium2`, `pypdf`, and `reportlab`.
+PDF regeneration is a separate asset task.
+Review every regenerated page before replacing a bundled PDF.
+Do not install missing libraries or change approved legal text without approval.
 
-Use these role names exactly:
+## Account and environment preparation
 
-- `Homeowner1`
-- `Homeowner2`
+1. Confirm PandaDoc API access with the account owner.
+2. Confirm current sandbox recipient restrictions with PandaDoc.
+3. Obtain approval before creating provider resources or sending test documents.
+4. Keep the API key owner under CMG control.
+5. Obtain legal approval for both PDFs, agreement categories, fee values, and date fields.
+6. Set the required keys only in the approved environment.
+7. Redeploy after changing Vercel environment values.
 
-Use these token names exactly:
+| Setting | Purpose |
+|---|---|
+| `PANDADOC_API_KEY` | Server-only API access |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | Server-only HMAC verification |
+| `PANDADOC_API_BASE_URL` | Optional API endpoint override |
+| `PANDADOC_POLL_INTERVAL_MS` | Optional polling interval; default 2000 |
+| `PANDADOC_POLL_MAX_ATTEMPTS` | Optional poll count; default 20 |
 
-- `Claim.Ref`
-- `Claim.Carrier`
-- `Claim.PolicyNumber`
-- `Claim.ClaimNumber`
-- `Claim.LossDate`
-- `Claim.Cause`
-- `Property.Address`
-- `Homeowner1.Name`
-- `Homeowner2.Name`
-- `Adjuster.Name`
-- `Fee.Percent`
+`PANDADOC_LOR_TEMPLATE_UUID` and `PANDADOC_LOR_TEMPLATE_UUID_SINGLE` are legacy optional settings.
+The current bundled-PDF flow does not use them.
+Do not add `NEXT_PUBLIC_` to PandaDoc keys.
+An API key alone does not prove webhook readiness or hosted integration success.
 
-Add signature, signed-date, and initials fields for each role. Make both roles
-sign in parallel in the two-signer template. Copy both template UUIDs.
+## Approved draft test
 
-## 3. Create the webhook
+Normal test discovery does not require `.env.local`.
+The test checks the shell opt-in before reading that file.
+A missing file is allowed.
+Other file-loading errors still fail the test.
 
-1. Create a PandaDoc webhook subscription.
-2. Use this production path after the final domain is active:
-   `https://FINAL-DOMAIN/api/pandadoc/webhook`
-3. Subscribe to document state, recipient completion, completed-PDF-ready, and
-   document-creation-failed events.
-4. Copy the webhook shared key.
+The live suite requires all three values:
 
-## 4. Add Vercel values
+| Value | Source |
+|---|---|
+| `PANDADOC_LIVE_DRAFT_TEST=1` | Invoking shell only |
+| `PANDADOC_API_KEY` | Shell or optional `.env.local` |
+| `PANDADOC_DRAFT_TEST_EMAIL` | Shell or optional `.env.local` |
 
-Add these server-only values to Production, Preview, and Development:
+Do not store the opt-in in `.env.local`, CI, or Vercel.
+Obtain explicit approval before each live run.
+The test creates a real single-signer draft.
+It does not send the draft or delete it.
+Each repeated run can create another draft.
 
-- `PANDADOC_API_KEY`
-- `PANDADOC_LOR_TEMPLATE_UUID` for the two-signer template
-- `PANDADOC_LOR_TEMPLATE_UUID_SINGLE` for the one-signer template
-- `PANDADOC_WEBHOOK_SHARED_KEY`
+Run this only after approval and credential setup:
 
-Do not add `NEXT_PUBLIC_` to any PandaDoc value. Redeploy after the values are
-saved.
+```powershell
+$cmgPreviousDraftOptIn = $env:PANDADOC_LIVE_DRAFT_TEST
+try {
+  $env:PANDADOC_LIVE_DRAFT_TEST = "1"
+  npx vitest run src/lib/esign/pandadoc-draft.live.test.ts
+} finally {
+  $env:PANDADOC_LIVE_DRAFT_TEST = $cmgPreviousDraftOptIn
+}
+```
 
-## 5. Run the sandbox test
+The automated assertion checks `document.draft`.
+It does not verify field placement, legal wording, signatures, email delivery, or completed-PDF filing.
+Review the draft in PandaDoc before any separate send test.
+Record the result and any approved draft cleanup in HANDOFF.
 
-1. Set `SITE_MODE=platform` in a private Preview environment.
-2. Use signer addresses that PandaDoc sandbox permits.
-3. Open an `under_review` test claim with carrier and policy data.
-4. Send the LOR from the admin claim page.
-5. Confirm sent and viewed states.
-6. Sign with every required signer.
-7. Confirm the signed PDF appears in the claim documents.
-8. Confirm the claim moves to `lor_signed` once.
-9. Replay one webhook. Confirm that no duplicate document, email, feed item, or
-   status history appears.
-10. Test declined, expired, creation-failed, and uncertain-send recovery states.
+## Hosted platform acceptance
 
-## 6. Move to production
+Run this phase only after separate platform and external-write approvals.
+Use isolated test data and approved signer addresses.
 
-1. Obtain the PandaDoc production API key.
-2. Approve the final legal LOR text and the fee token behavior.
-3. Replace the sandbox key with the production key in Vercel Production.
-4. Point the production webhook to the final HTTPS domain.
-5. Run one controlled live claim from send through signed PDF filing.
+1. Set `SITE_MODE=platform` only in the approved test environment.
+2. Verify staff MFA and AAL2 before opening staff actions.
+3. Confirm the hosted schema and private Storage rules.
+4. Configure the webhook on the approved HTTPS hostname.
+5. Subscribe to `document_state_changed`, `recipient_completed`, `document_completed_pdf_ready`, and `document_creation_failed`.
+6. Verify one-signer and two-signer PDF field placement.
+7. Check all three agreement categories and fee values.
+8. Send each approved test LOR from an eligible `under_review` claim.
+9. Confirm sent, viewed, declined, expired, and creation-failed behavior.
+10. Complete every required signature.
+11. Confirm the signed PDF appears once in private claim storage.
+12. Confirm the claim advances to `lor_signed` once.
+13. Verify replay, concurrency, delayed-webhook, and uncertain-send recovery.
+14. Confirm no duplicate document, notification, feed item, or status history.
+15. Verify customer and partner access boundaries.
+16. Record exact results before requesting platform activation.
 
-The manual-signing workflow stays available if PandaDoc is not configured. Do
-not enable electronic sending until all four PandaDoc values and both templates
-are correct.
+The webhook path is `/api/pandadoc/webhook`.
+Simple mode returns 404 before processing the body.
+Platform mode verifies the raw-body HMAC before event handling.
+The event ledger records leases and completed work.
+Do not clear ledger rows or retry an uncertain send without checking provider state.
+
+## Production activation
+
+Production key changes, webhook changes, deployments, and live sends each require approval.
+Keep `SITE_MODE=simple` until all platform gates pass.
+Complete retention, export, erasure, legal-hold, and hosted integration work before activation.
+The manual provider remains available in platform mode without a PandaDoc API key.
+
+See the [current integration blueprint](../reference/pandadoc/06-cmg-integration-blueprint.md) for source mappings.

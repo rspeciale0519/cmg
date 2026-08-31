@@ -1,5 +1,10 @@
 # Stage 3 verification evidence
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](../../HANDOFF.md) for current evidence and [ROADMAP.md](../../../ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 Recorded 2026-08-13 against the local production build at
 `http://localhost:3011`. Nothing was deployed or connected to a hosted service.
 

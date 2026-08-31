@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import type { ValidatedUpload } from "@/lib/validators/files";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 
@@ -22,8 +22,9 @@ export type UploadedObject = {
  * filename is always a fresh UUID; the submitter's filename survives only as
  * `documents.original_name` (spec §7.4).
  *
- * Runs before any row is written, so a failure here leaves no database trace at
- * all — the caller only has to sweep the objects that did land.
+ * Register each cleanup intent before uploading bytes. Claim submission then
+ * attaches files in one database transaction. The worker removes only paths
+ * that no document references.
  */
 export async function uploadIntakeFiles(
   admin: Admin,
@@ -64,8 +65,8 @@ export async function uploadIntakeFiles(
   return { ok: true, objects };
 }
 
-/** Best-effort sweep of orphaned bytes. Never throws — the caller is already
- *  on an error path and a failed cleanup must not mask the original fault. */
+/** Queue exact paths for guarded cleanup after an uncertain upload or database
+ *  result. Never throws, so enqueue failures do not mask the original fault. */
 export async function removeObjects(admin: Admin, paths: string[]): Promise<void> {
   await removeOrQueueExact(admin, CLAIM_DOCS_BUCKET, paths);
 }

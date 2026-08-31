@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "@/types/database";
+import type { Database, Json } from "@/types/database-app";
 import type { ESignMode } from "./types";
 
 type Admin = SupabaseClient<Database>;

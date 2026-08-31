@@ -1,13 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ProseLink } from "@/components/marketing/prose-link";
 import { Button } from "@/components/ui/button";
-import { submitIntake } from "@/lib/actions/intake";
-import { idleState, resilient } from "@/lib/actions/types";
 import { emailHref, site, telHref } from "@/lib/site";
-import { FILE_ACCEPT_ATTRIBUTE } from "@/lib/validators/files";
+import { ACCEPTED_FORMATS, FILE_ACCEPT_ATTRIBUTE, MAX_FILES } from "@/lib/validators/files";
 /* Not `@/lib/validators/intake` — that module builds the zod schema, and a
    client component importing from it ships zod to the browser.
    `intake-options` holds the same tables with no zod in its import graph. */
@@ -37,6 +35,7 @@ import {
   SuccessPanel,
 } from "./form-feedback";
 import { TurnstileWidget } from "./turnstile";
+import { useIntakeUpload } from "./use-intake-upload";
 
 const STATE_OPTIONS = US_STATES.map((name) => ({ value: name, label: name }));
 
@@ -71,7 +70,8 @@ function IntakeSection({
 }
 
 export function IntakeForm() {
-  const [state, formAction, pending] = useActionState(resilient(submitIntake), idleState);
+  const upload = useIntakeUpload();
+  const { state, pending } = upload;
   /* Both start unanswered. These two answers are drafted into the Letter of
      Representation, so a pre-selected "No" would have the form state, on the
      homeowner's behalf, that nobody else is on the policy and that the roof has
@@ -87,7 +87,7 @@ export function IntakeForm() {
   const successRef = useRef<HTMLDivElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (state.status === "success") {
       successRef.current?.focus();
       return;
@@ -96,7 +96,7 @@ export function IntakeForm() {
     if (state.status !== "error") return;
 
     const firstInvalid = formRef.current?.querySelector<HTMLElement>(
-      '[aria-invalid="true"]',
+      '[aria-invalid="true"]:not(:disabled)',
     );
     (firstInvalid ?? alertRef.current)?.focus();
     /* The CSS guard only resets `html { scroll-behavior }`; an explicit
@@ -144,8 +144,17 @@ export function IntakeForm() {
        true for the whole 2400px scroll. Below 1100px the rail falls under the
        submit button, which is where this copy already lived. */
     <div className="grid gap-x-16 gap-y-[18px] min-[1100px]:grid-cols-[minmax(520px,880px)_minmax(240px,1fr)] min-[1100px]:items-start">
-      <form ref={formRef} action={formAction} noValidate className="min-w-0">
+      <form
+        ref={formRef}
+        method="post"
+        onSubmit={(event) => { event.preventDefault(); upload.submit(event.currentTarget); }}
+        noValidate
+        className="min-w-0"
+      >
         <FormAlert message={formAlertMessage(state)} ref={alertRef} />
+        <noscript>Enable JavaScript to submit this form, or call us to provide the details.</noscript>
+        <fieldset disabled={!upload.ready || pending || upload.locked} aria-busy={pending} className="m-0 min-w-0 border-0 p-0">
+          <legend className="sr-only">Intake details</legend>
 
         <IntakeSection step="01" title="Homeowner">
           <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(180px,1fr))]`}>
@@ -296,6 +305,8 @@ export function IntakeForm() {
             label="Declarations page & any contractor contract (optional)"
             multiple
             accept={FILE_ACCEPT_ATTRIBUTE}
+            hint={`${ACCEPTED_FORMATS} · up to ${MAX_FILES} files · 25 MiB each`}
+            onChange={(event) => upload.selectFiles(event.currentTarget.files)}
             error={errors.documents}
           />
           <p className="mt-[10px] text-[13px] leading-[1.7] text-ink/55">
@@ -309,18 +320,29 @@ export function IntakeForm() {
             {INTAKE_CONSENT_TEXT}
           </CheckboxField>
         </IntakeSection>
+        </fieldset>
 
         <div className="pt-8">
-          <TurnstileWidget resetOn={state} />
+          <div hidden={upload.locked}>
+            <TurnstileWidget resetOn={upload.turnstileReset} />
+          </div>
+          <p role="status" aria-live="polite" aria-atomic="true" className="text-[14px] leading-[1.65] text-ink/85">
+            {upload.progressMessage}
+          </p>
+          {upload.locked ? (
+            <p className="mt-2 text-[13px] leading-[1.65] text-ink/65">
+              Do not refresh this page. Keep this tab open until you receive a reference.
+            </p>
+          ) : null}
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            disabled={pending}
+            disabled={!upload.ready || pending}
             aria-busy={pending}
             className="mt-6"
           >
-            {pending ? "Submitting intake…" : "Submit intake"}
+            {upload.buttonLabel}
           </Button>
         </div>
       </form>

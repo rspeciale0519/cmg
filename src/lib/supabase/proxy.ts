@@ -8,7 +8,7 @@ import {
   surfaceForPath,
   type AppRole,
 } from "@/lib/auth/roles";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import {
   isPlatformPath,
   isSimpleMode,

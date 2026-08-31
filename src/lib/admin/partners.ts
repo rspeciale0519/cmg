@@ -5,7 +5,7 @@ import { cache } from "react";
 import { loadUserDirectory } from "@/lib/admin/directory";
 import { isClaimStatus, type ClaimStatus } from "@/lib/claims/status";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
 export type PartnerStatus = Database["public"]["Enums"]["partner_company_status"];

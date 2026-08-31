@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * One invariant, on both upload paths: **a `documents` row and its bytes exist
@@ -15,9 +15,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * Both actions used to upload a file and commit its row per iteration while the
  * removal list accumulated across the whole loop, so a failure on file three
  * deleted the bytes of files one and two and left their rows behind. The fix is
- * structural rather than careful: upload every object, then insert every row in
- * one statement. One statement is one transaction, so a failure means no row
- * survived — which is what makes removing the whole batch of objects correct.
+ * structural: upload every object, then insert every row in one statement.
+ * A lost response can still hide a successful commit. Error paths must queue
+ * cleanup so the guarded worker can distinguish attached bytes from orphans.
  *
  * The doubles below model a bucket as a set of paths and the table as an array
  * of rows, so the assertions are the invariant itself rather than a count of
@@ -42,6 +42,7 @@ const stub = vi.hoisted(() => {
     /* Knobs, reset in beforeEach. */
     failUploadOnCall: 0 as number,
     rowInsertError: null as { message: string } | null,
+    committedResponse: "normal" as "normal" | "lost" | "empty" | "partial",
     uploadCalls: 0,
   };
 });
@@ -118,7 +119,13 @@ vi.mock("@/lib/supabase/server", () => ({
           const batch = Array.isArray(rows) ? rows : [rows];
           // One statement, so all of it lands or none of it does.
           stub.rows.push(...batch);
-          return { data: batch.map((_, index) => ({ id: `row-${index}` })), error: null };
+          const data = batch.map((_, index) => ({ id: `row-${index}` }));
+          if (stub.committedResponse === "lost") {
+            return { data: null, error: { message: "database response lost" } };
+          }
+          if (stub.committedResponse === "empty") return { data: null, error: null };
+          if (stub.committedResponse === "partial") return { data: data.slice(0, 1), error: null };
+          return { data, error: null };
         },
       }),
     }),
@@ -158,8 +165,12 @@ beforeEach(() => {
   stub.intents = new Set();
   stub.failUploadOnCall = 0;
   stub.rowInsertError = null;
+  stub.committedResponse = "normal";
   stub.uploadCalls = 0;
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
+
+afterEach(() => vi.restoreAllMocks());
 
 const SURFACES = [
   { name: "admin", action: uploadClaimDocument, build: adminForm },
@@ -190,26 +201,43 @@ for (const surface of SURFACES) {
 
       expect(state.status).toBe("error");
       expect(stub.rows).toHaveLength(0);
-      expect(stub.objects.size).toBe(0);
+      expect(stub.objects.size).toBe(2);
       expect(stub.intents.size).toBe(3);
+      expect([...stub.objects].every((path) => stub.intents.has(path))).toBe(true);
       expect(everyRowHasItsBytes()).toBe(true);
     });
 
     /**
      * The other direction. `documents_insert` refuses the whole statement — an
      * assistant filing an `lor_signed`, a claim the adjuster is not assigned to
-     * — and every object uploaded for it has to go.
+     * — and every object uploaded for it needs guarded cleanup.
      */
-    it("removes every object when the rows are refused", async () => {
+    it("queues every orphan when the rows are refused", async () => {
       stub.rowInsertError = { message: "new row violates row-level security policy" };
 
       const state = await surface.action(idleState, surface.build(["a.jpg", "b.jpg", "c.jpg"]));
 
       expect(state.status).toBe("error");
       expect(stub.rows).toHaveLength(0);
-      expect(stub.objects.size).toBe(0);
+      expect(stub.objects.size).toBe(3);
       expect(stub.intents.size).toBe(3);
+      expect([...stub.objects].every((path) => stub.intents.has(path))).toBe(true);
     });
+
+    it.each(["lost", "empty", "partial"] as const)(
+      "preserves committed bytes when the insert response is %s",
+      async (response) => {
+        stub.committedResponse = response;
+
+        const state = await surface.action(idleState, surface.build(["a.jpg", "b.jpg", "c.jpg"]));
+
+        expect(state.status).toBe("error");
+        expect(stub.rows).toHaveLength(3);
+        expect(stub.objects.size).toBe(3);
+        expect(stub.intents.size).toBe(3);
+        expect(everyRowHasItsBytes()).toBe(true);
+      },
+    );
 
     it("holds for a single file, which is the common case", async () => {
       stub.failUploadOnCall = 1;

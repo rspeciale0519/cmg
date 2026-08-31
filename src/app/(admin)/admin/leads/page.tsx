@@ -15,7 +15,7 @@ import {
   parseLeadCursor,
 } from "@/lib/leads/list";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,8 @@
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 
 /**
  * Helpers for the database-backed e-signature suites. Not a test file itself
@@ -46,6 +47,23 @@ export function testAdminClient(): TestAdmin {
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secret) throw new Error("local Supabase credentials are not configured");
 
+  // These fixtures insert and delete data. A copied hosted environment must
+  // never turn a local test run into writes against a deployed project.
+  let endpoint: URL;
+  try {
+    endpoint = new URL(url);
+  } catch {
+    throw new Error("database tests require a loopback Supabase URL");
+  }
+  if (
+    !["http:", "https:"].includes(endpoint.protocol) ||
+    !["localhost", "127.0.0.1", "[::1]"].includes(endpoint.hostname) ||
+    endpoint.username || endpoint.password ||
+    endpoint.pathname !== "/" || endpoint.search || endpoint.hash
+  ) {
+    throw new Error("database tests require a loopback Supabase URL");
+  }
+
   return createClient<Database>(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -63,8 +81,11 @@ export async function localSupabaseAvailable(): Promise<boolean> {
     return false;
   }
 
+  // Reject a hosted configuration outside the availability catch. A dangerous
+  // target is a configuration error, not a reason to silently skip the suite.
+  const admin = testAdminClient();
   try {
-    const { error } = await testAdminClient()
+    const { error } = await admin
       .from("pandadoc_webhook_events")
       .select("event_id")
       .limit(1);
@@ -174,73 +195,164 @@ export async function seedClaim(
  * against the seeded fixture — a stray claim, notification or audit row turns
  * a green suite red for reasons that have nothing to do with the schema.
  */
-async function safely(what: string, run: () => PromiseLike<unknown>): Promise<void> {
+async function cleanupStep<T extends { error: unknown }>(
+  failures: Error[],
+  what: string,
+  run: () => PromiseLike<T>,
+): Promise<T | null> {
   try {
-    await run();
-  } catch (error) {
-    console.error(`[esign-test] cleanup step "${what}" failed`, error);
+    const result = await run();
+    if (!result.error) return result;
+  } catch {
+    // Report the operation, never a raw response that can contain private data.
   }
+  failures.push(new Error(`[esign-test] cleanup step "${what}" failed`));
+  return null;
 }
 
+function reportCleanupFailures(failures: Error[], context: string): void {
+  if (failures.length > 0) throw new AggregateError(failures, `[esign-test] ${context}`);
+}
+
+/** Attempt the remaining safe steps, then fail the hook if any API call failed. */
 export async function cleanupClaim(
   admin: TestAdmin,
   claimId: string,
   claimRef?: string,
 ): Promise<void> {
-  await safely(`claim ${claimId}`, () => removeClaim(admin, claimId, claimRef));
-}
-
-/* Every step is best-effort and none may throw: a cleanup that aborts halfway
-   strands the remaining fixtures in a database that pgTAP then reads. */
-async function removeClaim(
-  admin: TestAdmin,
-  claimId: string,
-  claimRef?: string,
-): Promise<void> {
-  const { data: objects } = await admin.storage
-    .from("claim-docs")
-    .list(`claims/${claimId}`);
+  const failures: Error[] = [];
+  const listed = await cleanupStep(failures, "list storage objects", () =>
+    admin.storage.from("claim-docs").list(`claims/${claimId}`),
+  );
+  const objects = listed?.data;
 
   if (objects && objects.length > 0) {
-    await admin.storage
-      .from("claim-docs")
-      .remove(objects.map((object) => `claims/${claimId}/${object.name}`));
+    await cleanupStep(failures, "remove storage objects", () =>
+      admin.storage.from("claim-docs")
+        .remove(objects.map((object) => `claims/${claimId}/${object.name}`)),
+    );
   }
 
   if (claimRef) {
-    await admin
-      .from("notifications_outbox")
-      .delete()
-      .filter("payload->>claimRef", "eq", claimRef);
+    await cleanupStep(failures, "delete notifications", () =>
+      admin.from("notifications_outbox").delete()
+        .filter("payload->>claimRef", "eq", claimRef),
+    );
   }
 
   /* The audit triggers key their entries on the child row's own id, so the
      claim id alone does not find them. Collect the children before the cascade
      removes the rows that name them. */
   const childIds: string[] = [];
+  let childLookupFailed = false;
   for (const table of ["claimants", "claim_status_history", "documents", "consents"] as const) {
-    const { data } = await admin.from(table).select("id").eq("claim_id", claimId);
-    for (const row of data ?? []) childIds.push(row.id);
+    const result = await cleanupStep(failures, `read ${table} audit IDs`, () =>
+      admin.from(table).select("id").eq("claim_id", claimId),
+    );
+    if (!result) childLookupFailed = true;
+    for (const row of result?.data ?? []) childIds.push(row.id);
+  }
+  if (childLookupFailed) {
+    reportCleanupFailures(failures, `fixture cleanup failed for claim ${claimId}`);
   }
 
-  await admin.from("consents").delete().eq("claim_id", claimId);
-  await admin.from("claims").delete().eq("id", claimId);
-  await admin.from("audit_log").delete().eq("entity_id", claimId);
+  await cleanupStep(failures, "delete consents", () =>
+    admin.from("consents").delete().eq("claim_id", claimId),
+  );
+  const deleted = await cleanupStep(failures, "delete claim", () =>
+    admin.from("claims").delete().eq("id", claimId),
+  );
+  // Keep the audit and cleanup rows when deletion fails so a retry has evidence.
+  if (!deleted) reportCleanupFailures(failures, `fixture cleanup failed for claim ${claimId}`);
+
+  await cleanupStep(failures, "delete claim audit rows", () =>
+    admin.from("audit_log").delete().eq("entity_id", claimId),
+  );
   if (childIds.length > 0) {
-    await admin.from("audit_log").delete().in("entity_id", childIds);
+    await cleanupStep(failures, "delete child audit rows", () =>
+      admin.from("audit_log").delete().in("entity_id", childIds),
+    );
   }
-  await admin.from("storage_cleanup_queue").delete().eq("claim_id", claimId);
+  await cleanupStep(failures, "delete storage cleanup rows", () =>
+    admin.from("storage_cleanup_queue").delete().eq("claim_id", claimId),
+  );
+  reportCleanupFailures(failures, `fixture cleanup failed for claim ${claimId}`);
+}
+
+/** A unique test-only address identifies the rejection audit without changing production logging. */
+export async function captureWebhookRejectionAudit<T>(
+  admin: TestAdmin,
+  auditIds: number[],
+  run: (ip: string) => Promise<T>,
+): Promise<T> {
+  const suffix = randomBytes(12).toString("hex");
+  const ip = ["2001", "db8", ...Array.from({ length: 6 }, (_, index) =>
+    suffix.slice(index * 4, index * 4 + 4),
+  )].join(":");
+  const outcome = await run(ip);
+
+  let auditId: number | undefined;
+  try {
+    const { data, error } = await admin.from("audit_log").select("id")
+      .eq("entity", "pandadoc_webhook")
+      .eq("action", "esign.webhook_signature_rejected")
+      .eq("ip", ip);
+    if (!error && data?.length === 1 && Number.isSafeInteger(data[0].id)) {
+      auditId = data[0].id;
+    }
+  } catch {
+    // An unreadable or ambiguous row stays in place; never infer its ID from a sequence or time.
+  }
+  if (auditId === undefined) {
+    throw new Error("[esign-test] webhook fixture audit ID could not be captured; record retained");
+  }
+  auditIds.push(auditId);
+  return outcome;
 }
 
 export async function cleanupWebhookEvents(
   admin: TestAdmin,
   eventIds: string[],
+  auditIds: readonly number[] = [],
 ): Promise<void> {
-  await safely("webhook audit rows", () =>
-    admin.from("audit_log").delete().eq("entity", "pandadoc_webhook"),
-  );
-  if (eventIds.length === 0) return;
-  await safely("webhook dedupe rows", () =>
-    admin.from("pandadoc_webhook_events").delete().in("event_id", eventIds),
-  );
+  const failures: Error[] = [];
+  // Rejected signatures have no trusted event ID. Only captured fixture IDs prove ownership.
+  if (auditIds.length > 0) {
+    await cleanupStep(failures, "delete webhook audit rows", () =>
+      admin.from("audit_log").delete().eq("entity", "pandadoc_webhook").in("id", auditIds),
+    );
+  }
+  if (eventIds.length > 0) {
+    await cleanupStep(failures, "delete webhook dedupe rows", () =>
+      admin.from("pandadoc_webhook_events").delete().in("event_id", eventIds),
+    );
+  }
+  reportCleanupFailures(failures, "webhook fixture cleanup failed");
+}
+
+/** One failed fixture must not prevent teardown of other fixtures in the suite. */
+export async function cleanupFixtures(
+  admin: TestAdmin,
+  claims: ReadonlyArray<{ id: string; claimRef?: string }>,
+  eventIds?: string[],
+  auditIds: readonly number[] = [],
+): Promise<void> {
+  const failures: Error[] = [];
+  for (const claim of claims) {
+    try {
+      await cleanupClaim(admin, claim.id, claim.claimRef);
+    } catch (error) {
+      if (error instanceof AggregateError) failures.push(...error.errors);
+      else failures.push(new Error(`[esign-test] fixture cleanup failed for claim ${claim.id}`));
+    }
+  }
+  if (eventIds !== undefined || auditIds.length > 0) {
+    try {
+      await cleanupWebhookEvents(admin, eventIds ?? [], auditIds);
+    } catch (error) {
+      if (error instanceof AggregateError) failures.push(...error.errors);
+      else failures.push(new Error("[esign-test] webhook fixture cleanup failed"));
+    }
+  }
+  reportCleanupFailures(failures, "fixture cleanup failed");
 }

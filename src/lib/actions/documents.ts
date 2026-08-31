@@ -13,9 +13,10 @@ import {
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import {
   GENERIC_ERROR,
   submittedValues,
@@ -43,11 +44,9 @@ const NOT_YOURS =
  *   `authenticated`, deliberately, see …_storage.sql), then the `documents` row
  *   through the *caller's* client so `documents_insert` is what authorises it.
  *
- * If the row is refused or fails, the object is removed again. The reverse
- * order — row first — would leave a `documents` row pointing at bytes that were
- * never written, which is a broken download for every reader from then on. An
- * orphaned object is invisible and sweepable; an orphaned row is a lie on the
- * page.
+ * A failed response can follow a successful row commit. Queue the exact paths
+ * for the cleanup worker, which excludes objects still referenced by documents.
+ * This preserves committed bytes while unused uploads remain recoverable.
  */
 export async function uploadClaimDocument(
   _previous: FormState,
@@ -120,24 +119,10 @@ export async function uploadClaimDocument(
   }
 
   /**
-   * Every object first, then one insert — the shape `submitIntake` already
-   * uses, and the reason it uses it.
-   *
-   * This was a loop that uploaded a file, committed its row, and pushed the
-   * path onto an accumulating list. Both failure branches then removed that
-   * whole list while deleting no rows. Traced with three files failing on the
-   * third: files one and two kept their `documents` rows and lost their bytes.
-   * `issueDocumentDownload` then reads the row, mints a signed URL against an
-   * object that is not there, writes `document.signed_url_issued` into the
-   * audit trail, and hands the operator a link that 404s — with the record
-   * asserting the file was released. `deleteClaimDocument` is the only repair,
-   * and it is refused for an `lor_signed` row once the claim is past the gate.
-   *
-   * The header above this file states the rule this broke: an orphaned object
-   * is invisible and sweepable, an orphaned row is a lie on the page. Batching
-   * makes it structural rather than careful — one `insert` of N rows is one
-   * statement, so it is one transaction, and on any failure at all no row can
-   * have survived, which is what makes removing the whole batch correct.
+   * Upload every object before inserting the document rows in one statement.
+   * This prevents a partial row batch when a later upload fails. A lost insert
+   * response can still hide a committed batch, so cleanup stays in the durable
+   * queue until the worker checks document references.
    */
   const admin = createAdminClient();
   const stored: string[] = [];
@@ -246,7 +231,7 @@ export async function issueDocumentDownload(
     .eq("id", documentId)
     .maybeSingle();
 
-  if (error || !document) {
+  if (error || !document || !isDocumentStoragePath(document.storage_path, document.claim_id)) {
     return { status: "error", message: NOT_YOURS };
   }
 

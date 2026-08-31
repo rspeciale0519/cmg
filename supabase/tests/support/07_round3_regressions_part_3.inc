@@ -10,13 +10,14 @@
 set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
 set local role authenticated;
 
+-- The restrictive insert policy checks the path prefix before table CHECKs run.
 select throws_ok(
   $$ insert into public.documents (claim_id, storage_path, original_name, kind, mime, size_bytes, uploaded_by, visibility)
      values ('20000000-0000-4000-a000-000000000001',
              'claims/20000000-0000-4000-a000-000000000002/b1b1b1b1-0000-4000-a000-000000000001.pdf',
              'mislabelled.pdf', 'photo', 'application/pdf', 4096,
              '00000000-0000-4000-a000-000000000002', 'internal') $$,
-  '23514'::char(5), null::text,
+  '42501'::char(5), null::text,
   'a documents row and the object it names must agree about which claim they belong to, so a row on one claim can no longer carry a path under another claim''s prefix'
 );
 

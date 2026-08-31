@@ -38,6 +38,7 @@ describeDb("POST /api/pandadoc/webhook", () => {
   let admin: TestAdmin;
   const claims: Array<{ id: string; claimRef: string }> = [];
   const eventIds: string[] = [];
+  const auditIds: number[] = [];
   let previousKey: string | undefined;
   let previousMode: string | undefined;
 
@@ -46,13 +47,18 @@ describeDb("POST /api/pandadoc/webhook", () => {
     expect(maxDuration).toBeLessThanOrEqual(15);
   });
 
-  const request = (body: string, signature: string | null, eventId: string | null) =>
+  const request = (
+    body: string,
+    signature: string | null,
+    eventId: string | null,
+    ip = "203.0.113.42",
+  ) =>
     new Request(signature === null ? ENDPOINT : `${ENDPOINT}?signature=${signature}`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         ...(eventId ? { [WEBHOOK_EVENT_ID_HEADER]: eventId } : {}),
-        "x-forwarded-for": "203.0.113.42",
+        "x-forwarded-for": ip,
       },
       body,
     });
@@ -72,10 +78,7 @@ describeDb("POST /api/pandadoc/webhook", () => {
     if (previousMode === undefined) delete process.env.SITE_MODE;
     else process.env.SITE_MODE = previousMode;
 
-    for (const claim of claims) {
-      await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    }
-    await support.cleanupWebhookEvents(admin, eventIds);
+    await support.cleanupFixtures(admin, claims, eventIds, auditIds);
   });
 
   it("verifies, dedupes and applies a correctly signed delivery", async () => {
@@ -113,11 +116,14 @@ describeDb("POST /api/pandadoc/webhook", () => {
       stateChangedEvent(randomUUID(), "pd-tampered", "document.completed"),
     ]);
 
-    const response = await POST(
-      request(
-        delivery.rawBody.replace("document.completed", "document.declined"),
-        delivery.signature,
-        delivery.eventId,
+    const response = await support.captureWebhookRejectionAudit(admin, auditIds, (ip) =>
+      POST(
+        request(
+          delivery.rawBody.replace("document.completed", "document.declined"),
+          delivery.signature,
+          delivery.eventId,
+          ip,
+        ),
       ),
     );
 
@@ -140,7 +146,9 @@ describeDb("POST /api/pandadoc/webhook", () => {
       stateChangedEvent(randomUUID(), "pd-nosig", "document.completed"),
     ]);
 
-    const response = await POST(request(delivery.rawBody, null, delivery.eventId));
+    const response = await support.captureWebhookRejectionAudit(admin, auditIds, (ip) =>
+      POST(request(delivery.rawBody, null, delivery.eventId, ip)),
+    );
     expect(response.status).toBe(403);
   });
 

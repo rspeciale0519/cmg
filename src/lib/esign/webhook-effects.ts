@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuditEvent } from "@/lib/audit";
 import { outboxRows } from "@/lib/email/outbox";
 import type { OutboxEntry } from "@/lib/email/outbox";
-import type { Database, Json } from "@/types/database";
+import type { Database, Json } from "@/types/database-app";
 
 type Admin = SupabaseClient<Database>;
 

@@ -17,6 +17,8 @@ export const RATE_LIMITS = {
   contactEmail: { scope: "contact:email", max: 3, window: "1 hour" },
   intakeIp: { scope: "intake:ip", max: 5, window: "1 hour" },
   intakeEmail: { scope: "intake:email", max: 3, window: "1 hour" },
+  intakeFinalizeIp: { scope: "intake-finalize:ip", max: 60, window: "1 hour" },
+  intakeFinalizeToken: { scope: "intake-finalize:token", max: 30, window: "1 hour" },
 
   /* Auth surfaces. Two budgets per attempt, and they answer different attacks:
      the per-IP one bounds a spray across many accounts from one source, the

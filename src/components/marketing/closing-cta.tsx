@@ -34,7 +34,7 @@ export function ClosingCta({
   return (
     <div
       className={cx(
-        "grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-end gap-x-16 gap-y-8",
+        "grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-end gap-x-16 gap-y-8",
         bordered
           ? "border-t border-ink/11 pt-[clamp(40px,5vw,64px)]"
           : null,

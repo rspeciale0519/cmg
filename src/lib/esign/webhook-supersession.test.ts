@@ -66,8 +66,7 @@ describeDb("PandaDoc attempt supersession", () => {
   });
 
   afterAll(async () => {
-    for (const claim of claims) await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    await support.cleanupWebhookEvents(admin, deliveries);
+    await support.cleanupFixtures(admin, claims, deliveries);
   });
 
   it("ignores every stale prior-document effect after retry", async () => {

@@ -112,9 +112,7 @@ describeDb("dispatchLorForClaim against the local database", () => {
   /* pgTAP runs against this same live database and asserts against the seed,
      so the suite has to leave nothing of its own behind. */
   afterAll(async () => {
-    for (const claim of created) {
-      await support.cleanupClaim(admin, claim.id, claim.claimRef);
-    }
+    await support.cleanupFixtures(admin, created);
   });
 
   it("sends, persists the provider document, advances the claim and leaves a trail", async () => {
@@ -275,14 +273,18 @@ describeDb("dispatchLorForClaim against the local database", () => {
 
   it("records a retryable creation failure without advancing the claim, and audits it", async () => {
     const claim = await seed();
+    const vendorDetail =
+      "Role for private-recipient@example.test rejected; API-Key fake-provider-key-do-not-expose";
     const { provider } = pandadoc(() =>
-      json(400, { detail: "Role for form field with name='userName' is not provided in payload" }),
+      json(400, { detail: vendorDetail }),
     );
 
     const result = await dispatchLorForClaim({ claimId: claim.id }, { admin, provider });
 
     expect(result).toMatchObject({ ok: false, code: "provider_error" });
-    expect(result.ok ? "" : result.message).toContain("Role for form field");
+    expect(result.ok ? "" : result.message).toBe(
+      "The signing request could not be completed. Check the request status before you try again.",
+    );
 
     const { data: row } = await admin
       .from("claims")
@@ -297,10 +299,17 @@ describeDb("dispatchLorForClaim against the local database", () => {
 
     const { data: audit } = await admin
       .from("audit_log")
-      .select("action")
+      .select("action, meta")
       .eq("entity_id", claim.id)
       .eq("action", "esign.lor_send_failed");
     expect(audit).toHaveLength(1);
+    expect(audit?.[0].meta).toMatchObject({ provider_code: "creation_failed", http_status: 400 });
+    const { data: attempts } = await admin.from("esign_dispatch_attempts")
+      .select("result").eq("claim_id", claim.id);
+    expect(attempts).toHaveLength(1);
+    const saved = JSON.stringify({ audit, attempts });
+    expect(saved).not.toContain("private-recipient@example.test");
+    expect(saved).not.toContain("fake-provider-key-do-not-expose");
   });
 
   it("advances the claim in manual mode with no provider document", async () => {

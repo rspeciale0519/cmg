@@ -7,7 +7,7 @@ import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/database-app";
 import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-ledger";
 import { handleDispatchFailure } from "./lor-dispatch-failure";
 import { createESignProvider } from "./provider";

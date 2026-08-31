@@ -52,7 +52,7 @@ export default function ContactPage() {
       <Section
         space="none"
         className="pt-[clamp(40px,5vw,64px)] pb-[clamp(56px,7vw,96px)]"
-        containerClassName="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-x-[clamp(40px,6vw,96px)] gap-y-12"
+        containerClassName="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] items-start gap-x-[clamp(40px,6vw,96px)] gap-y-12"
       >
         <div className="flex flex-col gap-8">
           <div className={DETAIL_BLOCK}>
