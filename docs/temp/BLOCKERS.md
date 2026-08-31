@@ -22,7 +22,7 @@ See the implementation, validation, and cleanup controls in [HANDOFF.md](HANDOFF
 
 **Owner action:** approve hosted deployment and hosted boundary-test submissions separately.
 Architecture approval is complete and must not be requested again.
-The old deployed candidate does not contain the replacement transport.
+The pushed Preview contains the replacement transport, but hosted upload boundary acceptance remains unverified.
 Do not claim maximum-size hosted acceptance before that deployment and its approved tests.
 Local engineering validation belongs in HANDOFF, not this owner-only list.
 
@@ -65,8 +65,8 @@ Cloudflare identifies this as “Domain not authorized” in its [error-code ref
 **Owner action:** approve widget hostname configuration for the intended Preview and production hosts.
 No CAPTCHA bypass or configuration change occurred.
 
-The latest Preview runs platform mode and fails simple-mode acceptance.
-Private routes reach login, and login and invite pages render.
+The latest Preview runs platform mode and fails the required simple-mode private-route acceptance.
+Public routes pass read-only responsive checks, while private routes reach login.
 **Owner action:** approve the Preview `SITE_MODE=simple` update and its redeployment separately.
 No environment write or redeployment has occurred.
 
@@ -126,16 +126,14 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 
 ### 8. Separate release approvals
 
-Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally and is not pushed.
-PR #1 targets `develop`, and its previous GitHub checks failed.
-The Ready Preview does not contain these fixes.
+Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed.
+PR #1 targets `develop`, and its current required GitHub checks pass.
+The Ready Preview contains these fixes but still runs platform mode.
 The Vercel UI confirms that future Production deployments track `develop`.
 A merge can therefore start deployment automatically.
 
 The following actions require separate authorization:
 
-- Commit the reviewed changes.
-- Push the approved commit.
 - Update the PR description from the local draft.
 - Change branch protection.
 - Merge the approved PR.

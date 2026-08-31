@@ -3,7 +3,7 @@
 Local draft for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-08-31.
 This file has not been published to GitHub.
-Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally, but it is not pushed and is not ready to merge or deploy.
+Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed, but this draft has not been published and the PR is not approved to merge or deploy.
 
 ## Problem
 
@@ -300,30 +300,30 @@ The credential-pattern scan covered all 103 files, including both new SQL files,
 - [x] Current full simple and platform Vitest runs: 98 files and 1,046 tests per mode, one live skip, exit 0
 - [x] Current smooth-scroll layout regression and synchronous form focus regression
 - [x] Current mobile Turnstile sizing regression: compact widget below 420px
-- [ ] Public browser acceptance at desktop, 390px, and 320px
-- [ ] Current-head GitHub `verify`, `database`, and Vercel checks
-- [ ] Updated Preview acceptance after an approved push
+- [x] Public browser acceptance at desktop, 390px, and 320px; private-route mode acceptance remains blocked
+- [x] Current-head GitHub `verify`, `database`, and Vercel checks
+- [x] Updated Preview acceptance after the approved push; Preview still runs platform mode
 
 Previous CI run [33099790158](https://github.com/rspeciale0519/cmg/actions/runs/33099790158) failed in both required jobs.
 Its pgTAP step passed 32 files and 923 assertions.
 Its database Vitest selection passed 22 files and 142 tests but failed live-test discovery.
 Those partial results do not make the old run green.
 
-Fresh read-only `gh pr view` confirms PR #1 remains open at `d895527834d1eb9690141449c59618766b11ccb9`, targeting `develop`.
-Its `verify` and `database` checks still show the 2026-08-27 failures.
-Vercel and CodeRabbit report success for that old head, which excludes release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
-No GitHub write occurred.
+Fresh read-only `gh pr view` confirms PR #1 remains open at `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, targeting `develop`.
+The current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass for the pushed head.
+CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
+No PR description update occurred.
 
-The Ready Preview still uses `d895527834d1eb9690141449c59618766b11ccb9` without release commit `4516a825609dfa325cb150251dceb14e38bdf24b`.
-It runs platform mode and failed simple-mode acceptance.
+The Ready Preview uses the pushed head `fd1d94bb53f3d8de20435a31f8b3bcce83106502`.
+It runs platform mode and fails the required simple-mode private-route acceptance.
 Its `/admin`, `/portal`, and `/partner` requests reach login; login and invite pages render.
 It needs an approved `SITE_MODE=simple` update and redeployment.
 
 Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
-The release commit was created locally after approval.
-No push, PR update, merge, deployment, or hosted migration has occurred during this review.
+The reviewed commits were pushed after approval.
+No PR update, merge, deployment, or hosted migration has occurred during this review.
 
 ## Security review warning
 
@@ -399,7 +399,7 @@ Vercel Instant Rollback does not update cron jobs.
 The advertised upload allowance remains ten files of 25 MiB each.
 Direct-upload architecture approval and local implementation are complete.
 File bytes bypass the Vercel function request limit through signed private Storage uploads.
-The deployed candidate does not contain this change, so maximum-size hosted acceptance remains open.
+The current Production deployment does not contain this change, so maximum-size hosted acceptance remains open.
 
 Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl) remain valid for two hours.
 The implementation allows two-hour sessions and five minutes for signing, with cleanup blocked until two hours and 15 minutes after reservation.

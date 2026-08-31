@@ -3,7 +3,7 @@
 Last reconciled: 2026-08-31.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-Release commit `4516a825609dfa325cb150251dceb14e38bdf24b` exists locally but is not pushed, and release acceptance remains incomplete.
+Release commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed to `origin/feature/claims-platform`, and release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.
@@ -72,15 +72,15 @@ Those approved local reset checks are complete; they predate the two upload migr
 - [x] Complete type generation and full pgTAP after the fourth migration.
 - [x] Complete the platform CI rerun after the fourth migration.
 - [x] Record final static file, source-size, dependency, workflow, and credential-pattern checks.
-- [ ] Complete public acceptance at desktop, 390px, and 320px on the fixed candidate.
+- [x] Complete public acceptance at desktop, 390px, and 320px on the pushed Preview candidate; private-route mode acceptance remains blocked.
 - [x] Obtain upload architecture approval and implement direct private uploads for ten files of 25 MiB each.
 - [x] Validate client upload, progress, and retry behavior: three files and 50 tests in each site mode.
 - [ ] Complete hosted upload boundary acceptance after that transport work.
 - [ ] Obtain separate approval for Vercel Pro commercial hosting and GitHub private-repository protection.
 - [ ] Resolve owner-controlled service, domain, legal, backup, repository-plan, and publication decisions.
 - [x] Obtain commit approval and create the local release commit.
-- [ ] Obtain separate push and PR-update approvals.
-- [ ] Require passing checks and Preview acceptance on the approved remote head.
+- [x] Obtain separate push approval and push the reviewed commits.
+- [x] Require passing checks on the approved remote head; Preview is Ready but still uses platform mode.
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.
 - [ ] Obtain separate merge, deployment, and domain approvals.
