@@ -1,9 +1,9 @@
 # Release CMG simple website mode
 
-Local draft for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
+Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-08-31.
-This file has not been published to GitHub.
-The reviewed implementation and documentation commits are pushed, but this draft has not been published and the PR is not approved to merge or deploy.
+The reviewed implementation and documentation commits are pushed.
+The PR remains open and is not approved to merge or deploy.
 
 ## Problem
 
@@ -312,7 +312,7 @@ Those partial results do not make the old run green.
 Fresh read-only `gh pr view` confirms PR #1 remains open, targeting `develop`, with the reviewed implementation and documentation commits pushed.
 The current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass for the pushed head.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
-No PR description update occurred.
+The PR description was published from this record; merge and deployment remain unapproved.
 
 The branch Preview uses the pushed implementation and documentation commits.
 It runs platform mode and fails the required simple-mode private-route acceptance.
