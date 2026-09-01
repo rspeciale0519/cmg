@@ -3,7 +3,7 @@
 Last reconciled: 2026-08-31.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-Release commits `4516a825609dfa325cb150251dceb14e38bdf24b`, `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, and `ed8dde134efa7d86bf4491ad866fae12cb9904f8` are pushed to `origin/feature/claims-platform`, and release acceptance remains incomplete.
+The reviewed implementation commits through `ac8b85b1b80e07e9ebe712e0824d781dc0e438e3` are pushed to `origin/feature/claims-platform`, and release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.
