@@ -3,7 +3,7 @@
 Last reconciled: 2026-08-31.
 The release target is `SITE_MODE=simple`.
 The current candidate is not ready for release approval.
-Local engineering validation is complete, and reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed to `origin/feature/claims-platform`.
+Local engineering validation is complete, and reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b`, `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, and `ed8dde134efa7d86bf4491ad866fae12cb9904f8` are pushed to `origin/feature/claims-platform`.
 Owner decisions remain open.
 The latest Preview still fails simple-mode private-route acceptance because its environment uses platform mode.
 A Ready Vercel deployment does not prove application acceptance or passing GitHub checks.
@@ -25,14 +25,14 @@ No PR update, branch-protection change, merge, or deployment occurred during thi
 | Item | Recorded state |
 |---|---|
 | Branch | `feature/claims-platform` |
-| Local HEAD | `fd1d94bb53f3d8de20435a31f8b3bcce83106502` |
-| Local changes | Clean; both reviewed commits are pushed |
+| Local HEAD | `ed8dde134efa7d86bf4491ad866fae12cb9904f8` |
+| Local changes | Clean; all three reviewed commits are pushed |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
 | Previous CI run | [33099790158](https://github.com/rspeciale0519/cmg/actions/runs/33099790158); `verify` and `database` failed |
 | CI failure | The live PandaDoc test loaded missing `.env.local` during discovery |
 | Previous remote pgTAP | 32 files; 923 assertions passed in that failed CI run |
 | Previous remote database Vitest | 22 files; 142 tests passed, plus the live-test discovery failure |
-| Latest Preview | [fd1d94b Preview](https://cmgps-5ldr7g7co-robs-projects-c72886ba.vercel.app), Ready but running platform mode; public acceptance passed and private-mode acceptance remains blocked |
+| Latest Preview | [ed8dde1 Preview](https://cmgps-cncjizfcf-robs-projects-c72886ba.vercel.app), Ready but running platform mode; public acceptance passed and private-mode acceptance remains blocked |
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
 | Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
@@ -53,7 +53,7 @@ Keep the repository private.
 An owner-approved private-repository plan is unresolved.
 Manual check review does not provide branch protection.
 
-The Preview contains the pushed release head `fd1d94bb53f3d8de20435a31f8b3bcce83106502`.
+The Preview contains the pushed release head `ed8dde134efa7d86bf4491ad866fae12cb9904f8`.
 Its public routes passed read-only checks at 320px, 390px, and 1280px with no horizontal overflow.
 Its normal GET requests to `/admin`, `/portal`, and `/partner` redirect to `/login`, which proves the deployment still runs platform mode.
 The Browser adapter did not move focus with Tab, so native Tab traversal remains unverified.
@@ -64,7 +64,7 @@ No environment write or redeployment occurred.
 The current remote checks pass for the pushed head.
 Do not reuse older passing totals as evidence for the changed candidate.
 
-Fresh read-only `gh pr view` confirms PR #1 is open at `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, targeting `develop`.
+Fresh read-only `gh pr view` confirms PR #1 is open at `ed8dde134efa7d86bf4491ad866fae12cb9904f8`, targeting `develop`.
 Its current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
 No PR description update occurred.
@@ -375,8 +375,8 @@ Historical results do not complete these checks.
 | Final diff, source-size, and client-secret checks | Final aggregate: 103 changed or untracked files, zero deleted files, no dependency/workflow changes, and no credential-pattern matches |
 | Current desktop, 390px, and 320px public browser acceptance | Fresh local simple-mode checks at 320px, 390px, and 1280px found no horizontal overflow and no fresh console errors after the compact Turnstile fix; menu click and Escape passed; empty intake returned the generic Turnstile failure; native Tab traversal, upload interaction, and full network tracing remain unverified |
 | Current Preview acceptance after an approved push | Public routes passed at 320px, 390px, and 1280px with no horizontal overflow; private routes still reach login because Preview runs platform mode |
-| Current-head GitHub `verify` and `database` checks | Passed for `fd1d94bb53f3d8de20435a31f8b3bcce83106502`; Vercel and Preview Comments also passed |
-| Current-head Vercel build and acceptance | Preview Ready at `https://cmgps-5ldr7g7co-robs-projects-c72886ba.vercel.app`; simple-mode environment update remains owner-controlled |
+| Current-head GitHub `verify` and `database` checks | Passed for `ed8dde134efa7d86bf4491ad866fae12cb9904f8`; Vercel and Preview Comments also passed |
+| Current-head Vercel build and acceptance | Preview Ready at `https://cmgps-cncjizfcf-robs-projects-c72886ba.vercel.app`; simple-mode environment update remains owner-controlled |
 | Live PandaDoc draft test | Not run; requires separate approval and shell opt-in |
 
 The following focused results were verified during this review:
@@ -513,7 +513,7 @@ The former transport sent file bytes through a Server Action.
 [Vercel limits function request payloads to 4.5 MB](https://vercel.com/docs/functions/limitations).
 The new Server Actions receive only text, file metadata, and session credentials.
 The installed Supabase browser SDK sends file bytes directly to the private bucket.
-The pushed Preview contains release head `fd1d94bb53f3d8de20435a31f8b3bcce83106502`; Production remains on the older deployment.
+The pushed Preview contains release head `ed8dde134efa7d86bf4491ad866fae12cb9904f8`; Production remains on the older deployment.
 Maximum-size hosted acceptance remains open until an approved deployment and approved hosted tests.
 
 The implementation uses these controls:

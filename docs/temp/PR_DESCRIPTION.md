@@ -3,7 +3,7 @@
 Local draft for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-08-31.
 This file has not been published to GitHub.
-Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed, but this draft has not been published and the PR is not approved to merge or deploy.
+Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b`, `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, and `ed8dde134efa7d86bf4491ad866fae12cb9904f8` are pushed, but this draft has not been published and the PR is not approved to merge or deploy.
 
 ## Problem
 
@@ -309,12 +309,12 @@ Its pgTAP step passed 32 files and 923 assertions.
 Its database Vitest selection passed 22 files and 142 tests but failed live-test discovery.
 Those partial results do not make the old run green.
 
-Fresh read-only `gh pr view` confirms PR #1 remains open at `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, targeting `develop`.
+Fresh read-only `gh pr view` confirms PR #1 remains open at `ed8dde134efa7d86bf4491ad866fae12cb9904f8`, targeting `develop`.
 The current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass for the pushed head.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
 No PR description update occurred.
 
-The Ready Preview uses the pushed head `fd1d94bb53f3d8de20435a31f8b3bcce83106502`.
+The Ready Preview uses the pushed head `ed8dde134efa7d86bf4491ad866fae12cb9904f8`.
 It runs platform mode and fails the required simple-mode private-route acceptance.
 Its `/admin`, `/portal`, and `/partner` requests reach login; login and invite pages render.
 It needs an approved `SITE_MODE=simple` update and redeployment.

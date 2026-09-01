@@ -126,7 +126,7 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 
 ### 8. Separate release approvals
 
-Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b` and `fd1d94bb53f3d8de20435a31f8b3bcce83106502` are pushed.
+Reviewed commits `4516a825609dfa325cb150251dceb14e38bdf24b`, `fd1d94bb53f3d8de20435a31f8b3bcce83106502`, and `ed8dde134efa7d86bf4491ad866fae12cb9904f8` are pushed.
 PR #1 targets `develop`, and its current required GitHub checks pass.
 The Ready Preview contains these fixes but still runs platform mode.
 The Vercel UI confirms that future Production deployments track `develop`.
