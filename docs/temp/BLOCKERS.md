@@ -127,7 +127,7 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 
 The reviewed implementation and documentation commits are pushed.
 PR #1 targets `develop`, and its current required GitHub checks pass.
-The Ready Preview contains these fixes but still runs platform mode.
+The Ready Preview contains these fixes and runs simple mode.
 The Vercel UI confirms that future Production deployments track `develop`.
 A merge can therefore start deployment automatically.
 

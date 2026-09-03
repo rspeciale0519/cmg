@@ -365,7 +365,7 @@ Historical results do not complete these checks.
 | Affected unit regressions | Affected platform selection passed seven files and 110 tests; corrected helper tests passed two files and 29 tests; full simple run passed |
 | `npm run type-check` | Post-reset run passed after type regeneration; exit 0 |
 | `npm run lint` | Final full run passed; exit 0 |
-| `npm test` | Previous complete simple and platform runs each passed 98 files and 1,046 tests, one live file/test skipped; a fresh platform rerun is blocked by Docker |
+| `npm test` | Current simple and platform runs each passed 98 files and 1,046 tests, one live file/test skipped |
 | Fresh platform full-suite rerun | 98 files passed and 1,046 tests passed, one live file/test skipped |
 | `npm run build` | Simple and platform builds passed after the upload and layout changes; both exited 0 |
 | `npm run db:reset` | Latest approved local run passed and applied all 29 repository migrations, seed, and container restart |
@@ -379,9 +379,9 @@ Historical results do not complete these checks.
 | Adversarial review of changed behavior | Final static review includes the fourth migration and suite 35; no further confirmed defect; planner-test limits remain recorded below |
 | Final diff, source-size, and client-secret checks | Final aggregate: 103 changed or untracked files, zero deleted files, no dependency/workflow changes, and no credential-pattern matches |
 | Current desktop, 390px, and 320px public browser acceptance | Fresh local simple-mode checks at 320px, 390px, and 1280px found no horizontal overflow and no fresh console errors after the compact Turnstile fix; menu click and Escape passed; empty intake returned the generic Turnstile failure; native Tab traversal, upload interaction, and full network tracing remain unverified |
-| Current Preview acceptance after an approved push | Public routes passed at 320px, 390px, and 1280px with no horizontal overflow; private routes still reach login because Preview runs platform mode |
+| Current Preview acceptance after an approved push | Public routes passed; private routes redirect to `/platform-disabled` in simple mode |
 | Current-head GitHub `verify` and `database` checks | Passed; Vercel and Preview Comments also passed |
-| Current-head Vercel build and acceptance | Branch Preview Ready; simple-mode environment update remains owner-controlled |
+| Current-head Vercel build and acceptance | Branch Preview Ready; simple-mode environment update and redeployment passed |
 | Live PandaDoc draft test | Not run; requires separate approval and shell opt-in |
 
 The following focused results were verified during this review:
@@ -573,21 +573,21 @@ Normal page GET checks produced these results:
 |---|---|---|
 | Local simple mode | Six private entry-route GETs redirected to `/platform-disabled` | Private entry closure passed for those requests |
 | Production | `/admin` redirected to `/platform-disabled` | One route check passed; full Production acceptance remains pending |
-| Latest Preview | Private routes reached login; login and invite pages rendered | Simple-mode acceptance failed |
+| Verified Preview | Public routes returned 200; all platform entry routes redirected to `/platform-disabled` | Simple-mode closure passed |
 
 Local `/`, `/services`, `/contractors`, `/about`, `/contact`, and `/file-a-claim` passed layout checks at 320px, 390px, and 1440px.
 Actual viewport measurements confirmed those widths after the narrow grid CSS fix.
 All 18 final local layout checks passed without horizontal overflow or missing images.
 Selected loading and error states also passed at 390px, as recorded below.
 Local success checks also passed within the scope recorded below.
-Complete native keyboard activation and full network tracing remain unverified.
+Fresh Preview Tab traversal moved focus through the skip link, logo, navigation, and phone link. Menu activation and full network tracing remain unverified.
 
-The latest Preview passed 15 of 18 public layout checks.
+The earlier Preview layout capture passed 15 of 18 public layout checks.
 At 320px, `/`, `/about`, and `/contact` each had 15px horizontal overflow.
 Their document client width was 305px, and their scroll width was 320px.
 Every Preview layout at 390px and 1440px passed.
 The earlier Preview layout capture found no missing images.
-Preview still fails private-route closure, and its complete network trace remains pending.
+That earlier Preview failed private-route closure; the current redeployment passes that boundary. Its complete network trace remains pending.
 
 | Local check at 390px | Observed result |
 |---|---|
@@ -621,14 +621,14 @@ No new warning or error logs appeared within that timestamp scope.
 All checked images loaded.
 The local contact GET returned HTTP 200.
 Older Preview Turnstile errors remained in the browser logs and were excluded by timestamp.
-Full network tracing and native keyboard activation remain unverified.
+Full network tracing and native keyboard activation remain unverified; fresh Preview Tab traversal passed.
 
 Phone input worked visually in the browser.
 DOM snapshots redact telephone values, so those snapshots do not show an input defect.
 
 Browser Enter and Space attempts did not activate the native menu button.
 The cause remains unresolved: tool behavior or an application issue.
-Do not mark keyboard activation complete.
+Do not mark menu activation complete until a fresh interaction test passes.
 
 The acceptance tab became a data-URL `ERR_CONNECTION_REFUSED` page while the local server was stopped.
 After restart, Browser Use URL policy blocked access to that old error page.
