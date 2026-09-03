@@ -3,7 +3,7 @@
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-09-03.
 The reviewed implementation commit `4516a82` and current release-record updates are pushed on `feature/claims-platform`.
-The PR remains open and is not approved to merge or deploy.
+The PR remains open. Production merge and deployment remain gated by the unresolved owner prerequisites.
 
 ## Problem
 
@@ -80,6 +80,8 @@ After Docker recovered, the approved local reset removed stale fixtures. The fre
 The affected form and Turnstile selection then passed four files and 51 tests in each site mode.
 Both production builds passed after the upload, focus, and smooth-scroll changes.
 The layout regression test passed, and a fresh local browser run found no new console errors or horizontal overflow at 320px, 390px, or 1280px.
+The verified Preview redeployment runs `SITE_MODE=simple`; public routes return 200, platform routes redirect to `/platform-disabled`, cron routes return 401, and the GET webhook returns 405.
+Preview security headers remain present, and its public routes passed the recorded responsive checks.
 
 ### Earlier validation checkpoint
 

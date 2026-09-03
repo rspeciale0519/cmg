@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-03.
 The release target is `SITE_MODE=simple`.
 The site is not approved for launch.
-Current release-record updates are pushed; the latest Preview deployment is Ready but still uses platform mode.
+Current release-record updates are pushed; the verified Preview redeployment is Ready in simple mode.
 This file contains owner-controlled decisions, access, and publication actions.
 [HANDOFF.md](HANDOFF.md) contains engineering checks, release evidence, and pending release work.
 Pending engineering checks are not owner-only blockers.
@@ -66,10 +66,8 @@ Cloudflare identifies this as “Domain not authorized” in its [error-code ref
 **Owner action:** approve widget hostname configuration for the intended Preview and production hosts.
 No CAPTCHA bypass or configuration change occurred.
 
-The latest Preview runs platform mode and fails the required simple-mode private-route acceptance.
-Public routes pass read-only responsive checks, while private routes reach login.
-**Owner action:** approve the Preview `SITE_MODE=simple` update and its redeployment separately.
-No environment write or redeployment has occurred.
+The Preview `SITE_MODE=simple` environment update and redeployment are complete.
+Private routes redirect to `/platform-disabled`, and public routes pass read-only checks.
 
 **Owner action:** confirm live accounts, sending-domain control, recipient addresses, and final Turnstile hostnames.
 Approve live submissions and test messages before they write to hosted services or contact recipients.

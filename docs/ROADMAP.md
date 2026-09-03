@@ -76,7 +76,7 @@ Those approved local reset checks are complete and include the two upload migrat
 - [x] Complete type generation and full pgTAP after the fourth migration.
 - [x] Complete the platform CI rerun after the fourth migration.
 - [x] Record final static file, source-size, dependency, workflow, and credential-pattern checks.
-- [x] Complete public acceptance at desktop, 390px, and 320px on the pushed Preview candidate; private-route mode acceptance remains blocked.
+- [x] Complete public acceptance at desktop, 390px, and 320px on the pushed Preview candidate; simple-mode private-route closure passed after redeployment.
 - [x] Obtain upload architecture approval and implement direct private uploads for ten files of 25 MiB each.
 - [x] Validate client upload, progress, and retry behavior: three files and 50 tests in each site mode.
 - [ ] Complete hosted upload boundary acceptance after that transport work.
@@ -84,7 +84,7 @@ Those approved local reset checks are complete and include the two upload migrat
 - [ ] Resolve owner-controlled service, domain, legal, backup, repository-plan, and publication decisions.
 - [x] Obtain commit approval and create the local release commit.
 - [x] Obtain separate push approval and push the reviewed commits.
-- [x] Require passing checks on the approved remote head; Preview is Ready but still uses platform mode.
+- [x] Require passing checks on the approved remote head; the verified Preview redeployment is Ready in simple mode.
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.
 - [ ] Obtain separate merge, deployment, and domain approvals.
