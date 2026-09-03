@@ -153,7 +153,7 @@ The Turnstile hostname issue remains a separate configuration blocker.
 ## Local environment
 
 The local CMGPA Supabase stack is running again, and the database container is healthy.
-A fresh pgTAP run found stale local fixture state and needs an approved local reset before it can pass.
+A prior pgTAP run found stale local fixture state; the approved local reset removed it.
 Its API uses port 15421, PostgreSQL uses 15422, Studio uses 15423, and local email uses 15424.
 The reserved block is 15420 through 15429.
 Use Node.js 22 and `npm ci`.
@@ -365,11 +365,11 @@ Historical results do not complete these checks.
 | `npm run type-check` | Post-reset run passed after type regeneration; exit 0 |
 | `npm run lint` | Final full run passed; exit 0 |
 | `npm test` | Previous complete simple and platform runs each passed 98 files and 1,046 tests, one live file/test skipped; a fresh platform rerun is blocked by Docker |
-| Fresh platform full-suite rerun | 97 files passed and 1,046 tests passed, one live file/test skipped; the direct Storage integration file could not start because `com.docker.service` was stopped |
+| Fresh platform full-suite rerun | 98 files passed and 1,046 tests passed, one live file/test skipped |
 | `npm run build` | Simple and platform builds passed after the upload and layout changes; both exited 0 |
 | `npm run db:reset` | Latest approved local run passed and applied all 29 repository migrations, seed, and container restart |
-| `npm run db:test` | Last clean run passed 38 files and 1,250 assertions; the fresh run failed 7 assertions because stale local fixtures remain |
-| Fresh pgTAP rerun | 38 files and 1,250 tests; 7 failures in claim-reference and intake-cleanup suites; local reset is required |
+| `npm run db:test` | Current clean run passed 38 files and 1,250 assertions; exit 0 |
+| Fresh pgTAP rerun | 38 files and 1,250 tests passed after the approved local reset; exit 0 |
 | `npm run db:types` | Regeneration passed after the upload migrations; current SHA256 is `0C04FD50FC14872FA0C555C367B47AE6759283E6E2A1A12BAAC3BF724411EA3F` |
 | CI database-backed Vitest selection | Post-reset simple and platform each passed 30 files and 205 tests, one live file/test skipped; both exited 0 |
 | Outbox batch suites 32 and 35 | Passed 84 assertions after the fourth migration; old-function control also passed 84 and did not reproduce the failure |

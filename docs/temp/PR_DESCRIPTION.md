@@ -76,7 +76,7 @@ An earlier simple run passed 46 tests but failed when the form-test worker did n
 The unchanged retry passed all 50 tests; worker settings, assertions, and timeouts remained intact.
 The full simple and platform Vitest runs each passed 98 files and 1,046 tests, with one opt-in live test skipped, after the final mobile widget adjustment.
 A fresh platform-mode rerun passed 97 files and 1,046 tests, with one opt-in live test skipped; the direct Storage integration file was blocked because Docker's `com.docker.service` was stopped.
-After Docker recovered, a fresh pgTAP run reached all 38 files and 1,250 assertions but failed 7 assertions because stale local fixtures changed the claim sequence and cleanup expectations. A disposable local reset needs explicit approval before rerunning.
+After Docker recovered, the approved local reset removed stale fixtures. The fresh local pgTAP run passed all 38 files and 1,250 assertions.
 The affected form and Turnstile selection then passed four files and 51 tests in each site mode.
 Both production builds passed after the upload, focus, and smooth-scroll changes.
 The layout regression test passed, and a fresh local browser run found no new console errors or horizontal overflow at 320px, 390px, or 1280px.

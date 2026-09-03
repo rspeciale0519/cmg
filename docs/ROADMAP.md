@@ -35,7 +35,7 @@ The mobile Turnstile widget uses the compact size below 420px, with a passing re
 
 A fresh platform-mode full run on the current worktree passed 97 files and 1,046 tests, with one opt-in live test skipped. The direct Storage integration file could not start because Docker's `com.docker.service` was stopped; no application assertion failed.
 
-After Docker recovered, a fresh local pgTAP run reached all 38 files and 1,250 assertions but failed 7 assertions because stale local fixtures changed the claim sequence and cleanup expectations. A disposable local reset needs explicit approval before rerunning.
+After Docker recovered, the approved local reset removed stale fixtures. The fresh local pgTAP run passed all 38 files and 1,250 assertions.
 
 The following checkpoint predates the direct-upload addition.
 Full simple-mode tests passed 89 files and 884 tests, with one live file and test skipped.
