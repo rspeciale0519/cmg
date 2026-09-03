@@ -1,15 +1,15 @@
 # Release CMG simple website mode
 
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
-Prepared on 2026-08-31.
-The reviewed implementation and documentation commits are pushed.
+Prepared on 2026-09-03.
+The reviewed implementation commit `4516a82` and latest pushed documentation head `fa119f1` are on `feature/claims-platform`.
 The PR remains open and is not approved to merge or deploy.
 
 ## Problem
 
 The release exposes the public website while keeping private claims workflows disabled through `SITE_MODE=simple`.
-Current CI fails before completing validation because the live PandaDoc test reads `.env.local` during discovery.
-CI has no local secrets file and should not need one.
+An earlier CI run failed before completing validation because the live PandaDoc test read `.env.local` during discovery.
+The live test is now shell-opt-in, and the current `verify` and `database` checks pass without local secrets.
 
 The release review also found unsafe failure paths in document cleanup, document signing, and provider-error handling.
 An uncertain database response could trigger immediate deletion of a file whose document transaction had committed.
@@ -70,10 +70,13 @@ Template UUIDs are not required by the current upload flow.
 
 The direct-upload client selection passed three files and 50 tests in each site mode.
 Simple mode exited 0 in 42.50 seconds; platform mode exited 0 in 23.38 seconds.
+The current pure authorization and mode-boundary selection passed seven files and 45 tests in each site mode.
 Scoped client lint and whitespace checks passed.
 An earlier simple run passed 46 tests but failed when the form-test worker did not start.
 The unchanged retry passed all 50 tests; worker settings, assertions, and timeouts remained intact.
 The full simple and platform Vitest runs each passed 98 files and 1,046 tests, with one opt-in live test skipped, after the final mobile widget adjustment.
+A fresh platform-mode rerun passed 97 files and 1,046 tests, with one opt-in live test skipped; the direct Storage integration file was blocked because Docker's `com.docker.service` was stopped.
+After Docker recovered, a fresh pgTAP run reached all 38 files and 1,250 assertions but failed 7 assertions because stale local fixtures changed the claim sequence and cleanup expectations. A disposable local reset needs explicit approval before rerunning.
 The affected form and Turnstile selection then passed four files and 51 tests in each site mode.
 Both production builds passed after the upload, focus, and smooth-scroll changes.
 The layout regression test passed, and a fresh local browser run found no new console errors or horizontal overflow at 320px, 390px, or 1280px.
@@ -108,26 +111,26 @@ That retry did not execute, and the first reset remains a failed historical run.
 The user later approved deletion and rebuilding of the LOCAL CMG database only.
 Checks confirmed the CMGPA container and loopback database port 15422 and API port 15421.
 The approved `npm run db:reset -- --local` exited 0 and reported a local target.
-It recreated the database, applied all 27 migrations through `20260830123000`, ran `supabase/seed.sql`, and restarted the containers.
+It recreated the database, applied all 29 migrations through `20260830124100`, ran `supabase/seed.sql`, and restarted the containers.
 No health timeout occurred, and the current reset gate passed.
 No hosted reset, seed, migration, or Git action occurred.
 
-Post-reset `npm run db:test -- --local` passed 36 files and 1,075 assertions, with exit 0.
+Post-reset `npm run db:test -- --local` passed 38 files and 1,250 assertions, with exit 0.
 Database, Storage, Auth, Realtime, Kong, Studio, and `pg_meta` health checks passed; the REST container is running.
 No function or migration failed during the rebuilt database checks.
 Earlier validation results below predate the approved reset.
 
-Post-reset simple-mode CI passed 29 files and 200 tests, with one live file and test skipped.
+Post-reset simple-mode CI passed 30 files and 205 tests, with one live file and test skipped.
 It exited 0 in 128.20 seconds.
 It used the recorded CI file selection with `SITE_MODE=simple` and live provider actions disabled.
 
-Post-reset platform CI passed 29 files and 200 tests, with one live file and test skipped.
+Post-reset platform CI passed 30 files and 205 tests, with one live file and test skipped.
 It exited 0 in 73.75 seconds.
 Post-reset `npm run db:types` exited 0 with the identical SHA256 recorded in HANDOFF.
 The post-reset `npm run type-check` exited 0.
 All post-reset checks passed.
 
-Local read-only checks matched all 27 migrations to repository files, through `20260830123000`.
+Local read-only checks matched all 29 migrations to repository files, through `20260830124100`.
 All 20 local public tables have RLS active.
 The local `claim-docs` bucket is private with a 26,214,400-byte, or 25 MiB, limit.
 Hosted state was not rechecked or changed.
@@ -280,10 +283,10 @@ The credential-pattern scan covered all 103 files, including both new SQL files,
 - [x] Final TypeScript and full ESLint: exit 0
 - [x] Additional affected platform selection: seven files and 110 tests
 - [x] Production builds in simple and platform modes
-- [x] Explicitly approved local database reset: exit 0, all 27 migrations and seed, without a health timeout
-- [x] Post-reset pgTAP: 36 files and 1,075 assertions, exit 0
-- [x] Post-reset simple-mode CI selection: 29 files and 200 tests, one live skip, exit 0
-- [x] Post-reset platform CI selection: 29 files and 200 tests, one live skip, exit 0
+- [x] Explicitly approved local database reset: exit 0, all 29 migrations and seed, without a health timeout
+- [x] Post-reset pgTAP: 38 files and 1,250 assertions, exit 0
+- [x] Post-reset simple-mode CI selection: 30 files and 205 tests, one live skip, exit 0
+- [x] Post-reset platform CI selection: 30 files and 205 tests, one live skip, exit 0
 - [x] Post-reset type regeneration: exit 0 and unchanged SHA256
 - [x] Post-reset type-check after regeneration: exit 0
 - [x] Full pgTAP after the fourth migration: 36 files and 1,075 assertions, exit 0
@@ -323,7 +326,7 @@ Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
 The reviewed commits were pushed after approval.
-No PR update, merge, deployment, or hosted migration has occurred during this review.
+No merge, production deployment, or hosted migration has occurred during this review.
 
 ## Security review warning
 

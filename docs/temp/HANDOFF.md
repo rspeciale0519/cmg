@@ -1,11 +1,11 @@
 # CMG simple-mode release handoff
 
-Last reconciled: 2026-08-31.
+Last reconciled: 2026-09-03.
 The release target is `SITE_MODE=simple`.
 The current candidate is not ready for release approval.
-Local engineering validation is complete, and the reviewed implementation commits through `ac8b85b1b80e07e9ebe712e0824d781dc0e438e3` are pushed to `origin/feature/claims-platform`.
+Core local engineering validation passes for implementation `4516a82`; the latest pushed head is `fa119f1`. Release-record reconciliation is currently uncommitted.
 Owner decisions remain open.
-The latest Preview still fails simple-mode private-route acceptance because its environment uses platform mode.
+The latest Preview deployment for `fa119f1` is Ready, but it still uses platform mode. Simple-mode Preview acceptance remains open.
 A Ready Vercel deployment does not prove application acceptance or passing GitHub checks.
 
 An accidental empty Preview contact submission wrote one hosted rate-limit record.
@@ -18,21 +18,20 @@ The historical appendix preserves earlier evidence without treating it as curren
 
 ## GitHub and Vercel evidence
 
-These facts came from read-only inspection on 2026-08-31; remote values remain from 2026-08-30.
+These facts came from read-only inspection on 2026-09-03.
 The release commit was created locally after review approval.
-No PR update, branch-protection change, merge, or deployment occurred during this review.
+The PR description update occurred earlier; no branch-protection change, merge, or production deployment occurred during this review.
 
 | Item | Recorded state |
 |---|---|
 | Branch | `feature/claims-platform` |
-| Implementation head | `ac8b85b1b80e07e9ebe712e0824d781dc0e438e3` |
-| Local changes | Clean after the documentation update |
+| Implementation head | `4516a82` |
+| Latest documentation head | `fa119f1` |
+| Local changes | Release-record reconciliation is uncommitted |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
-| Previous CI run | [33099790158](https://github.com/rspeciale0519/cmg/actions/runs/33099790158); `verify` and `database` failed |
-| CI failure | The live PandaDoc test loaded missing `.env.local` during discovery |
-| Previous remote pgTAP | 32 files; 923 assertions passed in that failed CI run |
-| Previous remote database Vitest | 22 files; 142 tests passed, plus the live-test discovery failure |
-| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), Ready but running platform mode; public acceptance passed and private-mode acceptance remains blocked |
+| Current CI run | [33513666168](https://github.com/rspeciale0519/cmg/actions/runs/33513666168); `verify` and `database` pass |
+| CI review note | CodeRabbit reports pass status but skipped review because 529 files exceed its 150-file limit |
+| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), latest deployment `6202269093`, Ready but running platform mode |
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
 | Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
@@ -53,7 +52,7 @@ Keep the repository private.
 An owner-approved private-repository plan is unresolved.
 Manual check review does not provide branch protection.
 
-The branch Preview contains the pushed implementation head `ac8b85b1b80e07e9ebe712e0824d781dc0e438e3` at the time of the latest check.
+The branch Preview contains the latest pushed head `fa119f1` at the time of the latest check.
 Its public routes passed read-only checks at 320px, 390px, and 1280px with no horizontal overflow.
 Its normal GET requests to `/admin`, `/portal`, and `/partner` redirect to `/login`, which proves the deployment still runs platform mode.
 The Browser adapter did not move focus with Tab, so native Tab traversal remains unverified.
@@ -67,7 +66,7 @@ Do not reuse older passing totals as evidence for the changed candidate.
 Fresh read-only `gh pr view` confirms PR #1 is open, targeting `develop`, with the implementation and documentation commits pushed.
 Its current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
-No PR description update occurred.
+The PR description is published from `docs/temp/PR_DESCRIPTION.md`; merge and deployment remain unapproved.
 
 ## Hosted database and service evidence
 
@@ -153,19 +152,21 @@ The Turnstile hostname issue remains a separate configuration blocker.
 
 ## Local environment
 
-The local Supabase stack is healthy.
+The local CMGPA Supabase stack is running again, and the database container is healthy.
+A fresh pgTAP run found stale local fixture state and needs an approved local reset before it can pass.
 Its API uses port 15421, PostgreSQL uses 15422, Studio uses 15423, and local email uses 15424.
 The reserved block is 15420 through 15429.
 Use Node.js 22 and `npm ci`.
 
-Current local browser checks used `http://localhost:3011` in simple mode.
+The current local platform route smoke checks used `http://localhost:3010` with `SITE_MODE=platform`.
+Public routes returned HTTP 200, private routes redirected to `/login`, and protected cron routes returned HTTP 401 without a bearer token.
 The server belongs to CMGPA and remains healthy.
-Earlier port 3014 checks remain in the historical appendix.
+Earlier port 3011 simple-mode and port 3014 checks remain in the historical appendix.
 Email and live PandaDoc remain disabled.
-A fresh local route probe returned HTTP 200 for `/`, `/about`, `/contact`, and `/file-a-claim`.
+An earlier simple-mode route probe returned HTTP 200 for `/`, `/about`, `/contact`, and `/file-a-claim`.
 It returned HTTP 307 to `/platform-disabled` for `/admin`, `/portal`, and `/partner`.
 The local REST endpoint and Studio returned HTTP 200 in the same health check.
-Reuse that server while it remains healthy.
+Those health results predate the current Docker service outage.
 
 Prior local seed data was confirmed disposable before the planned database reset.
 The first reset applied 25 migrations and the seed, then exited 1 at the Storage health timeout.
@@ -180,26 +181,26 @@ Do not infer current MFA enrollment or test totals from the historical seed reco
 The user later approved deletion and rebuilding of the LOCAL CMG database only.
 Target checks confirmed the CMGPA container, loopback database port 15422, and loopback API port 15421.
 The approved `npm run db:reset -- --local` exited 0 and reported a local target.
-It recreated the local database and applied all 27 migrations through `20260830123000`.
+It recreated the local database and applied all 29 migrations through `20260830124100`.
 It ran `supabase/seed.sql` and restarted the containers.
 This run had no health timeout, so the current reset gate passed.
 
-Post-reset `npm run db:test -- --local` passed 36 files and 1,075 assertions, with exit 0.
+Post-reset `npm run db:test -- --local` passed 38 files and 1,250 assertions, with exit 0.
 Database, Storage, Auth, Realtime, Kong, Studio, and `pg_meta` health checks passed; the REST container is running.
 No function or migration failed during the rebuilt database checks.
 No hosted reset, seed, migration, or Git action occurred.
 
-Post-reset simple-mode CI passed 29 files and 200 tests, with one live file and test skipped.
+Post-reset simple-mode CI passed 30 files and 205 tests, with one live file and test skipped.
 It exited 0 in 128.20 seconds.
 It used the recorded CI file selection with `SITE_MODE=simple` and live provider actions disabled.
 
-Post-reset platform CI passed 29 files and 200 tests, with one live file and test skipped.
+Post-reset platform CI passed 30 files and 205 tests, with one live file and test skipped.
 It exited 0 in 73.75 seconds.
 Post-reset `npm run db:types` exited 0 with the identical SHA256 recorded below.
 The post-reset `npm run type-check` exited 0.
 All post-reset checks passed.
 
-Local read-only verification matched all 27 migration versions exactly to repository files, through `20260830123000`.
+Local read-only verification matched all 29 migration versions exactly to repository files, through `20260830124100`.
 All 20 local public tables have RLS active.
 The local `claim-docs` bucket remains private with a 26,214,400-byte, or 25 MiB, limit.
 These checks did not recheck or change hosted state.
@@ -336,8 +337,9 @@ See [README.md](../../README.md#database-types) for maintenance rules.
 
 Direct-upload client tests passed in both site modes: three files and 50 tests per run.
 The simple run exited 0 in 42.50 seconds; the platform run exited 0 in 23.38 seconds.
+The current pure authorization and mode-boundary selection passed seven files and 45 tests in each site mode.
 The direct-upload Storage integration suite passed five tests against the local stack.
-The clean local reset applied all 29 repository migrations, and pgTAP passed 38 files and 1,250 assertions.
+The last approved clean local reset applied all 29 repository migrations, and pgTAP passed 38 files and 1,250 assertions.
 The full simple and platform Vitest runs each passed 98 files and 1,046 tests, with one opt-in live test skipped, after the final mobile widget adjustment.
 The affected form and Turnstile selection passed four files and 51 tests in each site mode after that adjustment.
 The layout warning fix and its regression test passed in both builds.
@@ -362,12 +364,14 @@ Historical results do not complete these checks.
 | Affected unit regressions | Affected platform selection passed seven files and 110 tests; corrected helper tests passed two files and 29 tests; full simple run passed |
 | `npm run type-check` | Post-reset run passed after type regeneration; exit 0 |
 | `npm run lint` | Final full run passed; exit 0 |
-| `npm test` | Latest simple and platform runs each passed 98 files and 1,046 tests, one live file/test skipped; exit 0 |
+| `npm test` | Previous complete simple and platform runs each passed 98 files and 1,046 tests, one live file/test skipped; a fresh platform rerun is blocked by Docker |
+| Fresh platform full-suite rerun | 97 files passed and 1,046 tests passed, one live file/test skipped; the direct Storage integration file could not start because `com.docker.service` was stopped |
 | `npm run build` | Simple and platform builds passed after the upload and layout changes; both exited 0 |
 | `npm run db:reset` | Latest approved local run passed and applied all 29 repository migrations, seed, and container restart |
-| `npm run db:test` | Latest local run passed all 38 files and 1,250 assertions; exit 0 |
+| `npm run db:test` | Last clean run passed 38 files and 1,250 assertions; the fresh run failed 7 assertions because stale local fixtures remain |
+| Fresh pgTAP rerun | 38 files and 1,250 tests; 7 failures in claim-reference and intake-cleanup suites; local reset is required |
 | `npm run db:types` | Regeneration passed after the upload migrations; current SHA256 is `0C04FD50FC14872FA0C555C367B47AE6759283E6E2A1A12BAAC3BF724411EA3F` |
-| CI database-backed Vitest selection | Post-reset simple and platform each passed 29 files and 200 tests, one live file/test skipped; both exited 0; 128.20 and 73.75 seconds respectively |
+| CI database-backed Vitest selection | Post-reset simple and platform each passed 30 files and 205 tests, one live file/test skipped; both exited 0 |
 | Outbox batch suites 32 and 35 | Passed 84 assertions after the fourth migration; old-function control also passed 84 and did not reproduce the failure |
 | Additional affected platform selection | Passed: seven files and 110 tests |
 | `npm audit --audit-level=high` | Fresh run passed; exit 0 and zero vulnerabilities |

@@ -1,9 +1,9 @@
 # Development roadmap — CMG Property Solutions
 
-Last reconciled: 2026-08-31.
+Last reconciled: 2026-09-03.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-The reviewed implementation commits through `ac8b85b1b80e07e9ebe712e0824d781dc0e438e3` are pushed to `origin/feature/claims-platform`, and release acceptance remains incomplete.
+The reviewed implementation commit is `4516a82`; the latest documentation head is `fa119f1`, both pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.
@@ -33,6 +33,10 @@ Both production builds pass after the upload, focus, and smooth-scroll changes.
 The root layout now declares the Next.js smooth-scroll contract, and its regression test passes.
 The mobile Turnstile widget uses the compact size below 420px, with a passing regression test.
 
+A fresh platform-mode full run on the current worktree passed 97 files and 1,046 tests, with one opt-in live test skipped. The direct Storage integration file could not start because Docker's `com.docker.service` was stopped; no application assertion failed.
+
+After Docker recovered, a fresh local pgTAP run reached all 38 files and 1,250 assertions but failed 7 assertions because stale local fixtures changed the claim sequence and cleanup expectations. A disposable local reset needs explicit approval before rerunning.
+
 The following checkpoint predates the direct-upload addition.
 Full simple-mode tests passed 89 files and 884 tests, with one live file and test skipped.
 Final type-check and lint passed.
@@ -50,9 +54,9 @@ HANDOFF records the failure, the passing old-function control, and the limits of
 
 The first local reset failed, and an earlier retry was denied without execution.
 The later explicitly approved local reset passed.
-Post-reset pgTAP passed 36 files and 1,075 assertions.
-Post-reset simple-mode CI passed 29 files and 200 tests, with one live skip.
-Post-reset platform CI also passed 29 files and 200 tests, with one live skip.
+Post-reset pgTAP passed 38 files and 1,250 assertions.
+Post-reset simple-mode CI passed 30 files and 205 tests, with one live skip.
+Post-reset platform CI also passed 30 files and 205 tests, with one live skip.
 Type regeneration passed with an unchanged SHA256.
 
 The post-reset type-check passed with exit 0.
