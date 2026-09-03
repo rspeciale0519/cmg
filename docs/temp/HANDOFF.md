@@ -29,7 +29,7 @@ The PR description update occurred earlier; no branch-protection change, merge, 
 | Release-record state | Pushed and clean |
 | Local changes | Clean |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
-| Current CI run | [33783583259](https://github.com/rspeciale0519/cmg/actions/runs/33783583259); `verify` and `database` pass |
+| Current CI run | [33784420179](https://github.com/rspeciale0519/cmg/actions/runs/33784420179); `verify` and `database` pass |
 | CI review note | CodeRabbit reports pass status but skipped review because 529 files exceed its 150-file limit |
 | Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), verified simple-mode deployment [cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app](https://cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app), Ready |
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
