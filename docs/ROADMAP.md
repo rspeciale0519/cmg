@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-03.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-The reviewed implementation commit is `4516a82`; the latest documentation head is `fa119f1`, both pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
+The reviewed implementation commit is `4516a82`; the latest release-record head is `6a7be5f`, both pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.
@@ -33,7 +33,7 @@ Both production builds pass after the upload, focus, and smooth-scroll changes.
 The root layout now declares the Next.js smooth-scroll contract, and its regression test passes.
 The mobile Turnstile widget uses the compact size below 420px, with a passing regression test.
 
-A fresh platform-mode full run on the current worktree passed 97 files and 1,046 tests, with one opt-in live test skipped. The direct Storage integration file could not start because Docker's `com.docker.service` was stopped; no application assertion failed.
+An earlier platform-mode full run was incomplete while Docker was stopped. After Docker recovered and the local database was reset, the current platform and simple runs each passed 98 files and 1,046 tests.
 
 After Docker recovered, the approved local reset removed stale fixtures. The fresh local pgTAP run passed all 38 files and 1,250 assertions.
 
@@ -60,7 +60,7 @@ Post-reset platform CI also passed 30 files and 205 tests, with one live skip.
 Type regeneration passed with an unchanged SHA256.
 
 The post-reset type-check passed with exit 0.
-Those approved local reset checks are complete; they predate the two upload migrations.
+Those approved local reset checks are complete and include the two upload migrations.
 
 - [x] Record the current branch, PR, failed CI run, Ready Preview, and existing Production deployment.
 - [x] Record hosted migration counts, RLS, bucket limits, account counts, and queue counts without reading identities.

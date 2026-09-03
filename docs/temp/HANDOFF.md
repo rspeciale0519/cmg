@@ -3,9 +3,9 @@
 Last reconciled: 2026-09-03.
 The release target is `SITE_MODE=simple`.
 The current candidate is not ready for release approval.
-Core local engineering validation passes for implementation `4516a82`; the latest pushed head is `fa119f1`. Release-record reconciliation is currently uncommitted.
+Core local engineering validation passes for implementation `4516a82`; the latest pushed release-record head is `6a7be5f`.
 Owner decisions remain open.
-The latest Preview deployment for `fa119f1` is Ready, but it still uses platform mode. Simple-mode Preview acceptance remains open.
+The latest Preview deployment for `6a7be5f` is Ready, but it still uses platform mode. Simple-mode Preview acceptance remains open.
 A Ready Vercel deployment does not prove application acceptance or passing GitHub checks.
 
 An accidental empty Preview contact submission wrote one hosted rate-limit record.
@@ -26,12 +26,12 @@ The PR description update occurred earlier; no branch-protection change, merge, 
 |---|---|
 | Branch | `feature/claims-platform` |
 | Implementation head | `4516a82` |
-| Latest documentation head | `fa119f1` |
-| Local changes | Release-record reconciliation is uncommitted |
+| Latest documentation head | `6a7be5f` |
+| Local changes | Clean |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
-| Current CI run | [33513666168](https://github.com/rspeciale0519/cmg/actions/runs/33513666168); `verify` and `database` pass |
+| Current CI run | [33776460358](https://github.com/rspeciale0519/cmg/actions/runs/33776460358); `verify` and `database` pass |
 | CI review note | CodeRabbit reports pass status but skipped review because 529 files exceed its 150-file limit |
-| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), latest deployment `6202269093`, Ready but running platform mode |
+| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), latest deployment `D1Z9aWPGBkfKQiR1koVErSvXBbn5`, Ready but running platform mode |
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
 | Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
@@ -52,7 +52,7 @@ Keep the repository private.
 An owner-approved private-repository plan is unresolved.
 Manual check review does not provide branch protection.
 
-The branch Preview contains the latest pushed head `fa119f1` at the time of the latest check.
+The branch Preview contains the latest pushed head `6a7be5f` at the time of the latest check.
 Its public routes passed read-only checks at 320px, 390px, and 1280px with no horizontal overflow.
 Its normal GET requests to `/admin`, `/portal`, and `/partner` redirect to `/login`, which proves the deployment still runs platform mode.
 The Browser adapter did not move focus with Tab, so native Tab traversal remains unverified.
