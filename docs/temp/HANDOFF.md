@@ -35,6 +35,7 @@ The PR description update occurred earlier; no branch-protection change, merge, 
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
 | Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
+| Custom domain routing | `cmgpropertysolutions.net` redirects `/admin` to `/lander`; it does not serve the CMG app |
 | Future Production branch | Vercel UI confirms `develop`; the current Production deployment came from the feature branch |
 | Vercel plan | Hobby; confirmed in the browser |
 | Branch protection | `develop` is unprotected; the protection API returned HTTP 403 |
@@ -68,6 +69,12 @@ Fresh read-only `gh pr view` confirms PR #1 is open, targeting `develop`, with t
 Its current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
 The PR description is published from `docs/temp/PR_DESCRIPTION.md`; merge and deployment remain unapproved.
+
+Read-only host routing checks found a production cutover blocker.
+The Vercel aliases `cmgps.vercel.app`, `cmgps-rspeciale0519.vercel.app`, and `cmgps-robs-projects-c72886ba.vercel.app` serve this CMG deployment.
+The custom domain `cmgpropertysolutions.net` instead redirects `/admin` to `/lander`, and its cron API path returns 404.
+The custom domain therefore does not currently point to the Vercel Production app.
+No domain, DNS, or production configuration changed.
 
 ## Hosted database and service evidence
 
@@ -117,7 +124,8 @@ No CAPTCHA bypass or configuration change occurred.
 | `_dmarc.cmgpropertysolutions.net` | NXDOMAIN |
 
 No domain, DNS, secret, or production configuration changed.
-These DNS records do not prove Resend verification, final website routing, or TLS acceptance.
+The custom domain HTTPS endpoint returned 200 but served `/lander`, which is a different site from the Vercel aliases.
+These DNS records do not prove Resend verification, final website routing, or TLS acceptance for the CMG app.
 
 ## Security review warning
 

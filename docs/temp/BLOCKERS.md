@@ -83,11 +83,14 @@ A faster schedule requires a separate decision after commercial-plan approval.
 ### 5. Domain, DNS, TLS, and mail policy
 
 The current DNS observations are recorded in [HANDOFF.md](HANDOFF.md#hosted-database-and-service-evidence).
+The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
+The custom domain is therefore not routed to the Vercel Production deployment.
 The final site domain and sender-domain acceptance remain unconfirmed.
 Microsoft 365 mail records exist, and the DMARC lookup returned NXDOMAIN.
 These observations do not establish the required DNS changes.
 
 **Owner action:** confirm the final hostname, DNS authority, mail policy, and cutover timing.
+Attach the custom domain to the CMG Vercel project and validate the canonical redirect before launch.
 Approve domain and DNS writes separately from deployment.
 Preserve existing Microsoft 365 mail routing.
 Approve hosted TLS, redirect, form, and email acceptance actions before launch.

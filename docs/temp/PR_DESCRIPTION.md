@@ -327,6 +327,8 @@ The current deployment is Ready, and no production deployment occurred.
 Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
+The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
+The custom domain is not routed to the Vercel Production deployment.
 The reviewed commits were pushed after approval.
 No merge, production deployment, or hosted migration has occurred during this review.
 
