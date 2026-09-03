@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-03.
 The release target is `SITE_MODE=simple`.
 The site is not approved for launch.
-The latest pushed head is `6a7be5f`; the latest Preview deployment is Ready but still uses platform mode.
+The latest pushed head is `98677b6`; the latest Preview deployment is Ready but still uses platform mode.
 This file contains owner-controlled decisions, access, and publication actions.
 [HANDOFF.md](HANDOFF.md) contains engineering checks, release evidence, and pending release work.
 Pending engineering checks are not owner-only blockers.

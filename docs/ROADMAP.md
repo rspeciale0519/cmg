@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-03.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
-The reviewed implementation commit is `4516a82`; the latest release-record head is `6a7be5f`, both pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
+The reviewed implementation commit is `4516a82`; the latest release-record head is `98677b6`, both pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
 Private platform activation remains a separate phase.
 
 Current code, tests, manifests, and configuration control implementation facts.

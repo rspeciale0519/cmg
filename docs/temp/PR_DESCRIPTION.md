@@ -2,7 +2,7 @@
 
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-09-03.
-The reviewed implementation commit `4516a82` and latest pushed release-record head `6a7be5f` are on `feature/claims-platform`.
+The reviewed implementation commit `4516a82` and latest pushed release-record head `98677b6` are on `feature/claims-platform`.
 The PR remains open and is not approved to merge or deploy.
 
 ## Problem
