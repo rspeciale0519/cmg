@@ -305,9 +305,9 @@ The credential-pattern scan covered all 103 files, including both new SQL files,
 - [x] Current full simple and platform Vitest runs: 98 files and 1,046 tests per mode, one live skip, exit 0
 - [x] Current smooth-scroll layout regression and synchronous form focus regression
 - [x] Current mobile Turnstile sizing regression: compact widget below 420px
-- [x] Public browser acceptance at desktop, 390px, and 320px; private-route mode acceptance remains blocked
+- [x] Public browser acceptance at desktop, 390px, and 320px; simple-mode private-route closure passed after redeployment
 - [x] Current-head GitHub `verify`, `database`, and Vercel checks
-- [x] Updated Preview acceptance after the approved push; Preview still runs platform mode
+- [x] Updated Preview acceptance after the approved push; Preview runs simple mode and closes platform routes
 
 Previous CI run [33099790158](https://github.com/rspeciale0519/cmg/actions/runs/33099790158) failed in both required jobs.
 Its pgTAP step passed 32 files and 923 assertions.
@@ -320,9 +320,9 @@ CodeRabbit reports pass status but skipped review because the diff exceeds its 1
 The PR description was published from this record; merge and deployment remain unapproved.
 
 The branch Preview uses the pushed implementation and documentation commits.
-It runs platform mode and fails the required simple-mode private-route acceptance.
-Its `/admin`, `/portal`, and `/partner` requests reach login; login and invite pages render.
-It needs an approved `SITE_MODE=simple` update and redeployment.
+It runs simple mode and passes the required private-route closure acceptance.
+Its `/admin`, `/portal`, and `/partner` requests redirect to `/platform-disabled`; `/login`, `/mfa`, and `/invite` follow the same boundary.
+The current deployment is Ready, and no production deployment occurred.
 
 Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
 Its normal `/admin` GET redirects to `/platform-disabled`.

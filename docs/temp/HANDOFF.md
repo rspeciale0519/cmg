@@ -29,9 +29,9 @@ The PR description update occurred earlier; no branch-protection change, merge, 
 | Release-record state | Pushed and clean |
 | Local changes | Clean |
 | PR | [#1: Release CMG simple website mode](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop` |
-| Current CI run | [33777979869](https://github.com/rspeciale0519/cmg/actions/runs/33777979869); `verify` and `database` pass |
+| Current CI run | [33781872804](https://github.com/rspeciale0519/cmg/actions/runs/33781872804); `verify` and `database` pass |
 | CI review note | CodeRabbit reports pass status but skipped review because 529 files exceed its 150-file limit |
-| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), verified simple-mode deployment [cmgps-pqbaudqtn-robs-projects-c72886ba.vercel.app](https://cmgps-pqbaudqtn-robs-projects-c72886ba.vercel.app), Ready |
+| Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), verified simple-mode deployment [cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app](https://cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app), Ready |
 | Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
 | Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
@@ -56,7 +56,7 @@ The verified simple-mode Preview returned 200 for `/`, `/contact`, `/file-a-clai
 Its `/login`, `/mfa`, `/invite`, `/admin`, `/portal`, and `/partner` routes returned 307 to `/platform-disabled`.
 Its cron routes returned 401 without a bearer token, and the PandaDoc webhook returned 405 for GET.
 Its public routes passed read-only checks at 320px, 390px, and 1280px with no horizontal overflow.
-The Browser adapter did not move focus with Tab, so native Tab traversal remains unverified.
+Fresh Preview Tab traversal moved focus through the skip link, logo, navigation, and phone link. Menu activation and full network tracing remain unverified.
 Security headers remained present: CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, and HSTS.
 The Preview `SITE_MODE=simple` environment write and redeployment are complete.
 No production environment write or deployment occurred.
@@ -101,8 +101,8 @@ Vercel shows `SITE_MODE` for all environments and a Preview branch override.
 PandaDoc and Resend settings exist for Production and Preview.
 Public and secret Turnstile settings, `CRON_SECRET`, and Supabase keys are present.
 Secret values and live provider validity were not verified.
-The observed Preview route behavior confirms that its deployed mode is platform.
-Environment changes require a new deployment.
+The observed Preview route behavior confirms that its deployed mode is simple.
+The Preview environment change and redeployment are complete.
 
 Fresh navigation to Preview `/contact` repeatedly produced Turnstile error `110200`.
 Cloudflare defines this as “Domain not authorized” in its [error-code reference](https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/error-codes/).
