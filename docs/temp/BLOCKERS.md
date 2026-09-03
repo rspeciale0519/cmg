@@ -112,13 +112,15 @@ The review did not inspect identities or confirm account roles.
 The database must not be treated as empty or disposable.
 Backup and PITR readiness remain unconfirmed.
 The Supabase dashboard is signed out, so its backup settings could not be verified.
+The owner explicitly declined a hosted Supabase database backup.
 
 Six forward migrations follow the last recorded hosted migration, including two for direct uploads.
 Their names, risks, and required preflight checks are in HANDOFF.
 No production backup, migration, seed, reset, or data repair occurred during this review.
 
-**Owner action:** confirm recovery requirements and approve database and Storage backups.
-Confirm that the backup process includes private object bytes, not only database metadata.
+**Owner action:** confirm the recovery decision and Storage recovery coverage.
+No production migration is authorized while recovery and PITR readiness remain unverified.
+If a backup is later required, confirm that it includes private object bytes, not only database metadata.
 Approve each production migration or repair separately.
 Never seed or reset production.
 

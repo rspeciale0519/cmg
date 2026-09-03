@@ -81,6 +81,8 @@ No domain, DNS, or production configuration changed.
 The inspection read counts, schema state, and configuration presence.
 It did not read user identities or secret values.
 No production backup, migration, seed, reset, or repair occurred.
+The owner explicitly declined a hosted Supabase database backup.
+Recovery and PITR readiness remain unverified, so no production migration is authorized.
 
 | Item | Recorded state |
 |---|---|

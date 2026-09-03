@@ -96,6 +96,9 @@ Vercel Ready status does not complete release acceptance.
 The upload architecture decision is complete, and the advertised allowance remains unchanged.
 Hosted upload publication and boundary acceptance remain open.
 
+The owner explicitly declined a hosted Supabase database backup.
+Recovery and PITR readiness remain unverified, so production migrations remain blocked until the recovery decision is revisited.
+
 The Vercel team currently uses Hobby.
 Vercel's [fair-use rules](https://vercel.com/docs/limits/fair-use-guidelines) require Pro or Enterprise for commercial use.
 Vercel Pro is recommended for CMG; no purchase or plan change is approved or completed.
