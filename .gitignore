@@ -15,6 +15,15 @@ coverage/
 # production media sources (large originals; transcoded outputs live in public/videos)
 temp/media/
 
+# generated LOR artefacts. `temp/docs/CMG_Blank-LOR-2026.pdf` is the hand-made
+# source and IS tracked; everything below is rebuilt from it by
+# scripts/build-lor-tagged-pdfs.py and scripts/build-pandadoc-tag-probe.py.
+temp/docs/CMG_LOR-2026-PandaDoc-*.pdf
+temp/docs/CMG_PandaDoc-Tag-Probe.pdf
+
+# scratch space for PDF/tag probing; nothing here is an input to anything
+tmp/
+
 # env
 .env
 .env.local

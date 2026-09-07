@@ -1,0 +1,29 @@
+-- ---------------------------------------------------------------------------
+
+select plan(54);
+
+create extension if not exists pgtap with schema extensions;
+set local client_min_messages = warning;
+begin;
+
+--   claim 3     20000000-0000-4000-a000-000000000013  referred by company B
+--   company B   10000000-0000-4000-a000-000000000002  Ridgeline Roofing LLC
+--   partner B   00000000-0000-4000-a000-000000000015  Ridgeline Roofing LLC rep
+--   customer B  00000000-0000-4000-a000-000000000014  Elena Whitfield, claimant on claim 2
+-- Fixtures (all rolled back):
+--
+-- the same policies are asked a question that has a wrong answer available.
+-- different claim, and a second partner company with its own rep and its own referral. Now
+-- This file adds the second of each: a second homeowner with a portal account on a
+--
+-- still pass.
+-- exists, so `claim_partner_summaries_select` could be `using (true)` and that test would
+-- projection — `partner_company_id <> '1000…01'` is vacuously empty when no second company
+-- every row to every customer, since there is only one. The same is true of the partner
+-- own claim" assertion in that file is also satisfied by a policy that simply returns
+-- company, is that the boundaries between *peers* hold: every "a customer sees only their
+-- cannot show, because the seed contains exactly one customer and exactly one partner
+-- 04_rls_roles.test.sql already walks the §4 access matrix one role at a time. What it
+--
+-- CMG Property Solutions — Phase 3 exit criteria, stated as falsifiable isolation tests.
+rollback;

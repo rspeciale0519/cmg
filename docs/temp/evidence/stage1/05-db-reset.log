@@ -1,0 +1,110 @@
+
+> cmg-property-solutions@0.1.0 db:reset
+> supabase db reset
+
+Resetting local database...
+Recreating database...
+Initialising schema...
+Seeding globals from roles.sql...
+Applying migration 20260809120000_initial_schema.sql...
+NOTICE (42710): extension "pgcrypto" already exists, skipping
+NOTICE (00000): trigger "claims_guard_update" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "claims_before_insert" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "claims_enforce_status_transition" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "audit_claims" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "audit_documents" for relation "public.documents" does not exist, skipping
+NOTICE (00000): trigger "audit_claim_status_history" for relation "public.claim_status_history" does not exist, skipping
+NOTICE (00000): trigger "audit_consents" for relation "public.consents" does not exist, skipping
+NOTICE (00000): trigger "audit_claim_financials" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): trigger "audit_claimants" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): trigger "consents_guard_subject" for relation "public.consents" does not exist, skipping
+NOTICE (00000): trigger "consents_guard_immutable" for relation "public.consents" does not exist, skipping
+NOTICE (00000): trigger "documents_guard_claim_immutable" for relation "public.documents" does not exist, skipping
+NOTICE (00000): trigger "documents_enqueue_storage_cleanup" for relation "public.documents" does not exist, skipping
+NOTICE (00000): trigger "claims_refresh_partner_summary" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "claim_financials_refresh_partner_summary" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): trigger "claimants_refresh_partner_summary" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): trigger "on_auth_user_created" for relation "auth.users" does not exist, skipping
+NOTICE (00000): trigger "profiles_guard_privileges" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): trigger "claimants_normalize_email" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): trigger "partner_companies_guard_delete" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): trigger "partner_companies_set_updated_at" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): trigger "profiles_set_updated_at" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): trigger "leads_set_updated_at" for relation "public.leads" does not exist, skipping
+NOTICE (00000): trigger "claims_set_updated_at" for relation "public.claims" does not exist, skipping
+NOTICE (00000): trigger "claim_financials_set_updated_at" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): trigger "claimants_set_updated_at" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): trigger "documents_set_updated_at" for relation "public.documents" does not exist, skipping
+NOTICE (00000): trigger "notifications_outbox_set_updated_at" for relation "public.notifications_outbox" does not exist, skipping
+Applying migration 20260809120100_rls_policies.sql...
+NOTICE (00000): policy "profiles_select_self_or_staff" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): policy "profiles_update_self" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): policy "profiles_update_owner" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): policy "profiles_insert_owner" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): policy "profiles_delete_owner" for relation "public.profiles" does not exist, skipping
+NOTICE (00000): policy "partner_companies_select" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): policy "partner_companies_insert_owner" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): policy "partner_companies_update_owner" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): policy "partner_companies_delete_owner" for relation "public.partner_companies" does not exist, skipping
+NOTICE (00000): policy "leads_select_staff" for relation "public.leads" does not exist, skipping
+NOTICE (00000): policy "leads_insert_staff" for relation "public.leads" does not exist, skipping
+NOTICE (00000): policy "leads_update_staff" for relation "public.leads" does not exist, skipping
+NOTICE (00000): policy "leads_delete_owner" for relation "public.leads" does not exist, skipping
+NOTICE (00000): policy "claims_select" for relation "public.claims" does not exist, skipping
+NOTICE (00000): policy "claims_insert_owner" for relation "public.claims" does not exist, skipping
+NOTICE (00000): policy "claims_update_manage" for relation "public.claims" does not exist, skipping
+NOTICE (00000): policy "claims_delete_owner" for relation "public.claims" does not exist, skipping
+NOTICE (00000): policy "claim_financials_select" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): policy "claim_financials_insert" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): policy "claim_financials_update" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): policy "claim_financials_delete_owner" for relation "public.claim_financials" does not exist, skipping
+NOTICE (00000): policy "claimants_select" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): policy "claimants_insert" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): policy "claimants_update" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): policy "claimants_delete" for relation "public.claimants" does not exist, skipping
+NOTICE (00000): policy "claim_status_history_select" for relation "public.claim_status_history" does not exist, skipping
+NOTICE (00000): policy "claim_status_history_insert" for relation "public.claim_status_history" does not exist, skipping
+NOTICE (00000): policy "claim_events_select" for relation "public.claim_events" does not exist, skipping
+NOTICE (00000): policy "claim_events_insert_staff" for relation "public.claim_events" does not exist, skipping
+NOTICE (00000): policy "claim_events_insert_customer" for relation "public.claim_events" does not exist, skipping
+NOTICE (00000): policy "documents_select" for relation "public.documents" does not exist, skipping
+NOTICE (00000): policy "documents_insert" for relation "public.documents" does not exist, skipping
+NOTICE (00000): policy "documents_update_staff" for relation "public.documents" does not exist, skipping
+NOTICE (00000): policy "documents_delete" for relation "public.documents" does not exist, skipping
+NOTICE (00000): policy "consents_select" for relation "public.consents" does not exist, skipping
+NOTICE (00000): policy "consents_insert_staff" for relation "public.consents" does not exist, skipping
+NOTICE (00000): policy "consents_update" for relation "public.consents" does not exist, skipping
+NOTICE (00000): policy "invites_all_owner" for relation "public.invites" does not exist, skipping
+NOTICE (00000): policy "audit_log_select_owner" for relation "public.audit_log" does not exist, skipping
+NOTICE (00000): policy "claim_partner_summaries_select" for relation "public.claim_partner_summaries" does not exist, skipping
+Applying migration 20260809120200_storage.sql...
+NOTICE (00000): policy "claim_docs_select" for relation "storage.objects" does not exist, skipping
+NOTICE (00000): policy "claim_docs_insert" for relation "storage.objects" does not exist, skipping
+NOTICE (00000): policy "claim_docs_update" for relation "storage.objects" does not exist, skipping
+NOTICE (00000): policy "claim_docs_delete" for relation "storage.objects" does not exist, skipping
+Applying migration 20260810120000_admin_user_directory.sql...
+Applying migration 20260810130000_change_staff_privileges.sql...
+Applying migration 20260811120000_claim_status_counts.sql...
+Applying migration 20260811140000_portal_claim_contact.sql...
+Applying migration 20260812120000_partner_referral.sql...
+Applying migration 20260813120000_lor_policy_gate.sql...
+Applying migration 20260814120000_outbox_claim.sql...
+Applying migration 20260815120000_storage_cleanup_claim.sql...
+NOTICE (00000): constraint "storage_cleanup_queue_one_terminal_state" of relation "storage_cleanup_queue" does not exist, skipping
+Applying migration 20260815130000_pandadoc_webhook_claim.sql...
+Applying migration 20260815140000_claim_lifecycle_invariants.sql...
+Applying migration 20260815150000_retire_storage_authorization_helpers.sql...
+Applying migration 20260815160000_claim_search_computed_field.sql...
+Applying migration 20260815170000_esign_dispatch_claim.sql...
+NOTICE (00000): trigger "claims_protect_esign_dispatch_columns" for relation "public.claims" does not exist, skipping
+NOTICE (42701): column "phase" of relation "esign_dispatch_attempts" already exists, skipping
+NOTICE (42701): column "provider_document_id" of relation "esign_dispatch_attempts" already exists, skipping
+Applying migration 20260815180000_partner_portal_profile.sql...
+Seeding data from supabase/seed.sql...
+Restarting containers...
+A new version of Supabase CLI is available: v2.114.0 (currently installed v2.111.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+A new version of Supabase CLI is available: v2.114.0 (currently installed v2.111.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+Finished supabase db reset on branch feature/claims-platform.
+{"target":"local","version":"","message":"Reset local database."}

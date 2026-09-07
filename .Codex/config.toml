@@ -1,0 +1,26 @@
+
+[mcp_servers.agentmail]
+# Local IMAP/SMTP access for this project's mailbox. Runs as a subprocess on
+# this machine; nothing is exposed to the network.
+command = 'C:\Users\rob\mcp-servers\agentmail\.venv\Scripts\python.exe'
+args = ['C:\Users\rob\mcp-servers\agentmail\server.py']
+startup_timeout_sec = 30
+# Read-only tools run freely; the four below are gated individually.
+default_tools_approval_mode = 'auto'
+
+[mcp_servers.agentmail.env]
+# agentmail reads its nine settings from .env.local in the folder named here.
+# Only a path is stored, never credentials.
+CLAUDE_PROJECT_DIR = 'C:\Users\rob\Documents\Websites\- Customers\CMGPA'
+
+[mcp_servers.agentmail.tools.save_draft]
+approval_mode = 'prompt'
+
+[mcp_servers.agentmail.tools.mark_read]
+approval_mode = 'prompt'
+
+[mcp_servers.agentmail.tools.move_message]
+approval_mode = 'prompt'
+
+[mcp_servers.agentmail.tools.send_message]
+approval_mode = 'prompt'

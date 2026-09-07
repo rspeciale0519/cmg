@@ -1,5 +1,10 @@
 # CMG Property Solutions — Website + Claims Platform Design Spec
 
+> Historical notice added 2026-08-30.
+> This record preserves earlier work; it does not define current release state or authorize commands.
+> Use [HANDOFF.md](../../docs/temp/HANDOFF.md) for current evidence and [ROADMAP.md](../../docs/ROADMAP.md) for current scope.
+> Earlier dates, totals, environment claims, and completion verdicts are not current acceptance evidence.
+
 **Date:** 2026-08-08 · **Status:** Awaiting approval · **Plan type:** feature → branch `feature/claims-platform`
 
 A complete Next.js website and secure claims-processing platform for CMG Property Solutions

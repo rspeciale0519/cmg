@@ -1,0 +1,12 @@
+
+> cmg-property-solutions@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 C:/Users/rob/Documents/Websites/- Customers/CMGPA
+
+
+ Test Files  70 passed (70)
+      Tests  712 passed (712)
+   Start at  00:12:48
+   Duration  49.68s (transform 17.22s, setup 0ms, import 88.99s, tests 45.23s, environment 622.46s)

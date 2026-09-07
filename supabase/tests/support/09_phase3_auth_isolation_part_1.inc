@@ -1,0 +1,425 @@
+-- ---------------------------------------------------------------------------
+-- Fixtures
+-- ---------------------------------------------------------------------------
+
+insert into public.partner_companies (id, name, status, contact_name, contact_email)
+values (
+  '10000000-0000-4000-a000-000000000002', 'Ridgeline Roofing LLC', 'active',
+  'Dev Ortega', 'partner-b@cmg.test'
+);
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change
+)
+select
+  '00000000-0000-0000-0000-000000000000', u.id, 'authenticated', 'authenticated', u.email,
+  extensions.crypt('CmgDev!2026', extensions.gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  jsonb_build_object('first_name', u.first_name, 'last_name', u.last_name),
+  now(), now(), '', '', '', ''
+from (values
+  ('00000000-0000-4000-a000-000000000014'::uuid, 'customer-b@cmg.test', 'Elena', 'Whitfield'),
+  ('00000000-0000-4000-a000-000000000015'::uuid, 'partner-b@cmg.test',  'Dev',   'Ortega')
+) as u(id, email, first_name, last_name);
+
+update public.profiles set role = 'customer'
+ where id = '00000000-0000-4000-a000-000000000014';
+update public.profiles
+   set role = 'partner', partner_company_id = '10000000-0000-4000-a000-000000000002'
+ where id = '00000000-0000-4000-a000-000000000015';
+
+-- The seed leaves claim 2's claimant unlinked; linking her is what makes claim 2 a second
+-- homeowner's claim rather than an orphan.
+update public.claimants set user_id = '00000000-0000-4000-a000-000000000014'
+ where id = '30000000-0000-4000-a000-000000000003';
+
+insert into public.claims (
+  id, property_street, property_city, property_zip,
+  carrier, policy_number, carrier_tenure, loss_date, cause, description,
+  partner_company_id
+) values (
+  '20000000-0000-4000-a000-000000000013', '9 Ridgeline Way', 'Apopka', '32703',
+  'Slide Insurance', 'POL-RIDGELINE-9', 'lt_1_year', current_date - 20, 'hail',
+  'Referral from the second partner company; exists so partner isolation has a wrong answer available',
+  '10000000-0000-4000-a000-000000000002'
+);
+
+insert into public.claimants (id, claim_id, first_name, last_name, email, initials, is_primary)
+values (
+  '30000000-0000-4000-a000-000000000013', '20000000-0000-4000-a000-000000000013',
+  'Ruth', 'Okafor', 'ruth.okafor@example.test', 'RO', true
+);
+
+-- A partner-visible entry on each company's claim. Without one on claim 3 the "partner A
+-- reads no events on company B's claim" assertion would pass because there is nothing to
+-- read, rather than because the policy refused it.
+insert into public.claim_events (id, claim_id, type, body, author_id, visibility)
+values (
+  '40000000-0000-4000-a000-000000000013', '20000000-0000-4000-a000-000000000013',
+  'system', 'Referral received from Ridgeline Roofing LLC.', null, 'partner'
+);
+
+insert into public.invites (email, role, claim_id, token_hash, invited_by)
+values (
+  'phase3-invitee@example.test', 'customer', '20000000-0000-4000-a000-000000000001',
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+  '00000000-0000-4000-a000-000000000001'
+);
+
+create temp table phase3_probe (label text primary key, affected int);
+grant all on table phase3_probe to public;
+
+-- ---------------------------------------------------------------------------
+-- anon — a leaked publishable key reaches nothing at all
+--
+-- 04 asserts this for claims and the partner projection. Phase 3 says "anon reads
+-- nothing", which is a claim about every relation, and the mechanism is one line in the
+-- schema migration (`revoke usage on schema public from public`) rather than a per-table
+-- policy — so the honest test enumerates the tables.
+-- ---------------------------------------------------------------------------
+
+set local role anon;
+
+select throws_ok($$ select 1 from public.profiles $$, '42501'::char(5), null::text,
+  'anon cannot read profiles, so a leaked publishable key does not enumerate CMG staff');
+select throws_ok($$ select 1 from public.claimants $$, '42501'::char(5), null::text,
+  'anon cannot read claimants, so homeowner names, emails and phone numbers are unreachable without a session');
+select throws_ok($$ select 1 from public.documents $$, '42501'::char(5), null::text,
+  'anon cannot read documents');
+select throws_ok($$ select 1 from public.claim_events $$, '42501'::char(5), null::text,
+  'anon cannot read the activity feed');
+select throws_ok($$ select 1 from public.claim_status_history $$, '42501'::char(5), null::text,
+  'anon cannot read claim status history');
+select throws_ok($$ select 1 from public.claim_financials $$, '42501'::char(5), null::text,
+  'anon cannot read settlement figures');
+select throws_ok($$ select 1 from public.consents $$, '42501'::char(5), null::text,
+  'anon cannot read consent snapshots, which carry email, phone and originating IP');
+select throws_ok($$ select 1 from public.leads $$, '42501'::char(5), null::text,
+  'anon cannot read the contact-form inbox');
+select throws_ok($$ select 1 from public.invites $$, '42501'::char(5), null::text,
+  'anon cannot read invites, so token digests and pending onboarding are not public');
+select throws_ok($$ select 1 from public.audit_log $$, '42501'::char(5), null::text,
+  'anon cannot read the audit trail');
+select throws_ok($$ select 1 from public.partner_companies $$, '42501'::char(5), null::text,
+  'anon cannot read partner companies');
+select throws_ok($$ select 1 from public.claim_partner_summaries $$, '42501'::char(5), null::text,
+  'anon cannot read the partner projection');
+
+select throws_ok(
+  $$ select public.check_rate_limit('anon-probe', 1, interval '1 minute') $$,
+  '42501'::char(5), null::text,
+  'anon cannot call the rate limiter, so the throttle protecting the public forms cannot be spent on a stranger''s behalf'
+);
+
+select throws_ok(
+  $$ select public.reassign_claim('20000000-0000-4000-a000-000000000001', null) $$,
+  '42501'::char(5), null::text,
+  'anon cannot call the reassignment RPC, which is the one SECURITY DEFINER write reachable from a session'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- customer B — a second homeowner, on a different claim
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000014","role":"authenticated"}';
+set local role authenticated;
+
+select results_eq(
+  $$ select id::text from public.claims where id in
+      ('20000000-0000-4000-a000-000000000001','20000000-0000-4000-a000-000000000002','20000000-0000-4000-a000-000000000013') order by id $$,
+  $$ values ('20000000-0000-4000-a000-000000000002'::text) $$,
+  'the second homeowner sees their own claim and not the first homeowner''s, which is the assertion a single-customer seed cannot make'
+);
+
+select is_empty(
+  $$ select id from public.documents where claim_id = '20000000-0000-4000-a000-000000000001' $$,
+  'one homeowner reads none of another homeowner''s documents, not even the ones published to that homeowner'
+);
+
+select is_empty(
+  $$ select id from public.claim_events where claim_id = '20000000-0000-4000-a000-000000000001' $$,
+  'one homeowner reads none of another homeowner''s feed, including the entries marked shared'
+);
+
+select is_empty(
+  $$ select id from public.claimants where claim_id = '20000000-0000-4000-a000-000000000001' $$,
+  'one homeowner cannot read the people attached to another homeowner''s claim'
+);
+
+select is_empty(
+  $$ select id from public.claim_status_history where claim_id = '20000000-0000-4000-a000-000000000001' $$,
+  'one homeowner cannot read another claim''s status history, so the other file''s timeline is not disclosed'
+);
+
+select is_empty(
+  $$ select id from public.consents where claim_id = '20000000-0000-4000-a000-000000000001' $$,
+  'one homeowner cannot read another homeowner''s consent snapshot, which carries their phone number and submitting IP'
+);
+
+select is(
+  (select count(*)::int from public.claim_financials), 0,
+  'the second homeowner reads no settlement figures, including the one on their own settled claim'
+);
+
+select is(
+  (select count(*)::int from public.invites), 0,
+  'a homeowner cannot read the invites table, so a portal account is not a route to a pending token digest'
+);
+
+select is(
+  (select count(*)::int from public.claim_partner_summaries), 0,
+  'a homeowner cannot read the partner projection, so who referred their claim is not disclosed to them'
+);
+
+select throws_ok(
+  $$ insert into public.claim_events (claim_id, type, body, author_id, visibility)
+     values ('20000000-0000-4000-a000-000000000001', 'question', 'probing another claim',
+             '00000000-0000-4000-a000-000000000014', 'customer') $$,
+  '42501'::char(5), null::text,
+  'a homeowner cannot post a question onto a claim that is not theirs, so the one write the portal grants them is claim-scoped'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- customer A — the seeded homeowner, now with a peer to be isolated from
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000004","role":"authenticated"}';
+set local role authenticated;
+
+select is_empty(
+  $$ select id from public.claims where id = '20000000-0000-4000-a000-000000000002' $$,
+  'the first homeowner cannot see the second homeowner''s claim, so the isolation runs in both directions rather than being an artefact of ordering'
+);
+
+select is_empty(
+  $$ select id from public.documents where claim_id = '20000000-0000-4000-a000-000000000002' $$,
+  'the first homeowner reads none of the second''s documents'
+);
+
+select is_empty(
+  $$ select id from public.claim_events where claim_id = '20000000-0000-4000-a000-000000000002' $$,
+  'the first homeowner reads none of the second''s feed entries'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- partner B — Ridgeline Roofing, one referral of its own
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000015","role":"authenticated"}';
+set local role authenticated;
+
+select results_eq(
+  $$ select claim_id::text from public.claim_partner_summaries where claim_id in
+      ('20000000-0000-4000-a000-000000000001','20000000-0000-4000-a000-000000000002','20000000-0000-4000-a000-000000000013') order by claim_id $$,
+  $$ values ('20000000-0000-4000-a000-000000000013'::text) $$,
+  'the second contractor sees exactly the one claim their own company referred — the assertion that fails if the projection policy were `using (true)`'
+);
+
+select is(
+  (select count(*)::int from public.claims), 0,
+  'the second contractor reads no claim rows, so carrier and policy_number stay structurally out of reach'
+);
+
+select is(
+  (select count(*)::int from public.documents), 0,
+  'the second contractor reads no documents on any claim, including the one they referred'
+);
+
+select is(
+  (select count(*)::int from public.claimants), 0,
+  'the second contractor cannot read the homeowner they referred, so a referral does not become a contact record'
+);
+
+select is(
+  (select count(*)::int from public.claim_financials), 0,
+  'the second contractor cannot read the financials table directly'
+);
+
+select is_empty(
+  $$ select id from public.claim_events
+      where claim_id in ('20000000-0000-4000-a000-000000000001',
+                         '20000000-0000-4000-a000-000000000002') $$,
+  'the second contractor reads no feed entry on the first company''s referrals, including the ones marked partner and shared'
+);
+
+select is(
+  (select count(*)::int from public.claim_events where id = '40000000-0000-4000-a000-000000000013'), 1,
+  'the second contractor does read the partner-visible entry on their own referral, which is the control proving the empty results above are refusals'
+);
+
+select is(
+  (select count(*)::int from public.invites), 0,
+  'a contractor cannot read invites'
+);
+
+select is(
+  (select count(*)::int from public.audit_log), 0,
+  'a contractor cannot read the audit trail'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- partner A — Summit Exteriors, now with a competitor on the platform
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000005","role":"authenticated"}';
+set local role authenticated;
+
+select is_empty(
+  $$ select claim_id from public.claim_partner_summaries
+      where claim_id = '20000000-0000-4000-a000-000000000013' $$,
+  'the first contractor cannot see the second company''s referral in the projection'
+);
+
+select is(
+  (select count(*)::int from public.claim_partner_summaries where claim_id in
+    ('20000000-0000-4000-a000-000000000001','20000000-0000-4000-a000-000000000002','20000000-0000-4000-a000-000000000013')), 2,
+  'the first contractor still sees exactly their own two referrals and no more'
+);
+
+select is_empty(
+  $$ select id from public.claim_events where claim_id = '20000000-0000-4000-a000-000000000013' $$,
+  'the first contractor reads no partner-visible entry on the second company''s claim, so `visibility = partner` means their partner and not any partner'
+);
+
+select is(
+  (select count(*)::int from public.consents), 0,
+  'a contractor reads no consent records at all'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- assistant — office authority, no lifecycle authority
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000003","role":"authenticated","aal":"aal2"}';
+set local role authenticated;
+
+select throws_ok(
+  $$ insert into public.claim_status_history (claim_id, from_status, to_status, changed_by)
+     values ('20000000-0000-4000-a000-000000000001', 'settlement_offered', 'settled',
+             '00000000-0000-4000-a000-000000000003') $$,
+  '42501'::char(5), null::text,
+  'the assistant cannot write a status history row either, so the record of the lifecycle is closed to them along with the lifecycle itself'
+);
+
+select is(
+  (select count(*)::int from public.claim_financials
+    where claim_id = '20000000-0000-4000-a000-000000000013'), 0,
+  'the assistant reads no financial record on a newly created claim either, so the exclusion is a property of the table and not of the seeded rows'
+);
+
+select throws_ok(
+  $$ insert into public.documents
+       (claim_id, storage_path, original_name, kind, mime, size_bytes, uploaded_by, visibility)
+     values ('20000000-0000-4000-a000-000000000013',
+             'claims/20000000-0000-4000-a000-000000000013/aa000000-0000-4000-a000-00000000aaaa.pdf',
+             'planted-lor.pdf', 'lor_signed', 'application/pdf', 1024,
+             '00000000-0000-4000-a000-000000000003', 'internal') $$,
+  '42501'::char(5), null::text,
+  'the assistant cannot file a signed LOR, which is the document that opens the lor_sent gate — status authority cannot be reached sideways through the documents table'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- adjuster — assigned claims 1 and 2, and nothing about claim 3
+-- ---------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated","aal":"aal2"}';
+set local role authenticated;
+
+select is_empty(
+  $$ select id from public.claims where id = '20000000-0000-4000-a000-000000000013' $$,
+  'the adjuster does not see a claim they are not assigned to'
+);
+
+select is_empty(
+  $$ select id from public.claimants where claim_id = '20000000-0000-4000-a000-000000000013' $$,
+  'the adjuster cannot read the claimants of an unassigned claim, so caseload scoping reaches the rows hanging off the claim and not only the claim row'
+);
+
+select is_empty(
+  $$ select id from public.claim_events where claim_id = '20000000-0000-4000-a000-000000000013' $$,
+  'the adjuster cannot read the feed of an unassigned claim'
+);
+
+select is_empty(
+  $$ select claim_id from public.claim_financials where claim_id = '20000000-0000-4000-a000-000000000013' $$,
+  'the adjuster cannot reach the financials of an unassigned claim'
+);
+
+select throws_ok(
+  $$ insert into public.claim_events (claim_id, type, body, author_id, visibility)
+     values ('20000000-0000-4000-a000-000000000013', 'note', 'note on someone else''s claim',
+             '00000000-0000-4000-a000-000000000002', 'internal') $$,
+  '42501'::char(5), null::text,
+  'the adjuster cannot post into the feed of an unassigned claim'
+);
+
+select set_config('request.jwt.claims', '', true);
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- invites — the token is a digest, single-use and time-boxed by the table itself
+-- ---------------------------------------------------------------------------
+
+select col_is_unique(
+  'public', 'invites', 'token_hash',
+  'token_hash is unique, so two live invitations cannot collide onto one digest and make redemption ambiguous'
+);
+
+select throws_ok(
+  $$ insert into public.invites (email, role, claim_id, token_hash, invited_by)
+     values ('second@example.test', 'customer', '20000000-0000-4000-a000-000000000001',
+             'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+             '00000000-0000-4000-a000-000000000001') $$,
+  '23505'::char(5), null::text,
+  'a second invite cannot reuse a digest already on file — the uniqueness above is enforced and not merely declared'
+);
+
+select is(
+  (select (expires_at - created_at) from public.invites
+    where token_hash = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'),
+  interval '72 hours',
+  'an invite defaults to the 72-hour life spec §7.2 requires, so an application that forgets to set expires_at still issues a time-boxed token'
+);
+
+select throws_ok(
+  $$ insert into public.invites (email, role, token_hash, invited_by)
+     values ('owner-escalation@example.test', 'owner', 'a0000000000000000000000000000000000000000000000000000000000000aa',
+             '00000000-0000-4000-a000-000000000001') $$,
+  '23514'::char(5), null::text,
+  'no invitation can confer the owner role, so the acceptance flow cannot be pointed at the highest-privilege account even by a caller who can write this table'
+);
+
+select throws_ok(
+  $$ insert into public.invites (email, role, token_hash, invited_by)
+     values ('partner-no-company@example.test', 'partner', 'b0000000000000000000000000000000000000000000000000000000000000bb',
+             '00000000-0000-4000-a000-000000000001') $$,
+  '23514'::char(5), null::text,
+  'a partner invitation must name the company it grants access to, so acceptance cannot produce a rep attached to nothing'
+);
+
+select throws_ok(
+  $$ insert into public.invites (email, role, token_hash, invited_by)
+     values ('customer-no-claim@example.test', 'customer', 'c0000000000000000000000000000000000000000000000000000000000000cc',
+             '00000000-0000-4000-a000-000000000001') $$,
+  '23514'::char(5), null::text,
+  'a customer invitation must name the claim it grants access to, so acceptance cannot produce a portal account with no file behind it'
+);

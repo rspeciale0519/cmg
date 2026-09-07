@@ -1,0 +1,602 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — values taken verbatim from the Claude Design prototypes'
+   page-level :root override (design/prototypes/*.dc.html), which supersedes
+   the base Nocturne palette. Names are idiomatic Tailwind; values are exact.
+   ───────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-canvas: #26292c;
+  --color-surface: #33373a;
+  --color-ink: #f0ede7;
+
+  --color-accent: #d4b36a;
+  --color-accent-100: #fbf6ea;
+  --color-accent-200: #f5ead1;
+  --color-accent-300: #ebdaaf;
+  --color-accent-400: #dfc88c;
+  --color-accent-500: #d4b36a;
+  --color-accent-600: #b89752;
+  --color-accent-700: #96793f;
+  --color-accent-800: #6e5b30;
+  --color-accent-900: #473b21;
+
+  --color-bronze: #a5875f;
+  --color-bronze-100: #f7f1ea;
+  --color-bronze-200: #eadccb;
+  --color-bronze-300: #d9c3a8;
+  --color-bronze-400: #c0a483;
+  --color-bronze-500: #a5875f;
+  --color-bronze-600: #8a7053;
+  --color-bronze-700: #6c5741;
+  --color-bronze-800: #4c3e2f;
+  --color-bronze-900: #30271e;
+
+  --color-neutral-100: #f7f5f1;
+  --color-neutral-200: #e8e5df;
+  --color-neutral-300: #d3cfc7;
+  --color-neutral-400: #b5b0a7;
+  --color-neutral-500: #969188;
+  --color-neutral-600: #78736b;
+  --color-neutral-700: #5b5750;
+  --color-neutral-800: #3f3c37;
+  --color-neutral-900: #2a2825;
+
+  --color-section: #6a553f;
+  --color-section-glow: #7e6549;
+  --color-section-ghost: #c0a483;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* ── Type scale ────────────────────────────────────────────────────────
+     One clamp per step. Every desktop cap is the size the prototype renders
+     at 1440; the mobile floor is what the prototypes left un-systematised —
+     the same cap was reached from three different floors, so the hierarchy
+     silently reordered itself below ~900px. Headings and figures ramp
+     separately on purpose: a numeral has to stay a numeral on a phone, so
+     the figure steps floor higher than the heading steps they cap with. */
+  --text-display-1: clamp(40px, 7vw, 92px); /* home hero h1 */
+  --text-display-2: clamp(38px, 6vw, 84px); /* contractors hero h1 */
+  --text-display-3: clamp(36px, 5.4vw, 76px); /* page h1 */
+  --text-display-4: clamp(28px, 3.6vw, 46px); /* lead section h2 */
+  --text-display-5: clamp(28px, 3.4vw, 42px); /* section h2 */
+  --text-display-6: clamp(26px, 3.2vw, 40px); /* sub-section h2 */
+  --text-display-7: clamp(22px, 2.4vw, 30px); /* row heading */
+
+  /* Two elements cap at 42px with the section h2 but floor below it in the
+     prototypes, and folding them into `--text-display-5` raised both on a
+     phone. The floors are the prototypes' own and each keeps its own token:
+     the Services close is the page's quietest heading and floors under a
+     section h2 by design, and the pull-quote is a long single sentence whose
+     42px cap only works on a phone if it drops two steps, not one. */
+  --text-close-md: clamp(26px, 3.4vw, 42px); /* closing-CTA h2, md scale */
+  --text-quote: clamp(24px, 3.2vw, 42px); /* testimonial pull-quote */
+
+  /* Card titles. Four raw pixel values (21/23/23/24) sat outside this scale
+     and never ramped, so at 390 a fixed 24px `h3` stood 4px under a section
+     `h2` already floored at 28px — against a 22px step on the desktop the
+     scale was designed around. The desktop caps are the prototypes' own
+     (Services 21, About/Contractors 23, Home 24); the floors are new, and all
+     three reach their cap at the same 1000px viewport.
+
+     These four floors are a deliberate, retained deviation: below ~1000px
+     they clamp under the prototypes' fixed sizes. The prototypes fix these
+     headings at one size at every width, which inverts the hierarchy on a
+     phone; the floors restore the step and are kept under "craft may exceed
+     the prototype". Do not revert them to the fixed caps. */
+  --text-card-sm: clamp(19px, 2.1vw, 21px); /* four-step process card */
+  --text-card-md: clamp(20px, 2.3vw, 23px); /* values / benefits card */
+  --text-card-lg: clamp(20px, 2.4vw, 24px); /* home feature card */
+  --text-step: clamp(19px, 2.2vw, 22px); /* referral step-list heading */
+
+  --text-figure-lg: clamp(44px, 5.4vw, 76px); /* data band numerals */
+  --text-figure-md: clamp(32px, 3.4vw, 46px); /* stat band numerals */
+  --text-figure-sm: clamp(24px, 2.6vw, 32px); /* phone number */
+
+  --text-lede: clamp(16px, 1.5vw, 18px);
+  --text-lede-lg: clamp(16px, 1.6vw, 19px);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 0 0 1px #3f3c37;
+  --shadow-md: 0 0 0 1px #5b5750, 0 6px 18px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 0 0 1px #969188, 0 16px 40px rgb(0 0 0 / 0.65);
+}
+
+/* Prototype-parity aliases for ported markup that references the original
+   variable names, plus the derived divider token. */
+:root {
+  --color-bg: var(--color-canvas);
+  --color-text: var(--color-ink);
+  --color-divider: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --font-heading-weight: 500;
+
+  /* The colour a `Panel` actually paints — `bg-surface/38` composited over the
+     canvas. Named because the scroll-fade below has to *match* it opaquely:
+     a fade to a translucent colour fades to nothing. */
+  --panel-fill: color-mix(in srgb, var(--color-surface) 38%, var(--color-canvas));
+}
+
+/* Element defaults live in `base` so that Tailwind's `utilities` layer wins.
+   Unlayered rules outrank every layered rule, so an unlayered `h2 {}` here
+   would silently beat `text-[24px]`/`leading-[1.2]` at every call site. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    /* The prototypes' own body leading, and the value every element that
+       sets no line-height of its own inherits there. Tailwind's Preflight
+       puts 1.5 on `html`, which is close enough to look right and wrong
+       everywhere: an 11px eyebrow came out at 16.5px against the
+       prototype's 17.05px, a 32px phone number at 48px against 49.6px.
+       Setting it once here is the root fix; call sites that need a
+       different leading still state it. `line-height: 1.5` appears nowhere
+       in any prototype. */
+    line-height: 1.55;
+    text-wrap: pretty;
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: var(--font-heading-weight);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+  }
+
+  /* Tailwind v4's Preflight dropped `button { cursor: pointer }`, and nothing
+     replaced it — so every link in this product got a hand and every action
+     got an arrow. That is the affordance exactly backwards: navigation is the
+     reversible thing and actions are the ones that change something. Stated
+     here in `base` so a call site's own `cursor-*` utility still wins, which is
+     what `disabled:cursor-not-allowed` on the workspace buttons relies on.
+
+     `summary` is included for the same reason: Chromium ships it as `default`,
+     and the workspace's disclosures ("Invite a colleague", "Add a company")
+     are buttons in every respect but the tag name. */
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   A sideways-scrolling region that says so.
+
+   Seven columns of claim really are wider than a 390px phone, so the tables
+   scroll — but a bare `overflow-x: auto` gives no sign of it. The cut-off
+   status pill on `/admin/claims` just ended, and on a trackpad there is no
+   scrollbar to contradict that reading.
+
+   Four gradients, in two pairs. The outer pair fades the content into the
+   panel's own fill and is attached `local`, so it travels with the content
+   and sits at the *content's* edge. The inner pair is a hairline attached
+   `scroll`, so it stays pinned to the container's edge. At the start of the
+   scroll the local cover is parked exactly over the scroll hairline and
+   cancels it; scroll away and the hairline emerges. The affordance is
+   therefore present only in the directions there is actually more to see,
+   with no JavaScript and no scroll listener.
+
+   `--panel-fill` has to be the opaque composite rather than `bg-surface/38`:
+   a cover that is itself translucent fades the text to a veil, not away.
+
+   `scrollbar-width: thin` is the third signal and matches the pipeline
+   ladder, which is the one place in the workspace that already had it.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility scroll-x-edged {
+  overflow-x: auto;
+  /* `position: relative` is not for stacking — it is what makes this element a
+     containing block for absolutely-positioned descendants, and without it the
+     screen-reader labels inside these tables escaped the scroller entirely.
+
+     `.sr-only` is `position: absolute`, and an absolute box resolves against its
+     nearest positioned ancestor. With this utility left `static` the nearest one
+     was BODY, so every `<span class="sr-only">Deactivate {name}</span>` on
+     /admin/staff was laid out against the page rather than against the cell it
+     belongs to. At 390px the furthest one's right edge measured 757.8px and
+     documentElement.scrollWidth read 758 against a clientWidth of 390 — 368px of
+     canvas that could not be reached, because `body { overflow-x: clip }`
+     propagates to the viewport and there is nothing to scroll. Invisible content
+     was setting the width of the document.
+
+     One line, and it is the correct line rather than a patch: a scroll container
+     should contain what is scrolled. */
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 20%, transparent) transparent;
+  background-image:
+    linear-gradient(to right, var(--panel-fill) 32%, transparent),
+    linear-gradient(to left, var(--panel-fill) 32%, transparent),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-ink) 20%, transparent),
+      transparent
+    ),
+    linear-gradient(
+      to left,
+      color-mix(in srgb, var(--color-ink) 20%, transparent),
+      transparent
+    );
+  background-position:
+    0 0,
+    100% 0,
+    0 0,
+    100% 0;
+  background-repeat: no-repeat;
+  background-size:
+    36px 100%,
+    36px 100%,
+    10px 100%,
+    10px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   A 24px tap box on a link sized to its text.
+
+   The workspace's row-identity and contact links — the claim reference that
+   opens a file, a partner company's name, the phone number an operator taps to
+   call a lead back — measured 16 to 18.8px tall at 390, under the WCAG 2.2
+   target floor of 24px. They are the most-used targets on their screens.
+
+   Padding rather than `min-height`, because these links are variously inline
+   and `block truncate`, and neither tolerates being turned into a flex box:
+   `truncate` needs a block formatting context, and an inline element ignores
+   `min-height` entirely. Vertical padding grows the hit box in both cases. The
+   negative margin cancels the padding for block links so no row gets taller;
+   on an inline link it is a no-op, and vertical padding there does not affect
+   the line box either. Nothing moves.
+
+   The floor is 24px rather than 44px deliberately. 2.5.8 asks for 24; the 44px
+   comfort target belongs to the controls a phone-first surface is built around,
+   and this is a desk tool whose text links sit inside dense table rows.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility tap-block {
+  padding-block: 5px;
+  margin-block: -5px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Sticky identity column.
+
+   Every table in the workspace opens with the thing the row *is* — a claim
+   reference, a person, a company — and at 390px those tables are two to three
+   times the width of their scroller. Measured on /admin/staff: an 860px table
+   in a 356px box, a 504px scroll range, and past roughly 200px of travel the
+   PERSON column is off-screen and the row reads "Never / Deactivate" with
+   nothing to attach it to. Row identity is the one thing horizontal scrolling
+   must not be able to take away.
+
+   The cell needs its own opaque fill, because the columns travel *under* it and
+   `--panel-fill` is what the panel actually paints. The hover and focus fills
+   are restated for the same reason: `Tr`'s `hover:bg-ink/[0.085]` paints the
+   row, and an opaque cell on top of it would be the one part of a hovered row
+   that did not light up.
+
+   The right-hand hairline is the same weight as the rule between rows, and it
+   is permanent rather than scroll-triggered: a scroll-linked shadow needs
+   `animation-timeline`, which two of the four engines in this project's
+   browserslist do not support, and a divider that appears in Chrome and never
+   in Safari is worse than one that is simply part of the table.
+   ───────────────────────────────────────────────────────────────────────── */
+@utility sticky-first-col {
+  & tr > *:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: var(--panel-fill);
+    box-shadow: 1px 0 0 0 color-mix(in srgb, var(--color-ink) 8%, transparent);
+  }
+
+  & tbody tr:hover > *:first-child,
+  & tbody tr:focus-within > *:first-child {
+    background-color: color-mix(in srgb, var(--color-ink) 8.5%, var(--panel-fill));
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Native date & time editors.
+
+   The field system says an unanswered field is `ink/35` (INPUT_CLASS's
+   placeholder colour) and an answered one is full ink. `input[type=date]`
+   and `input[type=time]` break that contract twice: the shadow-DOM editor
+   inherits the input's own colour, so the "mm/dd/yyyy" and "--:-- --"
+   skeletons render at full ink and read as real answers; and the picker
+   button ships Chromium's white glyph next to our gold select chevron.
+
+   Chromium marks a datetime sub-field that holds a value with
+   `aria-valuenow`, so `:not([aria-valuenow])` is the empty state.
+
+   The 35% these rules and `placeholder:text-ink/35` share is 2.84:1 and is
+   deliberate — see the note above `DANGER` in `src/components/forms/field.tsx`
+   for why it is not raised.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Renders the native calendar/clock popovers, the select option list and
+     the scrollbars against the dark canvas instead of a white sheet. */
+  color-scheme: dark;
+}
+
+::-webkit-datetime-edit-year-field:not([aria-valuenow]),
+::-webkit-datetime-edit-month-field:not([aria-valuenow]),
+::-webkit-datetime-edit-day-field:not([aria-valuenow]),
+::-webkit-datetime-edit-hour-field:not([aria-valuenow]),
+::-webkit-datetime-edit-minute-field:not([aria-valuenow]),
+::-webkit-datetime-edit-second-field:not([aria-valuenow]),
+::-webkit-datetime-edit-millisecond-field:not([aria-valuenow]),
+::-webkit-datetime-edit-ampm-field:not([aria-valuenow]) {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+/* The separators ("/", ":") belong to the skeleton, not the answer. */
+::-webkit-datetime-edit-text {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+::-webkit-datetime-edit-year-field:focus,
+::-webkit-datetime-edit-month-field:focus,
+::-webkit-datetime-edit-day-field:focus,
+::-webkit-datetime-edit-hour-field:focus,
+::-webkit-datetime-edit-minute-field:focus,
+::-webkit-datetime-edit-ampm-field:focus {
+  background: color-mix(in srgb, var(--color-accent) 26%, transparent);
+  color: var(--color-ink);
+  outline: none;
+}
+
+/* Replaces Chromium's white glyph with the same chevron and accent colour
+   the custom <select> control draws. */
+::-webkit-calendar-picker-indicator {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: 8px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.75;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%23d4b36a' stroke-width='1.25' stroke-linecap='square'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  transition: opacity 150ms ease;
+}
+
+::-webkit-calendar-picker-indicator:hover,
+::-webkit-calendar-picker-indicator:focus-visible {
+  opacity: 1;
+}
+
+/* A select still showing its empty first option is unanswered, and reads at
+   the same ink/35 as an empty text field and an empty datetime skeleton. */
+select:has(option[value=""]:checked) {
+  color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   `<details>` opens at the speed its own chevron turns.
+
+   The chevron rotates over 200ms while the panel it belongs to appeared
+   instantly — one interaction running at two speeds. `interpolate-size`
+   makes the `0 → auto` height animatable and `::details-content` is the
+   panel box; `content-visibility` needs `allow-discrete` to hold the content
+   painted for the length of the close.
+
+   Progressive enhancement in both directions: a browser without
+   `::details-content` drops the whole rule and the panel snaps open as
+   before, and one without `interpolate-size` still resolves `auto` on open —
+   it just gets there in one frame. The reduced-motion block below neutralises
+   the duration.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  interpolate-size: allow-keywords;
+}
+
+details::details-content {
+  height: 0;
+  overflow: hidden;
+  transition:
+    height 200ms ease,
+    content-visibility 200ms ease allow-discrete;
+}
+
+details[open]::details-content {
+  height: auto;
+}
+
+/* Hero atmosphere — keyframes ported from the prototype hero. */
+@keyframes drift-a {
+  0% {
+    transform: translate3d(-8%, 0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(10%, -3%, 0) scale(1.25);
+  }
+  100% {
+    transform: translate3d(-8%, 0, 0) scale(1.1);
+  }
+}
+
+@keyframes drift-b {
+  0% {
+    transform: translate3d(12%, 4%, 0) scale(1.2);
+  }
+  50% {
+    transform: translate3d(-10%, -2%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(12%, 4%, 0) scale(1.2);
+  }
+}
+
+@keyframes rain {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -260px 900px;
+  }
+}
+
+@keyframes flash {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+  }
+  94.5% {
+    opacity: 0.06;
+  }
+  96% {
+    opacity: 0.34;
+  }
+  97.5% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  details::details-content {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print.
+
+   A public adjuster prints a claim file into a carrier packet as routine work,
+   and this product is a dark surface: canvas #26292c, ink #f0ede7. Chrome does
+   not paint background colours when printing unless the reader ticks
+   "Background graphics", which is off by default — so every screen here printed
+   as near-white paper carrying near-white text. Measured on /admin/settings
+   before this block: nine distinct text colours in `main`, all between 1.09:1
+   and 2.01:1 against white, with body copy at 1.09. The page came out blank.
+   With backgrounds turned on it came out as full-bleed #26292c, which is not a
+   document anyone files either.
+
+   So print gets its own surface rather than a tweak of this one: white paper,
+   near-black text, grey rules. The workspace chrome goes — a header, a nav rail
+   and a filter bar are ways of reaching this page, not part of what it says —
+   and every clamp on the content comes off, because a truncated address or a
+   line-clamped question is a fact missing from the packet rather than a tidy
+   row.
+
+   Buttons go and form fields stay, which is the line worth stating. A button is
+   an offer and paper cannot take it. A field is where a fact is: a printed
+   `<select>` shows "Dana Reyes", and hiding the form to be rid of the button
+   would take the assigned adjuster off the packet with it.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  :root {
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-ink: #14161a;
+    --panel-fill: #ffffff;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #14161a !important;
+  }
+
+  /* The routes to this page, not the page. */
+  header,
+  nav[aria-label="Workspace"],
+  nav[aria-label="Claim sections"],
+  nav[aria-label="Claims pages"],
+  nav[aria-label="Audit pages"],
+  nav[aria-label="Filter leads"],
+  nav[aria-label="Filter companies"],
+  button {
+    display: none !important;
+  }
+
+  input,
+  select,
+  textarea {
+    border: 1px solid #c8c8c8 !important;
+    background: #fff !important;
+    color: #14161a !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* A packet is read, not scanned: nothing may be clipped, scrolled or hidden
+     behind an overflow. */
+  * {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    -webkit-line-clamp: none !important;
+  }
+
+  table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* A row split across a page break loses the identity column that says whose
+     row it is. */
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  section,
+  [class*="border"] {
+    border-color: #c8c8c8 !important;
+  }
+
+  a {
+    color: #14161a !important;
+    text-decoration: underline;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}

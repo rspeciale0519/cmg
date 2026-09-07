@@ -1,0 +1,74 @@
+
+> cmg-property-solutions@0.1.0 build
+> next build
+
+▲ Next.js 16.3.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 1783ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 17.0s
+  Running TypeScript ...
+  Finished TypeScript in 31.5s ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/4) ...
+  Generating static pages using 19 workers (1/4)
+  Generating static pages using 19 workers (2/4)
+  Generating static pages using 19 workers (3/4)
+✓ Generating static pages using 19 workers (4/4) in 726ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /admin
+├ ƒ /admin/[...unmatched]
+├ ƒ /admin/audit
+├ ƒ /admin/claims
+├ ƒ /admin/claims/[id]
+├ ƒ /admin/claims/[id]/activity
+├ ƒ /admin/claims/[id]/claimants
+├ ƒ /admin/claims/[id]/documents
+├ ƒ /admin/claims/[id]/financials
+├ ƒ /admin/claims/[id]/history
+├ ƒ /admin/intake
+├ ƒ /admin/leads
+├ ƒ /admin/partners
+├ ƒ /admin/partners/[id]
+├ ƒ /admin/questions
+├ ƒ /admin/settings
+├ ƒ /admin/staff
+├ ƒ /api/cron/outbox
+├ ƒ /api/cron/storage-cleanup
+├ ƒ /api/pandadoc/webhook
+├ ƒ /contact
+├ ƒ /contractors
+├ ƒ /file-a-claim
+├ ○ /icon.png
+├ ƒ /invite/[token]
+├ ƒ /login
+├ ƒ /mfa
+├ ƒ /partner
+├ ƒ /partner/[...unmatched]
+├ ƒ /partner/claims/[id]
+├ ƒ /partner/claims/[id]/activity
+├ ƒ /partner/profile
+├ ƒ /partner/refer
+├ ƒ /portal
+├ ƒ /portal/[...unmatched]
+├ ƒ /portal/claims/[id]
+├ ƒ /portal/claims/[id]/activity
+├ ƒ /portal/claims/[id]/documents
+├ ƒ /portal/profile
+├ ○ /robots.txt
+├ ƒ /services
+└ ○ /sitemap.xml
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
