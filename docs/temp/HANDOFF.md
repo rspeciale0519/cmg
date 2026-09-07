@@ -1,8 +1,9 @@
 # CMG simple-mode release handoff
 
-Last reconciled: 2026-09-03.
+Last reconciled: 2026-09-07.
 The release target is `SITE_MODE=simple`.
-The current candidate is not ready for release approval.
+The merged candidate is deployed to the Vercel Production aliases.
+Release acceptance remains incomplete because the custom domain and owner prerequisites are unresolved.
 Core local engineering validation passes for implementation `4516a82`; current release-record updates are pushed.
 Owner decisions remain open.
 The verified Preview redeployment is Ready and runs `SITE_MODE=simple`. Simple-mode Preview acceptance passed its route boundary checks.
@@ -18,9 +19,10 @@ The historical appendix preserves earlier evidence without treating it as curren
 
 ## GitHub and Vercel evidence
 
-These facts came from read-only inspection on 2026-09-03.
+These facts came from read-only inspection on 2026-09-07.
 The release commit was created locally after review approval.
-The PR description update occurred earlier; no branch-protection change, merge, or production deployment occurred during this review.
+PR #1 was merged into `develop`, and Vercel deployed the merge commit to Production.
+No branch-protection change, DNS change, or production migration occurred during this review.
 
 | Item | Recorded state |
 |---|---|
@@ -32,11 +34,11 @@ The PR description update occurred earlier; no branch-protection change, merge, 
 | Recorded CI run | [33784420179](https://github.com/rspeciale0519/cmg/actions/runs/33784420179); `verify` and `database` pass |
 | CI review note | CodeRabbit reports pass status but skipped review because 529 files exceed its 150-file limit |
 | Branch Preview | [feature-claims-platform Preview](https://cmgps-git-feature-claims-platform-robs-projects-c72886ba.vercel.app), verified simple-mode deployment [cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app](https://cmgps-54mruv7ei-robs-projects-c72886ba.vercel.app), Ready |
-| Current Production | `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`, Ready on 2026-08-14 |
-| Production deployment | [37b4ec4 Production](https://cmgps-odbuei20h-robs-projects-c72886ba.vercel.app) |
+| Current Production | `383a99936ca7536f7e5522ea71387c2b788763df`, Ready on 2026-09-07 |
+| Production deployment | [383a999 Production](https://cmgps-es36guo8m-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
 | Custom domain routing | `cmgpropertysolutions.net` redirects `/admin` to `/lander`; it does not serve the CMG app |
-| Future Production branch | Vercel UI confirms `develop`; the current Production deployment came from the feature branch |
+| Production branch | Vercel deployment metadata confirms `develop`; the current Production deployment came from the merged branch |
 | Vercel plan | Hobby; confirmed in the browser |
 | Branch protection | `develop` is unprotected; the protection API returned HTTP 403 |
 
@@ -60,21 +62,28 @@ Its public routes passed read-only checks at 320px, 390px, and 1280px with no ho
 Fresh Preview Tab traversal moved focus through the skip link, logo, navigation, and phone link. Menu activation and full network tracing remain unverified.
 Security headers remained present: CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, and HSTS.
 The Preview `SITE_MODE=simple` environment write and redeployment are complete.
-No production environment write or deployment occurred.
+No production environment write or DNS change occurred; the Production deployment came from the merged `develop` commit.
 
 The current remote checks pass for the pushed head.
 Do not reuse older passing totals as evidence for the changed candidate.
 
-Fresh read-only `gh pr view` confirms PR #1 is open, targeting `develop`, with the implementation and documentation commits pushed.
+Fresh read-only `gh pr view` confirms PR #1 is merged into `develop`, with the implementation and documentation commits pushed.
 Its current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
-The PR description is published from `docs/temp/PR_DESCRIPTION.md`; merge and deployment remain unapproved.
+The PR description is published from `docs/temp/PR_DESCRIPTION.md`; PR #1 is merged and Production deployment is Ready.
 
 Read-only host routing checks found a production cutover blocker.
 The Vercel aliases `cmgps.vercel.app`, `cmgps-rspeciale0519.vercel.app`, and `cmgps-robs-projects-c72886ba.vercel.app` serve this CMG deployment.
 The custom domain `cmgpropertysolutions.net` instead redirects `/admin` to `/lander`, and its cron API path returns 404.
 The custom domain therefore does not currently point to the Vercel Production app.
 No domain, DNS, or production configuration changed.
+
+Post-merge Production read-only smoke checks passed on the Vercel aliases.
+`/`, `/contact`, and `/file-a-claim` returned 200.
+`/admin`, `/login`, `/mfa`, `/invite`, `/portal`, and `/partner` redirected to `/platform-disabled`.
+`/api/cron/outbox` and `/api/cron/storage-cleanup` returned 401 without a bearer token.
+`/api/pandadoc/webhook` returned 405 for GET.
+These checks confirm route behavior for the merged deployment; public forms, provider delivery, DNS, TLS, and hosted upload acceptance remain pending.
 
 ## Hosted database and service evidence
 
@@ -582,7 +591,7 @@ Normal page GET checks produced these results:
 | Environment | Observed result | Acceptance limit |
 |---|---|---|
 | Local simple mode | Six private entry-route GETs redirected to `/platform-disabled` | Private entry closure passed for those requests |
-| Production | `/admin` redirected to `/platform-disabled` | One route check passed; full Production acceptance remains pending |
+| Production | Public routes returned 200; private routes redirected to `/platform-disabled` | Merged commit `383a999`; forms, providers, DNS, and full operational acceptance remain pending |
 | Verified Preview | Public routes returned 200; all platform entry routes redirected to `/platform-disabled` | Simple-mode closure passed |
 
 Local `/`, `/services`, `/contractors`, `/about`, `/contact`, and `/file-a-claim` passed layout checks at 320px, 390px, and 1440px.

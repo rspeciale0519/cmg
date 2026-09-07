@@ -1,6 +1,6 @@
 # Development roadmap — CMG Property Solutions
 
-Last reconciled: 2026-09-03.
+Last reconciled: 2026-09-07.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
 The reviewed implementation commit is `4516a82`; current release-record updates are pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
@@ -87,11 +87,12 @@ Those approved local reset checks are complete and include the two upload migrat
 - [x] Require passing checks on the approved remote head; the verified Preview redeployment is Ready in simple mode.
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.
-- [ ] Obtain separate merge, deployment, and domain approvals.
+- [x] Obtain separate merge and deployment approvals; merge PR #1 into `develop` and deploy Production.
+- [ ] Obtain separate domain approval and complete the DNS cutover.
 - [ ] Verify the deployed commit, public workflows, email, queues, cron schedules, DNS, TLS, and rollback compatibility.
 
 No current validation item inherits a pass from the historical ledger.
-The existing Production deployment is older than the candidate.
+Production now uses merged commit `383a99936ca7536f7e5522ea71387c2b788763df`.
 Vercel Ready status does not complete release acceptance.
 The upload architecture decision is complete, and the advertised allowance remains unchanged.
 Hosted upload publication and boundary acceptance remain open.

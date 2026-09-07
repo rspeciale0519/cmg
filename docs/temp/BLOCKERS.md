@@ -1,9 +1,9 @@
 # Owner-only launch blockers and decisions
 
-Last reconciled: 2026-09-03.
+Last reconciled: 2026-09-07.
 The release target is `SITE_MODE=simple`.
 The site is not approved for launch.
-Current release-record updates are pushed; the verified Preview redeployment is Ready in simple mode.
+Current release-record updates are pushed; the merged Production deployment is Ready in simple mode.
 This file contains owner-controlled decisions, access, and publication actions.
 [HANDOFF.md](HANDOFF.md) contains engineering checks, release evidence, and pending release work.
 Pending engineering checks are not owner-only blockers.
@@ -131,22 +131,20 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 ### 8. Separate release approvals
 
 The reviewed implementation and documentation commits are pushed.
-PR #1 targets `develop`, and its current required GitHub checks pass.
+PR #1 is merged into `develop`, and its required GitHub checks passed.
 The Ready Preview contains these fixes and runs simple mode.
-The Vercel UI confirms that future Production deployments track `develop`.
-A merge can therefore start deployment automatically.
+Vercel deployed merge commit `383a99936ca7536f7e5522ea71387c2b788763df` to Production.
+The Vercel aliases serve the merged code in simple mode.
 
-The following actions require separate authorization:
+The following actions remain owner-controlled:
 
-- Update the PR description from the local draft.
 - Change branch protection.
-- Merge the approved PR.
-- Deploy or promote Production.
 - Change domain or DNS settings.
 - Apply production migrations, repairs, backups, or restores.
 - Submit hosted test data or send live test messages.
 
 Approval for one action does not approve another action.
+Merge and Production deployment are complete.
 Auto-review rejected an earlier local reset retry before the user approved deletion of local database data.
 That retry did not execute.
 

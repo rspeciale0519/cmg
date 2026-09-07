@@ -3,7 +3,8 @@
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-09-03.
 The reviewed implementation commit `4516a82` and current release-record updates are pushed on `feature/claims-platform`.
-The PR remains open. Production merge and deployment remain gated by the unresolved owner prerequisites.
+PR #1 is merged into `develop`, and Vercel deployed the merge commit to Production.
+The custom domain and other owner prerequisites remain unresolved.
 
 ## Problem
 
@@ -314,23 +315,24 @@ Its pgTAP step passed 32 files and 923 assertions.
 Its database Vitest selection passed 22 files and 142 tests but failed live-test discovery.
 Those partial results do not make the old run green.
 
-Fresh read-only `gh pr view` confirms PR #1 remains open, targeting `develop`, with the reviewed implementation and documentation commits pushed.
+Fresh read-only `gh pr view` confirms PR #1 is merged into `develop`, with the reviewed implementation and documentation commits pushed.
 The current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass for the pushed head.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
-The PR description was published from this record; merge and deployment remain unapproved.
+The PR description was published from this record; PR #1 is merged and Production deployment is Ready.
 
 The branch Preview uses the pushed implementation and documentation commits.
 It runs simple mode and passes the required private-route closure acceptance.
 Its `/admin`, `/portal`, and `/partner` requests redirect to `/platform-disabled`; `/login`, `/mfa`, and `/invite` follow the same boundary.
-The current deployment is Ready, and no production deployment occurred.
+The current Preview is Ready, and Production uses the merged commit.
 
-Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
+Current Production uses `383a99936ca7536f7e5522ea71387c2b788763df`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
 The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
 The custom domain is not routed to the Vercel Production deployment.
 The reviewed commits were pushed after approval.
-No merge, production deployment, or hosted migration has occurred during this review.
+PR #1 merged into `develop`, and Vercel deployed merge commit `383a99936ca7536f7e5522ea71387c2b788763df` to Production.
+No hosted migration occurred during this review.
 
 ## Security review warning
 
@@ -406,7 +408,7 @@ Vercel Instant Rollback does not update cron jobs.
 The advertised upload allowance remains ten files of 25 MiB each.
 Direct-upload architecture approval and local implementation are complete.
 File bytes bypass the Vercel function request limit through signed private Storage uploads.
-The current Production deployment does not contain this change, so maximum-size hosted acceptance remains open.
+The current Production deployment contains this change, so maximum-size hosted acceptance remains open only until approved hosted boundary tests pass.
 
 Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl) remain valid for two hours.
 The implementation allows two-hour sessions and five minutes for signing, with cleanup blocked until two hours and 15 minutes after reservation.
