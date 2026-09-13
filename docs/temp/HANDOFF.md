@@ -1,10 +1,192 @@
 # CMG simple-mode release handoff
 
-Last reconciled: 2026-09-07.
+## Full-platform acceptance update — 2026-09-13
+
+### Completion gates
+
+This table separates the current release requirements from the historical records below. Release completion remains unproven.
+
+| Requirement | Current evidence | Remaining gate |
+|---|---|---|
+| Safe live-test discovery | Source checks shell opt-in before optional `.env.local`; discovery regression and README/environment examples cover the contract. | None for discovery; live provider acceptance is separate. |
+| Local verification | Post-patch type, lint, build, audit, full Vitest, both selected site modes, and isolated reset/pgTAP pass. | Shared-data cleanup tests require an isolated fixture baseline. |
+| Release defect review | Local dependency patches and annual reference guard have regression evidence. MFA test fixtures preserve existing factors. | New code and migration are not deployed. |
+| Release records | README, ROADMAP, HANDOFF, BLOCKERS, and local PR description reflect current evidence. | Review and commit remain pending. |
+| Interface acceptance | Public widths and partial native owner/customer/partner checks are recorded below. | Complete native role workflows, uploads, states, and latest patched Preview acceptance. Turnstile and MFA gates remain. |
+| Remote checks | Fresh GitHub read confirms PR #1 merged into `develop`; its verify, database, and Vercel checks pass. | Commit, push, new remote review, and checks covering the local patch require separate authorization. |
+| Production preparation | Approved 29 migrations, public email delivery, private test upload, DNS/TLS, and queue progress have evidence. | New migration approval, recovery limits, legal approval, commercial hosting, and authenticated cron-log verification. No backup is authorized. |
+| Protected release | Production exists at the prior merged release. Fresh HTTPS checks return 200 publicly and 307 to `/platform-disabled` for five private entry routes. | Branch protection, current patched deployment, and final post-release acceptance remain incomplete. |
+| Later platform scope | Only the approved Preview exposes platform routes; Production remains simple. | Full hosted role/signing acceptance, retention policy, export, and erasure work remain separate unresolved requirements. |
+
+The current GitHub checks cover head `099f351155d821cef7b3ac2db17a2a59137b05f8`, merged as `383a99936ca7536f7e5522ea71387c2b788763df`.
+They do not cover the uncommitted security patch or new capacity migration. No completion claim follows from the old green checks.
+
+The owner resumed full-platform acceptance and approved the six pending hosted migrations without a backup.
+This section supersedes earlier pending-migration and email-test statements below.
+Production remains in simple mode. Preview platform activation is separately approved for `feature/claims-platform`.
+
+- Supabase applied exactly `20260830120000` through `20260830124100`; those 29 migrations are recorded remotely. A later local capacity-guard migration is pending, as recorded below.
+- No backup, seed, reset, DNS change, or existing-object deletion occurred.
+- Both new upload tables have RLS enabled. `anon` and `authenticated` cannot execute the service-only upload preparation RPC.
+- The preflight found zero documents and zero Storage objects before the synthetic upload test.
+- The contact test created one `CMG Acceptance Email Test` lead. Resend recorded both staff alert and `rob@miodiollc.com` auto-reply as Delivered.
+- Resend auto-reply ID: `40cd3517-a599-43e6-a2e2-871583e5edd4`; staff alert ID: `f39cc993-1aa1-4480-9515-e80aa253d5ec`.
+- The approved synthetic upload returned `Intake received.` and reference `CMG-2026-0003`.
+- Hosted checks confirm its 68-byte `synthetic-upload.png` document exists in the private `claim-docs` bucket.
+- Its upload session is completed with one file. Both intake outbox entries are sent. Maximum-size upload acceptance remains open.
+- Hosted accounts include two owners and one adjuster, with one verified TOTP factor. These counts do not prove complete role acceptance.
+- Local pgTAP initially failed three hard-coded claim-counter expectations after earlier local submissions advanced the counter.
+- The test now checks increments from a transaction-local baseline without resetting user data. All 38 files and 1,250 assertions pass.
+- TypeScript passes. The first platform integration run passed 289 tests but failed overall because one worker did not start.
+- The affected signature suite passed all 11 tests on retry. The full platform integration rerun passed 33 files and 300 tests; live PandaDoc remained skipped.
+- The simple-mode intake and cleanup selection passed six files and 122 tests.
+- Lint passed with two existing unused-variable warnings in `src/lib/actions/intake-rollback.test.ts`.
+- Dependency audit failed: two moderate, 17 high, and one critical package findings. Security patch review is open; do not report release checks as green.
+- The approved platform Preview redeployment is Ready: `BUCANBQxjD2LdDTiPEjgSbAkLGXu`, source `099f351`.
+- Production still redirects private routes to `/platform-disabled`; unauthenticated cron requests return 401.
+- The matching saved owner password passed an authentication check. The temporary session was signed out locally. The later browser result is recorded below.
+- Later owner acceptance: the user explicitly approved removal of the existing TOTP factor for their owner account. The reset succeeded; a read-only retry confirmed zero remaining factors. The user then enrolled their authenticator and reached `/admin`.
+- The former `E2E_OWNER_TOTP_SECRET` is obsolete after this reset. Do not use it for later MFA tests or replace the user's new factor.
+- Browser checks confirm the Owner dashboard, synthetic claim overview, document list, empty financial state, and history render. The private 68-byte document is listed and five intake audit entries appear. No claim data was changed during these checks.
+- These owner views returned no client console warnings or errors in the inspected log. Other-role access, downloads, mutations, and full workflow acceptance remain open.
+- At a 390px viewport, the intake confirmation remains present without measured horizontal overflow. The browser log retains message-channel errors from the earlier extension interruption; no clean-console claim is made.
+- PandaDoc Dev Center displays an expired plan and requests production API configuration. No live signing test ran.
+- Registry metadata confirms Next.js `16.3.5` depends on patched `sharp` `^0.35.4`. The owner later approved the local update; results follow below.
+
+The internal browser contact attempt failed before a matching lead was stored. The regular Chrome retry succeeded.
+Chrome file upload required the extension's file-URL permission. The owner enabled it and separately approved the synthetic submission after automatic review rejected it.
+Synthetic records remain retained. Recovery uses a reviewed forward repair; immediate restore readiness remains unverified.
+Local test and evidence changes are uncommitted. No Git push or Production deployment occurred in this acceptance update.
+
+### Release verification continuation
+
+GitHub read-only verification confirms PR #1 is merged, with head `099f351155d821cef7b3ac2db17a2a59137b05f8` and merge `383a99936ca7536f7e5522ea71387c2b788763df`.
+Its recorded `verify`, `database`, and Vercel results are successful. These results do not cover current local edits.
+The first full Node.js 22 Vitest run failed: 97 files passed, one failed, and one was skipped; 1,046 tests passed and one was skipped.
+The upload suite failed its cleanup hook because the sandbox could not confirm the local Docker container. Cleanup guards remained intact.
+The full rerun with local Docker access passed: 98 files and 1,046 tests; one live PandaDoc file/test was skipped.
+`npm run build` passed under Node.js 22 with Next.js 16.3.0. This does not resolve the separate dependency audit failure.
+Chrome contact measurements show no horizontal overflow at actual viewport widths 320, 390, and 1440 pixels.
+The mobile menu opens and closes at 320 pixels. Viewport emulation was reset after testing.
+Chrome records extension message-channel errors from tab attachment. Full keyboard, visual, network, and all-route acceptance remain open.
+Later Chrome measurements also pass for Home, Services, Contractors, About, and claim intake at 320, 390, and 1440 pixels.
+The new route-check tab returned no console warnings or errors. These are width measurements, not complete visual or keyboard acceptance.
+Fresh Production GET checks confirm `/login`, `/mfa`, `/admin`, `/portal`, and `/partner` return 307 to `/platform-disabled`.
+GET `/api/pandadoc/webhook` returns 405; this does not verify POST behavior.
+README now follows the owner's no-backup decision. BLOCKERS separates current owner decisions from historical requests.
+The PR description has a local acceptance addendum; no remote description was changed.
+
+### Newly confirmed reference-capacity defect
+
+PostgreSQL `lpad('10000', 4, '0')` returns `1000`. The original migration's comment claiming no truncation is incorrect.
+The current generator can therefore reuse an earlier reference after 9,999 allocations. The unique constraint rejects a collision when that earlier row still exists.
+New migration `20260913050000_claim_ref_capacity_guard.sql` preserves the existing four-digit format and explicitly rejects annual exhaustion with SQLSTATE 23514.
+It preserves the function identity, privileges, locking, and transaction rollback behavior. No public interface or database type changes are required.
+New regression `39_claim_ref_capacity.test.sql` fails two of four assertions before the fix and passes all four with the replacement function.
+Both initial checks used rollback-only local transactions. The migration was then applied locally with `supabase migration up --local`; it remains unapplied remotely.
+Full `npm run db:test -- --local` passes all 39 files and 1,254 assertions after the local apply.
+`npm run db:types` completed against the local schema. No reset or seed was used.
+Production application needs separate approval. Recovery uses a reviewed forward migration; expanding annual capacity is a separate contract change.
+Fresh Production checks confirm a webhook POST returns 404 `platform_disabled`, HTTPS returns 200 with HSTS and CSP, and the app CNAME points to Vercel.
+The root MX still points to Microsoft 365. No DNS change occurred.
+
+### Production queue health — read-only check
+
+The outbox contains 17 rows: six sent, six dead, three failed, and two pending.
+Six dead public emails date from August 13. Their stored errors are domain-related; do not resend or erase them automatically.
+Two failed public lead emails date from September 13 at 03:18 UTC, before the later successful acceptance sends. Their errors are also domain-related.
+One failed invite and two pending claim-status messages date from August 14. Simple mode excludes these private templates from its worker.
+The Storage cleanup queue contains one processed and one due pending row, with zero recorded attempts.
+These counts do not prove scheduled cron execution. No queue worker was invoked, and no row was changed during this check.
+Operator review must resolve old terminal messages and verify the next scheduled public retry and cleanup outcomes.
+
+Later read-only verification on September 13 found eight sent emails, six dead emails, one failed email, and two pending emails.
+The two public lead retries were sent at 14:34:39 UTC, each on attempt two.
+The remaining cleanup row was processed at 14:27:38 UTC on attempt one. Both cleanup rows are now processed; none are due.
+These timestamps fall within the daily cron windows. Vercel signed out before the execution logs could be checked, so scheduler attribution remains unverified.
+No worker was invoked manually. Old terminal and private-template messages remain retained for owner review.
+
+### Contact keyboard and visual acceptance
+
+On Production, the first Tab focuses `Skip to content`; Enter moves focus to the main element.
+The contact field order is Full name, Phone, Email, then What happened.
+Enter on the native FAQ summary expands its answer. A subsequent DOM style check confirms visible content with nonzero height.
+The full-page 320px screenshot shows the contact form, FAQ rows, and footer without overlapping text or controls.
+No form was submitted. The temporary viewport was reset, and the acceptance tab was retained for continued checks.
+The home page also passed a full-page visual review at 320px and a first-screen review at 390px.
+The Services first screen is readable at 320px. Further full-page captures timed out; desktop screenshot acceptance is not claimed.
+The viewport was reset after these attempts. The browser remains open on Services for continued acceptance.
+
+### Approved dependency update and native browser smoke tests
+
+The owner approved the local security patch and requested smoke tests for all features in the native browser.
+Next.js and eslint-config-next are now `16.3.5`. Compatible development patches resolve Vitest to `4.1.11` and js-yaml to `4.3.2`.
+The lockfile resolves sharp to `0.35.4`. Installation reports zero vulnerabilities.
+TypeScript, lint, and the production build pass. Lint retains the two existing unused-variable warnings recorded above.
+The first updated full test run failed overall: 97 files and 1,012 tests passed, one live test was skipped, and one worker failed to start.
+The worker timeout affected `use-intake-upload.test.ts`; its focused retry passed all 34 tests.
+The full rerun passed all 98 active files and 1,046 tests. One live PandaDoc file/test remained skipped.
+No assertion or worker guard was weakened. A fresh `npm audit --audit-level=high` passes with zero vulnerabilities.
+The installer blocked the optional unrs-resolver postinstall script. Build and lint still passed; no script permission was changed.
+
+Native browser checks remain partial:
+
+| Surface | Environment | Observed result |
+|---|---|---|
+| Questions | Hosted platform Preview, owner | Empty state renders. |
+| Staff | Hosted platform Preview, owner | Accounts render; last-owner demotion and deactivation controls are disabled. No access changes made. |
+| Settings | Hosted platform Preview, owner | Panels render and Recheck completes. Configuration labels do not prove live PandaDoc delivery. |
+| Partners | Hosted platform Preview, owner | Empty company state renders. |
+| Customer login and overview | Local platform, seeded customer | Sign-in and claim routing pass. |
+| Customer question | Local platform, seeded customer | Synthetic question persists in activity; email remains queued with live sending disabled. |
+| Customer documents | Local platform, seeded customer | Existing file list and upload controls render. |
+| Customer upload | Local platform, seeded customer | Native chooser selected the synthetic PNG. A long tool delay preceded submission; the session had expired. UI showed connection recovery text and reload returned to login. Upload success is not claimed. |
+| Partner login and list | Local platform, seeded partner | Sign-in passes. Settled amount appears only for the settled claim. |
+| Partner detail, activity, profile | Local platform, seeded partner | Settled detail, shared activity, and read-only company profile render. Sign-out returns to login. |
+| Partner staff-route boundary | Local platform, seeded partner | Both staff dashboard and staff claim URL redirect to the partner list without staff content. |
+| Partner referral | Local platform, seeded partner | Form renders. Submission is refused by verification; success is not claimed. |
+| Adjuster login | Local platform, seeded adjuster | Password sign-in reaches required MFA setup. User handoff requested; no factor changed by the agent. |
+| Home and contact FAQ | Production, native browser | Home first-screen visual review passes; FAQ keyboard expansion passes without horizontal overflow at width 1069. |
+| Services, Contractors, About | Production, native browser | Navigation and headings render. No horizontal overflow or completed broken images at the current desktop width. |
+| Claim search and filters | Hosted platform Preview, owner | Exact synthetic reference returns one row. Settled filter returns the expected empty state. |
+| Claimants | Hosted platform Preview, owner | Synthetic primary claimant and outstanding invitation state render. No invitation resent. |
+| Download authorization and audit | Hosted platform Preview, owner | Download issues a five-minute attachment link; history records the action. Link clicked, but saved bytes were not independently verified. |
+| Customer profile | Local platform, seeded customer | First-name update saves and updates the header. Original name restored with a second successful save. Consent details expand. No password or consent change. |
+| Public intake | Production, native browser | Six sections render without overflow. Second-policyholder choice adds required signer fields; choosing No removes them. No submission made. |
+
+The native Production tab records Turnstile error `300030`. Cloudflare documents `300*` as a generic challenge failure.
+Source: https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/error-codes/
+Local configuration already contains test keys. Native referral verification did not complete; no CAPTCHA or server validation was bypassed.
+
+The local server uses local Supabase with live Resend and PandaDoc sending disabled.
+The hosted download created its expected audit entry. No hosted claim edit, DNS change, backup, commit, push, or deployment occurred in this continuation.
+All-feature acceptance, live signing, maximum-size uploads, and remaining role workflows are not complete.
+
+### Post-patch database verification
+
+The simple-mode intake and cleanup selection passed eight files and 46 tests.
+The exact CI database-backed selection passed 30 files and 205 tests in platform mode; one live PandaDoc file/test was skipped.
+Both selections ran after the dependency patch, with local database access and live providers disabled.
+
+A later shared-local pgTAP run failed six assertions: two directory MFA assumptions and four cleanup scheduler assumptions.
+The seeded adjuster already had a verified factor. The directory suite now creates its own rollback-only factor-state account and preserves existing MFA.
+Unrelated upload manifests became eligible after their embargo elapsed. Suite 37 explicitly requires a quiet test database and has no fixture-ID worker filter.
+Its assertions and production functions remain unchanged. A separate disposable stack was created from repository migrations and synthetic seed data for clean verification.
+The scratch stack is `CMGPA-release-test-20260913`, with ports 15520 through 15529. It does not replace the normal 15420 through 15429 stack.
+Only this new synthetic stack is eligible for the current reset check. Existing local data and Production are not disposable and were not reset.
+The isolated reset completed, and all 39 pgTAP files and 1,254 assertions passed. File hashes confirm that tested migrations and tests match the worktree.
+The repaired directory suite also passed all 17 assertions against the shared local database with its existing MFA factors.
+The shared database still contains aged cleanup records; a full shared-data run is not a clean test baseline. No cleanup assertion was weakened.
+The disposable stack was then stopped with its exact project ID and `--no-backup`; its generated volumes were removed.
+The normal local stack remains available. No Supabase backup was created.
+
+## Earlier release record
+
+Last reconciled: 2026-09-12.
 The release target is `SITE_MODE=simple`.
 The merged candidate is deployed to the Vercel Production aliases.
-Release acceptance remains incomplete because the custom domain and owner prerequisites are unresolved.
-Core local engineering validation passes for implementation `4516a82`; current release-record updates are pushed.
+Release acceptance remains incomplete because owner prerequisites are unresolved.
+Core local engineering validation passes for implementation `4516a82`; the current launch-record updates are local and uncommitted.
 Owner decisions remain open.
 The verified Preview redeployment is Ready and runs `SITE_MODE=simple`. Simple-mode Preview acceptance passed its route boundary checks.
 A Ready Vercel deployment does not prove application acceptance or passing GitHub checks.
@@ -22,7 +204,7 @@ The historical appendix preserves earlier evidence without treating it as curren
 These facts came from read-only inspection on 2026-09-07.
 The release commit was created locally after review approval.
 PR #1 was merged into `develop`, and Vercel deployed the merge commit to Production.
-No branch-protection change, DNS change, or production migration occurred during this review.
+No branch-protection change or production migration occurred during this review; the later app-subdomain DNS write is recorded below.
 
 | Item | Recorded state |
 |---|---|
@@ -37,7 +219,7 @@ No branch-protection change, DNS change, or production migration occurred during
 | Current Production | `383a99936ca7536f7e5522ea71387c2b788763df`, Ready on 2026-09-07 |
 | Production deployment | [383a999 Production](https://cmgps-es36guo8m-robs-projects-c72886ba.vercel.app) |
 | Production alias | [cmgps.vercel.app](https://cmgps.vercel.app) |
-| Custom domain routing | `cmgpropertysolutions.net` redirects `/admin` to `/lander`; it does not serve the CMG app |
+| Custom domain routing | `app.cmgpropertysolutions.net` serves the CMG Production app; the root and `www` hostnames remain unchanged |
 | Production branch | Vercel deployment metadata confirms `develop`; the current Production deployment came from the merged branch |
 | Vercel plan | Hobby; confirmed in the browser |
 | Branch protection | `develop` is unprotected; the protection API returned HTTP 403 |
@@ -62,7 +244,7 @@ Its public routes passed read-only checks at 320px, 390px, and 1280px with no ho
 Fresh Preview Tab traversal moved focus through the skip link, logo, navigation, and phone link. Menu activation and full network tracing remain unverified.
 Security headers remained present: CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, and HSTS.
 The Preview `SITE_MODE=simple` environment write and redeployment are complete.
-No production environment write or DNS change occurred; the Production deployment came from the merged `develop` commit.
+The Production environment now includes the approved site URL; the deployment came from the merged `develop` commit.
 
 The current remote checks pass for the pushed head.
 Do not reuse older passing totals as evidence for the changed candidate.
@@ -72,18 +254,23 @@ Its current `verify`, `database`, Vercel, and Vercel Preview Comments checks pas
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
 The PR description is published from `docs/temp/PR_DESCRIPTION.md`; PR #1 is merged and Production deployment is Ready.
 
-Read-only host routing checks found a production cutover blocker.
+Read-only host routing checks found a production cutover blocker before the subdomain setup.
 The Vercel aliases `cmgps.vercel.app`, `cmgps-rspeciale0519.vercel.app`, and `cmgps-robs-projects-c72886ba.vercel.app` serve this CMG deployment.
-The custom domain `cmgpropertysolutions.net` instead redirects `/admin` to `/lander`, and its cron API path returns 404.
-The custom domain therefore does not currently point to the Vercel Production app.
-No domain, DNS, or production configuration changed.
+The root domain still serves its previous site by choice.
+The owner approved only the new `app` subdomain, so no root, `www`, or Microsoft 365 record was changed.
 
 Post-merge Production read-only smoke checks passed on the Vercel aliases.
 `/`, `/contact`, and `/file-a-claim` returned 200.
 `/admin`, `/login`, `/mfa`, `/invite`, `/portal`, and `/partner` redirected to `/platform-disabled`.
 `/api/cron/outbox` and `/api/cron/storage-cleanup` returned 401 without a bearer token.
 `/api/pandadoc/webhook` returned 405 for GET.
-These checks confirm route behavior for the merged deployment; public forms, provider delivery, DNS, TLS, and hosted upload acceptance remain pending.
+These checks confirm route behavior for the merged deployment; live provider delivery, public form acceptance, and hosted upload acceptance remain pending.
+
+The owner then added `app.cmgpropertysolutions.net` to the Vercel project and added one GoDaddy CNAME:
+`app` → `50238cf0f774d850.vercel-dns-017.com.`
+Vercel verified the subdomain configuration, and the live hostname returned 200 for public routes, 307 to `/platform-disabled` for private routes, 401 for unauthenticated cron routes, and 405 for a GET PandaDoc webhook.
+The root, `www`, Microsoft 365, and other pre-existing DNS records remain unchanged.
+Vercel Production now uses `NEXT_PUBLIC_SITE_URL=https://app.cmgpropertysolutions.net` and redeployment `DFeBennx8L6Dhj9M7uisVKiJKPhS` is Ready from `develop` commit `383a999`.
 
 ## Hosted database and service evidence
 
@@ -118,7 +305,13 @@ A lease timeout does not prove that an email provider rejected a send.
 Vercel shows `SITE_MODE` for all environments and a Preview branch override.
 PandaDoc and Resend settings exist for Production and Preview.
 Public and secret Turnstile settings, `CRON_SECRET`, and Supabase keys are present.
-Secret values and live provider validity were not verified.
+Resend verified `cmgpropertysolutions.net` for sending on 2026-09-09.
+Vercel now has a new sending-only `RESEND_API_KEY` for Production and Preview.
+`EMAIL_FROM` is `CMG Property Solutions <claims@cmgpropertysolutions.net>`, which uses the verified root domain.
+Cloudflare Turnstile now authorizes `cmgpropertysolutions.net`, covering the `app` subdomain.
+A synthetic phone-only production submission returned `Request received.`
+Resend accepted the staff alert with HTTP 200 and recorded it as `Delivered` to `Austin@CMGPropertySolutions.net`.
+The approved `rob@miodiollc.com` auto-reply remains pending a cooldown retry because contact email rate limiting blocked the second test.
 The observed Preview route behavior confirms that its deployed mode is simple.
 The Preview environment change and redeployment are complete.
 
@@ -131,12 +324,17 @@ No CAPTCHA bypass or configuration change occurred.
 |---|---|
 | `cmgpropertysolutions.net` A | `15.197.148.33`, `3.33.130.190` |
 | `www.cmgpropertysolutions.net` | CNAME to the apex domain |
+| `app.cmgpropertysolutions.net` | CNAME to `50238cf0f774d850.vercel-dns-017.com.`; verified by Vercel |
 | Mail | Microsoft 365 MX and SPF records exist |
-| `_dmarc.cmgpropertysolutions.net` | NXDOMAIN |
+| `resend._domainkey.cmgpropertysolutions.net` | Resend DKIM TXT; verified by Resend |
+| `send.cmgpropertysolutions.net` MX | `feedback-smtp.us-east-1.amazonses.com`, priority 10; verified by Resend |
+| `send.cmgpropertysolutions.net` TXT | `v=spf1 include:amazonses.com ~all`; verified by Resend |
+| `_dmarc.cmgpropertysolutions.net` | `v=DMARC1; p=none;` |
 
-No domain, DNS, secret, or production configuration changed.
-The custom domain HTTPS endpoint returned 200 but served `/lander`, which is a different site from the Vercel aliases.
-These DNS records do not prove Resend verification, final website routing, or TLS acceptance for the CMG app.
+The new `app` CNAME and the four Resend sender records were added.
+The root domain HTTPS endpoint still serves `/lander`, which is outside the current CMG subdomain target.
+Resend domain verification and a live staff-alert delivery test are complete.
+The approved auto-reply recipient still needs one cooldown-safe retry.
 
 ## Security review warning
 
@@ -168,7 +366,7 @@ The incident does not authorize further hosted submissions or cleanup.
 
 Subsequent local browser form actions assert the expected local URL before they proceed.
 This record documents an operational incident, not an owner-action blocker.
-The Turnstile hostname issue remains a separate configuration blocker.
+The Turnstile hostname issue is resolved by the existing widget update.
 
 ## Local environment
 

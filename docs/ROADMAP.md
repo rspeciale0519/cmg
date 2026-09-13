@@ -1,5 +1,13 @@
 # Development roadmap — CMG Property Solutions
 
+Current update — 2026-09-13: full-platform acceptance is active at the owner's request.
+All 29 hosted migrations are applied after explicit approval without a backup.
+A later migration fixes annual reference truncation. It is applied locally; all 1,254 pgTAP assertions pass. It is not deployed to Production.
+Contact email delivery and one small private claim upload passed; full hosted role and signing acceptance remain incomplete.
+Preview platform activation is deployed and Ready. The earlier simple-only roadmap below describes the previous release phase.
+Database assertions and the full regression rerun pass. The approved dependency patch clears the audit. Full browser role acceptance remains open.
+Current acceptance evidence and test changes remain local and uncommitted.
+
 Last reconciled: 2026-09-07.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
@@ -88,7 +96,8 @@ Those approved local reset checks are complete and include the two upload migrat
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.
 - [x] Obtain separate merge and deployment approvals; merge PR #1 into `develop` and deploy Production.
-- [ ] Obtain separate domain approval and complete the DNS cutover.
+- [x] Obtain separate domain approval and configure `app.cmgpropertysolutions.net` without changing existing root, `www`, or Microsoft 365 records.
+- [x] Set Vercel `NEXT_PUBLIC_SITE_URL` to `https://app.cmgpropertysolutions.net` and verify the Resend sending domain without changing existing Microsoft 365 records.
 - [ ] Verify the deployed commit, public workflows, email, queues, cron schedules, DNS, TLS, and rollback compatibility.
 
 No current validation item inherits a pass from the historical ledger.

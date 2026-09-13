@@ -70,6 +70,8 @@ Use [supabase/config.toml](supabase/config.toml) as the port authority.
 | `npm audit --audit-level=high` | Check dependency security |
 
 Confirm that local data is disposable before `npm run db:reset`.
+The cleanup scheduler tests require an isolated fixture database. A quiet server alone is insufficient when existing upload embargoes have expired.
+Use a separate disposable Supabase project when the normal local stack contains browser acceptance data. Do not reset shared data to make tests pass.
 Obtain explicit approval before deleting local database data.
 Record the reset command's exit status, not only its migration and seed output.
 Do not retry a blocked reset without the required approval.
@@ -193,7 +195,7 @@ The Server Action receives text fields and a small file manifest only.
 The browser uploads file bytes directly to private Supabase Storage with one-time signed capabilities.
 The server copies each upload to an immutable document path, verifies its signature, and then commits the claim.
 The implementation and local Storage tests preserve the ten-file and 25 MiB limits.
-Hosted migration, configuration, and maximum-size hosted acceptance remain release work.
+Check HANDOFF for hosted migration and configuration evidence. Maximum-size hosted acceptance remains release work.
 See [Vercel function limits](https://vercel.com/docs/functions/limitations).
 
 Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl) remain valid for two hours.
@@ -201,14 +203,16 @@ Cleanup retains both exact paths through the upload expiry and reconciles late o
 
 10. Compare hosted migration history with every repository migration.
 11. Record the pending migration list in HANDOFF.
-12. Obtain approval for the production backup and each production write.
-13. Back up the database and Storage objects before applying approved migrations.
-14. Verify backup completeness and the restore procedure.
+12. Record the owner's recovery decision and obtain approval for each production write.
+13. Create backups only when the owner approves them.
+14. Verify available recovery coverage and record any unverified restore capability.
 15. Apply only the approved forward migrations to the verified hosted project.
 16. Verify schema, RLS, grants, and public workflows after migration.
 
-Database backups do not include Storage file contents.
-Back up those objects separately.
+The owner declined a Supabase backup for the six migrations applied on 2026-09-13.
+Do not create a backup under the current authorization.
+Those approved migrations use reviewed forward repair as the recovery path; immediate restore readiness remains unverified.
+Database backups do not include Storage file contents. A future approved backup plan must address those objects separately.
 See [Supabase backup scope](https://supabase.com/docs/guides/platform/backups).
 Never run `supabase/seed.sql` or `db:reset` against production.
 

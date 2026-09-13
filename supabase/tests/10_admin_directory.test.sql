@@ -23,6 +23,11 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(17);
 
+-- Browser acceptance can enroll the seeded adjuster. Give the factor-state
+-- scenarios their own account; rollback removes it without touching that MFA.
+insert into auth.users (id, email, raw_user_meta_data)
+values ('10000010-0000-4000-a000-000000000001', 'directory-fixture@example.test', '{}'::jsonb);
+
 -- ---------------------------------------------------------------------------
 -- Shape and grants
 -- ---------------------------------------------------------------------------
@@ -82,14 +87,14 @@ select ok(
 
 select is(
   (select email from public.admin_user_directory()
-    where user_id = '00000000-0000-4000-a000-000000000002'),
-  'adjuster@cmg.test',
+    where user_id = '10000010-0000-4000-a000-000000000001'),
+  'directory-fixture@example.test',
   'the sign-in address comes back — the fact public.profiles cannot carry'
 );
 
 select is(
   (select mfa_enrolled from public.admin_user_directory()
-    where user_id = '00000000-0000-4000-a000-000000000002'),
+    where user_id = '10000010-0000-4000-a000-000000000001'),
   false,
   'an account with no factor reads as not enrolled'
 );
@@ -107,7 +112,7 @@ select set_config('request.jwt.claims', '', true);
 insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at, secret)
 values (
   '30000000-0000-4000-a000-000000000001',
-  '00000000-0000-4000-a000-000000000002',
+  '10000010-0000-4000-a000-000000000001',
   'abandoned setup', 'totp', 'unverified', now(), now(), 'NOTASECRET'
 );
 
@@ -116,7 +121,7 @@ set local role authenticated;
 
 select is(
   (select mfa_enrolled from public.admin_user_directory()
-    where user_id = '00000000-0000-4000-a000-000000000002'),
+    where user_id = '10000010-0000-4000-a000-000000000001'),
   false,
   'an abandoned, unverified enrolment does not read as protection'
 );
@@ -132,14 +137,14 @@ set local role authenticated;
 
 select is(
   (select mfa_enrolled from public.admin_user_directory()
-    where user_id = '00000000-0000-4000-a000-000000000002'),
+    where user_id = '10000010-0000-4000-a000-000000000001'),
   true,
   'verifying the same factor flips it to enrolled'
 );
 
 select isnt(
   (select mfa_confirmed_at from public.admin_user_directory()
-    where user_id = '00000000-0000-4000-a000-000000000002'),
+    where user_id = '10000010-0000-4000-a000-000000000001'),
   null,
   'and the enrolment carries a date the owner can read'
 );

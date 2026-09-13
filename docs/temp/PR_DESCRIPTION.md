@@ -1,10 +1,23 @@
 # Release CMG simple website mode
 
+## Current acceptance addendum — 2026-09-13
+
+PR #1 is already merged. The earlier description below is historical and is not evidence of current green checks.
+All 29 hosted migrations are applied. The owner approved the six latest migrations without a backup.
+Contact email delivery, a small private upload, owner MFA enrollment, and selected owner pages passed hosted acceptance.
+Production remains simple. Only the approved feature Preview runs platform mode.
+The approved local dependency patch clears the audit. TypeScript, lint, build, and the full regression rerun pass.
+The rerun passes 1,046 tests; one live PandaDoc test remains skipped. Native browser acceptance is partial, with MFA and verification blockers recorded in HANDOFF.
+Local dependency, test, and evidence edits remain uncommitted and unpushed.
+HANDOFF contains the current validation ledger and unresolved acceptance work.
+
+## Earlier merged PR description
+
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-09-03.
-The reviewed implementation commit `4516a82` and current release-record updates are pushed on `feature/claims-platform`.
+The reviewed implementation commit `4516a82` is pushed on `feature/claims-platform`; the current launch-record updates remain local and uncommitted.
 PR #1 is merged into `develop`, and Vercel deployed the merge commit to Production.
-The custom domain and other owner prerequisites remain unresolved.
+The temporary production hostname `app.cmgpropertysolutions.net` is configured and verified without changing existing root, `www`, or Microsoft 365 DNS records.
 
 ## Problem
 
@@ -328,8 +341,12 @@ The current Preview is Ready, and Production uses the merged commit.
 Current Production uses `383a99936ca7536f7e5522ea71387c2b788763df`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
-The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
-The custom domain is not routed to the Vercel Production deployment.
+The root domain still serves its previous site by design.
+`app.cmgpropertysolutions.net` routes to the Vercel Production deployment.
+Vercel now uses `NEXT_PUBLIC_SITE_URL=https://app.cmgpropertysolutions.net`.
+Resend verified `cmgpropertysolutions.net` for sending.
+After the verified sender update, a synthetic production form submission returned `Request received.` and Resend recorded the staff alert as `Delivered`.
+The approved `rob@miodiollc.com` auto-reply still needs a cooldown-safe retry because the contact email rate limit blocked the second test.
 The reviewed commits were pushed after approval.
 PR #1 merged into `develop`, and Vercel deployed merge commit `383a99936ca7536f7e5522ea71387c2b788763df` to Production.
 No hosted migration occurred during this review.

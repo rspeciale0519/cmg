@@ -33,6 +33,12 @@ select is_empty(
 select col_is_pk('public'::name, 'claim_ref_counters'::name, 'year'::name,
   'claim numbering is keyed by year, which is what makes the sequence restart each January instead of running forever');
 
+-- Local acceptance runs can advance the counter after seeding. Check continuity
+-- from the current value without resetting it or changing unrelated claims.
+create temporary table ref_counter_baseline on commit drop as
+select coalesce((select last_value from public.claim_ref_counters
+  where year = extract(year from (now() at time zone 'America/New_York'))::int), 0) as last_value;
+
 insert into public.claims (
   id, property_street, property_city, property_zip,
   carrier, policy_number, carrier_tenure, loss_date, cause, description
@@ -46,20 +52,22 @@ insert into public.claims (
 
 select is(
   (select claim_ref from public.claims where id = '21000000-0000-4000-a000-000000000001'),
-  'CMG-' || extract(year from (now() at time zone 'America/New_York'))::int::text || '-0003',
+  'CMG-' || extract(year from (now() at time zone 'America/New_York'))::int::text || '-' ||
+    to_char((select last_value + 1 from ref_counter_baseline), 'FM0000'),
   'a new claim continues this year''s run instead of restarting, so two claims can never share a reference'
 );
 
 select is(
   (select claim_ref from public.claims where id = '21000000-0000-4000-a000-000000000002'),
-  'CMG-' || extract(year from (now() at time zone 'America/New_York'))::int::text || '-0004',
+  'CMG-' || extract(year from (now() at time zone 'America/New_York'))::int::text || '-' ||
+    to_char((select last_value + 2 from ref_counter_baseline), 'FM0000'),
   'the very next claim takes the very next number, so the sequence is gapless and each reference is minted exactly once'
 );
 
 select is(
   (select last_value from public.claim_ref_counters
     where year = extract(year from (now() at time zone 'America/New_York'))::int),
-  4,
+  (select last_value + 2 from ref_counter_baseline),
   'the counter advanced by exactly one per claim, so the reference cannot be guessed forward without also guessing the claim count'
 );
 
