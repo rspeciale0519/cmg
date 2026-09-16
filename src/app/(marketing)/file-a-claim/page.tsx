@@ -26,7 +26,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function FileAClaimPage() {
+export default async function FileAClaimPage({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  // Repeated or oversized codes must fail closed at submission, not lose attribution.
+  const code = params.ref;
+  const referralCode = code === undefined ? "" : typeof code === "string" && code.length <= 36 ? code : "invalid";
   return (
     <>
       <PageGlow />
@@ -48,7 +54,7 @@ export default function FileAClaimPage() {
         space="none"
         className="pt-[clamp(40px,5vw,64px)] pb-[clamp(72px,9vw,120px)]"
       >
-        <IntakeForm />
+        <IntakeForm referralCode={referralCode} />
       </Section>
     </>
   );

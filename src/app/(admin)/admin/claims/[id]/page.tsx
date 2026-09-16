@@ -155,9 +155,23 @@ export default async function ClaimOverviewPage({
           </PanelBody>
         </Panel>
 
+        {(claim.contractorName || claim.contractorCompany || claim.contractorPhone || claim.contractorEmail) ? (
+          <Panel title="Contractor information">
+            <PanelBody>
+              <FactList columns={1}>
+                <Fact label="Name">{claim.contractorName ?? "—"}</Fact>
+                <Fact label="Company">{claim.contractorCompany ?? "—"}</Fact>
+                <Fact label="Phone">{claim.contractorPhone ?? "—"}</Fact>
+                <Fact label="Email">{claim.contractorEmail ?? "—"}</Fact>
+              </FactList>
+            </PanelBody>
+          </Panel>
+        ) : null}
+
         <Panel title="Referral">
           <PanelBody>
             <FactList columns={1}>
+              <Fact label="Vendor intake link">{claim.intakeReferralVendor ?? "Direct intake"}</Fact>
               <Fact label="Company">
                 {claim.partnerName ?? (
                   <span className="text-ink/55">Direct — no referring company</span>

@@ -8,6 +8,7 @@ const stub = vi.hoisted(() => ({
   prepare: vi.fn(),
   finalize: vi.fn(),
   admin: vi.fn(() => ({ marker: "local-stub" })),
+  referral: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
@@ -18,6 +19,7 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/turnstile", () => ({ verifyTurnstile: stub.turnstile }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: stub.admin }));
+vi.mock("@/lib/intake/referral", () => ({ resolveIntakeReferral: stub.referral }));
 vi.mock("@/lib/intake/upload-session", async (original) => ({
   ...await original<typeof import("@/lib/intake/upload-session")>(),
   prepareIntakeSession: stub.prepare, finalizeIntakeSession: stub.finalize,
@@ -61,11 +63,32 @@ beforeEach(() => {
   stub.rate.mockResolvedValue(true);
   stub.check.mockResolvedValue(true);
   stub.turnstile.mockResolvedValue({ ok: true });
+  stub.referral.mockResolvedValue({ ok: true, partner: null });
   stub.prepare.mockResolvedValue({ status: "idle", uploadSession: { id: "session" } });
   stub.finalize.mockResolvedValue({ status: "success", reference: "CMG-2099-0207" });
 });
 
 describe("private intake upload gates", () => {
+  it("rejects an unavailable referral before reserving upload paths", async () => {
+    const form = intakeForm();
+    form.set("vendorReferralCode", "40000000-0000-4000-a000-000000000001");
+    stub.referral.mockResolvedValueOnce({ ok: false });
+    const result = await submitIntake(idleState, form);
+    expect(result.status).toBe("error");
+    expect(stub.prepare).not.toHaveBeenCalled();
+  });
+
+  it("passes only the server-resolved vendor to upload preparation", async () => {
+    const form = intakeForm();
+    form.set("vendorReferralCode", "40000000-0000-4000-a000-000000000001");
+    form.set("intake_referral_partner_id", "forged");
+    const partner = { id: "40000000-0000-4000-a000-000000000010", name: "Trusted Vendor" };
+    stub.referral.mockResolvedValueOnce({ ok: true, partner });
+    await submitIntake(idleState, form);
+    expect(stub.prepare.mock.calls[0][4]).toEqual(partner);
+    expect(stub.prepare.mock.calls[0][1]).not.toHaveProperty("intake_referral_partner_id");
+  });
+
   it("does not reserve paths before rate limits and Turnstile succeed", async () => {
     stub.rate.mockResolvedValueOnce(false);
     expect((await submitIntake(idleState, intakeForm())).status).toBe("error");

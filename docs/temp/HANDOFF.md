@@ -1,5 +1,12 @@
 # CMG simple-mode release handoff
 
+## Current local intake work — 2026-09-16
+
+Contractor fields, optional legacy loss time, and vendor-specific intake links are implemented locally.
+See [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for checks, migration order, and remaining browser acceptance.
+These new changes are not committed or deployed. The earlier Turnstile release commit is `b6774f1`.
+Existing DNS remains unchanged. No Supabase backup was created.
+
 Owner decision — 2026-09-15: the five reviewed files are approved for a local commit only.
 The owner deferred Resend sign-in until returning to the office. Provider delivery and inbox receipt remain unverified.
 Earlier pending-commit statements below describe prior checkpoints. Push, merge, deployment, and the new hosted migration are not authorized by this approval.

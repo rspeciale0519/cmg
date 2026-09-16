@@ -97,6 +97,34 @@ describe("intakeSchema — option values match the database enums", () => {
 });
 
 describe("intakeSchema — happy paths", () => {
+  it("accepts optional contractor information without replacing homeowner details", () => {
+    const result = intakeSchema.parse({ ...valid, lossTime: undefined,
+      contractorName: " Test Contractor ", contractorCompany: " Test Roofing ",
+      contractorPhone: "4075550101", contractorEmail: "contractor@example.com",
+    });
+    expect(result.contractorName).toBe("Test Contractor");
+    expect(result.contractorCompany).toBe("Test Roofing");
+    expect(result.email).toBe(valid.email);
+    expect(result.lossTime).toBeUndefined();
+  });
+
+  it.each([
+    ["contractorName", "x".repeat(81)], ["contractorCompany", "x".repeat(161)],
+    ["contractorPhone", "abcdefg"], ["contractorEmail", "not-an-email"],
+  ])("rejects invalid %s", (field, value) => {
+    expect(errorFor({ ...valid, [field]: value }, field)).toBeDefined();
+  });
+
+  it("accepts empty contractor fields", () => {
+    const result = intakeSchema.parse({ ...valid, contractorName: "", contractorCompany: "",
+      contractorPhone: "", contractorEmail: "",
+    });
+    expect(result.contractorName).toBeUndefined();
+    expect(result.contractorCompany).toBeUndefined();
+    expect(result.contractorPhone).toBeUndefined();
+    expect(result.contractorEmail).toBeUndefined();
+  });
+
   it("accepts a single-policyholder intake", () => {
     const result = intakeSchema.safeParse(valid);
     expect(result.success).toBe(true);
@@ -272,10 +300,10 @@ describe("intakeSchema — loss branch", () => {
     expect(errorFor({ ...valid, lossTime: "25:00" }, "lossTime")).toBeDefined();
   });
 
-  /* The field renders empty — it carries no default — so "" is a state a real
-     submission reaches, not a synthetic one. */
-  it("rejects a missing time", () => {
-    expect(errorFor({ ...valid, lossTime: "" }, "lossTime")).toBeDefined();
+  /* Older clients can still send an empty time. New forms omit the field. */
+  it("accepts a missing time without inventing one", () => {
+    expect(intakeSchema.parse({ ...valid, lossTime: "" }).lossTime).toBeUndefined();
+    expect(intakeSchema.parse({ ...valid, lossTime: undefined }).lossTime).toBeUndefined();
   });
 
   it("rejects an unknown cause", () => {

@@ -49,6 +49,33 @@ function details() {
 }
 
 describe("intake form direct upload", () => {
+  it.each([false, true])("submits separate contractor details with files=%s", async (hasFile) => {
+    render(<IntakeForm referralCode="40000000-0000-4000-a000-000000000001" />);
+    const { firstName, documents, form } = details();
+    expect(form.querySelector('[name="lossTime"]')).toBeNull();
+    expect(form.querySelector('[name="lossDate"]')).not.toBeNull();
+    expect(form.querySelector('[name="cause"]')).not.toBeNull();
+    fireEvent.change(firstName, { target: { value: "Homeowner" } });
+    const values = {
+      contractorName: "Contractor", contractorCompany: "Test Roofing",
+      contractorPhone: "4075550101", contractorEmail: "contractor@example.invalid",
+    };
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+      expect(field.required).toBe(false);
+      fireEvent.change(field, { target: { value } });
+    }
+    if (hasFile) fireEvent.change(documents, { target: { files: [new File(["scan"], "scan.pdf", { type: "application/pdf" })] } });
+    fireEvent.submit(form);
+    await waitFor(() => expect(screen.getByText("Intake received.")).toBeDefined());
+    const payload = start.mock.calls[0][1] as FormData;
+    expect(payload.get("firstName")).toBe("Homeowner");
+    for (const [name, value] of Object.entries(values)) expect(payload.get(name)).toBe(value);
+    expect(payload.has("lossTime")).toBe(false);
+    expect(payload.get("vendorReferralCode")).toBe("40000000-0000-4000-a000-000000000001");
+    expect(put).toHaveBeenCalledTimes(hasFile ? 1 : 0);
+  });
+
   it("cannot submit form values before hydration and never uses a native GET", () => {
     const container = document.createElement("div");
     container.innerHTML = renderToString(<IntakeForm />);
