@@ -1,5 +1,28 @@
 # Owner-only launch blockers and decisions
 
+Owner decision — 2026-09-15: committing the five reviewed files is approved. Push, merge, and deployment remain separate approval points.
+The owner will sign in to Resend after returning to the office. Delivery verification remains pending; no repeat sign-in request is needed meanwhile.
+Native Preview contact submission passed and both outbox entries are sent. Earlier pending-submission and commit-approval statements below are historical.
+
+Latest update — 2026-09-15: the approved Preview hostname addition is complete.
+Cloudflare confirmed the save and now shows four hostnames. Existing entries, Managed mode, and disabled pre-clearance remain unchanged.
+The earlier hostname-entry blocker below is resolved. No DNS changes or backups occurred.
+Native Preview contact verification now shows Turnstile `Success!`. No new hosted form submission occurred during that check.
+
+Current update — 2026-09-15: Cloudflare sign-in is restored, but the approved Preview hostname is still absent.
+A new local fix provides accessible runtime-verification errors. Its local checks pass; commit and push require separate approval.
+The hostname input returns `No results`; an attempted save retained the original three hostnames.
+The owner must complete this exact hostname addition in the retained widget settings tab before Preview form acceptance can continue.
+No repeat authorization is needed for the previously approved hostname. DNS must remain unchanged.
+Fresh GitHub checks still pass for PR #2; its merge, Production deployment, and new hosted migration remain separately controlled actions.
+
+Current update — 2026-09-14: the approved commit and push of `8be147c` are complete. PR #2 metadata is updated.
+Remote verify, database, CodeRabbit, and Vercel checks pass. Earlier pending-commit statements are historical.
+The new Preview hostname needs Turnstile authorization before form acceptance can continue.
+The owner approved adding only `cmgps-git-docs-record-production-c2abd6-robs-projects-c72886ba.vercel.app`.
+Cloudflare requires sign-in again before the approved change can proceed. The Chrome login tab is retained for the owner.
+This changes the widget allowlist, not DNS. Do not merge, deploy, or apply the new hosted migration without separate approval.
+
 Current update — 2026-09-13: the owner resumed full-platform acceptance and approved the six hosted migrations without a backup.
 All 29 migrations are now applied. The contact auto-reply and staff alert are delivered.
 Those are the previously approved migrations. The new reference-capacity guard remains local and needs separate production approval after validation.

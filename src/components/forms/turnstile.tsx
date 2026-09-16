@@ -10,6 +10,8 @@ type TurnstileApi = {
       theme?: "light" | "dark" | "auto";
       size?: "normal" | "flexible" | "compact";
       "response-field-name"?: string;
+      callback?: (token: string) => void;
+      "error-callback"?: (code: string) => boolean;
     },
   ) => string;
   reset: (widgetId?: string) => void;
@@ -103,6 +105,13 @@ export function TurnstileWidget({ resetOn }: { resetOn?: unknown }) {
           theme: "dark",
           size,
           "response-field-name": "cf-turnstile-response",
+          callback: () => {
+            if (!cancelled) setFailed(false);
+          },
+          "error-callback": () => {
+            if (!cancelled) setFailed(true);
+            return true;
+          },
         });
       })
       .catch((error: unknown) => {
@@ -131,14 +140,16 @@ export function TurnstileWidget({ resetOn }: { resetOn?: unknown }) {
     }
   }, [resetOn]);
 
-  if (!siteKey || failed) {
-    return (
-      <p className="text-[13px] leading-[1.6] text-[#E08C6A]">
-        The verification check could not load, so this form cannot be submitted right now.
-        Please reload the page, or call us and we&apos;ll take the details over the phone.
-      </p>
-    );
-  }
-
-  return <div ref={containerRef} className="min-h-[65px]" />;
+  return (
+    <>
+      {/* Keep the widget mounted so provider retries can recover and supply a token. */}
+      {siteKey && <div ref={containerRef} className="min-h-[65px]" />}
+      {(!siteKey || failed) && (
+        <p role="alert" className="text-[13px] leading-[1.6] text-[#E08C6A]">
+          The verification check could not complete, so this form cannot be submitted right now.
+          Please reload the page, or call us and we&apos;ll take the details over the phone.
+        </p>
+      )}
+    </>
+  );
 }

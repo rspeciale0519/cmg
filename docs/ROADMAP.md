@@ -1,5 +1,13 @@
 # Development roadmap — CMG Property Solutions
 
+Current update — 2026-09-15: Production remains in simple mode. PR #1 is merged; PR #2 contains the pushed dependency and reference-capacity fixes.
+PR #2 checks pass at `8be147c`, but the capacity migration and updated Production release still need approval.
+Native Preview acceptance found missing feedback for runtime Turnstile failures. A local widget fix adds an accessible message and preserves retry recovery.
+The owner approved committing this patch and its release records. Push approval and remote checks for this patch remain pending.
+The approved Preview hostname is configured. Native contact submission passed, with a stored lead and two sent outbox entries; delivery verification remains open.
+Owner launch decisions and later platform acceptance also remain open.
+The dated records below describe earlier checkpoints and do not supersede HANDOFF.
+
 Current update — 2026-09-13: full-platform acceptance is active at the owner's request.
 All 29 hosted migrations are applied after explicit approval without a backup.
 A later migration fixes annual reference truncation. It is applied locally; all 1,254 pgTAP assertions pass. It is not deployed to Production.

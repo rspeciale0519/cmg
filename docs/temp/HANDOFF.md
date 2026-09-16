@@ -1,5 +1,95 @@
 # CMG simple-mode release handoff
 
+Owner decision — 2026-09-15: the five reviewed files are approved for a local commit only.
+The owner deferred Resend sign-in until returning to the office. Provider delivery and inbox receipt remain unverified.
+Earlier pending-commit statements below describe prior checkpoints. Push, merge, deployment, and the new hosted migration are not authorized by this approval.
+
+## Native Preview contact acceptance — 2026-09-15
+
+The approved synthetic contact submission returned `Request received.` after the hostname update.
+The hosted lead `0d9b170b-3053-4f90-889c-a9b7085942bd` was created at `2026-09-15T16:35:05.603624Z`.
+Read-only verification found both outbox entries sent after one attempt: staff alert `0a713a45-be98-4c94-bb32-b3876a138e85` and auto-reply `e53b6bd7-3686-4b1a-8af9-a0b2305efbf5`.
+Recipients use the approved staff inbox and `rob@miodiollc.com`. Provider delivery and inbox receipt are not yet verified for this submission.
+The application returned success through its fail-closed Turnstile submission path. Cloudflare's dashboard warning still needs reconciliation with provider activity.
+The browser log contains Cloudflare-frame `NaN` diagnostic messages; do not claim a clean console for this submission.
+The local Turnstile runtime-error patch remains uncommitted and is not in this Preview. Its separate validation results follow below.
+
+## Approved hostname update — 2026-09-15
+
+Cloudflare saved `cmgps-git-docs-record-production-c2abd6-robs-projects-c72886ba.vercel.app` as the fourth CMG widget hostname.
+The custom-hostname option was visible in the screenshot despite an incomplete accessibility list. Selecting it added the entry before Update.
+The save confirmation and four-hostname count verify persistence. The three existing hostnames, Managed mode, and disabled pre-clearance remain unchanged.
+The native Preview contact page reopened without warnings or errors in the inspected console log. No form was submitted during this check.
+Cloudflare also displays a Siteverify warning. This needs reconciliation with a complete submission and server-side verification evidence; it does not prove a code defect alone.
+No DNS change, backup, merge, Production deployment, or hosted migration occurred.
+
+## Continuation check — 2026-09-15
+
+### Preview hostname acceptance
+
+The latest owner record confirms that the approved hostname addition saved successfully, with four hostnames and unchanged widget mode and pre-clearance.
+A fresh native Preview contact page now shows Turnstile `Success!` without manual challenge interaction.
+This supersedes the earlier missing-hostname blocker below. No form was submitted in this check; server-side validation and email acceptance on this Preview remain unverified.
+The captured console contains opaque warnings and errors from the Cloudflare challenge frame. A clean-console result is not claimed.
+The local widget patch still requires separate commit and push approval before its remote acceptance can run.
+
+### New local runtime-verification fix
+
+Native Preview acceptance reproduced Turnstile error `110200` with no accessible explanation in the form.
+The shared widget caught script-load failures but did not register the provider's runtime error callback.
+The local fix announces the failure with `role="alert"`, preserves the widget for automatic retries, and clears the message after success.
+Server-side token validation and the public submission order remain unchanged.
+The regression failed before the fix and passes afterward. The provider callback contract follows [Cloudflare's error documentation](https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/).
+
+The local native browser rendered the error using Cloudflare's always-failing test site key.
+The message fits at 320px and desktop; DOM measurements show no horizontal overflow at 320, 390, or 1280px.
+The 390px screenshot was clipped by the browser panel, so complete visual acceptance at that width remains open.
+The temporary viewport was reset. The test-only dev server was stopped before the production build.
+No hosted form, email, upload, DNS, or widget setting was changed in this continuation.
+
+Type-check, build, and dependency audit pass under Node.js 22. Audit reports zero vulnerabilities.
+Lint passes with the two existing unused-variable warnings in `intake-rollback.test.ts`.
+The three focused suites pass all 16 tests in each explicit site mode, simple and platform.
+The first full run passed all 1,048 assertions but failed its upload fixture cleanup because the sandbox could not confirm the local Docker container.
+The full rerun with Docker access passes 98 files and 1,048 tests. One live PandaDoc file/test is intentionally skipped.
+Five synthetic local upload sessions remained from the first run. A read-only preflight confirmed the CMG database port `15422`, zero retained claims, and zero retained Storage objects for their exact IDs.
+Cleanup removed only those five session rows and their 13 file metadata rows in one transaction. These disposable fixture rows are reproducible by the test suite; no reset, seed, user-record deletion, or hosted write occurred.
+The local patch is ready for commit review. Commit and push still require separate approval.
+The remote green checks below cover `8be147c`, not this uncommitted patch.
+
+PR #2 remains open at `8be147c`. Fresh GitHub checks confirm successful `verify`, `database`, and Vercel results.
+The successful `verify` job includes the production build. PR #1 is already merged.
+The existing local HANDOFF and BLOCKERS edits remain preserved and uncommitted.
+
+Cloudflare sign-in is now available. The widget still lists exactly three hostnames; the approved PR #2 Preview hostname is absent.
+Entering that exact hostname produced `No results`. Enter submitted the existing settings and displayed a success notice, but a fresh settings read still showed only the original three hostnames.
+The attempted save therefore did not complete the hostname addition. No DNS, widget mode, pre-clearance, or key change occurred.
+The settings tab remains open for owner completion. Preview form acceptance remains blocked on the hostname addition.
+
+Cloudflare also displays a missing-Siteverify-activity warning. Source inspection confirms public actions call the fail-closed Siteverify helper; this does not prove current hosted provider activity.
+Focused validation under Node.js `22.22.2` passes both `turnstile.test.ts` and `public-rate-limit-order.test.ts`: two files and 13 tests.
+The initial same selection also passed under the shell's Node.js `24.20.0`; the Node.js 22 rerun is the project-version evidence.
+Production migration, merge, deployment, legal, commercial-plan, recovery, and final acceptance gates remain open.
+
+## Current release status — 2026-09-14
+
+This section supersedes older pending-commit and remote-check statements below.
+Commit `8be147c` is pushed on `docs/record-production-launch-current`; PR #2 remains open into `develop`.
+GitHub `verify` and `database`, CodeRabbit, and Vercel Preview checks pass for that commit.
+The approved PR title and description update is complete. Production and hosted migrations remain unchanged.
+The new capacity migration still needs separate Production approval. No backup is authorized.
+
+Latest native Preview checks cover Home, Contact, Services, Contractors, About, and intake at 1280 pixels without horizontal overflow.
+Services, Contractors, and About show no completed broken images. Contact FAQ keyboard expansion passes.
+Intake adds four required second-policyholder fields when Yes is selected and removes them when No is selected.
+The admin route remains disabled. These checks do not prove mobile, complete visual, network, or form-success acceptance.
+Turnstile reports `110200` on the new Preview hostname. The owner approved adding that exact hostname; Cloudflare sign-in now blocks the change.
+DNS must stay unchanged. No widget settings have changed.
+Chrome fallback measurements pass for all six public Preview routes at actual widths of 320 and 390 pixels without horizontal overflow.
+Browser control interrupted the last navigation; a direct retry completed the remaining intake measurement. The temporary viewport override was reset.
+These measurements do not prove complete mobile visual, keyboard, network, or form-success acceptance. The native browser is currently unavailable.
+The evidence below identifies the Preview URL and deployment. This documentation update remains local and uncommitted.
+
 ## Full-platform acceptance update — 2026-09-13
 
 ### Completion gates
@@ -1068,3 +1158,21 @@ Follow the dependency-ordered runbook in the README. In short:
   connection works. All 21 migrations match through `20260815220000`.
   `claim-docs` is private, every public table has RLS enabled, and production has
   no Auth users or owner profiles yet.
+
+### PR #2 and patched Preview verification — 2026-09-14
+
+Commit `8be147c2ec5e320f055c50d7411cbe7a0a905bf2` is pushed to `docs/record-production-launch-current` with owner approval.
+The worktree was clean after the push. Earlier statements that these changes remain uncommitted are historical.
+GitHub run `34791901556` passes both `verify` and `database`. CodeRabbit and Vercel checks also pass.
+The owner approved updating PR #2. Its title and description now cover the dependency fixes, capacity migration, and validation limits.
+No merge, Production deployment, or hosted capacity migration occurred.
+
+Patched Preview: https://cmgps-git-docs-record-production-c2abd6-robs-projects-c72886ba.vercel.app
+Vercel deployment: `6S7ES3pWhEXUXKnZsvzFp8KqZZ1M`.
+Native browser checks confirm Home and Contact render at an actual width of 1280 pixels without horizontal overflow.
+Home has no completed broken images. Contact navigation and FAQ keyboard expansion pass.
+The empty required name and phone inputs report invalid validity states. No contact submission occurred.
+The `/admin` route displays the platform-disabled page.
+Contact console reports Turnstile error `110200`. Cloudflare documents this as an unauthorized hostname.
+Allowlisting this exact Preview hostname needs approval before changing the widget configuration. Existing DNS must remain unchanged.
+Full Preview form success, mobile acceptance, role workflows, and Production release remain incomplete.
