@@ -23,21 +23,25 @@ Deactivation stops new reservations. An existing immutable reservation can finis
 
 ## Database rollout and recovery
 
-Three new additive migrations are local only:
+The owner approved and applied these three additive migrations to Production on 2026-09-16:
 
 - `20260916010000_intake_contractor_details.sql`
 - `20260916020000_vendor_intake_links.sql`
 - `20260916020100_vendor_intake_link_index.sql`
 
-Apply the migrations before deploying the application. New staff queries require their columns.
-The earlier pending claim-reference capacity migration remains a separate hosted release requirement.
+The same approved transaction applied `20260913050000_claim_ref_capacity_guard.sql`.
+Production now has 33 migrations through `20260916020100`. New staff queries have their required columns.
+Read-only checks confirm constraints, index validity, unique vendor codes, RLS, service-only RPC access, and the capacity guard.
 Old application versions can run with the added nullable claim columns and defaulted vendor code.
 Recovery uses the previous application release while retaining these columns and recorded data.
 Use a reviewed forward repair for database defects. An immediate restore is not verified.
 The vendor foreign key prevents deleting companies with recorded referral provenance.
 Use the existing inactive status to end a relationship while retaining history.
 
-No hosted database change, DNS change, backup, commit, push, merge, or deployment occurred for this feature.
+Local commit `b5cfca5` and the approved hosted migrations are complete.
+The owner-approved push of `b5cfca5` is complete. Verify, database, Vercel, and CodeRabbit checks passed.
+Native Preview public layout and private-route closure checks passed; successful submission acceptance remains open.
+No DNS change, backup, merge, or Production application deployment occurred for this feature.
 
 ## Verification
 

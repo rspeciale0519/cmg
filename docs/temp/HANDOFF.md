@@ -4,14 +4,60 @@
 
 Contractor fields, optional legacy loss time, and vendor-specific intake links are implemented locally.
 See [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for checks, migration order, and remaining browser acceptance.
-These new changes are not committed or deployed. The earlier Turnstile release commit is `b6774f1`.
+The owner-approved commit `b5cfca5` is pushed to `docs/record-production-launch-current`. Production is not deployed.
+The earlier Turnstile release commit is `b6774f1`.
 Existing DNS remains unchanged. No Supabase backup was created.
+
+### Pushed Preview acceptance — 2026-09-16
+
+The owner-approved push of `b5cfca5` succeeded. Vercel reports its Preview deployment complete.
+Native browser checks used the stable PR #2 Preview hostname.
+Home, Services, Contractors, About, Contact, and File a claim fit widths 320, 390, and 1280 pixels.
+Each route has its main heading. No completed broken images were observed.
+A 320-pixel intake screenshot confirms the mobile layout. All four contractor fields are optional; no time input exists.
+Keyboard Tab moves from First name to Last name. The empty form has 23 invalid required controls.
+Admin, partner, portal, login, and MFA visits show the disabled-platform notice.
+The inspected console log returned no warnings or errors. Full network and successful submission checks remain open.
+No submission, email, DNS change, merge, or Production deployment occurred. The viewport override was reset.
+The browser tab remains available for continued acceptance.
+
+### Fresh release verification — 2026-09-16
+
+PR #2 remains open into `develop`. Its remote head is now `b5cfca5`.
+GitHub run `35114872284` and Vercel Preview deployment `8x4DTzJRFdoBUXzwFMk4Lxozr8AF` started for this head.
+Verify passed in 3m1s, including the head build. Database passed in 3m26s. Vercel and CodeRabbit also passed.
+CI log totals: verify ran 89 passing files and 1,019 passing tests, with 12 files and 54 tests skipped.
+The database job passed all 41 pgTAP files and 1,287 assertions.
+Its database-backed Vitest selection passed 30 files and 205 tests; one file and one test were skipped.
+These selections overlap; do not sum them as distinct tests. Live PandaDoc acceptance remains unverified.
+GitHub confirms PR #2 is mergeable at `b5cfca5`; this does not grant merge approval.
+The owner approved four Production migrations without a backup: `20260913050000`, `20260916010000`, `20260916020000`, and `20260916020100`.
+The verified project had 29 migrations before application. Approved migration files matched commit `b5cfca5`.
+All four migrations and their history entries committed in one transaction, with bounded lock and statement timeouts.
+Read-only verification confirms 33 migrations through `20260916020100`, six added columns, constraints, and the ready, valid index.
+Vendor codes are non-null and unique. Claims and partner-company RLS remain enabled.
+The submission RPC remains security-invoker with an empty search path and service-role-only execution among application roles.
+Its definition contains contractor and vendor fields. The reference-capacity guard is present.
+The schema cache received a reload notification. No seed, claim submission, or email test ran.
+Hosted browser acceptance remains open. Push, PR updates, merge, and deployment need separate approval.
+The owner's instruction prohibits creating a Supabase backup. Recovery requires reviewed forward repair; immediate restoration is unverified.
+
+`npm audit --audit-level=high` reports zero vulnerabilities.
+Native browser layout checks pass for Home, Services, Contractors, About, Contact, and File a claim at 320, 390, and 1280 pixels.
+Every route has its main heading and no horizontal overflow. No completed broken images were observed.
+An intake screenshot at 320 pixels confirms the visible layout. All visible form fields remain inside the viewport.
+Keyboard Tab moves from First name to Last name. The empty intake reports 23 invalid required controls.
+Native visits to `/admin`, `/partner`, `/portal`, `/login`, and `/mfa` each reach `/platform-disabled` in simple mode.
+The inspected console log returned no warnings or errors during route checks.
+The intake still displays the local verification failure message. No form submission or email occurred.
+These checks do not establish full network, submission-success, or hosted acceptance.
+The local preview server was stopped after testing. Browser viewport settings were restored.
 
 Owner decision — 2026-09-15: the five reviewed files are approved for a local commit only.
 The owner deferred Resend sign-in until returning to the office. Provider delivery and inbox receipt remain unverified.
 Earlier pending-commit statements below describe prior checkpoints. Push, merge, deployment, and the new hosted migration are not authorized by this approval.
 
-## Native Preview contact acceptance — 2026-09-15
+## Historical Native Preview contact acceptance — 2026-09-15
 
 The approved synthetic contact submission returned `Request received.` after the hostname update.
 The hosted lead `0d9b170b-3053-4f90-889c-a9b7085942bd` was created at `2026-09-15T16:35:05.603624Z`.
@@ -19,7 +65,7 @@ Read-only verification found both outbox entries sent after one attempt: staff a
 Recipients use the approved staff inbox and `rob@miodiollc.com`. Provider delivery and inbox receipt are not yet verified for this submission.
 The application returned success through its fail-closed Turnstile submission path. Cloudflare's dashboard warning still needs reconciliation with provider activity.
 The browser log contains Cloudflare-frame `NaN` diagnostic messages; do not claim a clean console for this submission.
-The local Turnstile runtime-error patch remains uncommitted and is not in this Preview. Its separate validation results follow below.
+At this checkpoint, the local Turnstile runtime-error patch was uncommitted and absent from this Preview. It is now committed as `b6774f1`.
 
 ## Approved hostname update — 2026-09-15
 

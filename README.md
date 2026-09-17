@@ -209,7 +209,7 @@ Cleanup retains both exact paths through the upload expiry and reconciles late o
 15. Apply only the approved forward migrations to the verified hosted project.
 16. Verify schema, RLS, grants, and public workflows after migration.
 
-The owner declined a Supabase backup for the six migrations applied on 2026-09-13.
+The owner declined a Supabase backup for the six migrations applied on 2026-09-13 and four applied on 2026-09-16.
 Do not create a backup under the current authorization.
 Those approved migrations use reviewed forward repair as the recovery path; immediate restore readiness remains unverified.
 Database backups do not include Storage file contents. A future approved backup plan must address those objects separately.
@@ -240,6 +240,29 @@ Approval for one Git or production action does not approve another action.
 Environment changes apply to new deployments.
 They do not change existing deployments.
 See [Vercel environment variables](https://vercel.com/docs/environment-variables).
+
+## Contractor intake and vendor links
+
+The public intake separates homeowner details from optional contractor name, company, phone, and email.
+The homeowner must give the displayed consent. Contractor details do not replace homeowner identity or consent.
+The form asks for loss date and cause, but no longer asks for loss time.
+Valid times from older clients remain supported. Omitted times are stored as null.
+
+Each partner company has a unique public intake link. Owners can copy it from the company detail page in platform mode.
+Links use `NEXT_PUBLIC_SITE_URL`; verify that this value identifies the intended public environment.
+No additional environment variable or vendor-specific form is required.
+The server resolves the link code after rate limits, Turnstile, and input validation.
+Invalid links and inactive vendors cannot start a reservation. Direct intake without a link remains available.
+
+Referral attribution is internal metadata. It does not assign partner access or disclose other vendors.
+Possession of a link does not prove the submitter works for that vendor.
+Contractor contact fields and public partner IDs cannot override the server mapping.
+An existing immutable upload reservation retains its source during its normal lifetime.
+
+Apply the pending schema migrations before deploying code that reads the new columns.
+Old submission functions can ignore new contractor fields, so an application-first deployment risks incomplete records.
+Retain the added columns during application rollback. Use reviewed forward repair for database corrections.
+See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for migration order and verification limits.
 
 ## Cron operation
 

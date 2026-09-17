@@ -1,5 +1,19 @@
 # Development roadmap — CMG Property Solutions
 
+Current update — 2026-09-16: contractor details and vendor intake links are committed locally as `b5cfca5`.
+The public form no longer asks for loss time. Older time values remain compatible.
+Vendor links record internal attribution without granting claim access. Homeowner-only intake remains supported.
+Commit `b5cfca5` is pushed with owner approval. PR #2 verify, database, Vercel, and CodeRabbit checks pass for this head.
+Native Preview public layout and private-route closure checks pass.
+The owner approved all four pending hosted migrations without a backup. They applied successfully in one transaction.
+Production has 33 migrations through `20260916020100`. Schema and access-control checks pass.
+Local validation passes 1,072 application tests and 1,287 database assertions, with one live PandaDoc test skipped.
+Type checks, lint, build, and audit pass. Lint retains two existing warnings.
+Public layout checks cover 320, 390, and 1280 pixels. Simple-mode private-route closure passes.
+Submission success, authenticated screens, and latest hosted acceptance remain incomplete for the new feature.
+Production remains simple. DNS is unchanged, and the owner prohibits a Supabase backup.
+HANDOFF contains current evidence. Earlier dated entries below are historical.
+
 Current update — 2026-09-15: Production remains in simple mode. PR #1 is merged; PR #2 contains the pushed dependency and reference-capacity fixes.
 PR #2 checks pass at `8be147c`, but the capacity migration and updated Production release still need approval.
 Native Preview acceptance found missing feedback for runtime Turnstile failures. A local widget fix adds an accessible message and preserves retry recovery.

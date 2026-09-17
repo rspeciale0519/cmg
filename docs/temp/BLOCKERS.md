@@ -1,5 +1,15 @@
 # Owner-only launch blockers and decisions
 
+Current approval gate — 2026-09-16: local commit `b5cfca5` is approved and complete.
+The owner approved migrations `20260913050000`, `20260916010000`, `20260916020000`, and `20260916020100` without a backup.
+All four applied in one transaction. Production has 33 migrations through `20260916020100`.
+Schema, constraints, index, vendor-code uniqueness, RLS, service-only RPC access, and capacity-guard checks passed.
+No backup was created. Recovery requires reviewed forward repair; immediate restoration remains unverified.
+The owner approved pushing `b5cfca5`; that push is complete.
+Committing the seven updated records, PR changes, merge, and Production deployment need separate approval.
+Resend sign-in remains deferred until the owner returns to the office.
+The dated checkpoints below are historical wherever this update supersedes them.
+
 Owner decision — 2026-09-15: committing the five reviewed files is approved. Push, merge, and deployment remain separate approval points.
 The owner will sign in to Resend after returning to the office. Delivery verification remains pending; no repeat sign-in request is needed meanwhile.
 Native Preview contact submission passed and both outbox entries are sent. Earlier pending-submission and commit-approval statements below are historical.
@@ -37,7 +47,7 @@ Recovery readiness, commercial hosting, branch protection, and business/legal de
 - Approve a commercial Vercel plan before purchase or commercial launch.
 - Resolve the private-repository plan limitation, then separately approve required branch protection.
 - Approve the exact public business copy, privacy terms, consent wording, retention policy, and legal holds.
-- Confirm acceptance of the documented recovery limits. No Supabase backup is authorized; the six migrations are already approved and applied.
+- Resolve launch recovery readiness. The owner accepted forward repair for the applied migrations; immediate restoration remains unverified. Do not request migration approval again.
 - Sign in to Vercel again to inspect current execution logs and deployment settings. The browser session and CLI credentials have expired.
 - Complete the local test staff MFA handoff for remaining native browser role tests. Do not send authentication codes in chat.
 - For later production platform activation, resolve PandaDoc production API access and approve live signing tests.

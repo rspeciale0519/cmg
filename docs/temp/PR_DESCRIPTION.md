@@ -1,4 +1,52 @@
-# Release CMG simple website mode
+# PR #2 description draft — 2026-09-16
+
+This local draft is not published. Updating the GitHub PR requires separate approval.
+
+## Problem and changes
+
+Contractors need separate contact fields when helping homeowners submit an intake.
+Vendors also need individual links to one shared form, without access to other vendors or private claims.
+This change adds optional contractor details and server-resolved vendor attribution.
+Homeowner contact, consent, and confirmation recipients stay separate.
+The form no longer requests loss time. Existing time values and older clients remain compatible.
+
+Owners can copy each vendor's link from the company page. Only active vendor mappings can start new reservations.
+Public link possession grants no claim access. Direct homeowner intake remains available.
+Staff see contractor details and referral provenance in claim details and staff emails.
+The existing atomic upload, outbox, cleanup, RLS, and MFA boundaries remain intact.
+
+The branch also includes the prior dependency patch, claim-reference capacity guard, and accessible Turnstile runtime-error feedback.
+Production remains in `SITE_MODE=simple`.
+
+## Validation and limits
+
+- Local full simple-mode run: 100 files and 1,072 tests pass; one live PandaDoc test is skipped.
+- Platform-focused suites: 200 tests pass; the expanded action-gate suite separately passes 16 tests.
+- Isolated database reset succeeds. All 41 pgTAP suites pass, with 1,287 assertions.
+- Type checks, lint, production build, and dependency audit pass. Lint reports two existing warnings; audit reports zero vulnerabilities.
+- Native public layouts fit 320, 390, and 1280 pixels. Tested private entry routes reach `/platform-disabled`.
+- Local browser submission is blocked by Turnstile verification. New authenticated screens and hosted workflows need acceptance against a migrated database.
+
+The approved commit `b5cfca5` is pushed and is the current PR head.
+GitHub run `35114872284` passed: verify, including build, in 3m1s and database in 3m26s.
+Vercel Preview and CodeRabbit passed for this head. Native public layout and disabled-route checks also passed.
+
+## Deployment order and recovery
+
+The owner approved migrations `20260913050000`, `20260916010000`, `20260916020000`, and `20260916020100` without a backup.
+All four applied atomically. Read-only verification confirms 33 migrations through `20260916020100`.
+Columns, constraints, the index, vendor-code uniqueness, RLS, RPC access, and the capacity guard passed inspection.
+Hosted browser acceptance and separate push, PR-update, merge, and deployment approvals remain required.
+An older submission function can ignore new contractor fields; deploying the application first risks incomplete records.
+The owner prohibits creating a backup. Immediate restoration is unverified.
+Recovery retains additive columns and uses the prior application plus reviewed forward database repair.
+Do not seed Production or change existing DNS.
+Commercial hosting, branch protection, legal approval, provider verification, and remaining acceptance gates remain open.
+See HANDOFF and BLOCKERS for the current release record.
+
+---
+
+# Historical PR #1 description and earlier checkpoints
 
 ## Current acceptance addendum — 2026-09-13
 
