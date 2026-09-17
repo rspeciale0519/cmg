@@ -3,9 +3,19 @@ import "server-only";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { isAppRole, isStaffRole, type AppRole } from "@/lib/auth/roles";
+import {
+  isAppRole,
+  isStaffRole,
+  landingPathFor,
+  SURFACES,
+  type AppRole,
+} from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
-import { isSimpleMode, PLATFORM_DISABLED_PATH } from "@/lib/site-mode";
+import {
+  isAnyPrivateSurfaceOpen,
+  isPathOpen,
+  PLATFORM_DISABLED_PATH,
+} from "@/lib/site-mode";
 
 export type Session = {
   userId: string;
@@ -28,7 +38,13 @@ export type Session = {
  * different requests never share anything.
  */
 export const getSession = cache(async (): Promise<Session | null> => {
-  if (isSimpleMode()) return null;
+  /* The question here is "can this build have a session at all", not "is any
+     particular surface open": `/login` is one of the six private prefixes, so a
+     mode that opens nothing has no way to issue a session and reading one would
+     build a Supabase client that can never answer anything. Staff mode opens
+     `/login`, so the read happens — and what the session is then *allowed* to
+     reach is decided by `requireUser` and the `require*` helpers below. */
+  if (!isAnyPrivateSurfaceOpen()) return null;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
@@ -55,17 +71,40 @@ export const getSession = cache(async (): Promise<Session | null> => {
   };
 });
 
-/** The mode boundary must also run inside pages and actions, not only proxy. */
-export function requirePlatform(): void {
-  if (isSimpleMode()) redirect(PLATFORM_DISABLED_PATH);
+/**
+ * The mode boundary, run inside pages and actions and not only in the proxy.
+ *
+ * Takes the path whose surface it is guarding rather than asking which mode is
+ * running, so a caller states *what it needs open* and the three-mode table in
+ * `site-mode.ts` stays the only place that knows which modes open what. A route
+ * matcher edit in the proxy therefore cannot quietly remove this second copy.
+ */
+export function requireOpenPath(path: string): void {
+  if (!isPathOpen(path)) redirect(PLATFORM_DISABLED_PATH);
 }
 
 export async function requireUser(next?: string): Promise<Session> {
-  requirePlatform();
-  const session = await getSession();
-  if (session) return session;
+  /* "Is there a login in this build at all" — the same question `getSession`
+     asks, and the reason it is asked again here is that it must answer with a
+     redirect rather than a null. */
+  if (!isAnyPrivateSurfaceOpen()) redirect(PLATFORM_DISABLED_PATH);
 
-  redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  const session = await getSession();
+  if (!session) {
+    redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  }
+
+  /* Staff mode opens `/login` for staff and closes `/portal` and `/partner`, so
+     a homeowner or referring contractor with valid credentials can reach a real
+     session and then has no surface. Refused here, once, for every caller of
+     every `require*` helper — `landingPathFor` resolves to `/platform-disabled`
+     exactly when that role's own prefix is closed. Without this a customer's
+     `/portal` page would be the thing deciding, and a page added under a closed
+     prefix would decide nothing at all. */
+  const landing = landingPathFor(session.role);
+  if (landing === PLATFORM_DISABLED_PATH) redirect(PLATFORM_DISABLED_PATH);
+
+  return session;
 }
 
 /**
@@ -159,6 +198,10 @@ export async function metadataForRole(
  * reaching for their own desk.
  */
 export async function requireStaff(next?: string): Promise<Session> {
+  /* Stated positively and by prefix: this helper needs `/admin` open, which is
+     true in `platform` and in `staff` and false in `simple`. `requireUser`
+     alone would not say so — it only asks whether a login exists. */
+  requireOpenPath(SURFACES.admin.prefix);
   const session = await requireUser(next);
   if (!isStaffRole(session.role)) notFound();
   if (session.aal !== "aal2") {

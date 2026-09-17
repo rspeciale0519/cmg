@@ -12,10 +12,7 @@ import {
   type SettleInput,
 } from "./delivery";
 import type { NotificationMessage } from "./render";
-import {
-  isSimpleMode,
-  PUBLIC_FORM_TEMPLATES,
-} from "@/lib/site-mode";
+import { deliverableTemplates } from "@/lib/site-mode";
 
 type Admin = SupabaseClient<Database>;
 
@@ -162,18 +159,24 @@ export async function dispatchOutbox(admin: Admin, ids: string[]): Promise<void>
   if (ids.length === 0) return;
 
   let allowedIds = ids;
-  if (isSimpleMode()) {
+
+  /* "Which templates may this mode put on the wire" — `undefined` only in
+     platform mode, where every template is deliverable and the lookup is
+     skipped entirely. Simple mode permits the four public-form templates;
+     staff mode adds the three alerts addressed to the CMG inbox. */
+  const templates = deliverableTemplates();
+  if (templates) {
     const { data, error } = await admin
       .from("notifications_outbox")
       .select("id, template")
       .in("id", ids);
 
     if (error) {
-      console.error("[outbox] simple-mode template check failed", error.message);
+      console.error("[outbox] deliverable-template check failed", error.message);
       return;
     }
 
-    const allowed = new Set<string>(PUBLIC_FORM_TEMPLATES);
+    const allowed = new Set<string>(templates);
     allowedIds = (data ?? [])
       .filter((row) => allowed.has(row.template))
       .map((row) => row.id);
@@ -221,7 +224,7 @@ export async function sweepOutbox(
       .limit(Math.max(limit, 0));
 
     if (error) {
-      throw new Error(`outbox simple-mode filter failed: ${error.message}`);
+      throw new Error(`outbox template filter failed: ${error.message}`);
     }
 
     ids = (data ?? []).map((row) => row.id);

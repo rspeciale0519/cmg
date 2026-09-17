@@ -1221,6 +1221,7 @@ export type Database = {
         Args: { p_ids?: string[]; p_lease_seconds?: number; p_limit?: number }
         Returns: {
           attempts: number
+          created_at: string
           id: string
           payload: Json
           recipient_email: string

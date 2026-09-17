@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { requirePlatform } from "@/lib/authz";
+import { requireOpenPath } from "@/lib/authz";
 import { findRedeemableInvite } from "@/lib/invites";
 import { site, telHref } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,7 +28,7 @@ export default async function InvitePage({
 }: {
   params: Promise<{ token: string }>;
 }) {
-  requirePlatform();
+  requireOpenPath("/invite");
   const { token } = await params;
 
   // Service-role, per spec §3: the caller has no session at all, and
