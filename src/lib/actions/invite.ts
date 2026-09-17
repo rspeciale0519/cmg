@@ -7,11 +7,7 @@ import { resendApiKey } from "@/lib/email/outbox";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { isAppRole, landingPathFor } from "@/lib/auth/roles";
 import { requirePlatform, requireStaff } from "@/lib/authz";
-import {
-  findRedeemableInvite,
-  issueInvite,
-  restoreInvite,
-} from "@/lib/invites";
+import { findRedeemableInvite, issueInvite } from "@/lib/invites";
 import {
   checkRateLimit,
   clientIpFromHeaders,
@@ -127,6 +123,34 @@ export async function issueClaimantInvite(
   };
 }
 
+/**
+ * Hands the reservation back when acceptance could not finish.
+ *
+ * `begin_invite_acceptance` stamps `acceptance_attempt_id` before the account
+ * is created, and `issue_invite_transaction` refuses to resend while that stamp
+ * is present — so a failure between the two used to leave an invitation that
+ * was neither redeemable nor re-issuable until it expired. These two branches
+ * called `restoreInvite`, which cleared `accepted_at` on a row where nothing had
+ * ever set it: a no-op on the only column that mattered.
+ *
+ * `abandon_invite_acceptance` clears the stamp only for the attempt that set it
+ * and only while the invite is unaccepted, so a late failure here can never
+ * reopen an invitation another request has already redeemed. A false return
+ * means exactly that case and needs no handling: the reservation is not ours to
+ * release.
+ */
+async function releaseReservation(
+  admin: ReturnType<typeof createAdminClient>,
+  inviteId: string,
+  attemptId: string,
+): Promise<void> {
+  const { error } = await admin.rpc("abandon_invite_acceptance", {
+    p_invite_id: inviteId,
+    p_attempt_id: attemptId,
+  });
+  if (error) console.error("[invite] reservation release failed", error.message);
+}
+
 type AcceptOutcome =
   | { kind: "signed_in"; destination: string }
   | { kind: "existing_account"; destination: string; notice?: string }
@@ -197,7 +221,7 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
   });
 
   if (createError && createError.code !== "email_exists") {
-    await restoreInvite(admin, invite.id);
+    await releaseReservation(admin, invite.id, reservedAttempt);
     console.error("[invite] createUser failed", createError.message);
     return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
   }
@@ -223,7 +247,7 @@ async function acceptInviteInner(formData: FormData): Promise<AcceptOutcome> {
   }
 
   if (!userId) {
-    await restoreInvite(admin, invite.id);
+    await releaseReservation(admin, invite.id, reservedAttempt);
     return { kind: "failed", state: { status: "error", message: GENERIC_ERROR } };
   }
 

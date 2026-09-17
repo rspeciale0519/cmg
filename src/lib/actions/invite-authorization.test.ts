@@ -37,10 +37,7 @@ vi.mock("@/lib/authz", () => ({ requireStaff: vi.fn(async () => stub.session) })
 vi.mock("@/lib/email/outbox", () => ({ resendApiKey: vi.fn(() => null) }));
 vi.mock("@/lib/invites", () => ({
   issueInvite: stub.issueInvite,
-  burnInvite: vi.fn(),
   findRedeemableInvite: vi.fn(),
-  restoreInvite: vi.fn(),
-  stampInviteAcceptedBy: vi.fn(),
 }));
 vi.mock("@/lib/rate-limit", () => ({
   RATE_LIMITS: {},

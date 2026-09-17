@@ -68,6 +68,18 @@ describe("parseClaimFilters", () => {
     expect(parseClaimFilters({ partner: "anything" }).partnerId).toBeNull();
   });
 
+  it("accepts a uuid vendor link and the no-link sentinel, independently of partner", () => {
+    const uuid = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+    expect(parseClaimFilters({ vendor: uuid }).vendorId).toBe(uuid);
+    expect(parseClaimFilters({ vendor: "none" }).vendorId).toBe("none");
+    expect(parseClaimFilters({ vendor: "anything" }).vendorId).toBeNull();
+    // The two columns are different facts, so one filter must never set the
+    // other: a claim attributed to a company at triage did not necessarily
+    // arrive through that company's link.
+    expect(parseClaimFilters({ vendor: uuid }).partnerId).toBeNull();
+    expect(parseClaimFilters({ partner: uuid }).vendorId).toBeNull();
+  });
+
   it("sanitises the search term on the way in", () => {
     expect(parseClaimFilters({ q: "bell,evil.ilike.*" }).search).toBe("bell evil ilike");
   });
@@ -80,6 +92,7 @@ describe("hasActiveFilters", () => {
         status: null,
         adjusterId: null,
         partnerId: null,
+        vendorId: null,
         search: "",
       }),
     ).toBe(false);
@@ -91,6 +104,7 @@ describe("hasActiveFilters", () => {
         status: "filed",
         adjusterId: null,
         partnerId: null,
+        vendorId: null,
         search: "",
       }),
     ).toBe(true);
@@ -99,7 +113,19 @@ describe("hasActiveFilters", () => {
         status: null,
         adjusterId: null,
         partnerId: null,
+        vendorId: null,
         search: "bell",
+      }),
+    ).toBe(true);
+    // The vendor filter has to count too, or the bar offers a Clear that
+    // changes nothing while the list is filtered.
+    expect(
+      hasActiveFilters({
+        status: null,
+        adjusterId: null,
+        partnerId: null,
+        vendorId: "none",
+        search: "",
       }),
     ).toBe(true);
   });
@@ -128,6 +154,7 @@ describe("applyClaimFilters", () => {
         status: "filed",
         adjusterId: "unassigned",
         partnerId: "partner-id",
+        vendorId: "vendor-id",
         search: "Bell",
       }),
     ).toBe(query);
@@ -135,6 +162,7 @@ describe("applyClaimFilters", () => {
       "eq:status:filed",
       "is:assigned_adjuster_id:null",
       "eq:partner_company_id:partner-id",
+      "eq:intake_referral_partner_id:vendor-id",
       "ilike:search_text:%Bell%",
     ]);
   });

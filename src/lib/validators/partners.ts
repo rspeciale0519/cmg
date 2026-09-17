@@ -19,6 +19,29 @@ export const partnerCompanySchema = z.object({
   contactName: optionalText(120),
   contactEmail: optionalEmail,
   contactPhone: optionalText(40),
+  /**
+   * The fee CMG charges on claims this vendor refers. Blank is the normal
+   * answer and means "the standard rate", so it parses to null rather than to
+   * zero — a stored 0 would say CMG works this company's claims for nothing.
+   *
+   * The range is `partner_companies_default_fee_percent_range` in the database
+   * and `claim_financials_fee_percent_range` after acceptance copies it; this
+   * produces the sentence. Two decimals because the column is numeric(5,2).
+   */
+  defaultFeePercent: z
+    .string()
+    .trim()
+    .max(6, "Give the fee as a percentage, for example 15.")
+    .transform((value) => (value === "" ? null : value))
+    .refine(
+      (value) => value === null || /^\d{1,3}(\.\d{1,2})?$/.test(value),
+      "Give the fee as a percentage, for example 15 or 17.5.",
+    )
+    .transform((value) => (value === null ? null : Number(value)))
+    .refine(
+      (value) => value === null || (value >= 0 && value <= 100),
+      "A fee must be between 0 and 100 percent.",
+    ),
   notes: optionalText(2000),
 });
 

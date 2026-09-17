@@ -9,6 +9,8 @@ const claim = {
   assigned_adjuster_id: "adjuster-1",
   claim_ref: "CMG-2026-0042",
   id: "claim-42",
+  intake_referral_partner_id: null,
+  intake_referral_partner_name: null,
   loss_date: "2026-08-01",
   partner_company_id: null,
   partner_name: null,

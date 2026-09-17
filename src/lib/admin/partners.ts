@@ -146,7 +146,13 @@ export type AttributedClaim = {
 };
 
 export type PartnerDetail = {
-  company: PartnerSummary & { notes: string | null; updatedAt: string; intakeReferralCode: string };
+  company: PartnerSummary & {
+    notes: string | null;
+    updatedAt: string;
+    intakeReferralCode: string;
+    /** The negotiated CMG fee for this vendor's referrals, or null for the standard rate. */
+    defaultFeePercent: number | null;
+  };
   reps: PartnerRep[];
   /** Reps linked to this company, counted in the database rather than measured off the page. */
   repTotal: number;
@@ -225,7 +231,7 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
     supabase
       .from("partner_companies")
       .select(
-        "id, name, status, contact_name, contact_email, contact_phone, notes, created_at, updated_at, intake_referral_code",
+        "id, name, status, contact_name, contact_email, contact_phone, notes, created_at, updated_at, intake_referral_code, default_fee_percent",
       )
       .eq("id", companyId)
       .maybeSingle(),
@@ -282,6 +288,7 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
       createdAt: company.created_at,
       updatedAt: company.updated_at,
       intakeReferralCode: company.intake_referral_code,
+      defaultFeePercent: company.default_fee_percent,
     },
     reps: repRows.map((row) => {
       const account = directory.get(row.id);

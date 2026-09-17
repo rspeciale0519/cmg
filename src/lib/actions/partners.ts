@@ -70,6 +70,7 @@ const COMPANY_FIELDS = [
   "contactName",
   "contactEmail",
   "contactPhone",
+  "defaultFeePercent",
   "notes",
 ] as const;
 
@@ -81,6 +82,7 @@ function readCompanyForm(formData: FormData) {
     contactName: formData.get("contactName") ?? "",
     contactEmail: formData.get("contactEmail") ?? "",
     contactPhone: formData.get("contactPhone") ?? "",
+    defaultFeePercent: formData.get("defaultFeePercent") ?? "",
     notes: formData.get("notes") ?? "",
   });
 }
@@ -119,6 +121,7 @@ export async function createPartnerCompany(
       contact_name: parsed.data.contactName ?? null,
       contact_email: parsed.data.contactEmail ?? null,
       contact_phone: parsed.data.contactPhone ?? null,
+      default_fee_percent: parsed.data.defaultFeePercent,
       notes: parsed.data.notes ?? null,
     })
     .select("id, name")
@@ -134,6 +137,7 @@ export async function createPartnerCompany(
 
   await auditPartner(session.userId, "partner_company.created", data.id, {
     name: data.name,
+    default_fee_percent: parsed.data.defaultFeePercent,
   });
 
   revalidatePartners(data.id);
@@ -162,6 +166,7 @@ export async function updatePartnerCompany(
       contact_name: parsed.data.contactName ?? null,
       contact_email: parsed.data.contactEmail ?? null,
       contact_phone: parsed.data.contactPhone ?? null,
+      default_fee_percent: parsed.data.defaultFeePercent,
       notes: parsed.data.notes ?? null,
     })
     .eq("id", companyId)
@@ -175,8 +180,11 @@ export async function updatePartnerCompany(
 
   if (!data) return { status: "error", message: NOT_FOUND, values: typed };
 
+  // The fee is a money term, so every change to it is on the record with the
+  // owner who made it — `partner_companies` carries no audit trigger.
   await auditPartner(session.userId, "partner_company.updated", companyId, {
     name: data.name,
+    default_fee_percent: parsed.data.defaultFeePercent,
   });
 
   revalidatePartners(companyId);
