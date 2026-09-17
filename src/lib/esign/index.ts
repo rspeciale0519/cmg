@@ -6,6 +6,7 @@ import "server-only";
  *
  *   esignCapabilities()        which provider is live and whether it can send
  *   sendLor(request)           put the Letter of Representation out for signing
+ *   prefillLorForClaim(id)     hand staff the prefilled letter to sign elsewhere
  *   createESignProvider()      the provider itself, for anything lower-level
  *
  * `sendLor` is the *authorized* entry point and the only one exported here.
@@ -27,6 +28,11 @@ export {
   type CreateESignProviderOptions,
   type ESignCapabilities,
 } from "./provider";
+export {
+  prefillLorForClaim,
+  type PrefilledLorFailureCode,
+  type PrefilledLorResult,
+} from "./prefill-lor";
 export {
   sendLor,
   type SendLorFailure,

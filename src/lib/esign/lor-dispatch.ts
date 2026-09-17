@@ -3,21 +3,17 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
-import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
 import type { Database } from "@/types/database-app";
 import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-ledger";
 import { handleDispatchFailure } from "./lor-dispatch-failure";
+import { collectLorLetter, loadLorClaim, type LorLetterFailureCode } from "./lor-letter";
 import { createESignProvider } from "./provider";
 import {
   ESignError,
   PANDADOC_TERMINAL_FAILURE_STATUSES,
   type ESignMode,
   type ESignProvider,
-  type LorRole,
-  type LorSigner,
-  type LorToken,
 } from "./types";
 
 type Admin = SupabaseClient<Database>;
@@ -49,14 +45,10 @@ export type SendLorSuccess = {
 };
 
 export type SendLorFailureCode =
-  | "claim_not_found"
+  /* The content gates live in `./lor-letter`, so the manual prefilled-PDF path
+     is refused by the same five codes this one is. */
+  | LorLetterFailureCode
   | "invalid_status"
-  /** No carrier or no policy number: there is nobody to address the letter to. */
-  | "missing_policy"
-  | "missing_lor_type"
-  /** No saved fee on the claim: the letter never prints a defaulted rate. */
-  | "missing_fee"
-  | "no_claimants"
   | "not_configured"
   | "provider_error"
   | "persist_failed"
@@ -75,100 +67,6 @@ export type SendLorDeps = {
   /** Fault-injection seam for proving post-send persistence failures stay locked. */
   beforePersist?: () => Promise<void>;
 };
-
-const ROLES: LorRole[] = ["Homeowner1", "Homeowner2"];
-
-const causeLabel = (value: string) =>
-  CAUSE_OPTIONS.find((option) => option.value === value)?.label ?? value;
-
-const formatLorDate = (value: string) => {
-  const [year, month, day] = value.split("-");
-  return year && month && day ? `${month}/${day}/${year}` : value;
-};
-
-function tokensFor(
-  claim: ClaimRow,
-  signers: LorSigner[],
-  adjusterName: string | null,
-  feePercent: number,
-): LorToken[] {
-  const address = [
-    claim.property_street,
-    claim.property_street2,
-    `${claim.property_city}, ${claim.property_state} ${claim.property_zip}`,
-  ]
-    .filter((part): part is string => Boolean(part))
-    .join(", ");
-
-  const nameFor = (role: LorRole) => {
-    const signer = signers.find((candidate) => candidate.role === role);
-    return signer ? `${signer.firstName} ${signer.lastName}` : "";
-  };
-  const primary = signers.find((candidate) => candidate.role === "Homeowner1");
-  const policyholderNames = signers
-    .map((signer) => `${signer.firstName} ${signer.lastName}`)
-    .join(" and ");
-  const selected = claim.lor_contract_type;
-
-  return [
-    { name: "Claim.Ref", value: claim.claim_ref },
-    /* Both are nullable in the type since Phase 6 — a partner referral carries
-       no policy side until staff record it — and neither is null by the time it
-       reaches here: `dispatchLorForClaim` refuses the claim above. The coalesce
-       is what the type requires, not a blank the letter is willing to print.
-       `Claim.ClaimNumber` is different and stays optional: the carrier issues it
-       after the claim is filed, so a letter sent before then honestly has none. */
-    { name: "Claim.Carrier", value: claim.carrier ?? "" },
-    { name: "Claim.PolicyNumber", value: claim.policy_number ?? "" },
-    { name: "Claim.ClaimNumber", value: claim.claim_number ?? "" },
-    { name: "Claim.LossDate", value: formatLorDate(claim.loss_date) },
-    { name: "Claim.Cause", value: causeLabel(claim.cause) },
-    { name: "Property.Address", value: address },
-    { name: "Homeowner1.Name", value: nameFor("Homeowner1") },
-    { name: "Homeowner2.Name", value: nameFor("Homeowner2") },
-    { name: "Policyholders.Name", value: policyholderNames },
-    { name: "Homeowner1.Phone", value: primary?.phone ?? "" },
-    { name: "Homeowner1.Email", value: primary?.email ?? "" },
-    { name: "Claim.EmergencyMark", value: selected === "emergency" ? "X" : "" },
-    {
-      name: "Claim.NonEmergencyMark",
-      value: selected === "non_emergency" ? "X" : "",
-    },
-    {
-      name: "Claim.SupplementalMark",
-      value: selected === "supplemental" ? "X" : "",
-    },
-    { name: "Adjuster.Name", value: adjusterName ?? "" },
-    { name: "Fee.Percent", value: `${feePercent}%` },
-  ];
-}
-
-const CLAIM_COLUMNS =
-  "id, claim_ref, status, carrier, policy_number, claim_number, lor_contract_type, loss_date, cause, " +
-  "property_street, property_street2, property_city, property_state, property_zip, " +
-  "assigned_adjuster_id, requested_adjuster, pandadoc_document_id, esign_status";
-
-type ClaimRow = Pick<
-  Database["public"]["Tables"]["claims"]["Row"],
-  | "id"
-  | "claim_ref"
-  | "status"
-  | "carrier"
-  | "policy_number"
-  | "claim_number"
-  | "lor_contract_type"
-  | "loss_date"
-  | "cause"
-  | "property_street"
-  | "property_street2"
-  | "property_city"
-  | "property_state"
-  | "property_zip"
-  | "assigned_adjuster_id"
-  | "requested_adjuster"
-  | "pandadoc_document_id"
-  | "esign_status"
->;
 
 /**
  * Service-role mechanism, not an authorization entry point. Only the
@@ -193,13 +91,9 @@ export async function dispatchLorForClaim(
   const admin = deps.admin ?? createAdminClient();
   const provider = deps.provider ?? createESignProvider();
 
-  const { data: claim, error: claimError } = await admin
-    .from("claims")
-    .select(CLAIM_COLUMNS)
-    .eq("id", input.claimId)
-    .maybeSingle<ClaimRow>();
+  const claim = await loadLorClaim(admin, input.claimId);
 
-  if (claimError || !claim) {
+  if (!claim) {
     return {
       ok: false,
       code: "claim_not_found",
@@ -231,88 +125,15 @@ export async function dispatchLorForClaim(
   }
 
   /* Refused before the provider is called, not after. The claim's own transition
-     to `lor_sent` is gated on these two columns in the app and in
-     `public.enforce_claim_status_transition()`, and without this check the
+     to `lor_sent` is gated on the policy columns in the app and in
+     `public.enforce_claim_status_transition()`, and without these checks the
      database gate would fire on the UPDATE *below* — after the letter had been
-     put in front of the homeowner. The order matters more than the rule: an
+     put in front of the homeowner. The order matters more than the rules: an
      unsent letter is a refusal, a sent one naming no carrier is a document that
      should never have existed. */
-  if (!namesAPolicy(claim)) {
-    return {
-      ok: false,
-      code: "missing_policy",
-      message:
-        "This claim has no carrier or policy number on file, and the letter is addressed to the carrier. Record them on the claim first.",
-    };
-  }
-
-  if (!claim.lor_contract_type) {
-    return {
-      ok: false,
-      code: "missing_lor_type",
-      message:
-        "This claim has no agreement type. Choose Emergency, Non-emergency, or Supplemental on the claim before you send the letter.",
-    };
-  }
-
-  const { data: claimants } = await admin
-    .from("claimants")
-    .select("first_name, last_name, email, phone, is_primary, created_at")
-    .eq("claim_id", claim.id)
-    .order("is_primary", { ascending: false })
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .limit(ROLES.length);
-
-  if (!claimants || claimants.length === 0) {
-    return {
-      ok: false,
-      code: "no_claimants",
-      message: "This claim has no claimants to sign the letter.",
-    };
-  }
-
-  const signers: LorSigner[] = claimants.slice(0, ROLES.length).map((claimant, index) => ({
-    email: claimant.email,
-    phone: claimant.phone,
-    firstName: claimant.first_name,
-    lastName: claimant.last_name,
-    role: ROLES[index],
-  }));
-
-  let feePercent = input.feePercent ?? null;
-  if (feePercent === null) {
-    const { data: financials } = await admin
-      .from("claim_financials")
-      .select("fee_percent")
-      .eq("claim_id", claim.id)
-      .maybeSingle();
-    feePercent = financials?.fee_percent ?? null;
-  }
-  /* The fee is a term of the agreement the homeowner signs. It is never
-     defaulted here: a letter carrying a rate nobody recorded on this claim is
-     a document that should not exist, so the refusal happens before the
-     provider is called, like the policy and agreement-type gates above. */
-  if (feePercent === null) {
-    return {
-      ok: false,
-      code: "missing_fee",
-      message:
-        "This claim has no fee percentage saved. Record the fee on the Financials tab before you send the letter.",
-    };
-  }
-
-  let adjusterName: string | null = claim.requested_adjuster;
-  if (claim.assigned_adjuster_id) {
-    const { data: adjuster } = await admin
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("id", claim.assigned_adjuster_id)
-      .maybeSingle();
-    adjusterName = adjuster
-      ? [adjuster.first_name, adjuster.last_name].filter(Boolean).join(" ") || null
-      : null;
-  }
+  const letter = await collectLorLetter(admin, claim, input.feePercent ?? null);
+  if (!letter.ok) return letter;
+  const { signers } = letter;
 
   const requestId = input.requestId ?? randomUUID();
   const ownership = await claimDispatch(admin, {
@@ -352,7 +173,7 @@ export async function dispatchLorForClaim(
       claimRef: claim.claim_ref,
       documentName: `LOR — ${claim.claim_ref}`,
       signers,
-      tokens: tokensFor(claim, signers, adjusterName, feePercent),
+      tokens: letter.tokens,
       message: input.message ?? null,
       beforeSend: async (providerDocumentId) => {
         const marked = await markDispatchSending(

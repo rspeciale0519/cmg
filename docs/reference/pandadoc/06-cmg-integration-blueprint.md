@@ -18,7 +18,10 @@ Current code and tests take priority.
 | [provider.ts](../../../src/lib/esign/provider.ts) | PandaDoc or manual provider selection |
 | [lor-dispatch.ts](../../../src/lib/esign/lor-dispatch.ts) | Validation, dispatch ownership, and claim effects |
 | [pandadoc.ts](../../../src/lib/esign/pandadoc.ts) | Create from PDF, wait for draft, and send |
+| [lor-letter.ts](../../../src/lib/esign/lor-letter.ts) | Claim read, content gates, and letter tokens |
 | [lor-pdf.ts](../../../src/lib/esign/lor-pdf.ts) | Bundled files, fields, and signer roles |
+| [lor-prefill.ts](../../../src/lib/esign/lor-prefill.ts) | Local tag substitution for the manual prefilled PDF |
+| [prefill-lor.ts](../../../src/lib/esign/prefill-lor.ts) | Authorized download of the prefilled letter |
 | [pandadoc-client.ts](../../../src/lib/esign/pandadoc-client.ts) | API requests, deadlines, and provider errors |
 | [webhook.ts](../../../src/lib/esign/webhook.ts) | HMAC, event leases, claim resolution, and dispatch reconciliation |
 | [webhook-handlers.ts](../../../src/lib/esign/webhook-handlers.ts) | Recipient, document state, and completed-PDF handling |
@@ -63,6 +66,43 @@ The source PDF is `temp/docs/CMG_Blank-LOR-2026.pdf`.
 It does not update the bundled copies automatically.
 Review regenerated pages before replacing release assets.
 Do not change approved legal wording as part of routine setup.
+
+`scripts/build-lor-tagged-pdfs.py --manifest src/lib/esign/lor-tag-manifest.json` exports the tag coordinates.
+The manifest is the only tag source the application reads.
+Regenerate it whenever the script's coordinate tables change.
+`lor-prefill.test.ts` compares the manifest against both bundled PDFs.
+
+## Manual prefilled-PDF signing
+
+This path needs no PandaDoc API key and no webhook.
+It is the release path while CMG signs through the PandaDoc web app.
+The provider stays `manual`, so nothing in the application calls PandaDoc.
+
+`prefillLorForClaim()` authorizes the caller and applies the content gates.
+It uses `requireStaff()` and `claimCapabilities().canManage`, exactly as `sendLor()` does.
+It refuses `missing_policy`, `missing_lor_type`, `missing_fee`, and `no_claimants`.
+It writes an `esign.lor_prefilled` audit row before it releases the bytes.
+It does not advance the claim status and does not claim the dispatch lease.
+Staff can therefore download the letter as often as the desk needs.
+
+`buildPrefilledLorPdf()` replaces each data tag's drawn string with the claim value.
+It leaves every initial and signature tag exactly as drawn.
+A covered tag is not enough: PandaDoc reads invisible text on upload.
+Values wider than their tag are condensed, then truncated with `...`.
+
+Staff procedure:
+
+1. Open the claim and download the letter from the representation panel.
+2. Upload the PDF to PandaDoc as a new document.
+3. Confirm PandaDoc detected the `H1` tags, and the `H2` tags on a two-signer letter.
+4. Assign `H1` to the primary policyholder and `H2` to the second policyholder.
+5. Send the document from PandaDoc.
+6. Download the completed PDF from PandaDoc after every signature.
+7. Upload it to the claim's Documents tab with kind `lor_signed`.
+
+The claim advances to `lor_signed` through the existing database gate.
+That gate still requires a `documents` row of kind `lor_signed`.
+Prefilled date text is not evidence of the signature time.
 
 ## Environment
 

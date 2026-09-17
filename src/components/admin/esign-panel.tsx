@@ -1,12 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { submitLorRecovery } from "@/lib/actions/esign";
+import { useActionState, useState, useTransition } from "react";
+import { downloadPrefilledLor, submitLorRecovery } from "@/lib/actions/esign";
 import { idleState, resilient } from "@/lib/actions/types";
 import { adminESignState, type AdminESignTone } from "@/lib/esign/admin-state";
 import { cx } from "@/lib/cx";
-import { ActionFeedback, SubmitButton } from "./form-controls";
+import { ActionFeedback, AdminButton, SubmitButton } from "./form-controls";
+
+const DOWNLOAD_FAILED =
+  "The letter could not be prepared. Reload the claim and try again.";
+
+/**
+ * Save the returned bytes as a file rather than opening them.
+ *
+ * A server action answers with a value, not a response, so there is no
+ * `Content-Disposition` header to set: the anchor's `download` attribute is
+ * what makes the browser treat the PDF as an attachment instead of handing it
+ * to an inline viewer.
+ */
+function saveAsAttachment(pdfBase64: string, filename: string): void {
+  const binary = atob(pdfBase64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  // Revoked on the next turn, not inline: a browser that has not yet started
+  // reading the object URL when `click()` returns saves an empty file.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 const TONE: Record<AdminESignTone, string> = {
   neutral: "border-ink/15 bg-ink/[0.025] text-ink/72",
@@ -24,6 +52,7 @@ export function ESignPanel({
   canManage,
   electronicReady,
   electronicBlocker,
+  providerMode,
 }: {
   claimId: string;
   requestId: string;
@@ -33,8 +62,12 @@ export function ESignPanel({
   canManage: boolean;
   electronicReady: boolean;
   electronicBlocker: string | null;
+  /** `manual` when no PandaDoc API key is configured. */
+  providerMode: "manual" | "pandadoc";
 }) {
   const [state, action] = useActionState(resilient(submitLorRecovery), idleState);
+  const [downloading, startDownload] = useTransition();
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const display = adminESignState(esignStatus, claimStatus);
   const canStart = display.key === "not_started" && claimStatus === "under_review";
   // A failure can leave the claim at either dispatchable status: a declined or
@@ -44,6 +77,30 @@ export function ESignPanel({
   const canRecover =
     (claimStatus === "lor_sent" || claimStatus === "under_review") && display.recoverable;
   const showActions = canManage && (canStart || canRecover);
+  /* Without an API key nobody sends the letter for CMG, so the desk needs the
+     paper itself. Offered wherever a letter is still the next thing to happen —
+     including while a manual request is already pending, which is exactly when
+     staff go looking for the file to upload to PandaDoc. */
+  const showPrefilledDownload =
+    canManage &&
+    providerMode === "manual" &&
+    (canStart || canRecover || display.key === "manual_pending");
+
+  const requestDownload = () => {
+    setDownloadError(null);
+    startDownload(async () => {
+      try {
+        const result = await downloadPrefilledLor(claimId);
+        if (!result.ok) {
+          setDownloadError(result.message);
+          return;
+        }
+        saveAsAttachment(result.pdfBase64, result.filename);
+      } catch {
+        setDownloadError(DOWNLOAD_FAILED);
+      }
+    });
+  };
 
   return (
     <div>
@@ -98,6 +155,28 @@ export function ESignPanel({
           ) : null}
           <ActionFeedback state={state} />
         </form>
+      ) : null}
+
+      {showPrefilledDownload ? (
+        <div className="mt-[13px]">
+          <AdminButton
+            type="button"
+            onClick={requestDownload}
+            disabled={downloading}
+            aria-busy={downloading || undefined}
+          >
+            {downloading ? "Preparing…" : "Download letter for signing"}
+          </AdminButton>
+          <p className="mt-[9px] text-[12px] leading-[1.55] text-ink/58">
+            The letter arrives filled in, with the signature tags left in place.
+            Upload it to PandaDoc, assign the signers, and send it from there.
+          </p>
+          {downloadError ? (
+            <p role="alert" className="mt-[7px] text-[12px] leading-[1.55] text-[#E08C6A]">
+              {downloadError}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {!canManage && canRecover ? (

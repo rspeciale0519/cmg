@@ -1,8 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const mocks = vi.hoisted(() => ({ download: vi.fn() }));
+
 vi.mock("@/lib/actions/esign", () => ({
   submitLorRecovery: vi.fn(async () => ({ status: "success" })),
+  downloadPrefilledLor: (...args: unknown[]) => mocks.download(...args),
 }));
 
 import { ESignPanel } from "./esign-panel";
@@ -17,6 +20,7 @@ const base = {
   canManage: true,
   electronicReady: true,
   electronicBlocker: null,
+  providerMode: "pandadoc" as const,
 };
 
 describe("ESignPanel", () => {
@@ -92,5 +96,57 @@ describe("ESignPanel", () => {
     expect(screen.getByRole("link", { name: "Documents" }).getAttribute("href")).toBe(
       `/admin/claims/${base.claimId}/documents`,
     );
+  });
+
+  /**
+   * The no-API-key path. CMG signs through PandaDoc's web app rather than its
+   * API, so the letter has to leave the desk as a file. The control appears
+   * only when the platform itself cannot send it, and the line beside it is
+   * the whole procedure staff follow next.
+   */
+  it("offers the prefilled letter, with upload guidance, when the provider is manual", () => {
+    render(
+      <ESignPanel
+        {...base}
+        providerMode="manual"
+        claimStatus="under_review"
+        esignStatus={null}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Download letter for signing" }),
+    ).toBeTruthy();
+    expect(screen.getByText(/upload it to pandadoc/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Send for e-signature" })).toBeTruthy();
+  });
+
+  it("keeps offering the letter while a manual request is pending", () => {
+    render(<ESignPanel {...base} providerMode="manual" esignStatus="manual_pending" />);
+    expect(
+      screen.getByRole("button", { name: "Download letter for signing" }),
+    ).toBeTruthy();
+  });
+
+  it("does not offer the prefilled letter when PandaDoc can send it", () => {
+    render(<ESignPanel {...base} claimStatus="under_review" esignStatus={null} />);
+    expect(
+      screen.queryByRole("button", { name: "Download letter for signing" }),
+    ).toBeNull();
+  });
+
+  it("does not offer the prefilled letter to a read-only assistant", () => {
+    render(
+      <ESignPanel
+        {...base}
+        providerMode="manual"
+        canManage={false}
+        claimStatus="under_review"
+        esignStatus={null}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Download letter for signing" }),
+    ).toBeNull();
+    expect(mocks.download).not.toHaveBeenCalled();
   });
 });
