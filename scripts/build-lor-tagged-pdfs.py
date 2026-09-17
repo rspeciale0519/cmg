@@ -50,9 +50,16 @@ def system_fields() -> dict[int, list[tuple[float, float, str]]]:
             (414, 441, tag("t", "H1", "d9a", 8)),
             (128, 403, tag("t", "H1", "email", 20)),
             (125, 366, tag("t", "H1", "d9b", 8)),
-            (105, 311, tag("t", "H1", "em", 1)),
-            (105, 292, tag("t", "H1", "ne", 1)),
-            (105, 273, tag("t", "H1", "su", 1)),
+            # Centred inside the printed checkboxes on page 9, which sit at
+            # y 323.2-330.5 (EMERGENCY), 304.9-312.2 (NON-EMERGENCY) and
+            # 286.5-293.8 (SUPPLEMENTAL), x 108.8-115.2. The earlier baselines
+            # of 311/292/273 were each about 12pt low, so every mark landed in
+            # the box for the option *below* the one it meant: an emergency
+            # agreement read as non-emergency, and a supplemental one marked
+            # nothing at all. These are glyph-centred for a 7pt X.
+            (109.6, 324.4, tag("t", "H1", "em", 1)),
+            (109.6, 306.0, tag("t", "H1", "ne", 1)),
+            (109.6, 287.6, tag("t", "H1", "su", 1)),
         ],
     }
 
