@@ -6,7 +6,8 @@ These engineering proposals do not establish legal retention duties.
 
 Public legal approval is required before the simple-mode launch.
 Retention automation, export, erasure, and platform access remain separate work.
-[HANDOFF.md](temp/HANDOFF.md) records current release evidence and open decisions.
+[RELEASE_STATE.md](RELEASE_STATE.md) records the current release state and open gates.
+[HANDOFF.md](temp/HANDOFF.md) records current engineering evidence.
 
 ## Proposed policy
 
@@ -30,6 +31,10 @@ Legal holds and unresolved delivery or recovery work take priority over proposed
 | `claim_partner_summaries` | While the claim exists | Maintain the derived projection | Database triggers |
 | `profiles`, `partner_companies` | Life of the relationship, subject to policy | Deactivate access | Existing controls |
 | `claim_ref_counters` | Retain permanently | Preserve reference uniqueness | Existing counter |
+
+The `claims` row also holds the optional `contractor_*` intake columns and `intake_referral_partner_id`.
+The `contractor_*` columns hold third-party contact details that the homeowner supplied, so they follow the claim's period and any subject request that names them.
+`intake_referral_partner_id` is internal provenance. Its foreign key blocks deleting a partner company that has recorded referrals, so deactivate the company instead.
 
 A status change alone does not prove that archive or deletion is legally allowed.
 Counsel must define the clock for rejected, reopened, and disputed claims.
@@ -149,7 +154,9 @@ Before an approved production migration:
 2. Obtain production backup and write approvals.
 3. Back up database data and Storage objects.
 4. Verify the backup and restore procedure.
-5. Record recovery identifiers in HANDOFF without secrets.
+5. Record recovery identifiers in RELEASE_STATE without secrets.
+
+The owner's current decision declines backups and accepts reviewed forward repair, which overrides steps 3 and 4 until that decision is revisited.
 
 Never seed or reset production.
 Do not delete recovery ledgers during a release.
