@@ -24,9 +24,43 @@ It is not proof of the signature date.
 The retained source is `temp/docs/CMG_Blank-LOR-2026.pdf`.
 `scripts/build-lor-tagged-pdfs.py` builds both variants under `temp/docs/`.
 Its Python libraries are `pypdfium2`, `pypdf`, and `reportlab`.
+`--manifest src/lib/esign/lor-tag-manifest.json` exports the tag coordinates and needs none of them.
+Regenerate that manifest whenever the script's coordinate tables change.
 PDF regeneration is a separate asset task.
 Review every regenerated page before replacing a bundled PDF.
 Do not install missing libraries or change approved legal text without approval.
+
+## Manual prefilled-PDF signing
+
+Use this path when CMG has no PandaDoc API access.
+It needs no `PANDADOC_API_KEY` and no webhook.
+Leave the provider in manual mode; nothing in the application calls PandaDoc.
+
+The representation panel shows **Download letter for signing** in manual mode.
+The download applies the same refusals a send applies.
+It refuses a claim with no carrier, no policy number, no agreement type, no saved fee, or no claimants.
+It records an `esign.lor_prefilled` audit row for every download.
+It does not advance the claim status and does not consume the dispatch lease.
+
+The downloaded PDF carries every claim value in place of its data tag.
+It keeps every initial and signature tag: `i1`–`i4`, `i8`, `s5`–`s7`, `s9` for `H1`.
+A two-signer letter also keeps `j1`–`j4`, `j8`, `t5`–`t7`, `t9` for `H2`.
+PandaDoc detects those tags when staff upload the file.
+
+Procedure:
+
+1. Open the claim in the workspace and download the letter.
+2. Upload the PDF to PandaDoc as a new document.
+3. Check that PandaDoc created the `H1` fields, and the `H2` fields on a two-signer letter.
+4. Assign `H1` to the primary policyholder.
+5. Assign `H2` to the second policyholder when the letter has one.
+6. Send the document from PandaDoc.
+7. Download the completed PDF from PandaDoc after every signature.
+8. Upload it to the claim's Documents tab with kind `lor_signed`.
+
+The claim advances to `lor_signed` through the existing database gate.
+Check every page before sending, because the download is not reviewed by anyone else.
+The printed date is the download date, not the signature date.
 
 ## Account and environment preparation
 

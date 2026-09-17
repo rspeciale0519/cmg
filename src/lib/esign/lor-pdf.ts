@@ -47,8 +47,12 @@ export function formatDispatchDate(value: Date): string {
   }).format(value);
 }
 
+/** Only the two members the field map reads, so the manual prefill path — which
+ *  has no dispatch attempt and no provider document — can call it too. */
+export type LorFieldSource = Pick<LorRequest, "signers" | "tokens">;
+
 export function buildLorPdfFields(
-  request: LorRequest,
+  request: LorFieldSource,
   dispatchDate: Date = new Date(),
 ): Record<string, PandaDocField> {
   const tokenValues = new Map(request.tokens.map((token) => [token.name, token.value]));

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import argparse
+import json
+import re
 from pathlib import Path
 
-import pypdfium2 as pdfium
-from pypdf import PdfReader
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen import canvas
+# The third-party imports live inside `build()` on purpose. `--manifest` exports
+# the coordinate tables below and nothing else, and the application test that
+# checks the manifest against the bundled PDFs must be able to run it on a
+# machine that has no PDF toolchain installed.
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -120,6 +123,11 @@ def prepare_page_background(page_number: int, output_canvas: canvas.Canvas) -> N
 
 
 def build(output: Path, dual: bool) -> None:
+    import pypdfium2 as pdfium
+    from pypdf import PdfReader
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
     reader = PdfReader(str(SOURCE))
     rendered = pdfium.PdfDocument(str(SOURCE))
     systems = system_fields()
@@ -151,7 +159,69 @@ def build(output: Path, dual: bool) -> None:
     output_canvas.save()
 
 
+TAG_ID = re.compile(r"\{\{(?P<type>[a-z]):(?P<role>H[12]):(?P<id>[a-z0-9]+)_*\}\}")
+
+
+def placements(fields: dict[int, list[tuple[float, float, str]]]) -> list[dict[str, object]]:
+    """The drawn tags as data: page, baseline, and the exact string drawn."""
+    rows: list[dict[str, object]] = []
+    for page_number in sorted(fields):
+        for x, y, value in fields[page_number]:
+            match = TAG_ID.fullmatch(value)
+            if match is None:
+                raise SystemExit(f"Unreadable tag on page {page_number}: {value}")
+            rows.append(
+                {
+                    "page": page_number,
+                    "x": x,
+                    "y": y,
+                    "id": match.group("id"),
+                    "role": match.group("role"),
+                    "type": match.group("type"),
+                    "tag": value,
+                }
+            )
+    return rows
+
+
+def manifest() -> dict[str, object]:
+    """
+    The single source of truth for where each tag sits, exported for
+    `src/lib/esign/lor-prefill.ts`.
+
+    `data` holds the tags the application replaces with claim values.
+    `signature` holds the initial and signature tags, which must survive
+    prefilling verbatim so PandaDoc still detects them on upload.
+    """
+    system = placements(system_fields())
+    return {
+        "font": "Helvetica",
+        "fontSize": FONT_SIZE,
+        "variants": {
+            "single": {"data": system, "signature": placements(signer_fields(dual=False))},
+            "dual": {"data": system, "signature": placements(signer_fields(dual=True))},
+        },
+    }
+
+
+def write_manifest(output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(manifest(), indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Write the tag coordinate manifest to this path and build no PDF.",
+    )
+    args = parser.parse_args()
+
+    if args.manifest is not None:
+        write_manifest(args.manifest)
+        return
+
     if not SOURCE.exists():
         raise SystemExit(f"Source PDF does not exist: {SOURCE}")
     build(OUTPUT_DIR / "CMG_LOR-2026-PandaDoc-Single.pdf", dual=False)

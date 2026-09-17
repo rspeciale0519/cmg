@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 describe("LOR signer query shape", () => {
   it("orders deterministically and reads no more signers than the supported roles", () => {
-    const source = readFileSync(resolve("src/lib/esign/lor-dispatch.ts"), "utf8");
+    const source = readFileSync(resolve("src/lib/esign/lor-letter.ts"), "utf8");
     const signerRead = source.slice(
       source.indexOf('const { data: claimants } = await admin'),
       source.indexOf('if (!claimants || claimants.length === 0)'),

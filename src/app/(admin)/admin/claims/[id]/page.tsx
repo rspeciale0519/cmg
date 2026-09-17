@@ -133,6 +133,7 @@ export default async function ClaimOverviewPage({
               esignStatus={claim.esignStatus}
               providerDocumentId={claim.pandaDocDocumentId}
               canManage={can.canManage}
+              providerMode={esign.mode}
               electronicReady={esign.canSendElectronically && esign.ready}
               electronicBlocker={
                 esign.canSendElectronically
