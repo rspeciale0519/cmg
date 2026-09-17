@@ -65,6 +65,20 @@ describeDb("LOR dispatch validation", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
+  it("refuses to print a defaulted fee when the claim has none saved", async () => {
+    const claim = await support.seedClaim(admin, { status: "under_review" });
+    created.push({ id: claim.id, claimRef: claim.claimRef });
+    await admin.from("claim_financials").delete().eq("claim_id", claim.id);
+    const provider = new ManualSignProvider();
+    const dispatch = vi.spyOn(provider, "dispatchLor");
+
+    await expect(dispatchLorForClaim(
+      { claimId: claim.id },
+      { admin, provider },
+    )).resolves.toMatchObject({ ok: false, code: "missing_fee" });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it("refuses to guess which agreement checkbox applies", async () => {
     const claim = await support.seedClaim(admin, { status: "under_review" });
     created.push({ id: claim.id, claimRef: claim.claimRef });

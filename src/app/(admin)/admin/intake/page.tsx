@@ -69,7 +69,9 @@ export default async function IntakeQueuePage({
        property_street, property_street2, property_city, property_state, property_zip,
        carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome,
        loss_date, loss_time, cause, description,
-       requested_adjuster, referrer_name, referrer_email`,
+       requested_adjuster, referrer_name, referrer_email,
+       contractor_name, contractor_company, contractor_phone, contractor_email,
+       intake_referrer:partner_companies!claims_intake_referral_partner_id_fkey(id, name)`,
     )
     .eq("status", "new_intake")
     .order("created_at", { ascending: reversed })
@@ -229,6 +231,34 @@ export default async function IntakeQueuePage({
                         <span className="text-ink/55">Direct — no referral</span>
                       )}
                     </Fact>
+                    {/* Server-resolved from the vendor's link code. This is
+                        provenance, not access: the operator still decides
+                        whether the company is attached on accept, which is why
+                        the accept form pre-selects it rather than assuming it. */}
+                    <Fact label="Vendor link">
+                      {claim.intake_referrer ? (
+                        claim.intake_referrer.name
+                      ) : (
+                        <span className="text-ink/55">Direct intake</span>
+                      )}
+                    </Fact>
+                    {claim.contractor_name ||
+                    claim.contractor_company ||
+                    claim.contractor_phone ||
+                    claim.contractor_email ? (
+                      <Fact label="Contractor on the intake">
+                        {[claim.contractor_name, claim.contractor_company]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                        {claim.contractor_phone || claim.contractor_email ? (
+                          <span className="block text-[12.5px] text-ink/55">
+                            {[claim.contractor_phone, claim.contractor_email]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
+                        ) : null}
+                      </Fact>
+                    ) : null}
 
                     {others.length > 0 ? (
                       <Fact label="Also on the claim" wide>
@@ -260,6 +290,7 @@ export default async function IntakeQueuePage({
                   adjusters={adjusters}
                   partners={partners}
                   referrerName={claim.referrer_name}
+                  intakeReferralPartnerId={claim.intake_referrer?.id ?? null}
                   needsPolicyDetails={claim.carrier === null}
                   canAccept={can.canManage}
                   canLinkPartner={can.isOwner}

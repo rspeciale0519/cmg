@@ -37,7 +37,12 @@ export function ESignPanel({
   const [state, action] = useActionState(resilient(submitLorRecovery), idleState);
   const display = adminESignState(esignStatus, claimStatus);
   const canStart = display.key === "not_started" && claimStatus === "under_review";
-  const canRecover = claimStatus === "lor_sent" && display.recoverable;
+  // A failure can leave the claim at either dispatchable status: a declined or
+  // expired request sits at lor_sent, while a creation failure never advanced
+  // the claim past under_review. Both are retryable in the database and in
+  // dispatch, so both get the recovery controls.
+  const canRecover =
+    (claimStatus === "lor_sent" || claimStatus === "under_review") && display.recoverable;
   const showActions = canManage && (canStart || canRecover);
 
   return (

@@ -171,6 +171,13 @@ export async function seedClaim(
   );
   if (claimantError) throw new Error(`seed claimants failed: ${claimantError.message}`);
 
+  // Dispatch refuses a claim with no saved fee, so the fixture records the
+  // figure the dispatch assertions expect. Cascades away with the claim.
+  const { error: feeError } = await admin
+    .from("claim_financials")
+    .insert({ claim_id: claim.id, fee_percent: 10 });
+  if (feeError) throw new Error(`seed fee failed: ${feeError.message}`);
+
   const walk: Array<"under_review" | "lor_sent"> =
     options.status === "under_review" ? ["under_review"] : ["under_review", "lor_sent"];
 

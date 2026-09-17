@@ -31,13 +31,13 @@ import type { ESignCapabilities } from "@/lib/esign/provider";
  */
 
 /**
- * CMG's standard contingency fee. Not invented for this screen — it is the
- * figure recorded on both seeded claims (`claim_financials.fee_percent = 10.00`)
- * and is the reference an adjuster starts from. The binding number for any given
- * claim is the one on that claim's Financials tab; this is the default a new
- * agreement is written against.
+ * CMG's standard contingency fee, confirmed by the owner on 2026-09-17. A
+ * vendor-specific rate on the referring partner company overrides it when a
+ * claim is accepted, and the binding number for any given claim is the one on
+ * that claim's Financials tab. The Letter of Representation never falls back to
+ * this constant: dispatch refuses a claim with no saved fee.
  */
-export const FEE_PERCENT_DEFAULT = 10;
+export const FEE_PERCENT_DEFAULT = 20;
 
 /**
  * The exact contract the PandaDoc templates must implement. These names are

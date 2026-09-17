@@ -5,7 +5,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
 import { namesAPolicy } from "@/lib/claims/transitions";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { CAUSE_OPTIONS } from "@/lib/validators/intake-options";
 import type { Database } from "@/types/database-app";
 import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-ledger";
@@ -55,6 +54,8 @@ export type SendLorFailureCode =
   /** No carrier or no policy number: there is nobody to address the letter to. */
   | "missing_policy"
   | "missing_lor_type"
+  /** No saved fee on the claim: the letter never prints a defaulted rate. */
+  | "missing_fee"
   | "no_claimants"
   | "not_configured"
   | "provider_error"
@@ -89,7 +90,7 @@ function tokensFor(
   claim: ClaimRow,
   signers: LorSigner[],
   adjusterName: string | null,
-  feePercent: number | null,
+  feePercent: number,
 ): LorToken[] {
   const address = [
     claim.property_street,
@@ -138,7 +139,7 @@ function tokensFor(
       value: selected === "supplemental" ? "X" : "",
     },
     { name: "Adjuster.Name", value: adjusterName ?? "" },
-    { name: "Fee.Percent", value: `${feePercent ?? FEE_PERCENT_DEFAULT}%` },
+    { name: "Fee.Percent", value: `${feePercent}%` },
   ];
 }
 
@@ -287,6 +288,18 @@ export async function dispatchLorForClaim(
       .eq("claim_id", claim.id)
       .maybeSingle();
     feePercent = financials?.fee_percent ?? null;
+  }
+  /* The fee is a term of the agreement the homeowner signs. It is never
+     defaulted here: a letter carrying a rate nobody recorded on this claim is
+     a document that should not exist, so the refusal happens before the
+     provider is called, like the policy and agreement-type gates above. */
+  if (feePercent === null) {
+    return {
+      ok: false,
+      code: "missing_fee",
+      message:
+        "This claim has no fee percentage saved. Record the fee on the Financials tab before you send the letter.",
+    };
   }
 
   let adjusterName: string | null = claim.requested_adjuster;
