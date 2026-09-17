@@ -32,6 +32,7 @@ import {
 } from "@/lib/admin/paging";
 import { hasRole, NOT_FOUND_TITLE, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
+import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -210,8 +211,21 @@ export default async function PartnerDetailPage({
             )}
           </PanelBody>
         </Panel>
-        <Panel title="Company details" meta={`Updated ${formatRelative(company.updatedAt)}`}>
+        {/* The effective rate, stated as a fact, above the field that sets it.
+            An owner reading a vendor's page needs to know what CMG charges on
+            this vendor's claims, and a blank input answers that question only
+            for someone who already knows blank means the standard fee. */}
+        <Panel
+          title="Company details"
+          meta={`Updated ${formatRelative(company.updatedAt)}`}
+        >
           <PanelBody>
+            <p className="mb-3 text-sm text-ink/70">
+              {company.defaultFeePercent === null
+                ? `Vendor fee: uses the standard ${FEE_PERCENT_DEFAULT}%`
+                : `Vendor fee: ${company.defaultFeePercent}%`}
+              {" — applied to new claims when an intake is accepted."}
+            </p>
             {/* Keyed on updatedAt so a saved edit re-seeds the uncontrolled
                 fields rather than snapping back to the first render's values —
                 see PartnerCompanyForm. */}
@@ -223,6 +237,10 @@ export default async function PartnerDetailPage({
                 contactName: company.contactName ?? "",
                 contactEmail: company.contactEmail ?? "",
                 contactPhone: company.contactPhone ?? "",
+                defaultFeePercent:
+                  company.defaultFeePercent === null
+                    ? ""
+                    : String(company.defaultFeePercent),
                 notes: company.notes ?? "",
               }}
             />

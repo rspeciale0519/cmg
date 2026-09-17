@@ -1,7 +1,7 @@
 begin;
 set local client_min_messages=warning;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(13);
 
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
  where n.nspname='public' and p.proname in ('claim_esign_dispatch','mark_esign_dispatch_sending',
@@ -30,10 +30,17 @@ select ok(not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pron
 select ok(not has_table_privilege('authenticated','public.esign_dispatch_attempts','select')
  and not has_table_privilege('authenticated','public.esign_recipient_completions','select'),
  'authenticated cannot read either e-sign ledger table');
-select ok(not has_function_privilege('anon','private.invite_account_marker(uuid,text,uuid,uuid)','execute')
- and not has_function_privilege('authenticated','private.invite_account_marker(uuid,text,uuid,uuid)','execute'),
+-- 20260917120000 dropped the four-argument overload. 20260815200000 superseded
+-- it with the two-argument form that public.finalize_invite_acceptance() calls,
+-- and leaving both in place kept an unused service_role grant on an ambiguous
+-- name. The two-argument form carries the grants now.
+select ok(not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+ where n.nspname='private' and p.proname='invite_account_marker'
+   and p.pronargs=4),'the superseded four-argument auth marker overload is gone');
+select ok(not has_function_privilege('anon','private.invite_account_marker(uuid,text)','execute')
+ and not has_function_privilege('authenticated','private.invite_account_marker(uuid,text)','execute'),
  'client roles cannot call the auth marker projection');
-select ok(has_function_privilege('service_role','private.invite_account_marker(uuid,text,uuid,uuid)','execute'),
+select ok(has_function_privilege('service_role','private.invite_account_marker(uuid,text)','execute'),
  'service role alone can call the auth marker projection');
 
 insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,

@@ -960,6 +960,7 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          default_fee_percent: number | null
           id: string
           intake_referral_code: string
           name: string
@@ -972,6 +973,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          default_fee_percent?: number | null
           id?: string
           intake_referral_code?: string
           name: string
@@ -984,6 +986,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          default_fee_percent?: number | null
           id?: string
           intake_referral_code?: string
           name?: string
@@ -1105,12 +1108,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abandon_invite_acceptance: {
+        Args: { p_attempt_id: string; p_invite_id: string }
+        Returns: boolean
+      }
       accept_intake_transaction: {
         Args: {
           p_adjuster_id: string
           p_carrier: string
           p_carrier_tenure: Database["public"]["Enums"]["carrier_tenure"]
           p_claim_id: string
+          p_default_fee_percent: number
           p_ip: unknown
           p_lor_contract_type: Database["public"]["Enums"]["lor_contract_type"]
           p_new_partner_name: string
@@ -1118,6 +1126,7 @@ export type Database = {
           p_partner_choice: string
           p_partner_company_id: string
           p_policy_number: string
+          p_portal_url: string
         }
         Returns: Json
       }
@@ -1226,10 +1235,6 @@ export type Database = {
           p_payload_hash: string
         }
         Returns: Json
-      }
-      claim_search_text: {
-        Args: { p_claim: Database["public"]["Tables"]["claims"]["Row"] }
-        Returns: string
       }
       claim_status_counts: {
         Args: never
@@ -1403,6 +1408,8 @@ export type Database = {
           assigned_adjuster_id: string
           claim_ref: string
           id: string
+          intake_referral_partner_id: string
+          intake_referral_partner_name: string
           loss_date: string
           partner_company_id: string
           partner_name: string

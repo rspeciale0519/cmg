@@ -4,6 +4,13 @@ export type ClaimFilters = {
   status: ClaimStatus | null;
   adjusterId: string | null;
   partnerId: string | null;
+  /**
+   * The vendor whose public intake link produced the claim, which is a
+   * different fact from `partnerId`: attribution at triage says who CMG credits
+   * the referral to, and this says which link the homeowner actually arrived
+   * through. They disagree often enough to be worth filtering separately.
+   */
+  vendorId: string | null;
   /** Already sanitised for PostgREST's filter grammar — see `sanitiseSearch`. */
   search: string;
 };
@@ -45,6 +52,7 @@ export function parseClaimFilters(params: {
   status?: string;
   adjuster?: string;
   partner?: string;
+  vendor?: string;
   q?: string;
 }): ClaimFilters {
   return {
@@ -66,13 +74,26 @@ export function parseClaimFilters(params: {
         : params.partner === "none"
           ? "none"
           : null,
+    // Mirrors `partner` exactly, "none" included: a claim that came in without
+    // a vendor link is as real a selection as one that came through a named
+    // vendor's link.
+    vendorId:
+      typeof params.vendor === "string" && UUID.test(params.vendor)
+        ? params.vendor
+        : params.vendor === "none"
+          ? "none"
+          : null,
     search: sanitiseSearch(params.q),
   };
 }
 
 export function hasActiveFilters(filters: ClaimFilters): boolean {
   return Boolean(
-    filters.status || filters.adjusterId || filters.partnerId || filters.search,
+    filters.status ||
+      filters.adjusterId ||
+      filters.partnerId ||
+      filters.vendorId ||
+      filters.search,
   );
 }
 
@@ -93,6 +114,12 @@ export function applyClaimFilters<Q extends ClaimQuery<Q>>(
     next = next.is("partner_company_id", null);
   } else if (filters.partnerId) {
     next = next.eq("partner_company_id", filters.partnerId);
+  }
+
+  if (filters.vendorId === "none") {
+    next = next.is("intake_referral_partner_id", null);
+  } else if (filters.vendorId) {
+    next = next.eq("intake_referral_partner_id", filters.vendorId);
   }
 
   if (filters.search) {

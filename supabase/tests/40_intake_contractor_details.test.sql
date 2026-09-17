@@ -3,7 +3,10 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select no_plan();
+-- Exact, not no_plan(): six of the assertions below are driven by
+-- `contractor_results` and run once per fixture row, so the count is the thing
+-- that proves both the no-file and the one-file case actually ran.
+select plan(19);
 \ir support/36_intake_upload_fixtures.inc
 
 select ok((select relrowsecurity from pg_class where oid = 'public.claims'::regclass),

@@ -5,11 +5,13 @@ import { headers } from "next/headers";
 import { writeAudit } from "@/lib/audit";
 import { requireStaff } from "@/lib/authz";
 import { claimCapabilities } from "@/lib/claims/capabilities";
+import { portalUrl } from "@/lib/claims/notify";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus } from "@/lib/claims/status";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { inviteIntakeClaimants } from "./intake-invites";
 import { readIntakePolicyDetails } from "./intake-policy";
 import {
@@ -213,6 +215,13 @@ export async function acceptIntake(
       policyDetails && !("fieldErrors" in policyDetails) ? policyDetails.lorContractType : null,
     p_note: note,
     p_ip: ip,
+    /* Derived from NEXT_PUBLIC_SITE_URL rather than baked into the function,
+       which used to queue the production portal link from every environment. */
+    p_portal_url: portalUrl(),
+    /* CMG's standard fee. The function prefers the referring vendor's own rate
+       and falls back to this, so a claim never reaches the LOR with no rate on
+       it. An existing financials row is left alone. */
+    p_default_fee_percent: FEE_PERCENT_DEFAULT,
   });
 
   if (assignError) {

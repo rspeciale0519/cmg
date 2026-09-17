@@ -47,11 +47,18 @@ type FunctionOverrides = {
     "issue_invite_transaction",
     "p_claim_id" | "p_partner_company_id"
   >;
-  // 20260815210000: nullable assignment IDs and LEFT JOIN names remain null.
+  // 20260815210000, extended by 20260917120000: nullable assignment IDs and
+  // LEFT JOIN names remain null, and a claim that arrived without a vendor link
+  // has neither a referral partner ID nor a referral partner name.
   staff_claims_projection: Omit<Functions["staff_claims_projection"], "Returns"> & {
     Returns: NullableFields<
       Functions["staff_claims_projection"]["Returns"][number],
-      "adjuster_name" | "assigned_adjuster_id" | "partner_company_id" | "partner_name"
+      | "adjuster_name"
+      | "assigned_adjuster_id"
+      | "intake_referral_partner_id"
+      | "intake_referral_partner_name"
+      | "partner_company_id"
+      | "partner_name"
     >[];
   };
   // 20260815230000: both arguments default to NULL (Json already includes null).

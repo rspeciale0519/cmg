@@ -22,6 +22,7 @@ type CompanyValues = {
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  defaultFeePercent: string;
   notes: string;
 };
 
@@ -30,6 +31,7 @@ const EMPTY: CompanyValues = {
   contactName: "",
   contactEmail: "",
   contactPhone: "",
+  defaultFeePercent: "",
   notes: "",
 };
 
@@ -144,6 +146,32 @@ export function PartnerCompanyForm({
             maxLength={254}
             autoComplete="off"
             error={state.fieldErrors?.contactEmail}
+          />
+        </AdminField>
+
+        {/* Blank is the normal answer and the hint says what blank means, so an
+            owner who has not negotiated a rate is not pushed into typing the
+            standard one — a stored 20 would read as a decision about this
+            company rather than as the absence of one, and it would then stay 20
+            through any future change to CMG's standard fee. Text rather than
+            `type="number"`, for the reason `noValidate` is on the form: the
+            schema owns the shape, and a browser spinner on a percentage invites
+            a scroll wheel to change a money term by accident. */}
+        <AdminField
+          name="defaultFeePercent"
+          label="Vendor fee"
+          hint="optional — blank uses CMG's standard fee"
+          error={state.fieldErrors?.defaultFeePercent}
+          className="sm:col-span-2"
+        >
+          <AdminInput
+            name="defaultFeePercent"
+            inputMode="decimal"
+            defaultValue={state.values?.defaultFeePercent ?? initial.defaultFeePercent}
+            maxLength={6}
+            autoComplete="off"
+            placeholder="15"
+            error={state.fieldErrors?.defaultFeePercent}
           />
         </AdminField>
 

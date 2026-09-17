@@ -2,7 +2,11 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select no_plan();
+-- Exact, not no_plan(): three of the assertions below run once per row of
+-- `vendor_intakes` and therefore count twice each, which is the arithmetic a
+-- no_plan() suite silently stops checking. A fixture loop that stopped looping
+-- would leave every remaining assertion passing and the suite green.
+select plan(14);
 \ir support/36_intake_upload_fixtures.inc
 
 select ok((select count(*) = count(distinct intake_referral_code) from public.partner_companies),

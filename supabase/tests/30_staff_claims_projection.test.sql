@@ -3,7 +3,7 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(19);
 
 select has_function('public', 'staff_claims_projection', array[]::text[],
   'staff claims projection exists');
@@ -21,8 +21,18 @@ select ok(not has_function_privilege('anon','public.staff_claims_projection()','
   'anon cannot execute the projection');
 select ok(has_function_privilege('authenticated','public.staff_claims_projection()','execute'),
   'authenticated callers can reach the role-gated projection');
-select ok(not has_function_privilege('authenticated','public.claim_search_text(public.claims)','execute'),
-  'authenticated callers no longer execute the composite claims search function');
+select ok(not exists(
+  select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public' and p.proname='claim_search_text'),
+  'the composite claims search function the projection replaced no longer exists');
+-- 20260917120000 added the vendor-link provenance columns. They are output
+-- names on the function, so an accidental rename is a catalog fact this can
+-- check without depending on a row being present.
+select ok((select array['intake_referral_partner_id','intake_referral_partner_name']
+  <@ coalesce(p.proargnames, array[]::text[])
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  where n.nspname='public' and p.proname='staff_claims_projection'),
+  'projection exposes the vendor link partner and its name');
 select ok(not exists(
   select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
     unnest(coalesce(p.proargnames,array[]::text[])) output_name
@@ -35,15 +45,19 @@ set local request.jwt.claims =
 set local role authenticated;
 select is((select count(*)::int from public.staff_claims_projection()),2,
   'AAL2 owner sees the complete claims list');
+-- The seed leaves claim_ref to public.claims_before_insert(), which stamps the
+-- year the seed was loaded in. Hard-coding 2026 made these three assertions
+-- expire on New Year's Day; the year is computed from the same clock the
+-- trigger reads instead.
 select results_eq(
   $$select claim_ref from public.staff_claims_projection()
     where search_text ilike '%Marcus Bell%' order by claim_ref$$,
-  $$values ('CMG-2026-0001'::text)$$,
+  $$values ('CMG-' || to_char(now(), 'YYYY') || '-0001')$$,
   'owner search matches an exact claimant name');
 select results_eq(
   $$select claim_ref from public.staff_claims_projection()
     where search_text ilike '%Universal Property%' order by claim_ref$$,
-  $$values ('CMG-2026-0002'::text)$$,
+  $$values ('CMG-' || to_char(now(), 'YYYY') || '-0002')$$,
   'owner search matches an exact carrier name');
 select is((select count(*)::int from public.staff_claims_projection()
   where status='settled' and assigned_adjuster_id='00000000-0000-4000-a000-000000000002'
@@ -60,7 +74,7 @@ set local request.jwt.claims =
 set local role authenticated;
 select results_eq(
   $$select claim_ref from public.staff_claims_projection() order by claim_ref$$,
-  $$values ('CMG-2026-0001'::text)$$,
+  $$values ('CMG-' || to_char(now(), 'YYYY') || '-0001')$$,
   'adjuster sees only claims currently assigned to that adjuster');
 
 reset role;

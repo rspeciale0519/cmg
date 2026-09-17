@@ -63,6 +63,7 @@ export default async function ClaimsPage({
     status: first("status"),
     adjuster: first("adjuster"),
     partner: first("partner"),
+    vendor: first("vendor"),
     q: first("q"),
   });
 
@@ -139,6 +140,7 @@ export default async function ClaimsPage({
     if (filters.status) params.set("status", filters.status);
     if (filters.adjusterId) params.set("adjuster", filters.adjusterId);
     if (filters.partnerId) params.set("partner", filters.partnerId);
+    if (filters.vendorId) params.set("vendor", filters.vendorId);
     if (filters.search) params.set("q", filters.search);
     for (const [key, value] of Object.entries(extra ?? {})) params.set(key, value);
     const query = params.toString();
@@ -284,7 +286,7 @@ export default async function ClaimsPage({
                width below and the flexible Homeowner column would otherwise
                have paid for both — 258px at the floor before, 218px after. The
                floor moves by exactly the 40px the two columns took. */
-            minWidth={1080}
+            minWidth={1230}
             head={
               <>
                 {/* 148, up from 132. `CMG-2026-0001` plus the sort caret needs
@@ -302,6 +304,14 @@ export default async function ClaimsPage({
                     longest value in this table after the address, and it is the
                     one an owner filters on. */}
                 <Th className="w-[164px]">Referred by</Th>
+                {/* A separate column rather than a mark on "Referred by",
+                    because the two columns disagree on purpose: the one before
+                    it is who CMG credits the referral to, and this one is the
+                    link the homeowner actually arrived through. A vendor asking
+                    whether their link is producing work is asking about this
+                    column. 150px matches the Status column — a company name
+                    already has its full width one cell to the left. */}
+                <Th className="w-[150px]">Via vendor link</Th>
                 <Th className="w-[116px]" sort={sortFor("loss")}>
                   Loss date
                 </Th>
@@ -387,6 +397,20 @@ export default async function ClaimsPage({
                           name-first either before or after that collision is
                           sorted out. */}
                       {claim.partner_name ?? (
+                        <span className="text-ink/55">Direct</span>
+                      )}
+                    </span>
+                  </Td>
+                  <Td tone="meta">
+                    {/* "Direct" is a value here too, and it carries the same
+                        `title` and the same `ink/55` as the column beside it:
+                        the cell truncates inside hidden overflow, so a clipped
+                        vendor name is otherwise unrecoverable at 390px. */}
+                    <span
+                      className="block truncate"
+                      title={claim.intake_referral_partner_name ?? "Direct"}
+                    >
+                      {claim.intake_referral_partner_name ?? (
                         <span className="text-ink/55">Direct</span>
                       )}
                     </span>

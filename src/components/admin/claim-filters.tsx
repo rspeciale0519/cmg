@@ -112,6 +112,7 @@ export function ClaimFilters({
       status: params.get("status") ?? undefined,
       adjuster: params.get("adjuster") ?? undefined,
       partner: params.get("partner") ?? undefined,
+      vendor: params.get("vendor") ?? undefined,
       q: term,
     }),
   );
@@ -218,6 +219,36 @@ export function ClaimFilters({
         >
           <option value="">Any source</option>
           <option value="none">Direct</option>
+          {partners.map((partner) => (
+            <option key={partner.id} value={partner.id}>
+              {partner.name}
+            </option>
+          ))}
+        </AdminSelect>
+      </div>
+
+      {/* Separate from "Referred by" because the two answer different
+          questions. Attribution is a decision someone made at triage; the
+          vendor link is where the homeowner actually came from, and an owner
+          measuring whether a vendor's link is working needs the second one. */}
+      <div className="min-w-[150px]">
+        <label
+          htmlFor="admin-vendor"
+          className="mb-[5px] block text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55"
+        >
+          Via vendor link
+        </label>
+        <AdminSelect
+          name="vendor"
+          value={params.get("vendor") ?? ""}
+          onChange={(event) =>
+            startTransition(() =>
+              router.replace(withParam("vendor", event.target.value), { scroll: false }),
+            )
+          }
+        >
+          <option value="">Any link</option>
+          <option value="none">No vendor link</option>
           {partners.map((partner) => (
             <option key={partner.id} value={partner.id}>
               {partner.name}
