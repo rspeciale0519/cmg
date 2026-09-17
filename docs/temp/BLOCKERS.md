@@ -1,9 +1,67 @@
 # Owner-only launch blockers and decisions
 
-Last reconciled: 2026-09-03.
+Current approval gate — 2026-09-16: local commit `b5cfca5` is approved and complete.
+The owner approved migrations `20260913050000`, `20260916010000`, `20260916020000`, and `20260916020100` without a backup.
+All four applied in one transaction. Production has 33 migrations through `20260916020100`.
+Schema, constraints, index, vendor-code uniqueness, RLS, service-only RPC access, and capacity-guard checks passed.
+No backup was created. Recovery requires reviewed forward repair; immediate restoration remains unverified.
+The owner approved pushing `b5cfca5`; that push is complete.
+Committing the seven updated records, PR changes, merge, and Production deployment need separate approval.
+Resend sign-in remains deferred until the owner returns to the office.
+The dated checkpoints below are historical wherever this update supersedes them.
+
+Owner decision — 2026-09-15: committing the five reviewed files is approved. Push, merge, and deployment remain separate approval points.
+The owner will sign in to Resend after returning to the office. Delivery verification remains pending; no repeat sign-in request is needed meanwhile.
+Native Preview contact submission passed and both outbox entries are sent. Earlier pending-submission and commit-approval statements below are historical.
+
+Latest update — 2026-09-15: the approved Preview hostname addition is complete.
+Cloudflare confirmed the save and now shows four hostnames. Existing entries, Managed mode, and disabled pre-clearance remain unchanged.
+The earlier hostname-entry blocker below is resolved. No DNS changes or backups occurred.
+Native Preview contact verification now shows Turnstile `Success!`. No new hosted form submission occurred during that check.
+
+Current update — 2026-09-15: Cloudflare sign-in is restored, but the approved Preview hostname is still absent.
+A new local fix provides accessible runtime-verification errors. Its local checks pass; commit and push require separate approval.
+The hostname input returns `No results`; an attempted save retained the original three hostnames.
+The owner must complete this exact hostname addition in the retained widget settings tab before Preview form acceptance can continue.
+No repeat authorization is needed for the previously approved hostname. DNS must remain unchanged.
+Fresh GitHub checks still pass for PR #2; its merge, Production deployment, and new hosted migration remain separately controlled actions.
+
+Current update — 2026-09-14: the approved commit and push of `8be147c` are complete. PR #2 metadata is updated.
+Remote verify, database, CodeRabbit, and Vercel checks pass. Earlier pending-commit statements are historical.
+The new Preview hostname needs Turnstile authorization before form acceptance can continue.
+The owner approved adding only `cmgps-git-docs-record-production-c2abd6-robs-projects-c72886ba.vercel.app`.
+Cloudflare requires sign-in again before the approved change can proceed. The Chrome login tab is retained for the owner.
+This changes the widget allowlist, not DNS. Do not merge, deploy, or apply the new hosted migration without separate approval.
+
+Current update — 2026-09-13: the owner resumed full-platform acceptance and approved the six hosted migrations without a backup.
+All 29 migrations are now applied. The contact auto-reply and staff alert are delivered.
+Those are the previously approved migrations. The new reference-capacity guard remains local and needs separate production approval after validation.
+One small private upload passed as synthetic claim `CMG-2026-0003`; maximum-size hosted tests remain open.
+Preview platform activation for `feature/claims-platform` is deployed and Ready. Production remains in simple mode.
+Owner sign-in and authenticator enrollment passed. Engineering validation and open defects are recorded in HANDOFF.
+These facts supersede pending migration, backup prerequisite, recipient, and Preview-mode approval requests below.
+Recovery readiness, commercial hosting, branch protection, and business/legal decisions remain unresolved.
+
+## Current owner-controlled decisions
+
+- Approve a commercial Vercel plan before purchase or commercial launch.
+- Resolve the private-repository plan limitation, then separately approve required branch protection.
+- Approve the exact public business copy, privacy terms, consent wording, retention policy, and legal holds.
+- Resolve launch recovery readiness. The owner accepted forward repair for the applied migrations; immediate restoration remains unverified. Do not request migration approval again.
+- Sign in to Vercel again to inspect current execution logs and deployment settings. The browser session and CLI credentials have expired.
+- Complete the local test staff MFA handoff for remaining native browser role tests. Do not send authentication codes in chat.
+- For later production platform activation, resolve PandaDoc production API access and approve live signing tests.
+- Approve future commits, pushes, PR changes, merges, deployments, and other external changes separately when required.
+
+The chosen app subdomain, existing DNS preservation, approved test recipients, migration application, and Preview activation do not need repeat approval.
+The approved local dependency patch passes validation. Commit, push, remote checks, and deployment remain separate actions.
+
+## Historical launch decisions — superseded by the current record above
+
+Last reconciled: 2026-09-12.
 The release target is `SITE_MODE=simple`.
 The site is not approved for launch.
-Current release-record updates are pushed; the verified Preview redeployment is Ready in simple mode.
+The merged Production deployment is Ready in simple mode; current launch-record updates are local and uncommitted.
 This file contains owner-controlled decisions, access, and publication actions.
 [HANDOFF.md](HANDOFF.md) contains engineering checks, release evidence, and pending release work.
 Pending engineering checks are not owner-only blockers.
@@ -57,21 +115,19 @@ A Vercel upgrade does not remove the upload request limit or change the configur
 ### 4. Live public services and operating expectations
 
 Vercel contains Resend and Turnstile settings.
-Secret values and email delivery remain unverified.
+The production sender uses the verified root domain, and a synthetic staff alert was delivered.
 Local vendor keys are empty, and local Turnstile keys are test-only.
 Configuration presence does not prove delivery or bot protection.
 
-Fresh Preview `/contact` navigation repeatedly reported Turnstile `110200`.
-Cloudflare identifies this as “Domain not authorized” in its [error-code reference](https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/error-codes/).
-**Owner action:** approve widget hostname configuration for the intended Preview and production hosts.
-No CAPTCHA bypass or configuration change occurred.
+Cloudflare Turnstile now authorizes `cmgpropertysolutions.net`, which covers `app.cmgpropertysolutions.net`.
+Regular Chrome showed `Success!` on the live contact page.
 
 The Preview `SITE_MODE=simple` environment update and redeployment are complete.
 Private routes redirect to `/platform-disabled`, and public routes pass read-only checks.
 
-**Owner action:** confirm live accounts, sending-domain control, recipient addresses, and final Turnstile hostnames.
-Approve live submissions and test messages before they write to hosted services or contact recipients.
-Confirm the permitted test recipients and data.
+The approved phone-only production test returned `Request received.`
+Resend recorded the staff alert as `Delivered` to `Austin@CMGPropertySolutions.net`.
+The auto-reply to the approved `rob@miodiollc.com` address needs a cooldown-safe retry.
 
 The outbox runs daily at 14:00 UTC.
 Storage cleanup runs daily at 14:17 UTC.
@@ -83,15 +139,15 @@ A faster schedule requires a separate decision after commercial-plan approval.
 ### 5. Domain, DNS, TLS, and mail policy
 
 The current DNS observations are recorded in [HANDOFF.md](HANDOFF.md#hosted-database-and-service-evidence).
-The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
-The custom domain is therefore not routed to the Vercel Production deployment.
-The final site domain and sender-domain acceptance remain unconfirmed.
-Microsoft 365 mail records exist, and the DMARC lookup returned NXDOMAIN.
-These observations do not establish the required DNS changes.
+The owner selected `app.cmgpropertysolutions.net` as the temporary public hostname.
+Vercel verifies that hostname, and live route checks pass on it.
+The root and `www` hostnames remain unchanged by design.
+Resend verified the sender domain on 2026-09-09.
+A live staff-alert email was accepted and delivered on 2026-09-12.
+Microsoft 365 mail records exist, and the domain now has `v=DMARC1; p=none;`.
+The DNS setup and the live staff-alert test establish the current sending path.
 
-**Owner action:** confirm the final hostname, DNS authority, mail policy, and cutover timing.
-Attach the custom domain to the CMG Vercel project and validate the canonical redirect before launch.
-Approve domain and DNS writes separately from deployment.
+**Owner action:** confirm that the temporary app hostname is acceptable for launch.
 Preserve existing Microsoft 365 mail routing.
 Approve hosted TLS, redirect, form, and email acceptance actions before launch.
 
@@ -131,22 +187,20 @@ Do not authorize automatic renaming, deletion, quarantine, or constraint removal
 ### 8. Separate release approvals
 
 The reviewed implementation and documentation commits are pushed.
-PR #1 targets `develop`, and its current required GitHub checks pass.
+PR #1 is merged into `develop`, and its required GitHub checks passed.
 The Ready Preview contains these fixes and runs simple mode.
-The Vercel UI confirms that future Production deployments track `develop`.
-A merge can therefore start deployment automatically.
+Vercel deployed merge commit `383a99936ca7536f7e5522ea71387c2b788763df` to Production.
+The Vercel aliases serve the merged code in simple mode.
 
-The following actions require separate authorization:
+The following actions remain owner-controlled:
 
-- Update the PR description from the local draft.
 - Change branch protection.
-- Merge the approved PR.
-- Deploy or promote Production.
 - Change domain or DNS settings.
 - Apply production migrations, repairs, backups, or restores.
 - Submit hosted test data or send live test messages.
 
 Approval for one action does not approve another action.
+Merge and Production deployment are complete.
 Auto-review rejected an earlier local reset retry before the user approved deletion of local database data.
 That retry did not execute.
 
@@ -236,13 +290,12 @@ repository-only work. There is no deferred material application defect.
 ##### 3. Resend domain, DNS, and operational inbox
 
 - **Impact:** invitations and notifications remain durably queued/manual-link
-  capable but no production email is delivered.
+  capable until a live delivery test passes.
 - **Why owner-only:** Resend account access and DNS control are required.
 - **Safe fallback:** the UI returns manual invitation links; this is suitable for
   private acceptance only, not a public launch.
-- **Steps:** verify the sending domain; publish Resend DNS; set
-  `RESEND_API_KEY`, `EMAIL_FROM`, and `EMAIL_STAFF_INBOX`; confirm the five-minute
-  outbox cron.
+- **Steps:** send an approved live invitation and staff/customer notification;
+  confirm the five-minute outbox cron and provider delivery.
 - **Validation:** send a real invitation and staff/customer notification;
   confirm provider delivery and `notifications_outbox.sent_at`.
 - **Launch blocking:** yes.

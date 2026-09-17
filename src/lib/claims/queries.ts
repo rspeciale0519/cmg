@@ -27,11 +27,13 @@ const CLAIM_DETAIL_SELECT = `
   loss_date, loss_time, cause, description,
   assigned_adjuster_id, partner_company_id,
   requested_adjuster, referrer_name, referrer_email,
+  contractor_name, contractor_company, contractor_phone, contractor_email,
   pandadoc_document_id, esign_status,
   lor_signed_at, filed_at, denied_at, settled_at,
   created_at, updated_at,
   adjuster:profiles!claims_assigned_adjuster_id_fkey(id, first_name, last_name),
-  partner:partner_companies!claims_partner_company_id_fkey(id, name, status)
+  partner:partner_companies!claims_partner_company_id_fkey(id, name, status),
+  intake_referrer:partner_companies!claims_intake_referral_partner_id_fkey(id, name)
 ` as const;
 
 export type ClaimDetail = {
@@ -63,6 +65,11 @@ export type ClaimDetail = {
   requestedAdjuster: string | null;
   referrerName: string | null;
   referrerEmail: string | null;
+  contractorName: string | null;
+  contractorCompany: string | null;
+  contractorPhone: string | null;
+  contractorEmail: string | null;
+  intakeReferralVendor: string | null;
   pandaDocDocumentId: string | null;
   esignStatus: string | null;
   lorSignedAt: string | null;
@@ -151,6 +158,11 @@ export const loadClaimContext = cache(async function loadClaimContext(
     requestedAdjuster: data.requested_adjuster,
     referrerName: data.referrer_name,
     referrerEmail: data.referrer_email,
+    contractorName: data.contractor_name,
+    contractorCompany: data.contractor_company,
+    contractorPhone: data.contractor_phone,
+    contractorEmail: data.contractor_email,
+    intakeReferralVendor: data.intake_referrer?.name ?? null,
     pandaDocDocumentId: data.pandadoc_document_id,
     esignStatus: data.esign_status,
     lorSignedAt: data.lor_signed_at,

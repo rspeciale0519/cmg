@@ -10,6 +10,7 @@ import { GENERIC_ERROR } from "@/lib/actions/types";
 import type { IntakeInput } from "@/lib/validators/intake";
 import { allocateIntakeManifest, type IntakeManifestFile, parseIntakeManifest } from "./manifest";
 import { buildIntakeSubmission } from "./submission";
+import type { IntakeReferral } from "./referral";
 import type { IntakeFinalizeState, IntakeStartState } from "./upload-types";
 import { verifyIntakeFiles } from "./verified-files";
 
@@ -54,13 +55,14 @@ export async function prepareIntakeSession(
   input: IntakeInput,
   metadata: NonNullable<ReturnType<typeof parseIntakeManifest>>,
   ip: string | null,
+  referral: IntakeReferral | null = null,
 ): Promise<IntakeStartState> {
   const id = randomUUID();
   const token = randomBytes(32).toString("base64url");
   const files = allocateIntakeManifest(id, metadata);
   const submission = buildIntakeSubmission(input, files.map((file) => ({
     path: file.storage_path, originalName: file.original_name, mime: file.mime, size: file.size_bytes,
-  })), ip);
+  })), ip, referral);
   const { data, error } = await admin.rpc("begin_intake_upload_session", {
     p_id: id, p_token_hash: uploadTokenHash(token), p_submission: submission, p_files: files,
   });

@@ -77,7 +77,9 @@ const initials = z
 const lossTime = z
   .string()
   .trim()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Enter an approximate time.");
+  .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Enter an approximate time.")
+  .optional()
+  .or(z.literal("").transform(() => undefined));
 
 const consent = z
   .string()
@@ -127,6 +129,12 @@ export const intakeSchema = z
     requestedAdjuster,
     referrerName: optionalText(160),
     referrerEmail: optionalEmail,
+
+    contractorName: optionalText(80),
+    contractorCompany: optionalText(160),
+    contractorPhone: requiredPhone("Enter the contractor's phone number.")
+      .optional().or(z.literal("").transform(() => undefined)),
+    contractorEmail: optionalEmail,
 
     consent,
     turnstileToken,

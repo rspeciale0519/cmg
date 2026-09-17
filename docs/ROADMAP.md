@@ -1,6 +1,36 @@
 # Development roadmap — CMG Property Solutions
 
-Last reconciled: 2026-09-03.
+Current update — 2026-09-16: contractor details and vendor intake links are committed locally as `b5cfca5`.
+The public form no longer asks for loss time. Older time values remain compatible.
+Vendor links record internal attribution without granting claim access. Homeowner-only intake remains supported.
+Commit `b5cfca5` is pushed with owner approval. PR #2 verify, database, Vercel, and CodeRabbit checks pass for this head.
+Native Preview public layout and private-route closure checks pass.
+The owner approved all four pending hosted migrations without a backup. They applied successfully in one transaction.
+Production has 33 migrations through `20260916020100`. Schema and access-control checks pass.
+Local validation passes 1,072 application tests and 1,287 database assertions, with one live PandaDoc test skipped.
+Type checks, lint, build, and audit pass. Lint retains two existing warnings.
+Public layout checks cover 320, 390, and 1280 pixels. Simple-mode private-route closure passes.
+Submission success, authenticated screens, and latest hosted acceptance remain incomplete for the new feature.
+Production remains simple. DNS is unchanged, and the owner prohibits a Supabase backup.
+HANDOFF contains current evidence. Earlier dated entries below are historical.
+
+Current update — 2026-09-15: Production remains in simple mode. PR #1 is merged; PR #2 contains the pushed dependency and reference-capacity fixes.
+PR #2 checks pass at `8be147c`, but the capacity migration and updated Production release still need approval.
+Native Preview acceptance found missing feedback for runtime Turnstile failures. A local widget fix adds an accessible message and preserves retry recovery.
+The owner approved committing this patch and its release records. Push approval and remote checks for this patch remain pending.
+The approved Preview hostname is configured. Native contact submission passed, with a stored lead and two sent outbox entries; delivery verification remains open.
+Owner launch decisions and later platform acceptance also remain open.
+The dated records below describe earlier checkpoints and do not supersede HANDOFF.
+
+Current update — 2026-09-13: full-platform acceptance is active at the owner's request.
+All 29 hosted migrations are applied after explicit approval without a backup.
+A later migration fixes annual reference truncation. It is applied locally; all 1,254 pgTAP assertions pass. It is not deployed to Production.
+Contact email delivery and one small private claim upload passed; full hosted role and signing acceptance remain incomplete.
+Preview platform activation is deployed and Ready. The earlier simple-only roadmap below describes the previous release phase.
+Database assertions and the full regression rerun pass. The approved dependency patch clears the audit. Full browser role acceptance remains open.
+Current acceptance evidence and test changes remain local and uncommitted.
+
+Last reconciled: 2026-09-07.
 The next release targets `SITE_MODE=simple`.
 It is not launched or approved for release.
 The reviewed implementation commit is `4516a82`; current release-record updates are pushed to `origin/feature/claims-platform`. Release acceptance remains incomplete.
@@ -87,11 +117,13 @@ Those approved local reset checks are complete and include the two upload migrat
 - [x] Require passing checks on the approved remote head; the verified Preview redeployment is Ready in simple mode.
 - [ ] Back up the database and Storage before approved forward migrations.
 - [ ] Verify migration results without seeding production.
-- [ ] Obtain separate merge, deployment, and domain approvals.
+- [x] Obtain separate merge and deployment approvals; merge PR #1 into `develop` and deploy Production.
+- [x] Obtain separate domain approval and configure `app.cmgpropertysolutions.net` without changing existing root, `www`, or Microsoft 365 records.
+- [x] Set Vercel `NEXT_PUBLIC_SITE_URL` to `https://app.cmgpropertysolutions.net` and verify the Resend sending domain without changing existing Microsoft 365 records.
 - [ ] Verify the deployed commit, public workflows, email, queues, cron schedules, DNS, TLS, and rollback compatibility.
 
 No current validation item inherits a pass from the historical ledger.
-The existing Production deployment is older than the candidate.
+Production now uses merged commit `383a99936ca7536f7e5522ea71387c2b788763df`.
 Vercel Ready status does not complete release acceptance.
 The upload architecture decision is complete, and the advertised allowance remains unchanged.
 Hosted upload publication and boundary acceptance remain open.

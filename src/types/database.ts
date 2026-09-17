@@ -338,6 +338,10 @@ export type Database = {
           cause: Database["public"]["Enums"]["cause_of_loss"]
           claim_number: string | null
           claim_ref: string
+          contractor_company: string | null
+          contractor_email: string | null
+          contractor_name: string | null
+          contractor_phone: string | null
           created_at: string
           denied_at: string | null
           description: string
@@ -347,6 +351,7 @@ export type Database = {
           esign_status: string | null
           filed_at: string | null
           id: string
+          intake_referral_partner_id: string | null
           lor_contract_type:
             | Database["public"]["Enums"]["lor_contract_type"]
             | null
@@ -379,6 +384,10 @@ export type Database = {
           cause: Database["public"]["Enums"]["cause_of_loss"]
           claim_number?: string | null
           claim_ref: string
+          contractor_company?: string | null
+          contractor_email?: string | null
+          contractor_name?: string | null
+          contractor_phone?: string | null
           created_at?: string
           denied_at?: string | null
           description: string
@@ -388,6 +397,7 @@ export type Database = {
           esign_status?: string | null
           filed_at?: string | null
           id?: string
+          intake_referral_partner_id?: string | null
           lor_contract_type?:
             | Database["public"]["Enums"]["lor_contract_type"]
             | null
@@ -420,6 +430,10 @@ export type Database = {
           cause?: Database["public"]["Enums"]["cause_of_loss"]
           claim_number?: string | null
           claim_ref?: string
+          contractor_company?: string | null
+          contractor_email?: string | null
+          contractor_name?: string | null
+          contractor_phone?: string | null
           created_at?: string
           denied_at?: string | null
           description?: string
@@ -429,6 +443,7 @@ export type Database = {
           esign_status?: string | null
           filed_at?: string | null
           id?: string
+          intake_referral_partner_id?: string | null
           lor_contract_type?:
             | Database["public"]["Enums"]["lor_contract_type"]
             | null
@@ -460,6 +475,13 @@ export type Database = {
             columns: ["assigned_adjuster_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_intake_referral_partner_id_fkey"
+            columns: ["intake_referral_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
             referencedColumns: ["id"]
           },
           {
@@ -939,6 +961,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           id: string
+          intake_referral_code: string
           name: string
           notes: string | null
           status: Database["public"]["Enums"]["partner_company_status"]
@@ -950,6 +973,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          intake_referral_code?: string
           name: string
           notes?: string | null
           status?: Database["public"]["Enums"]["partner_company_status"]
@@ -961,6 +985,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          intake_referral_code?: string
           name?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["partner_company_status"]

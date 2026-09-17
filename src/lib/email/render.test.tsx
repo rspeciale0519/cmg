@@ -26,6 +26,20 @@ const intakeStaffPayload = {
 };
 
 describe("renderNotification", () => {
+  it("renders separate contractor details without an invented loss time", async () => {
+    const { text } = await renderNotification({ template: "intake_staff_alert", payload: {
+      ...intakeStaffPayload, lossTime: undefined,
+      contractorName: "Test Contractor", contractorCompany: "Test Roofing",
+      contractorPhone: "4075550101", contractorEmail: "contractor@example.com",
+    } });
+    expect(text).toContain("Test Contractor");
+    expect(text).toContain("Test Roofing");
+    expect(text).toContain("contractor@example.com");
+    expect(text).toContain("dana@example.com");
+    expect(text).not.toContain("undefined");
+    expect(text).not.toContain("16:30");
+  });
+
   it("renders the staff intake alert", async () => {
     const { subject, html, text } = await renderNotification({
       template: "intake_staff_alert",

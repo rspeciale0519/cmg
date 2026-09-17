@@ -69,7 +69,7 @@ function IntakeSection({
   );
 }
 
-export function IntakeForm() {
+export function IntakeForm({ referralCode = "" }: { referralCode?: string }) {
   const upload = useIntakeUpload();
   const { state, pending } = upload;
   /* Both start unanswered. These two answers are drafted into the Letter of
@@ -77,7 +77,7 @@ export function IntakeForm() {
      homeowner's behalf, that nobody else is on the policy and that the roof has
      never been claimed — neither of which they were asked to read. It also made
      `required` unreachable and kept the `priorOutcome` follow-up from ever
-     surfacing. Same call already taken on `lossTime` and the `cause` /
+     surfacing. Same call already taken on the `cause` /
      `carrierTenure` selects. */
   const [hasSecond, setHasSecond] = useState("");
   const [priorClaim, setPriorClaim] = useState("");
@@ -153,6 +153,7 @@ export function IntakeForm() {
       >
         <FormAlert message={formAlertMessage(state)} ref={alertRef} />
         <noscript>Enable JavaScript to submit this form, or call us to provide the details.</noscript>
+        <input type="hidden" name="vendorReferralCode" value={referralCode} />
         <fieldset disabled={!upload.ready || pending || upload.locked} aria-busy={pending} className="m-0 min-w-0 border-0 p-0">
           <legend className="sr-only">Intake details</legend>
 
@@ -253,7 +254,6 @@ export function IntakeForm() {
                 these inform the picker rather than blocking the submit — the
                 server check is still the gate. */}
             <TextField name="lossDate" label="Date of loss" required type="date" min={EARLIEST_LOSS_DATE} max={businessToday()} error={errors.lossDate} />
-            <TextField name="lossTime" label="Approximate time" required type="time" error={errors.lossTime} />
             <SelectField name="cause" label="Cause of loss" required options={CAUSE_OPTIONS} error={errors.cause} />
           </div>
           <TextAreaField
@@ -277,7 +277,20 @@ export function IntakeForm() {
           </div>
         </IntakeSection>
 
-        <IntakeSection step="05" title="Referral & documents">
+        <IntakeSection step="05" title="Contractor information">
+          <p className="mb-5 text-[14px] leading-[1.7] text-ink/65">
+            Contractors can complete this form with the homeowner. Enter the homeowner&apos;s
+            contact details above and your own details here. Homeowners can leave this section blank.
+          </p>
+          <div className={`${GRID} grid-cols-[repeat(auto-fit,minmax(200px,1fr))]`}>
+            <TextField name="contractorName" label="Contractor name" maxLength={80} error={errors.contractorName} />
+            <TextField name="contractorCompany" label="Contractor company" maxLength={160} error={errors.contractorCompany} />
+            <TextField name="contractorPhone" label="Contractor phone" type="tel" maxLength={40} error={errors.contractorPhone} />
+            <TextField name="contractorEmail" label="Contractor email" type="email" maxLength={254} error={errors.contractorEmail} />
+          </div>
+        </IntakeSection>
+
+        <IntakeSection step="06" title="Referral & documents">
           <SelectField
             name="requestedAdjuster"
             label="Which CMG adjuster are you working with?"
@@ -315,7 +328,10 @@ export function IntakeForm() {
           </p>
         </IntakeSection>
 
-        <IntakeSection step="06" title="Consent" last>
+        <IntakeSection step="07" title="Homeowner consent" last>
+          <p className="mb-5 text-[14px] leading-[1.7] text-ink/65">
+            The homeowner must read and give this consent. Contractor contact details do not replace homeowner consent.
+          </p>
           <CheckboxField name="consent" required error={errors.consent}>
             {INTAKE_CONSENT_TEXT}
           </CheckboxField>

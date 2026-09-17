@@ -70,6 +70,8 @@ Use [supabase/config.toml](supabase/config.toml) as the port authority.
 | `npm audit --audit-level=high` | Check dependency security |
 
 Confirm that local data is disposable before `npm run db:reset`.
+The cleanup scheduler tests require an isolated fixture database. A quiet server alone is insufficient when existing upload embargoes have expired.
+Use a separate disposable Supabase project when the normal local stack contains browser acceptance data. Do not reset shared data to make tests pass.
 Obtain explicit approval before deleting local database data.
 Record the reset command's exit status, not only its migration and seed output.
 Do not retry a blocked reset without the required approval.
@@ -193,7 +195,7 @@ The Server Action receives text fields and a small file manifest only.
 The browser uploads file bytes directly to private Supabase Storage with one-time signed capabilities.
 The server copies each upload to an immutable document path, verifies its signature, and then commits the claim.
 The implementation and local Storage tests preserve the ten-file and 25 MiB limits.
-Hosted migration, configuration, and maximum-size hosted acceptance remain release work.
+Check HANDOFF for hosted migration and configuration evidence. Maximum-size hosted acceptance remains release work.
 See [Vercel function limits](https://vercel.com/docs/functions/limitations).
 
 Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl) remain valid for two hours.
@@ -201,14 +203,16 @@ Cleanup retains both exact paths through the upload expiry and reconciles late o
 
 10. Compare hosted migration history with every repository migration.
 11. Record the pending migration list in HANDOFF.
-12. Obtain approval for the production backup and each production write.
-13. Back up the database and Storage objects before applying approved migrations.
-14. Verify backup completeness and the restore procedure.
+12. Record the owner's recovery decision and obtain approval for each production write.
+13. Create backups only when the owner approves them.
+14. Verify available recovery coverage and record any unverified restore capability.
 15. Apply only the approved forward migrations to the verified hosted project.
 16. Verify schema, RLS, grants, and public workflows after migration.
 
-Database backups do not include Storage file contents.
-Back up those objects separately.
+The owner declined a Supabase backup for the six migrations applied on 2026-09-13 and four applied on 2026-09-16.
+Do not create a backup under the current authorization.
+Those approved migrations use reviewed forward repair as the recovery path; immediate restore readiness remains unverified.
+Database backups do not include Storage file contents. A future approved backup plan must address those objects separately.
 See [Supabase backup scope](https://supabase.com/docs/guides/platform/backups).
 Never run `supabase/seed.sql` or `db:reset` against production.
 
@@ -236,6 +240,29 @@ Approval for one Git or production action does not approve another action.
 Environment changes apply to new deployments.
 They do not change existing deployments.
 See [Vercel environment variables](https://vercel.com/docs/environment-variables).
+
+## Contractor intake and vendor links
+
+The public intake separates homeowner details from optional contractor name, company, phone, and email.
+The homeowner must give the displayed consent. Contractor details do not replace homeowner identity or consent.
+The form asks for loss date and cause, but no longer asks for loss time.
+Valid times from older clients remain supported. Omitted times are stored as null.
+
+Each partner company has a unique public intake link. Owners can copy it from the company detail page in platform mode.
+Links use `NEXT_PUBLIC_SITE_URL`; verify that this value identifies the intended public environment.
+No additional environment variable or vendor-specific form is required.
+The server resolves the link code after rate limits, Turnstile, and input validation.
+Invalid links and inactive vendors cannot start a reservation. Direct intake without a link remains available.
+
+Referral attribution is internal metadata. It does not assign partner access or disclose other vendors.
+Possession of a link does not prove the submitter works for that vendor.
+Contractor contact fields and public partner IDs cannot override the server mapping.
+An existing immutable upload reservation retains its source during its normal lifetime.
+
+Apply the pending schema migrations before deploying code that reads the new columns.
+Old submission functions can ignore new contractor fields, so an application-first deployment risks incomplete records.
+Retain the added columns during application rollback. Use reviewed forward repair for database corrections.
+See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for migration order and verification limits.
 
 ## Cron operation
 

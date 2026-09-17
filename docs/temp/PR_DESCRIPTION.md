@@ -1,9 +1,71 @@
-# Release CMG simple website mode
+# PR #2 description draft — 2026-09-16
+
+This local draft is not published. Updating the GitHub PR requires separate approval.
+
+## Problem and changes
+
+Contractors need separate contact fields when helping homeowners submit an intake.
+Vendors also need individual links to one shared form, without access to other vendors or private claims.
+This change adds optional contractor details and server-resolved vendor attribution.
+Homeowner contact, consent, and confirmation recipients stay separate.
+The form no longer requests loss time. Existing time values and older clients remain compatible.
+
+Owners can copy each vendor's link from the company page. Only active vendor mappings can start new reservations.
+Public link possession grants no claim access. Direct homeowner intake remains available.
+Staff see contractor details and referral provenance in claim details and staff emails.
+The existing atomic upload, outbox, cleanup, RLS, and MFA boundaries remain intact.
+
+The branch also includes the prior dependency patch, claim-reference capacity guard, and accessible Turnstile runtime-error feedback.
+Production remains in `SITE_MODE=simple`.
+
+## Validation and limits
+
+- Local full simple-mode run: 100 files and 1,072 tests pass; one live PandaDoc test is skipped.
+- Platform-focused suites: 200 tests pass; the expanded action-gate suite separately passes 16 tests.
+- Isolated database reset succeeds. All 41 pgTAP suites pass, with 1,287 assertions.
+- Type checks, lint, production build, and dependency audit pass. Lint reports two existing warnings; audit reports zero vulnerabilities.
+- Native public layouts fit 320, 390, and 1280 pixels. Tested private entry routes reach `/platform-disabled`.
+- Local browser submission is blocked by Turnstile verification. New authenticated screens and hosted workflows need acceptance against a migrated database.
+
+The approved commit `b5cfca5` is pushed and is the current PR head.
+GitHub run `35114872284` passed: verify, including build, in 3m1s and database in 3m26s.
+Vercel Preview and CodeRabbit passed for this head. Native public layout and disabled-route checks also passed.
+
+## Deployment order and recovery
+
+The owner approved migrations `20260913050000`, `20260916010000`, `20260916020000`, and `20260916020100` without a backup.
+All four applied atomically. Read-only verification confirms 33 migrations through `20260916020100`.
+Columns, constraints, the index, vendor-code uniqueness, RLS, RPC access, and the capacity guard passed inspection.
+Hosted browser acceptance and separate push, PR-update, merge, and deployment approvals remain required.
+An older submission function can ignore new contractor fields; deploying the application first risks incomplete records.
+The owner prohibits creating a backup. Immediate restoration is unverified.
+Recovery retains additive columns and uses the prior application plus reviewed forward database repair.
+Do not seed Production or change existing DNS.
+Commercial hosting, branch protection, legal approval, provider verification, and remaining acceptance gates remain open.
+See HANDOFF and BLOCKERS for the current release record.
+
+---
+
+# Historical PR #1 description and earlier checkpoints
+
+## Current acceptance addendum — 2026-09-13
+
+PR #1 is already merged. The earlier description below is historical and is not evidence of current green checks.
+All 29 hosted migrations are applied. The owner approved the six latest migrations without a backup.
+Contact email delivery, a small private upload, owner MFA enrollment, and selected owner pages passed hosted acceptance.
+Production remains simple. Only the approved feature Preview runs platform mode.
+The approved local dependency patch clears the audit. TypeScript, lint, build, and the full regression rerun pass.
+The rerun passes 1,046 tests; one live PandaDoc test remains skipped. Native browser acceptance is partial, with MFA and verification blockers recorded in HANDOFF.
+Local dependency, test, and evidence edits remain uncommitted and unpushed.
+HANDOFF contains the current validation ledger and unresolved acceptance work.
+
+## Earlier merged PR description
 
 Release description for [PR #1](https://github.com/rspeciale0519/cmg/pull/1), targeting `develop`.
 Prepared on 2026-09-03.
-The reviewed implementation commit `4516a82` and current release-record updates are pushed on `feature/claims-platform`.
-The PR remains open. Production merge and deployment remain gated by the unresolved owner prerequisites.
+The reviewed implementation commit `4516a82` is pushed on `feature/claims-platform`; the current launch-record updates remain local and uncommitted.
+PR #1 is merged into `develop`, and Vercel deployed the merge commit to Production.
+The temporary production hostname `app.cmgpropertysolutions.net` is configured and verified without changing existing root, `www`, or Microsoft 365 DNS records.
 
 ## Problem
 
@@ -314,23 +376,28 @@ Its pgTAP step passed 32 files and 923 assertions.
 Its database Vitest selection passed 22 files and 142 tests but failed live-test discovery.
 Those partial results do not make the old run green.
 
-Fresh read-only `gh pr view` confirms PR #1 remains open, targeting `develop`, with the reviewed implementation and documentation commits pushed.
+Fresh read-only `gh pr view` confirms PR #1 is merged into `develop`, with the reviewed implementation and documentation commits pushed.
 The current `verify`, `database`, Vercel, and Vercel Preview Comments checks pass for the pushed head.
 CodeRabbit reports pass status but skipped review because the diff exceeds its 150-file review limit.
-The PR description was published from this record; merge and deployment remain unapproved.
+The PR description was published from this record; PR #1 is merged and Production deployment is Ready.
 
 The branch Preview uses the pushed implementation and documentation commits.
 It runs simple mode and passes the required private-route closure acceptance.
 Its `/admin`, `/portal`, and `/partner` requests redirect to `/platform-disabled`; `/login`, `/mfa`, and `/invite` follow the same boundary.
-The current deployment is Ready, and no production deployment occurred.
+The current Preview is Ready, and Production uses the merged commit.
 
-Current Production remains on `37b4ec45db0ff81ccb7f1cabbb9af880370a74f4`.
+Current Production uses `383a99936ca7536f7e5522ea71387c2b788763df`.
 Its normal `/admin` GET redirects to `/platform-disabled`.
 Six local private entry-route GETs also redirect there.
-The Vercel aliases serve the CMG app, but `cmgpropertysolutions.net` redirects to `/lander` and its cron API path returns 404.
-The custom domain is not routed to the Vercel Production deployment.
+The root domain still serves its previous site by design.
+`app.cmgpropertysolutions.net` routes to the Vercel Production deployment.
+Vercel now uses `NEXT_PUBLIC_SITE_URL=https://app.cmgpropertysolutions.net`.
+Resend verified `cmgpropertysolutions.net` for sending.
+After the verified sender update, a synthetic production form submission returned `Request received.` and Resend recorded the staff alert as `Delivered`.
+The approved `rob@miodiollc.com` auto-reply still needs a cooldown-safe retry because the contact email rate limit blocked the second test.
 The reviewed commits were pushed after approval.
-No merge, production deployment, or hosted migration has occurred during this review.
+PR #1 merged into `develop`, and Vercel deployed merge commit `383a99936ca7536f7e5522ea71387c2b788763df` to Production.
+No hosted migration occurred during this review.
 
 ## Security review warning
 
@@ -406,7 +473,7 @@ Vercel Instant Rollback does not update cron jobs.
 The advertised upload allowance remains ten files of 25 MiB each.
 Direct-upload architecture approval and local implementation are complete.
 File bytes bypass the Vercel function request limit through signed private Storage uploads.
-The current Production deployment does not contain this change, so maximum-size hosted acceptance remains open.
+The current Production deployment contains this change, so maximum-size hosted acceptance remains open only until approved hosted boundary tests pass.
 
 Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl) remain valid for two hours.
 The implementation allows two-hour sessions and five minutes for signing, with cleanup blocked until two hours and 15 minutes after reservation.

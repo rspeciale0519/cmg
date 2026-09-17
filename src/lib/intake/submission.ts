@@ -3,6 +3,7 @@ import "server-only";
 import { outboxRows, staffInbox, type OutboxEntry } from "@/lib/email/outbox";
 import { ADJUSTER_OPTIONS, CAUSE_OPTIONS, INTAKE_CONSENT_TEXT, intakeSchema, labelFor, type IntakeInput } from "@/lib/validators/intake";
 import type { UploadedObject } from "@/lib/actions/intake-storage";
+import type { IntakeReferral } from "./referral";
 
 export function parseIntakeInput(formData: FormData) {
   const text = (name: string) => formData.get(name) ?? "";
@@ -41,13 +42,17 @@ export function parseIntakeInput(formData: FormData) {
     requestedAdjuster: text("requestedAdjuster"),
     referrerName: text("referrerName"),
     referrerEmail: text("referrerEmail"),
+    contractorName: text("contractorName"),
+    contractorCompany: text("contractorCompany"),
+    contractorPhone: text("contractorPhone"),
+    contractorEmail: text("contractorEmail"),
     consent: formData.get("consent") ?? undefined,
     turnstileToken: text("cf-turnstile-response"),
   });
 
 }
 
-export function buildIntakeSubmission(input: IntakeInput, objects: UploadedObject[], ipInet: string | null) {
+export function buildIntakeSubmission(input: IntakeInput, objects: UploadedObject[], ipInet: string | null, referral: IntakeReferral | null = null) {
   const claimants: Array<{
     first_name: string; last_name: string; email: string;
     phone: string | null; initials: string; is_primary: boolean;
@@ -74,8 +79,8 @@ export function buildIntakeSubmission(input: IntakeInput, objects: UploadedObjec
   }
 
   /* One row per channel the checkbox covers, so SMS can be switched on later
-     without re-consent (decision #10). Recorded for the submitter only — the
-     second policyholder checked no box, and consent is not transferable. */
+     without re-consent (decision #10). Recorded for the primary homeowner only.
+     Contractor details do not replace homeowner contact or consent. */
   const consentBase = {
     email: input.email,
     phone: input.phone,
@@ -116,6 +121,11 @@ export function buildIntakeSubmission(input: IntakeInput, objects: UploadedObjec
           requestedAdjuster: labelFor(ADJUSTER_OPTIONS, input.requestedAdjuster),
           referrer: input.referrerName,
           referrerEmail: input.referrerEmail,
+          contractorName: input.contractorName,
+          contractorCompany: input.contractorCompany,
+          contractorPhone: input.contractorPhone,
+          contractorEmail: input.contractorEmail,
+          referralVendor: referral?.name,
           documentCount: objects.length,
         },
       },
@@ -148,12 +158,17 @@ export function buildIntakeSubmission(input: IntakeInput, objects: UploadedObjec
       claim_number: input.claimNumber ?? null,
       lor_contract_type: input.lorContractType,
       loss_date: input.lossDate,
-      loss_time: input.lossTime,
+      loss_time: input.lossTime ?? null,
       cause: input.cause,
       description: input.description,
       requested_adjuster: labelFor(ADJUSTER_OPTIONS, input.requestedAdjuster),
       referrer_name: input.referrerName ?? null,
       referrer_email: input.referrerEmail ?? null,
+      contractor_name: input.contractorName ?? null,
+      contractor_company: input.contractorCompany ?? null,
+      contractor_phone: input.contractorPhone ?? null,
+      contractor_email: input.contractorEmail ?? null,
+      intake_referral_partner_id: referral?.id ?? null,
     },
     claimants,
     consents: [

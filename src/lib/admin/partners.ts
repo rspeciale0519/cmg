@@ -146,7 +146,7 @@ export type AttributedClaim = {
 };
 
 export type PartnerDetail = {
-  company: PartnerSummary & { notes: string | null; updatedAt: string };
+  company: PartnerSummary & { notes: string | null; updatedAt: string; intakeReferralCode: string };
   reps: PartnerRep[];
   /** Reps linked to this company, counted in the database rather than measured off the page. */
   repTotal: number;
@@ -225,7 +225,7 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
     supabase
       .from("partner_companies")
       .select(
-        "id, name, status, contact_name, contact_email, contact_phone, notes, created_at, updated_at",
+        "id, name, status, contact_name, contact_email, contact_phone, notes, created_at, updated_at, intake_referral_code",
       )
       .eq("id", companyId)
       .maybeSingle(),
@@ -281,6 +281,7 @@ export const loadPartnerDetail = cache(async function loadPartnerDetail(
       claimCount: claimCountResult.count ?? claimWindow.length,
       createdAt: company.created_at,
       updatedAt: company.updated_at,
+      intakeReferralCode: company.intake_referral_code,
     },
     reps: repRows.map((row) => {
       const account = directory.get(row.id);

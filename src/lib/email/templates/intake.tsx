@@ -11,13 +11,18 @@ export type IntakeStaffAlertPayload = {
   policyNumber: string;
   claimNumber?: string;
   lossDate: string;
-  lossTime: string;
+  lossTime?: string;
   cause: string;
   description: string;
   secondPolicyholder?: string;
   requestedAdjuster: string;
   referrer?: string;
   referrerEmail?: string;
+  contractorName?: string;
+  contractorCompany?: string;
+  contractorPhone?: string;
+  contractorEmail?: string;
+  referralVendor?: string;
   documentCount: number;
 };
 
@@ -30,8 +35,8 @@ export function IntakeStaffAlert(payload: IntakeStaffAlertPayload) {
       <Text style={emailStyles.kicker}>New intake</Text>
       <Text style={emailStyles.heading}>{payload.claimRef}</Text>
       <Text style={emailStyles.paragraph}>
-        {payload.homeownerName} submitted a Letter of Representation intake. It is sitting
-        in the queue at status new_intake.
+        A Letter of Representation intake was submitted for {payload.homeownerName}.
+        It is in the queue at status new_intake.
       </Text>
 
       <Section style={{ marginTop: "28px" }}>
@@ -47,9 +52,14 @@ export function IntakeStaffAlert(payload: IntakeStaffAlertPayload) {
         {payload.claimNumber ? (
           <DetailRow label="Claim number" value={payload.claimNumber} />
         ) : null}
-        <DetailRow label="Loss" value={`${payload.lossDate} at ${payload.lossTime} · ${payload.cause}`} />
+        <DetailRow label="Loss" value={`${payload.lossDate}${payload.lossTime ? ` at ${payload.lossTime}` : ""} · ${payload.cause}`} />
         <DetailRow label="Description" value={payload.description} />
         <DetailRow label="Requested adjuster" value={payload.requestedAdjuster} />
+        {payload.referralVendor ? <DetailRow label="Vendor referral link" value={payload.referralVendor} /> : null}
+        {payload.contractorName ? <DetailRow label="Contractor name" value={payload.contractorName} /> : null}
+        {payload.contractorCompany ? <DetailRow label="Contractor company" value={payload.contractorCompany} /> : null}
+        {payload.contractorPhone ? <DetailRow label="Contractor phone" value={payload.contractorPhone} /> : null}
+        {payload.contractorEmail ? <DetailRow label="Contractor email" value={payload.contractorEmail} /> : null}
         {payload.referrer ? <DetailRow label="Referred by" value={payload.referrer} /> : null}
         {payload.referrerEmail ? (
           <DetailRow label="Referrer email" value={payload.referrerEmail} />

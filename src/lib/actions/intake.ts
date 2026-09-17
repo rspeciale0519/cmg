@@ -5,6 +5,7 @@ import { checkFormRateLimits, checkRateLimit, clientIpFromHeaders, inetOrNull, R
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { parseIntakeInput } from "@/lib/intake/submission";
+import { resolveIntakeReferral } from "@/lib/intake/referral";
 import { parseIntakeManifest } from "@/lib/intake/manifest";
 import { prepareIntakeSession, finalizeIntakeSession, uploadTokenHash, validUploadCapability } from "@/lib/intake/upload-session";
 import type { IntakeStartState, IntakeFinalizeState } from "@/lib/intake/upload-types";
@@ -42,7 +43,10 @@ export async function submitIntake(_previous: FormState, formData: FormData): Pr
   if (!metadata) return invalid({ documents: "Choose up to ten supported files of 25 MB or less. Check your files and submit again." });
 
   try {
-    return await prepareIntakeSession(createAdminClient(), parsed.data, metadata, ipInet);
+    const admin = createAdminClient();
+    const referral = await resolveIntakeReferral(admin, formData.get("vendorReferralCode"));
+    if (!referral.ok) return { status: "error", message: "This referral link is unavailable. Contact CMG for help or open the intake without a referral link." };
+    return await prepareIntakeSession(admin, parsed.data, metadata, ipInet, referral.partner);
   } catch {
     // Reservations remain available to the cleanup worker after a failed call.
     console.error("[intake] upload preparation failed");
