@@ -6,6 +6,7 @@ const config = [
     ignores: [
       ".next/**",
       "node_modules/**",
+      "archive/**",
       "design/**",
       "temp/**",
       "supabase/**",

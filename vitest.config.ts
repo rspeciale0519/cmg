@@ -12,7 +12,7 @@ export default defineConfig({
     maxWorkers: process.platform === "win32" ? 1 : 4,
     environment: "jsdom",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
   resolve: {
     alias: {

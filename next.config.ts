@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
   },
 
   outputFileTracingExcludes: {
-    "*": ["./design/**", "./temp/**"],
+    "*": ["./archive/**", "./design/**", "./temp/**"],
   },
   outputFileTracingIncludes: {
     "/*": ["./src/lib/esign/templates/*.pdf"],

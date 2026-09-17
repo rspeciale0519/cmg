@@ -3,7 +3,7 @@ import { MAX_FILE_BYTES } from "@/lib/validators/files";
 
 const stub = vi.hoisted(() => ({
   rate: vi.fn(async () => true),
-  check: vi.fn(async (_rule: unknown, _identifier: string) => true),
+  check: vi.fn<(rule: unknown, identifier: string) => Promise<boolean>>(async () => true),
   turnstile: vi.fn(async () => ({ ok: true })),
   prepare: vi.fn(),
   finalize: vi.fn(),
