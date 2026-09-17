@@ -59,9 +59,10 @@ export function ReassignForm({
           name="adjusterId"
           defaultValue={state.values?.adjusterId ?? currentAdjusterId ?? ""}
         >
-          {/* Unassigning is a real move, not an empty state: it returns the
-              claim to the intake queue for the owner to route again. */}
-          <option value="">Unassigned — back to the queue</option>
+          {/* Unassigning clears the adjuster and nothing else: the claim keeps
+              its status and is found under Claims with the Unassigned filter,
+              not in the intake queue, which lists new_intake only. */}
+          <option value="">Unassigned — no adjuster</option>
           {adjusters.map((adjuster) => (
             <option key={adjuster.id} value={adjuster.id}>
               {adjuster.name}

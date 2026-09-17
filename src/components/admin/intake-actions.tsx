@@ -40,6 +40,7 @@ export function IntakeActions({
   adjusters,
   partners,
   referrerName,
+  intakeReferralPartnerId,
   needsPolicyDetails,
   canAccept,
   canLinkPartner,
@@ -49,6 +50,9 @@ export function IntakeActions({
   adjusters: AdjusterOption[];
   partners: PartnerOption[];
   referrerName: string | null;
+  /** The company the server resolved from the vendor's intake link, if any.
+   *  Provenance only — the operator confirms the attachment on accept. */
+  intakeReferralPartnerId: string | null;
   /** A partner referral arrives with no carrier, policy number or tenure — §6
    *  has staff take them from the homeowner at this moment. */
   needsPolicyDetails: boolean;
@@ -104,6 +108,7 @@ export function IntakeActions({
           adjusters={adjusters}
           partners={partners}
           referrerName={referrerName}
+          intakeReferralPartnerId={intakeReferralPartnerId}
           needsPolicyDetails={needsPolicyDetails}
           canLinkPartner={canLinkPartner}
         />
@@ -119,6 +124,7 @@ function AcceptForm({
   adjusters,
   partners,
   referrerName,
+  intakeReferralPartnerId,
   needsPolicyDetails,
   canLinkPartner,
 }: {
@@ -126,16 +132,23 @@ function AcceptForm({
   adjusters: AdjusterOption[];
   partners: PartnerOption[];
   referrerName: string | null;
+  intakeReferralPartnerId: string | null;
   needsPolicyDetails: boolean;
   canLinkPartner: boolean;
 }) {
   const [state, formAction] = useActionState(resilient(acceptIntake), idleState);
 
-  // Pre-selected from the intake's own referral fields: if the submission named
-  // a referring contractor, the operator is almost always about to link one, and
-  // the default that saves a click is the one the data already implies.
+  // Pre-selected from the intake's own referral facts. A vendor-link intake
+  // already names a known company, so "Existing" with that company is the
+  // default; a submission that only typed a contractor name defaults to
+  // "Create". Either way the operator confirms — the default saves a click, it
+  // does not decide the attribution.
+  const knownVendor =
+    intakeReferralPartnerId && partners.some((partner) => partner.id === intakeReferralPartnerId)
+      ? intakeReferralPartnerId
+      : null;
   const [choice, setChoice] = useState<PartnerChoice>(
-    referrerName && canLinkPartner ? "new" : "none",
+    !canLinkPartner ? "none" : knownVendor ? "existing" : referrerName ? "new" : "none",
   );
   const groupName = useId();
 
@@ -228,7 +241,7 @@ function AcceptForm({
               {choice === "existing" ? (
                 <AdminSelect
                   name="partnerCompanyId"
-                  defaultValue={state.values?.partnerCompanyId ?? ""}
+                  defaultValue={state.values?.partnerCompanyId ?? knownVendor ?? ""}
                   error={state.fieldErrors?.partnerCompanyId}
                 >
                   <option value="" disabled>

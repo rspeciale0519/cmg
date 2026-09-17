@@ -275,7 +275,7 @@ export async function reassignClaimAdjuster(
     status: "success",
     message: adjusterId
       ? `${claim.claim_ref} reassigned.`
-      : `${claim.claim_ref} returned to the intake queue.`,
+      : `${claim.claim_ref} is unassigned. Find it under Claims with the adjuster filter set to Unassigned.`,
   };
 }
 

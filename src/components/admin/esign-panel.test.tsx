@@ -42,6 +42,14 @@ describe("ESignPanel", () => {
     expect(screen.getByRole("button", { name: "Use manual signing" })).toBeTruthy();
   });
 
+  it("offers retry and manual fallback after a creation failure on an under-review claim", () => {
+    render(
+      <ESignPanel {...base} claimStatus="under_review" esignStatus="document.creation_failed" />,
+    );
+    expect(screen.getByRole("button", { name: "Retry e-signature" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use manual signing" })).toBeTruthy();
+  });
+
   it("offers an initial send only from under review", () => {
     render(<ESignPanel {...base} claimStatus="under_review" esignStatus={null} />);
     expect(screen.getByRole("button", { name: "Send for e-signature" })).toBeTruthy();

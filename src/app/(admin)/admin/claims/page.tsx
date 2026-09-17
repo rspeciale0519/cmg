@@ -216,7 +216,7 @@ export default async function ClaimsPage({
         >
           {banner.kind === "handedOn"
             ? `${banner.ref} is now with another adjuster and has left your list.`
-            : `${banner.ref} is back in the intake queue and has left your list.`}
+            : `${banner.ref} is unassigned and has left your list. The owner can find it with the Unassigned filter.`}
         </p>
       ) : null}
 

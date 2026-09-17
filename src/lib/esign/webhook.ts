@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { writeAudit } from "@/lib/audit";
+import { dispatchOutbox } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database, Json } from "@/types/database-app";
 import { readESignConfig } from "./config";
@@ -374,5 +375,27 @@ export async function processPandaDocWebhook(
     return { status: 500, body: { ok: false, reason: "completion_failed", ...counts } };
   }
 
+  /* After the event is marked complete, not before: delivery is best-effort
+     and must never turn a processed event back into a retry. Every other
+     enqueue site dispatches immediately after its commit, and a signed letter
+     is the one notification a homeowner is actively waiting for — without this
+     it would wait for the next daily sweep. Rows are found by the dedupe key
+     the handlers stamped, so only this event's messages are attempted. */
+  await dispatchWebhookNotifications(admin, eventId);
+
   return { status: 200, body: { ok: true, ...counts } };
+}
+
+async function dispatchWebhookNotifications(admin: Admin, eventId: string): Promise<void> {
+  try {
+    const { data, error } = await admin
+      .from("notifications_outbox")
+      .select("id")
+      .like("dedupe_key", `${eventId}:%`)
+      .eq("status", "pending");
+    if (error || !data || data.length === 0) return;
+    await dispatchOutbox(admin, data.map((row) => row.id));
+  } catch (cause) {
+    console.error("[pandadoc-webhook] immediate dispatch failed", cause);
+  }
 }

@@ -7,6 +7,7 @@ import {
   Panel,
   PanelBody,
 } from "@/components/admin/admin-shell";
+import { CopyLink } from "@/components/admin/copy-link";
 import { CellMeta, DataTable, Td, Th, Tr } from "@/components/admin/data-table";
 import { ListPager, listMeta } from "@/components/admin/list-pager";
 import {
@@ -140,8 +141,11 @@ export default async function PartnerDetailPage({
         });
 
   const { company, reps, pendingInvites, claims } = detail;
-  const intakeUrl = new URL("/file-a-claim", process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
-  intakeUrl.searchParams.set("ref", company.intakeReferralCode);
+  // The link is handed to a vendor, so a silent localhost fallback would ship
+  // an unusable URL. Without the public origin the panel says so instead.
+  const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const intakeUrl = siteOrigin ? new URL("/file-a-claim", siteOrigin) : null;
+  intakeUrl?.searchParams.set("ref", company.intakeReferralCode);
 
   const { olderThan: claimsNext, newerThan: claimsPrev } = pageCursors({
     ids: claims.map((claim) =>
@@ -194,9 +198,16 @@ export default async function PartnerDetailPage({
               Share this link with this vendor. It opens the shared form and records the vendor internally.
               It does not grant access to claims or other vendors.
             </p>
-            {company.status === "active" ? (
-              <a className="break-all text-sm underline" href={intakeUrl.toString()}>{intakeUrl.toString()}</a>
-            ) : <p className="text-sm">This vendor is inactive. Its link cannot start a new intake.</p>}
+            {company.status !== "active" ? (
+              <p className="text-sm">This vendor is inactive. Its link cannot start a new intake.</p>
+            ) : intakeUrl ? (
+              <CopyLink href={intakeUrl.toString()} label={`Vendor intake link for ${company.name}`} />
+            ) : (
+              <p className="text-sm text-ink/70">
+                The public site address is not configured on this deployment, so the link
+                cannot be built. Set <code>NEXT_PUBLIC_SITE_URL</code> and redeploy.
+              </p>
+            )}
           </PanelBody>
         </Panel>
         <Panel title="Company details" meta={`Updated ${formatRelative(company.updatedAt)}`}>
