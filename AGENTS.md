@@ -25,9 +25,10 @@ These rules add repository facts to the global working agreement.
 
 - Current code, tests, manifests, and configuration override old documentation.
 - Use `README.md` for setup and production deployment.
-- Use `docs/ROADMAP.md` for current product progress.
-- Use `docs/temp/HANDOFF.md` for browser acceptance.
-- Use `docs/temp/BLOCKERS.md` for owner-only launch actions.
+- Use `docs/RELEASE_STATE.md` for the current release state, open pull requests, migration heads, and open gates.
+- Use `docs/ROADMAP.md` for design direction and history.
+- Use `docs/temp/HANDOFF.md` for engineering evidence and browser acceptance.
+- Use `docs/temp/BLOCKERS.md` for owner-only decisions.
 - Use `docs/RETENTION.md` for data-retention requirements.
 - Treat `.claude/plans/feature-claims-platform.md` as design history when current evidence disagrees.
 

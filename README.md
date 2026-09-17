@@ -5,9 +5,10 @@ The release target is `SITE_MODE=simple`.
 This setting keeps the public site and forms available.
 Private platform features need separate approval and hosted acceptance checks.
 
-[HANDOFF.md](docs/temp/HANDOFF.md) is the current release record.
-It contains verified commits, deployments, migrations, checks, and open risks.
-[BLOCKERS.md](docs/temp/BLOCKERS.md) lists owner-controlled actions.
+[RELEASE_STATE.md](docs/RELEASE_STATE.md) is the current release record.
+It contains production facts, open pull requests, migration heads, environment facts, open gates, and the ordered next steps.
+[HANDOFF.md](docs/temp/HANDOFF.md) contains engineering evidence and acceptance checklists.
+[BLOCKERS.md](docs/temp/BLOCKERS.md) lists owner-controlled decisions.
 
 ## Stack and local setup
 
@@ -151,7 +152,8 @@ Do not describe a browser console as clean without checking that scope.
 | `docs/` | Product and release records |
 
 Current code, tests, manifests, and configuration override older design records.
-[ROADMAP.md](docs/ROADMAP.md) records product progress.
+[RELEASE_STATE.md](docs/RELEASE_STATE.md) records the current release state.
+[ROADMAP.md](docs/ROADMAP.md) records design direction and history.
 [RETENTION.md](docs/RETENTION.md) separates implemented cleanup from proposed retention policy.
 The [original platform plan](.claude/plans/feature-claims-platform.md) and older progress records provide history.
 
@@ -180,7 +182,7 @@ The plan recommendation does not authorize a purchase.
 This requirement is separate from GitHub's private-repository protection plan.
 A plan upgrade does not remove Vercel's 4.5 MB request limit.
 
-1. Read HANDOFF for the current release candidate and unresolved risks.
+1. Read RELEASE_STATE for the current candidate and open gates, then HANDOFF for the supporting evidence.
 2. Complete local checks and browser acceptance at 320px, 390px, and desktop width.
 3. Repeat public-route acceptance against the latest Preview.
 4. Verify private-route closure, public form states, keyboard access, console output, and network requests.
@@ -202,7 +204,7 @@ Supabase [signed upload URLs](https://supabase.com/docs/reference/javascript/fil
 Cleanup retains both exact paths through the upload expiry and reconciles late objects after each sweep.
 
 10. Compare hosted migration history with every repository migration.
-11. Record the pending migration list in HANDOFF.
+11. Record the hosted and repository migration heads in RELEASE_STATE.
 12. Record the owner's recovery decision and obtain approval for each production write.
 13. Create backups only when the owner approves them.
 14. Verify available recovery coverage and record any unverified restore capability.
