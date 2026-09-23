@@ -154,6 +154,25 @@ describe("ESignPanel", () => {
     ).toBeTruthy();
   });
 
+  it("shows a manual letter as completed, with no download or upload hint, once the claim is lor_signed", () => {
+    render(
+      <ESignPanel
+        {...base}
+        providerMode="manual"
+        providerDocumentId={null}
+        esignStatus="manual_pending"
+        claimStatus="lor_signed"
+      />,
+    );
+    expect(screen.getByText("Representation completed")).toBeTruthy();
+    expect(screen.queryByText("Manual signature pending")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Download letter for signing" }),
+    ).toBeNull();
+    expect(screen.queryByText(/upload it as a signed LOR/i)).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("does not offer the prefilled letter when PandaDoc can send it", () => {
     render(<ESignPanel {...base} claimStatus="under_review" esignStatus={null} />);
     expect(
