@@ -77,6 +77,11 @@ export function ESignPanel({
   const canRecover =
     (claimStatus === "lor_sent" || claimStatus === "under_review") && display.recoverable;
   const showActions = canManage && (canStart || canRecover);
+  /* Without an API key the platform cannot send the letter itself, so the
+     electronic button would only ever render disabled. Manual mode shows the
+     steps staff actually take instead: download, send from PandaDoc, then
+     record the send. */
+  const manualMode = providerMode === "manual";
   /* Without an API key nobody sends the letter for CMG, so the desk needs the
      paper itself. Offered wherever a letter is still the next thing to happen —
      including while a manual request is already pending, which is exactly when
@@ -126,37 +131,6 @@ export function ESignPanel({
         </p>
       ) : null}
 
-      {showActions ? (
-        <form action={action} className="mt-[13px]">
-          <input type="hidden" name="claimId" value={claimId} />
-          <input type="hidden" name="requestId" value={requestId} />
-          <div className="flex flex-wrap gap-2">
-            <SubmitButton
-              name="intent"
-              value="electronic"
-              pendingLabel="Sending…"
-              disabled={!electronicReady}
-            >
-              {canStart ? "Send for e-signature" : "Retry e-signature"}
-            </SubmitButton>
-            <SubmitButton
-              name="intent"
-              value="manual"
-              variant="secondary"
-              pendingLabel="Switching…"
-            >
-              Use manual signing
-            </SubmitButton>
-          </div>
-          {!electronicReady && electronicBlocker ? (
-            <p className="mt-[9px] text-[12px] leading-[1.55] text-ink/58">
-              Electronic sending is unavailable: {electronicBlocker}
-            </p>
-          ) : null}
-          <ActionFeedback state={state} />
-        </form>
-      ) : null}
-
       {showPrefilledDownload ? (
         <div className="mt-[13px]">
           <AdminButton
@@ -177,6 +151,44 @@ export function ESignPanel({
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {showActions ? (
+        <form action={action} className="mt-[13px]">
+          <input type="hidden" name="claimId" value={claimId} />
+          <input type="hidden" name="requestId" value={requestId} />
+          <div className="flex flex-wrap gap-2">
+            {manualMode ? null : (
+              <SubmitButton
+                name="intent"
+                value="electronic"
+                pendingLabel="Sending…"
+                disabled={!electronicReady}
+              >
+                {canStart ? "Send for e-signature" : "Retry e-signature"}
+              </SubmitButton>
+            )}
+            <SubmitButton
+              name="intent"
+              value="manual"
+              variant="secondary"
+              pendingLabel={manualMode ? "Recording…" : "Switching…"}
+            >
+              {manualMode ? "Mark letter as sent" : "Use manual signing"}
+            </SubmitButton>
+          </div>
+          {manualMode ? (
+            <p className="mt-[9px] text-[12px] leading-[1.55] text-ink/58">
+              Use this after you send the letter from PandaDoc. The claim moves to LOR sent.
+            </p>
+          ) : null}
+          {!manualMode && !electronicReady && electronicBlocker ? (
+            <p className="mt-[9px] text-[12px] leading-[1.55] text-ink/58">
+              Electronic sending is unavailable: {electronicBlocker}
+            </p>
+          ) : null}
+          <ActionFeedback state={state} />
+        </form>
       ) : null}
 
       {!canManage && canRecover ? (

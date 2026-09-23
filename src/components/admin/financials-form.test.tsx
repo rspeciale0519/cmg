@@ -34,4 +34,13 @@ describe("FinancialsForm fee default", () => {
     });
     expect(input.value).toBe("12.5");
   });
+
+  it("hints the application default, not a hard-coded figure, once cleared", () => {
+    render(<FinancialsForm {...base} feeDefault={20} feePercent={null} />);
+
+    const input = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Fee percent",
+    });
+    expect(input.placeholder).toBe("20");
+  });
 });

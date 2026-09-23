@@ -117,7 +117,34 @@ describe("ESignPanel", () => {
       screen.getByRole("button", { name: "Download letter for signing" }),
     ).toBeTruthy();
     expect(screen.getByText(/upload it to pandadoc/i)).toBeTruthy();
+    // No dead electronic button without an API key; the manual action is named
+    // for what it records.
+    expect(screen.queryByRole("button", { name: "Send for e-signature" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Mark letter as sent" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Use manual signing" })).toBeNull();
+  });
+
+  it("lists the manual steps in the order staff work them", () => {
+    render(
+      <ESignPanel
+        {...base}
+        providerMode="manual"
+        claimStatus="under_review"
+        esignStatus={null}
+      />,
+    );
+    const download = screen.getByRole("button", { name: "Download letter for signing" });
+    const markSent = screen.getByRole("button", { name: "Mark letter as sent" });
+    expect(
+      download.compareDocumentPosition(markSent) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText(/after you send the letter from pandadoc/i)).toBeTruthy();
+  });
+
+  it("keeps both electronic and manual controls when PandaDoc is configured", () => {
+    render(<ESignPanel {...base} claimStatus="under_review" esignStatus={null} />);
     expect(screen.getByRole("button", { name: "Send for e-signature" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use manual signing" })).toBeTruthy();
   });
 
   it("keeps offering the letter while a manual request is pending", () => {
