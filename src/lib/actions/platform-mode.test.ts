@@ -22,6 +22,7 @@ const authz = await import("@/lib/authz");
 const { signIn, signOut } = await import("./auth");
 const { acceptInvite } = await import("./invite");
 const { beginTotpEnrollment, verifyTotp } = await import("./mfa");
+const { requestPasswordReset, resetPassword } = await import("./password-reset");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -68,6 +69,8 @@ describe.each(["simple", "", "invalid", "staffing", "platforms", undefined])(
     ["invitation", () => acceptInvite({ status: "idle" }, new FormData())],
     ["MFA enrollment", () => beginTotpEnrollment()],
     ["MFA verification", () => verifyTotp({ status: "idle" }, new FormData())],
+    ["password reset request", () => requestPasswordReset({ status: "idle" }, new FormData())],
+    ["password reset", () => resetPassword({ status: "idle" }, new FormData())],
   ] as const)("closes %s before any data or authentication call", async (_name, action) => {
     await expect(action()).rejects.toThrow("redirect:/platform-disabled");
     expect(stub.createClient).not.toHaveBeenCalled();
@@ -133,6 +136,17 @@ describe("staff mode", () => {
     ["MFA enrollment", () => beginTotpEnrollment()],
     ["MFA verification", () => verifyTotp({ status: "idle" }, new FormData())],
   ] as const)("keeps %s past the mode gate — /mfa is open", async (_name, action) => {
+    const outcome = await Promise.resolve(action()).then(
+      () => null,
+      (cause: unknown) => (cause instanceof Error ? cause.message : String(cause)),
+    );
+    expect(outcome).not.toBe("redirect:/platform-disabled");
+  });
+
+  it.each([
+    ["password reset request", () => requestPasswordReset({ status: "idle" }, new FormData())],
+    ["password reset", () => resetPassword({ status: "idle" }, new FormData())],
+  ] as const)("keeps %s past the mode gate — recovery opens with /login", async (_name, action) => {
     const outcome = await Promise.resolve(action()).then(
       () => null,
       (cause: unknown) => (cause instanceof Error ? cause.message : String(cause)),

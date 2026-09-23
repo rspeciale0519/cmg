@@ -21,6 +21,11 @@ const NOTICES: Record<string, string> = {
      the new claim is attached to it. */
   "invite-linked":
     "Your invitation is accepted and attached to the account you already have. Nothing about your sign-in has changed — use your existing password.",
+  /* Every session on the account was signed out when the password changed, so
+     this is the next step for everyone. A staff account is asked for its
+     authenticator code after this, as at any other sign-in. */
+  "password-reset":
+    "Your password is changed and every device was signed out. Sign in with your new password.",
 };
 
 export default async function LoginPage({

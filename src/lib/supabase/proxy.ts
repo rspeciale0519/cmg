@@ -54,8 +54,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const pathname = request.nextUrl.pathname;
 
   /* The mode gate, and the only one. `isPathOpen` answers "is this prefix open
-     in this mode" for all three modes at once, so simple mode closes all six
-     prefixes, staff mode closes `/invite`, `/portal` and `/partner`, and
+     in this mode" for all three modes at once, so simple mode closes every
+     private prefix, staff mode closes `/invite`, `/portal` and `/partner`, and
      platform mode closes nothing — with no mode comparison written here.
 
      Still before the Supabase client is constructed: a closed prefix has no

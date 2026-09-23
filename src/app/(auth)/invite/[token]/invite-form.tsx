@@ -4,60 +4,9 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { TextField } from "@/components/forms/controls";
 import { FormAlert, formAlertMessage } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
+import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter";
 import { acceptInvite } from "@/lib/actions/invite";
 import { idleState, resilient } from "@/lib/actions/types";
-import { cx } from "@/lib/cx";
-import {
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_SCORE_LABELS,
-  passwordProblemMessage,
-  passwordProblems,
-  passwordScore,
-} from "@/lib/validators/password";
-
-/**
- * Four segments rather than a bar: a continuous bar invites the reader to aim
- * for "full", and the rule this form actually enforces is a threshold, not a
- * maximum. The live problem line under it is the same text the server would
- * return, computed from the same function, so the meter never promises
- * something the submit will refuse.
- */
-function StrengthMeter({ password, email }: { password: string; email: string }) {
-  const score = passwordScore(password, email);
-  const problems = passwordProblems(password, email);
-
-  return (
-    <div className="mt-[10px]">
-      <div className="flex gap-[6px]" aria-hidden="true">
-        {[1, 2, 3, 4].map((step) => (
-          <span
-            key={step}
-            className={cx(
-              "h-[3px] flex-1 rounded-full transition-colors duration-200",
-              password.length === 0
-                ? "bg-ink/13"
-                : score >= step
-                  ? score <= 1
-                    ? "bg-[#E08C6A]"
-                    : "bg-accent"
-                  : "bg-ink/13",
-            )}
-          />
-        ))}
-      </div>
-      <p
-        aria-live="polite"
-        className="mt-[8px] text-[13px] leading-[1.6] text-ink/55"
-      >
-        {password.length === 0
-          ? `At least ${PASSWORD_MIN_LENGTH} characters, with an uppercase letter, a lowercase letter and a number.`
-          : problems.length > 0
-            ? passwordProblemMessage(problems[0])
-            : PASSWORD_SCORE_LABELS[score]}
-      </p>
-    </div>
-  );
-}
 
 export function InviteForm({
   token,
@@ -121,7 +70,7 @@ export function InviteForm({
           onChange={(event) => setPassword(event.target.value)}
           error={errors.password}
         />
-        <StrengthMeter password={password} email={email} />
+        <PasswordStrengthMeter password={password} email={email} />
       </div>
 
       <TextField
