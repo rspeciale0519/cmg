@@ -16,12 +16,15 @@ export function ClaimantInvite({
   hasPendingInvite,
   acceptanceInProgress,
   canInvite,
+  inviteOpen,
 }: {
   claimantId: string;
   hasAccount: boolean;
   hasPendingInvite: boolean;
   acceptanceInProgress: boolean;
   canInvite: boolean;
+  /** `isSurfaceOpen("/invite")`, decided by the page — see `issueClaimantInvite`. */
+  inviteOpen: boolean;
 }) {
   const [state, formAction] = useActionState(
     resilient(issueClaimantInvite),
@@ -31,6 +34,16 @@ export function ClaimantInvite({
   if (hasAccount) {
     return (
       <span className="text-[12px] leading-[1.4] text-ink/58">Portal active</span>
+    );
+  }
+
+  if (!inviteOpen) {
+    /* `issueClaimantInvite` would refuse this every time in `staff` mode — see
+       its own comment — so the control is replaced rather than left to fail. */
+    return (
+      <span className="text-[12px] leading-[1.4] text-ink/58">
+        Invitations are paused until the customer portal opens.
+      </span>
     );
   }
 

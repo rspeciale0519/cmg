@@ -10,6 +10,7 @@ import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
 import { resendApiKey } from "@/lib/email/outbox";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import {
   isStaffAppRole,
   LAST_OWNER_REFUSAL,
@@ -22,6 +23,7 @@ import { staffInviteSchema } from "@/lib/validators/staff";
 import {
   fieldErrorsFrom,
   GENERIC_ERROR,
+  INVITE_SURFACE_PAUSED,
   invalid,
   submittedValues,
   type FormState,
@@ -286,6 +288,18 @@ export async function inviteStaff(
   formData: FormData,
 ): Promise<InviteIssueState> {
   const session = await requireOwner();
+
+  /* Same `/invite/:token` link as `issueClaimantInvite` and `invitePartnerRep`,
+     and the same reason for a refusal state rather than `requireOpenPath`'s
+     redirect: this runs from `/admin/staff`, and a stale form there must not
+     bounce the owner off the desk. Inviting staff is, today, the only way to
+     add an account (`acceptInvite` is the only caller of
+     `admin.auth.admin.createUser` in this codebase), so this is also where a
+     `staff`-mode deployment cannot grow its roster until `/invite` reopens. */
+  if (!isSurfaceOpen("/invite")) {
+    return { status: "error", message: INVITE_SURFACE_PAUSED };
+  }
+
   /* `role` is here as well as the two text fields: the picker is an
      uncontrolled `<select>`, and React's post-action reset restores it to the
      option that was default-selected, so a refusal used to snap a chosen

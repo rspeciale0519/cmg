@@ -8,12 +8,14 @@ import { requireOwner } from "@/lib/authz";
 import { issueInvite } from "@/lib/invites";
 import { resendApiKey } from "@/lib/email/outbox";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { partnerCompanySchema, partnerRepInviteSchema } from "@/lib/validators/partners";
 import {
   fieldErrorsFrom,
   GENERIC_ERROR,
+  INVITE_SURFACE_PAUSED,
   invalid,
   submittedValues,
   type FormState,
@@ -321,6 +323,15 @@ export async function invitePartnerRep(
   formData: FormData,
 ): Promise<InviteIssueState> {
   const session = await requireOwner();
+
+  /* Same `/invite/:token` link as `issueClaimantInvite`, and the same reason
+     for a refusal state rather than a redirect: this runs from
+     `/admin/partners/[id]`, and a stale form there must not bounce the owner
+     off the page they are looking at. */
+  if (!isSurfaceOpen("/invite")) {
+    return { status: "error", message: INVITE_SURFACE_PAUSED };
+  }
+
   const companyId = String(formData.get("companyId") ?? "").trim();
   const typed = submittedValues(formData, REP_INVITE_FIELDS);
   if (!UUID.test(companyId)) {

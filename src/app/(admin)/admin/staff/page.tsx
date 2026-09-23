@@ -18,6 +18,7 @@ import {
 import { loadStaffDirectory, STAFF_PAGE_SIZE } from "@/lib/admin/staff";
 import { metadataForRole, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
+import { isSurfaceOpen } from "@/lib/site-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ export default async function StaffPage({
 }) {
   const session = await requireRole("owner");
   const raw = await searchParams;
+  const inviteOpen = isSurfaceOpen("/invite");
 
   const firstPass = await loadStaffDirectory();
   const page = clampPage(
@@ -90,7 +92,17 @@ export default async function StaffPage({
         hint="adjuster or assistant"
         className="mb-[clamp(14px,1.6vw,20px)]"
       >
-        <StaffInviteForm />
+        {inviteOpen ? (
+          <StaffInviteForm />
+        ) : (
+          /* `inviteStaff` would refuse this every time in `staff` mode — its
+             token points at `/invite`, which is closed — and it is, today,
+             the only way to add an account, so the desk cannot grow its
+             roster until the portal opens either. */
+          <p className="max-w-[68ch] text-[12.5px] leading-[1.6] text-ink/55">
+            Invitations are paused until the customer portal opens.
+          </p>
+        )}
       </FormDisclosure>
 
       <Panel

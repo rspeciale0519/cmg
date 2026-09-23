@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The contract these pin: **a refused server action hands back what was
@@ -90,6 +90,15 @@ const COMPANY = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  /* `inviteStaff` reads the real `isSurfaceOpen("/invite")` — unmocked here,
+     same as `invite-authorization.test.ts` — so `platform` is stubbed to keep
+     these value-echo assertions independent of the ambient SITE_MODE. The
+     `staff`-mode refusal itself is pinned in `invite-issuance-mode.test.ts`. */
+  vi.stubEnv("SITE_MODE", "platform");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("createPartnerCompany", () => {

@@ -9,6 +9,7 @@ import { portalUrl } from "@/lib/claims/notify";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus } from "@/lib/claims/status";
 import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
@@ -252,12 +253,20 @@ export async function acceptIntake(
   const warnings: string[] = [];
 
   // ── 5. Invites ────────────────────────────────────────────────────────
-  const invited = await inviteIntakeClaimants(
-    claimId,
-    claim.claim_ref,
-    session.userId,
-    ip,
-  );
+  /* `/invite` is a `/invite/:token` link and nothing else, so — same rule as
+     `issueClaimantInvite` — it is issued only while that surface is open.
+     `staff` mode opens `/admin` but not `/invite`: minting one anyway would
+     burn a single-use, one-way-hashed token on a link that redirects to
+     `/platform-disabled`, and `deliverableTemplates()` already refuses to
+     put the `invite` template on the wire, so the outbox row would sit
+     `pending` forever. Skipping the step — rather than calling it and
+     discarding the result — is what keeps every claimant free of a
+     wasted token, so the desk can invite them for real once the portal
+     opens. */
+  const inviteSurfaceOpen = isSurfaceOpen("/invite");
+  const invited = inviteSurfaceOpen
+    ? await inviteIntakeClaimants(claimId, claim.claim_ref, session.userId, ip)
+    : { issued: 0, queued: 0, unqueued: 0, failed: 0 };
   if (invited.failed > 0) {
     warnings.push(
       `${invited.failed} portal invitation${invited.failed === 1 ? "" : "s"} could not be sent. Resend from the Claimants tab.`,
@@ -274,8 +283,9 @@ export async function acceptIntake(
   revalidatePath(`/admin/claims/${claimId}`, "layout");
   revalidatePath("/admin");
 
-  const sentence =
-    invited.issued > 0
+  const sentence = !inviteSurfaceOpen
+    ? `${claim.claim_ref} accepted and under review. Portal invitations will be sent when the customer portal opens.`
+    : invited.issued > 0
       ? `${claim.claim_ref} accepted and under review. ${invited.issued} portal invitation${invited.issued === 1 ? "" : "s"} issued; ${invited.queued} queued for email.`
       : `${claim.claim_ref} accepted and under review.`;
 

@@ -7,6 +7,7 @@ import { ClaimRef, StatusPill } from "@/components/admin/status-pill";
 import { isClaimStatus } from "@/lib/claims/status";
 import { adminTitle, requireStaff } from "@/lib/authz";
 import { formatAddressLine, formatRelative } from "@/lib/format";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createClient } from "@/lib/supabase/server";
 import { loadClaimantSummaries } from "@/lib/claims/claimants";
 import { InvitePanel, type InvitableClaimant } from "./invite-panel";
@@ -159,6 +160,12 @@ export default async function AdminDashboard() {
   }));
   const invitableTotal = uninvitedCount.count ?? invitable.length;
   const sendableTotal = invitable.filter((row) => row.canInvite).length;
+
+  /* `/invite` is closed in `staff` mode, so the panel that repairs a homeowner's
+     missing portal access has nothing it can do — every button on it issues a
+     token for a page that redirects to `/platform-disabled`. Told plainly
+     rather than left to a refusal per row: see `issueClaimantInvite`. */
+  const inviteOpen = isSurfaceOpen("/invite");
 
   const questionsShown = (questions.data ?? []).length;
   const questionsTotal = questionCount.count ?? questionsShown;
@@ -388,16 +395,18 @@ export default async function AdminDashboard() {
         <Panel
           title="Awaiting portal access"
           meta={
-            invitableTotal === 0
+            !inviteOpen
               ? undefined
-              : sendableTotal === 0
-                ? `${invitableTotal} waiting on an owner or the assigned adjuster`
-                : invitable.length < invitableTotal
-                  ? `${invitable.length} of ${invitableTotal} to send`
-                  : `${invitableTotal} to send`
+              : invitableTotal === 0
+                ? undefined
+                : sendableTotal === 0
+                  ? `${invitableTotal} waiting on an owner or the assigned adjuster`
+                  : invitable.length < invitableTotal
+                    ? `${invitable.length} of ${invitableTotal} to send`
+                    : `${invitableTotal} to send`
           }
         >
-          <InvitePanel claimants={invitable} total={invitableTotal} />
+          <InvitePanel claimants={invitable} total={invitableTotal} inviteOpen={inviteOpen} />
         </Panel>
       </div>
     </>

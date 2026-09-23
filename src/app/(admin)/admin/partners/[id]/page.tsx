@@ -33,6 +33,7 @@ import {
 import { hasRole, NOT_FOUND_TITLE, requireRole } from "@/lib/authz";
 import { formatDateStamp, formatRelative } from "@/lib/format";
 import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -105,6 +106,7 @@ export default async function PartnerDetailPage({
   await requireRole("owner");
   const { id } = await params;
   const raw = await searchParams;
+  const inviteOpen = isSurfaceOpen("/invite");
 
   const claimsForward = parseTimeCursor(firstParam(raw, "claims"));
   const claimsBackward = claimsForward
@@ -324,7 +326,16 @@ export default async function PartnerDetailPage({
             <h3 className="mb-[12px] text-[11px] uppercase leading-[1.4] tracking-[0.13em] text-ink/55">
               Invite a rep
             </h3>
-            <PartnerRepInviteForm companyId={company.id} />
+            {inviteOpen ? (
+              <PartnerRepInviteForm companyId={company.id} />
+            ) : (
+              /* `invitePartnerRep` would refuse this every time in `staff`
+                 mode — its own token points at `/invite`, which is closed —
+                 so the form is replaced rather than left to fail. */
+              <p className="max-w-[62ch] text-[12.5px] leading-[1.6] text-ink/55">
+                Invitations are paused until the customer portal opens.
+              </p>
+            )}
           </div>
 
           {pendingInvites.length > 0 ? (
