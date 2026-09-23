@@ -1,12 +1,13 @@
 /**
- * Which of the six private route prefixes this deployment answers, and which
+ * Which of the private route prefixes this deployment answers, and which
  * notification templates it is allowed to put on the wire.
  *
  * THREE MODES, ONE RULE
  *
  *   simple    — nothing private. The marketing site, the public forms, and the
  *               four public-form emails. This is what production runs.
- *   staff     — the CMG claims desk only: `/login`, `/mfa`, `/admin`. The
+ *   staff     — the CMG claims desk only: `/login`, `/mfa`, `/admin`, and the
+ *               three password-recovery routes that belong to `/login`. The
  *               customer portal, the partner portal and invitation redemption
  *               stay closed, so staff can run claims and e-signing before those
  *               surfaces have had hosted acceptance testing.
@@ -27,6 +28,12 @@ export const PLATFORM_DISABLED_PATH = "/platform-disabled";
  */
 const PRIVATE_PREFIXES = [
   { prefix: "/login", openIn: ["platform", "staff"] },
+  /* Password recovery is part of signing in, so it opens exactly when `/login`
+     does. A build with no login has no password to recover, and a recovery
+     link that worked in simple mode would mint a session nothing can use. */
+  { prefix: "/forgot-password", openIn: ["platform", "staff"] },
+  { prefix: "/auth/confirm", openIn: ["platform", "staff"] },
+  { prefix: "/reset-password", openIn: ["platform", "staff"] },
   { prefix: "/mfa", openIn: ["platform", "staff"] },
   { prefix: "/admin", openIn: ["platform", "staff"] },
   { prefix: "/invite", openIn: ["platform"] },
@@ -84,7 +91,7 @@ function matches(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-/** True for any of the six private prefixes, whatever the mode. */
+/** True for any private prefix, whatever the mode. */
 export function isPlatformPath(pathname: string): boolean {
   return PRIVATE_PREFIXES.some((entry) => matches(pathname, entry.prefix));
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { TextField } from "@/components/forms/controls";
 import { FormAlert } from "@/components/forms/form-feedback";
@@ -37,6 +38,14 @@ export function LoginForm({ next }: { next: string | null }) {
         autoComplete="current-password"
         className="mt-5"
       />
+      <p className="mt-[10px] text-right text-[13px] leading-[1.6]">
+        <Link
+          href="/forgot-password"
+          className="text-accent underline underline-offset-4"
+        >
+          Forgot password?
+        </Link>
+      </p>
 
       <Button
         type="submit"

@@ -14,8 +14,8 @@ import {
 } from "./site-mode";
 
 /**
- * The contract this pins: **`SITE_MODE` fails closed, and every one of the six
- * private prefixes has one documented answer in each of the three modes.**
+ * The contract this pins: **`SITE_MODE` fails closed, and every private prefix
+ * has one documented answer in each of the three modes.**
  *
  * Written as a matrix rather than as spot checks because the failure this file
  * exists to catch is a prefix that nobody thought about when a mode was added.
@@ -26,6 +26,10 @@ import {
 /** prefix → the modes that open it. Every cell is asserted, in both directions. */
 const EXPECTED: Record<string, readonly SiteMode[]> = {
   "/login": ["platform", "staff"],
+  // Password recovery opens exactly when `/login` does.
+  "/forgot-password": ["platform", "staff"],
+  "/auth/confirm": ["platform", "staff"],
+  "/reset-password": ["platform", "staff"],
   "/mfa": ["platform", "staff"],
   "/admin": ["platform", "staff"],
   "/invite": ["platform"],
@@ -86,7 +90,7 @@ describe("siteMode — fails closed", () => {
   });
 });
 
-describe("isPathOpen — the full six-prefix by three-mode matrix", () => {
+describe("isPathOpen — the full prefix by three-mode matrix", () => {
   it("covers every prefix the module exports, so a new one cannot go untested", () => {
     expect([...PLATFORM_PATH_PREFIXES].sort()).toEqual(
       Object.keys(EXPECTED).sort(),
@@ -118,7 +122,16 @@ describe("isPathOpen — the full six-prefix by three-mode matrix", () => {
     });
 
     it(`${mode}: does not gate a path that merely starts with a prefix's characters`, () => {
-      for (const path of ["/partnerish", "/logins", "/admins", "/portalside"]) {
+      for (const path of [
+        "/partnerish",
+        "/logins",
+        "/admins",
+        "/portalside",
+        "/forgot-passwords",
+        "/reset-password-now",
+        "/auth/confirmed",
+        "/auth",
+      ]) {
         expect(isPathOpen(path, mode)).toBe(true);
         expect(isPlatformPath(path)).toBe(false);
       }
@@ -132,7 +145,16 @@ describe("isPathOpen — the full six-prefix by three-mode matrix", () => {
     expect(isPlatformPath(PLATFORM_DISABLED_PATH)).toBe(false);
   });
 
-  it("treats an unknown SITE_MODE as simple, closing all six", () => {
+  it("opens the three recovery routes exactly when /login is open", () => {
+    for (const mode of MODES) {
+      const loginOpen = isPathOpen("/login", mode);
+      for (const path of ["/forgot-password", "/auth/confirm", "/reset-password"]) {
+        expect(isPathOpen(path, mode)).toBe(loginOpen);
+      }
+    }
+  });
+
+  it("treats an unknown SITE_MODE as simple, closing every private prefix", () => {
     vi.stubEnv("SITE_MODE", "not-a-mode");
     try {
       for (const prefix of Object.keys(EXPECTED)) {

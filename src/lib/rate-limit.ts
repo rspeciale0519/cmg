@@ -41,6 +41,17 @@ export const RATE_LIMITS = {
   inviteAcceptToken: { scope: "invite-accept:token", max: 10, window: "1 hour" },
   mfaVerifyUser: { scope: "mfa-verify:user", max: 10, window: "15 minutes" },
 
+  /* Password recovery. The request budgets bound mail volume rather than
+     guessing: each accepted request can put a message in someone's inbox, so
+     the per-address budget is what stops this form being used to flood one
+     person. Three an hour covers a lost first email and a retry. The per-user
+     budget on the reset itself bounds password submissions against one
+     recovery session; the TOTP code on that screen also spends
+     `mfaVerifyUser`, so code guesses share one budget with `/mfa`. */
+  passwordResetIp: { scope: "password-reset:ip", max: 10, window: "1 hour" },
+  passwordResetEmail: { scope: "password-reset:email", max: 3, window: "1 hour" },
+  passwordResetUser: { scope: "password-reset:user", max: 10, window: "15 minutes" },
+
   /* Portal surfaces. Keyed on the account rather than the IP: every caller here
      has already signed in, so the identity is known and is the thing worth
      bounding — an IP bucket would merge a household behind one router and would

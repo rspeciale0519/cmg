@@ -172,6 +172,23 @@ export function passwordSchema(identifier?: string | null) {
   });
 }
 
+/**
+ * The password-recovery form: the same `passwordSchema` and the same match rule
+ * as invite acceptance, without the name fields. One policy, so a reset can
+ * never set a password that an invitation would refuse.
+ */
+export function resetPasswordSchema(identifier?: string | null) {
+  return z
+    .object({
+      password: passwordSchema(identifier),
+      confirmPassword: z.string(),
+    })
+    .refine((value) => value.password === value.confirmPassword, {
+      path: ["confirmPassword"],
+      message: "Both passwords must match.",
+    });
+}
+
 export function acceptInviteSchema(identifier?: string | null) {
   return z
     .object({

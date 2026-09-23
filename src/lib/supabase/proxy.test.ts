@@ -84,6 +84,9 @@ afterEach(() => {
  */
 const PREFIX_MATRIX = [
   { prefix: "/login", openIn: ["platform", "staff"] },
+  { prefix: "/forgot-password", openIn: ["platform", "staff"] },
+  { prefix: "/auth/confirm", openIn: ["platform", "staff"] },
+  { prefix: "/reset-password", openIn: ["platform", "staff"] },
   { prefix: "/mfa", openIn: ["platform", "staff"] },
   { prefix: "/admin", openIn: ["platform", "staff"] },
   { prefix: "/invite", openIn: ["platform"] },
@@ -93,8 +96,21 @@ const PREFIX_MATRIX = [
 
 describe.each([
   ["simple", []],
-  ["staff", ["/login", "/mfa", "/admin"]],
-  ["platform", ["/login", "/mfa", "/admin", "/invite", "/portal", "/partner"]],
+  ["staff", ["/login", "/forgot-password", "/auth/confirm", "/reset-password", "/mfa", "/admin"]],
+  [
+    "platform",
+    [
+      "/login",
+      "/forgot-password",
+      "/auth/confirm",
+      "/reset-password",
+      "/mfa",
+      "/admin",
+      "/invite",
+      "/portal",
+      "/partner",
+    ],
+  ],
   // Fail-closed: anything unrecognised must behave exactly like simple.
   ["not-a-mode", []],
   ["", []],
@@ -232,6 +248,59 @@ describe("staff mode — the claims desk is open and authorization is unchanged"
       const response = await updateSession(request(path));
 
       expect(response.headers.get("location")).toBeNull();
+    },
+  );
+});
+
+/**
+ * Password recovery has to work for someone who cannot sign in. The request form
+ * and the emailed link are reached with no session at all, and the reset screen
+ * with the aal1 recovery session `verifyOtp` creates — which, for a staff
+ * account, is below the bar `/admin` sets. None of the three is a surface, so
+ * the proxy must pass them through and leave the decision to the route itself.
+ */
+describe.each(["staff", "platform"])("password recovery routes — SITE_MODE=%s", (mode) => {
+  beforeEach(() => {
+    process.env.SITE_MODE = mode;
+  });
+
+  it.each(["/forgot-password", "/auth/confirm"])(
+    "lets a signed-out visitor reach %s",
+    async (path) => {
+      mockClient(null, null);
+
+      const response = await updateSession(request(path, "?token_hash=abc&type=recovery"));
+
+      expect(response.headers.get("location")).toBeNull();
+    },
+  );
+
+  it.each(["adjuster", "owner", "customer"])(
+    "lets an aal1 recovery session for a %s reach /reset-password without a /mfa detour",
+    async (role) => {
+      mockClient({ sub: "user-1", aal: "aal1" }, role);
+
+      const response = await updateSession(request("/reset-password"));
+
+      expect(response.headers.get("location")).toBeNull();
+    },
+  );
+});
+
+describe("simple mode closes password recovery", () => {
+  beforeEach(() => {
+    process.env.SITE_MODE = "simple";
+  });
+
+  it.each(["/forgot-password", "/auth/confirm", "/reset-password"])(
+    "redirects %s to /platform-disabled, dropping the token from the URL",
+    async (path) => {
+      const response = await updateSession(
+        request(path, "?token_hash=0123456789abcdef0123456789abcdef&type=recovery"),
+      );
+
+      expect(response.headers.get("location")).toBe("https://cmg.test/platform-disabled");
+      expect(createServerClient).not.toHaveBeenCalled();
     },
   );
 });

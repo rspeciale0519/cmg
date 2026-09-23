@@ -75,6 +75,15 @@ export const GENERIC_ERROR =
 export const VERIFICATION_ERROR =
   "We could not verify that you're a person. Refresh the page and try again.";
 
+/**
+ * The only answer the password-recovery request form gives once a submission
+ * passes its abuse gates — for an active account, an unknown address, a
+ * deactivated account, a surface closed in this mode, and a delivery failure
+ * alike. Any second sentence would make the form an account directory.
+ */
+export const PASSWORD_RESET_REQUESTED =
+  "If an account exists for that email, we sent a link to reset the password.";
+
 export const RATE_LIMIT_ERROR =
   "That's several submissions in a short time. Wait a few minutes and try again, or call us directly.";
 
