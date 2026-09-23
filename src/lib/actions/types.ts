@@ -72,6 +72,20 @@ export const idleEnrollment: EnrollmentState = { status: "idle" };
 export const GENERIC_ERROR =
   "We could not submit that just now. Please try again, or call us and we'll take the details over the phone.";
 
+/**
+ * What every invite-issuing staff action shows in `staff` mode instead of
+ * minting a token: an invitation is a `/invite/:token` link and nothing else,
+ * and that surface is closed until `platform` mode opens the customer and
+ * partner portals with it. `issueInvite` would still succeed — the write is
+ * service-role and the database has no opinion about site mode — so the
+ * refusal has to be stated here, as a normal `FormState`, rather than by
+ * letting the action redirect a staff member out of the page they are
+ * already on (`requireOpenPath` is right for the public `/invite` pages and
+ * wrong for a control that lives on `/admin`).
+ */
+export const INVITE_SURFACE_PAUSED =
+  "Invitations are paused until the customer portal opens.";
+
 export const VERIFICATION_ERROR =
   "We could not verify that you're a person. Refresh the page and try again.";
 

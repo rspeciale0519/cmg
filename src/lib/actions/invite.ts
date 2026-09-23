@@ -14,12 +14,14 @@ import {
   inetOrNull,
   RATE_LIMITS,
 } from "@/lib/rate-limit";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { acceptInviteSchema } from "@/lib/validators/password";
 import {
   fieldErrorsFrom,
   GENERIC_ERROR,
+  INVITE_SURFACE_PAUSED,
   invalid,
   RATE_LIMIT_ERROR,
   type FormState,
@@ -54,8 +56,15 @@ export async function issueClaimantInvite(
      `staff` mode `/admin` is open and `/invite` is not: issuing anyway would
      burn a single-use token on a link that redirects to `/platform-disabled`,
      and the invitee cannot be sent a replacement because the token is
-     one-way-hashed the moment it is written. */
-  requireOpenPath("/invite");
+     one-way-hashed the moment it is written.
+     A refusal state rather than `requireOpenPath`'s redirect: this action runs
+     from inside `/admin`, and a staff member who is already on their own desk
+     must not be bounced off it by a stale form — see `acceptInvite` below for
+     the one caller of `requireOpenPath("/invite")` that *should* redirect,
+     because it is reached from the public `/invite/:token` page itself. */
+  if (!isSurfaceOpen("/invite")) {
+    return { status: "error", message: INVITE_SURFACE_PAUSED };
+  }
 
   const claimantId = String(formData.get("claimantId") ?? "").trim();
 

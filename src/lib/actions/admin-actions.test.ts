@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The contract this pins, across every action a staff surface offers CMG:
@@ -229,6 +229,12 @@ function form(fields: Record<string, string>): FormData {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  /* `invitePartnerRep` reads the real `isSurfaceOpen("/invite")` — unmocked
+     here, same as `invite-authorization.test.ts` — so `platform` is stubbed
+     to keep this file's authorization/mapping assertions independent of the
+     ambient SITE_MODE. The `staff`-mode refusal is pinned in
+     `invite-issuance-mode.test.ts`. */
+  vi.stubEnv("SITE_MODE", "platform");
   stub.session = { userId: stub.OWNER_ID, email: "owner@cmg.test", aal: "aal2", role: "owner" };
   stub.claim = {
     id: stub.CLAIM_ID,
@@ -269,6 +275,10 @@ beforeEach(() => {
   stub.resendKey = null;
   stub.transitionWarnings = [];
   stub.rpcCalls = [];
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("advanceClaimStatus — the lor_signed document gate", () => {

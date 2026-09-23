@@ -35,15 +35,29 @@ export type InvitableClaimant = {
 export function InvitePanel({
   claimants,
   total,
+  inviteOpen,
 }: {
   claimants: InvitableClaimant[];
   /** Everyone the predicate matches, not just the excerpt shown here. */
   total: number;
+  /** `isSurfaceOpen("/invite")`, decided by the page — see `issueClaimantInvite`. */
+  inviteOpen: boolean;
 }) {
   const [state, formAction] = useActionState(
     resilient(issueClaimantInvite),
     idleInviteIssueState,
   );
+
+  if (!inviteOpen) {
+    /* `issueClaimantInvite` would refuse every row on this panel in `staff`
+       mode — see its own comment — so the whole repair list is replaced by
+       one sentence rather than a button that always fails. */
+    return (
+      <p className="px-[clamp(14px,1.6vw,20px)] py-[clamp(28px,4vw,44px)] text-center text-[13px] leading-[1.6] text-ink/55">
+        Invitations are paused until the customer portal opens.
+      </p>
+    );
+  }
 
   if (claimants.length === 0) {
     return (

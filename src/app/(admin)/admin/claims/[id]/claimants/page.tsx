@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin/paging";
 import { loadClaimContext } from "@/lib/claims/queries";
 import { formatTimestamp } from "@/lib/format";
+import { isSurfaceOpen } from "@/lib/site-mode";
 import { createClient } from "@/lib/supabase/server";
 import { collectPostgrestPages } from "@/lib/supabase/collect-pages";
 
@@ -46,6 +47,7 @@ export default async function ClaimantsPage({
   const { claim, can } = await loadClaimContext(id);
   const raw = await searchParams;
   const supabase = await createClient();
+  const inviteOpen = isSurfaceOpen("/invite");
 
   const { count: total } = await supabase
     .from("claimants")
@@ -161,6 +163,7 @@ export default async function ClaimantsPage({
                 hasPendingInvite={pending.has(person.email.toLowerCase())}
                 acceptanceInProgress={accepting.has(person.email.toLowerCase())}
                 canInvite={can.canManage}
+                inviteOpen={inviteOpen}
               />
             </li>
           ))}

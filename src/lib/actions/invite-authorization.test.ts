@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const stub = vi.hoisted(() => ({
   OWNER_ID: "10000000-0000-4000-a000-000000000001",
@@ -33,10 +33,6 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ writeAudit: vi.fn() }));
-/* `requireOpenPath` is a no-op here on purpose: this file is about *who* may
-   issue an invite, and the mode boundary that decides whether `/invite` exists
-   at all is pinned in `platform-mode.test.ts`. Left unstubbed it would read the
-   ambient SITE_MODE and make every case in this file depend on it. */
 vi.mock("@/lib/authz", () => ({
   requireStaff: vi.fn(async () => stub.session),
   requireOpenPath: vi.fn(() => {}),
@@ -74,6 +70,12 @@ function form(): FormData {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  /* This file is about *who* may issue an invite, not about which mode is
+     running — that boundary is pinned in `platform-mode.test.ts` and in
+     `invite-issuance-mode.test.ts`. `issueClaimantInvite` reads the real
+     `isSurfaceOpen("/invite")`, unmocked, so `platform` is stubbed here to
+     keep every case in this file from depending on the ambient SITE_MODE. */
+  vi.stubEnv("SITE_MODE", "platform");
   stub.session = {
     userId: stub.OWNER_ID,
     email: "owner@example.com",
@@ -86,6 +88,10 @@ beforeEach(() => {
     queued: false,
     url: "https://cmg.test/invite/token",
   });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("issueClaimantInvite authorization", () => {
