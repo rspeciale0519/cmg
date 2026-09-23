@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-09-22. Rewrite this file in place. Do not append dated updates to it.
+Reconciled 2026-09-22 (evening). Rewrite this file in place. Do not append dated updates to it.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence and checklists.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for the owner-decision register.
@@ -11,20 +11,22 @@ Use [README.md](../README.md#simple-mode-production-runbook) for the release pro
 | Item | Current state |
 |---|---|
 | Vercel project | `cmgps`, Hobby plan |
-| Site mode | `SITE_MODE=simple` |
+| Site mode | `SITE_MODE=staff` (Production only; Preview and Development stay `simple`) |
 | Public host | `app.cmgpropertysolutions.net` |
-| Deployed code | `develop`, through the PR #10 merge |
+| Deployed code | `develop`, through the PR #14 merge |
 | Hosted migrations | 35 applied, through `20260917130000`. A dry run on 2026-09-22 reported "Remote database is up to date." |
 | Backups | The owner declined backups for the applied migrations |
 | Recovery path | Reviewed forward repair; immediate restoration is unverified |
 
-Production carries the direct-to-Storage upload transport, contractor intake fields, vendor intake links, the per-vendor fee setting, the prefilled Letter of Representation download, the corrected agreement-type checkbox positions, and the `staff` site mode. The staff desk stays closed until `SITE_MODE` is changed.
+Production carries the direct-to-Storage upload transport, contractor intake fields, vendor intake links, the per-vendor fee setting, the prefilled Letter of Representation download, the corrected agreement-type checkbox positions, password recovery on the sign-in form, and the `staff` site mode. The staff desk is live: `/login`, `/mfa`, and `/admin` are open; `/portal`, `/partner`, and `/invite` stay closed.
 
-Synthetic acceptance claim `CMG-2026-0004` exists in Production. Its description marks it as a test.
+Production environment facts set on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only, so Production runs the manual e-signing path and refuses every webhook call. Supabase public sign-up is disabled; accounts are created only by invitation.
+
+Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (LOR sent, manual signature pending, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
 
 ## Pull requests
 
-PRs #1 through #10 are merged into `develop`. No pull request is open.
+PRs #1 through #14 are merged into `develop`. No pull request is open.
 
 ## Migration heads
 
@@ -47,11 +49,28 @@ Remove `--dry-run` and add `--yes` to apply. Do not call it through `npx`. npm c
 | `staff` | `/login`, `/mfa`, `/admin` | `/portal`, `/partner`, `/invite` |
 | `platform` | Everything | Nothing |
 
-Unknown or missing values resolve to `simple`. In `staff` mode, only the three staff-alert email templates are added, because the other private templates link into portals that stay closed. Outbox rows older than `OUTBOX_MAX_AGE_DAYS` (default 7) are dead-lettered instead of sent.
+Unknown or missing values resolve to `simple`. In `staff` mode, only the three staff-alert email templates are added, because the other private templates link into portals that stay closed. Outbox rows older than `OUTBOX_MAX_AGE_DAYS` (default 7) are dead-lettered instead of sent. While `/invite` is closed, accepting an intake issues no invitations, and every admin invite control shows a "paused" note.
+
+Invitation is the only way to create an account, so staff mode cannot add new staff members until `/invite` reopens.
 
 ## E-signing
 
-The first release uses the manual path. Staff download a prefilled Letter of Representation from the claim screen, upload it to PandaDoc's web app, and send it from there. The signed copy is uploaded to the claim as document kind `lor_signed`. This path needs no PandaDoc API key and no webhook. The API path remains in the code for later.
+The first release uses the manual path. Staff download a prefilled Letter of Representation from the claim screen, upload it to PandaDoc's web app, send it from there, then click "Mark letter as sent." The signed copy is uploaded to the claim as document kind `lor_signed`. This path needs no PandaDoc API key and no webhook. The API path remains in the code for later.
+
+## Staff-desk acceptance — 2026-09-22
+
+| Step | Result |
+|---|---|
+| Owner sign-in with TOTP | Pass |
+| Dashboard, intake queue, claims list, partners, staff, settings | Pass; no console errors |
+| Letter refuses with no saved fee | Pass |
+| Save fee on Financials | Pass |
+| Download prefilled letter | Pass; valid 2.3 MB PDF |
+| Mark letter as sent | Pass; claim moved to `lor_sent`, feed entry recorded |
+| `lor_signed` blocked until a signed letter is uploaded | Pass |
+| Accept intake | Pass; 20% fee seeded, no invitations issued in staff mode |
+| Password recovery routes | Pass for routing and expired-link handling; real email delivery not yet exercised |
+| Upload a signed letter | Not yet run |
 
 ## Environment
 
@@ -69,10 +88,9 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 
 | Item | Who | Status |
 |---|---|---|
-| Rotate the Supabase database password | owner | Recommended 2026-09-22. The password appeared in a scrambled but recoverable form in a local agent transcript. |
-| Resend delivery check for `CMG-2026-0004` and the 2026-09-15 lead | engineering | Waiting on the owner to sign in to Resend in a browser tab the agent controls |
-| Staff desk activation | owner | Migrations done. Set `SITE_MODE=staff` in Vercel, redeploy, then enroll staff MFA. |
-| Staff-desk hosted acceptance | engineering | After activation: MFA and AAL2, role boundaries, prefilled letter download, signed-letter upload |
+| Upload a signed letter and advance to `lor_signed` | owner | Needs a real file; run by hand on `CMG-2026-0003` |
+| Password recovery email delivery | owner | Request a reset for your own address and confirm the email arrives |
+| Adding staff while `/invite` is closed | engineering | Invitations are the only account path; staff mode cannot onboard new staff yet |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
 | Delete stray root folders | owner | Pending |
@@ -96,9 +114,8 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 
 ## Ordered next steps
 
-1. Rotate the Supabase database password.
-2. Complete the Resend delivery check.
-3. Turn on the staff desk: set `SITE_MODE=staff` in Vercel, redeploy, and enroll staff MFA.
-4. Run staff-desk hosted acceptance, including one prefilled letter sent through PandaDoc's web app.
-5. Obtain owner and legal approval of the public copy.
-6. Apply the SEO origin fix and cut `app.` over to `www.` last.
+1. Finish staff-desk acceptance: upload a signed letter on `CMG-2026-0003`, and confirm a password-recovery email arrives.
+2. Decide how to onboard new staff while the customer portal stays closed.
+3. Send one real Letter of Representation through PandaDoc's web app.
+4. Obtain owner and legal approval of the public copy.
+5. Apply the SEO origin fix and cut `app.` over to `www.` last.
