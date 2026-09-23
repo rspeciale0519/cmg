@@ -99,7 +99,7 @@ export function FinancialsForm({
             inputMode="decimal"
             value={fee}
             onChange={(event) => setFee(event.target.value)}
-            placeholder="10"
+            placeholder={String(feeDefault)}
             error={state.fieldErrors?.feePercent}
             className="tabular-nums"
           />
