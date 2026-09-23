@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { isAppRole, landingPathFor, safeNextPath } from "@/lib/auth/roles";
-import { requirePlatform } from "@/lib/authz";
+import { requireOpenPath } from "@/lib/authz";
 import {
   checkRateLimit,
   clientIpFromHeaders,
@@ -29,7 +29,7 @@ export async function signIn(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  requirePlatform();
+  requireOpenPath("/login");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeNextPath(String(formData.get("next") ?? "")) ?? null;
@@ -104,7 +104,7 @@ export async function signIn(
 }
 
 export async function signOut(): Promise<void> {
-  requirePlatform();
+  requireOpenPath("/login");
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub ?? null;

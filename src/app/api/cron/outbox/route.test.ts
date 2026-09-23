@@ -25,7 +25,68 @@ describe("outbox cron route", () => {
     createAdminClient.mockReturnValue({});
     countOutboxOwed.mockResolvedValue(2);
     resendSender.mockResolvedValue(vi.fn());
-    sweepOutbox.mockResolvedValue({ claimed: 2, sent: 2, failed: 0, dead: 0 });
+    sweepOutbox.mockResolvedValue({
+      claimed: 2,
+      sent: 2,
+      failed: 0,
+      dead: 0,
+      stale: 0,
+    });
+  });
+
+  const PUBLIC_FORM = [
+    "intake_staff_alert",
+    "intake_confirmation",
+    "lead_staff_alert",
+    "lead_auto_reply",
+  ];
+  const STAFF_ALERTS = [
+    "question_staff_alert",
+    "referral_staff_alert",
+    "esign_staff_alert",
+  ];
+
+  /** The sweep's template preselect, one row per mode. `undefined` is "no
+   *  filter", which only platform mode gets. */
+  it.each([
+    ["simple", PUBLIC_FORM],
+    ["", PUBLIC_FORM],
+    ["not-a-mode", PUBLIC_FORM],
+    ["staff", [...PUBLIC_FORM, ...STAFF_ALERTS]],
+    ["platform", undefined],
+  ] as const)("SITE_MODE=%j sweeps with the right template filter", async (mode, templates) => {
+    process.env.SITE_MODE = mode;
+
+    const response = await GET(new Request("http://localhost/api/cron/outbox"));
+
+    expect(response.status).toBe(200);
+    expect(countOutboxOwed).toHaveBeenCalledWith(expect.anything(), templates);
+    expect(sweepOutbox).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(Function),
+      12,
+      3,
+      templates,
+    );
+  });
+
+  it("reports the stale count so a held-back backlog is visible", async () => {
+    process.env.SITE_MODE = "staff";
+    sweepOutbox.mockResolvedValue({
+      claimed: 3,
+      sent: 1,
+      failed: 0,
+      dead: 2,
+      stale: 2,
+    });
+
+    const response = await GET(new Request("http://localhost/api/cron/outbox"));
+
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      dead: 2,
+      stale: 2,
+    });
   });
 
   it("limits simple-mode delivery to public form templates", async () => {

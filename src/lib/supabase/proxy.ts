@@ -9,11 +9,7 @@ import {
   type AppRole,
 } from "@/lib/auth/roles";
 import type { Database } from "@/types/database-app";
-import {
-  isPlatformPath,
-  isSimpleMode,
-  PLATFORM_DISABLED_PATH,
-} from "@/lib/site-mode";
+import { isPathOpen, PLATFORM_DISABLED_PATH } from "@/lib/site-mode";
 
 /**
  * Paths the proxy runs over but never gates. `/api/pandadoc/webhook` is on this
@@ -57,7 +53,15 @@ function redirectPreservingSession(
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   const pathname = request.nextUrl.pathname;
 
-  if (isSimpleMode() && isPlatformPath(pathname)) {
+  /* The mode gate, and the only one. `isPathOpen` answers "is this prefix open
+     in this mode" for all three modes at once, so simple mode closes all six
+     prefixes, staff mode closes `/invite`, `/portal` and `/partner`, and
+     platform mode closes nothing — with no mode comparison written here.
+
+     Still before the Supabase client is constructed: a closed prefix has no
+     session question to answer, so building a client to answer it would be a
+     per-request cost on a route that is about to 307 regardless. */
+  if (!isPathOpen(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = PLATFORM_DISABLED_PATH;
     url.search = "";

@@ -42,6 +42,80 @@ export const OUTBOX_LEASE_SECONDS = 300;
 export const OUTBOX_MAX_CONCURRENCY = 4;
 export const OUTBOX_SEND_TIMEOUT_MS = 10_000;
 
+/**
+ * How old a queued notification may be and still be sent, in days.
+ *
+ * SEVEN, AND WHY IT IS NOT LONGER
+ *
+ * Every template in this system is transactional: a claim changed state, a
+ * document was signed, somebody asked a question. Each one is a statement about
+ * a moment, and a week is the outside edge of the window in which such a
+ * statement is still true enough to send. Past it the mail is not merely late —
+ * it tells the recipient something about their claim that has since moved on,
+ * and they act on it.
+ *
+ * WHAT IT IS ACTUALLY GUARDING
+ *
+ * A widening of the deliverable-template set. `deliverableTemplates()` holds
+ * rows back by template, not by marking them undeliverable, so every row a mode
+ * refuses stays `pending` and stays *due* — `next_attempt_at` was never pushed
+ * out, because nothing ever claimed it. The moment a mode change adds that
+ * template to the list, the entire held-back history becomes claimable in one
+ * sweep. Production holds rows from August in exactly this state. Without this
+ * guard, editing one environment variable would mail them.
+ *
+ * DEAD, NOT SKIPPED
+ *
+ * A stale row is settled `dead` rather than left alone. Skipping would leave it
+ * due for ever, so the next sweep would claim it again, burn an attempt and skip
+ * it again, five times over, until the attempt limit dead-lettered it with a
+ * misleading `last_error` about a delivery failure that never happened.
+ * Dead-lettering here is the same terminal state reached honestly, on the first
+ * claim, with a reason an operator reading `/admin/settings` can act on. The
+ * payload is retained, so a notification that genuinely still needs to go out
+ * can be re-queued deliberately.
+ */
+export const OUTBOX_MAX_AGE_DAYS_DEFAULT = 7;
+
+/**
+ * The configured threshold. `0` and any negative value disable the guard, which
+ * is the escape hatch for a deliberate backlog flush; anything unparseable falls
+ * back to the default rather than disabling it, because a typo in an environment
+ * variable must not be a way to release month-old mail.
+ */
+export function outboxMaxAgeDays(
+  value = process.env.OUTBOX_MAX_AGE_DAYS,
+): number {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return OUTBOX_MAX_AGE_DAYS_DEFAULT;
+  }
+  const parsed = Number(value.trim());
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return OUTBOX_MAX_AGE_DAYS_DEFAULT;
+  }
+  return parsed;
+}
+
+/**
+ * Whether a row queued at `createdAt` is past the threshold.
+ *
+ * A missing or unparseable `created_at` is **not** stale. The column is `not
+ * null` in the table, so the only way to arrive here without one is a claim
+ * function that predates the migration adding it — and in that situation the
+ * honest answer is "age unknown", which must not silently dead-letter a queue.
+ */
+export function isStaleOutboxRow(
+  createdAt: string | null | undefined,
+  maxAgeDays = outboxMaxAgeDays(),
+  now = Date.now(),
+): boolean {
+  if (maxAgeDays <= 0) return false;
+  if (typeof createdAt !== "string") return false;
+  const queuedAt = Date.parse(createdAt);
+  if (Number.isNaN(queuedAt)) return false;
+  return now - queuedAt > maxAgeDays * 86_400_000;
+}
+
 export type OutboxOutcome = "sent" | "failed" | "dead";
 
 /**
@@ -75,6 +149,8 @@ export type ClaimedRow = {
   template: string;
   payload: unknown;
   attempts: number;
+  /** When the row was queued. Optional only for the pre-migration claim shape. */
+  created_at?: string | null;
 };
 
 export type SettleInput = {
@@ -119,6 +195,9 @@ export type DeliveryReport = {
   sent: number;
   failed: number;
   dead: number;
+  /** Rows dead-lettered by the age guard. A subset of `dead`, reported so an
+   *  operator can tell a stale backlog from a failing provider at a glance. */
+  stale: number;
 };
 
 /**
@@ -144,9 +223,28 @@ export async function deliverClaimed(
     sent: 0,
     failed: 0,
     dead: 0,
+    stale: 0,
   };
 
+  const maxAgeDays = outboxMaxAgeDays();
+
   const deliver = async (row: ClaimedRow) => {
+    /* Before the render, and before any provider call. A row this old is not
+       going to be sent by any later attempt either, so there is nothing to
+       gain by rendering it first and a recipient to protect by not sending
+       it at all. */
+    if (isStaleOutboxRow(row.created_at, maxAgeDays)) {
+      await store.settle({
+        id: row.id,
+        outcome: "dead",
+        error: `Not sent: queued more than ${maxAgeDays} day(s) ago, past OUTBOX_MAX_AGE_DAYS. The payload is retained; re-queue it deliberately if it is still owed.`,
+        retryInSeconds: null,
+      });
+      report.dead += 1;
+      report.stale += 1;
+      return;
+    }
+
     let sendFailure: unknown = null;
     try {
       const rendered = await renderNotification({

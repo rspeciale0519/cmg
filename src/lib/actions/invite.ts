@@ -6,7 +6,7 @@ import { hashInviteToken } from "@/lib/auth/invite-token";
 import { resendApiKey } from "@/lib/email/outbox";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { isAppRole, landingPathFor } from "@/lib/auth/roles";
-import { requirePlatform, requireStaff } from "@/lib/authz";
+import { requireOpenPath, requireStaff } from "@/lib/authz";
 import { findRedeemableInvite, issueInvite } from "@/lib/invites";
 import {
   checkRateLimit,
@@ -48,6 +48,15 @@ export async function issueClaimantInvite(
   formData: FormData,
 ): Promise<InviteIssueState> {
   const session = await requireStaff("/admin");
+
+  /* The invitation this issues is a `/invite/:token` link and nothing else, so
+     it needs the surface it points at, not the surface it is issued from. In
+     `staff` mode `/admin` is open and `/invite` is not: issuing anyway would
+     burn a single-use token on a link that redirects to `/platform-disabled`,
+     and the invitee cannot be sent a replacement because the token is
+     one-way-hashed the moment it is written. */
+  requireOpenPath("/invite");
+
   const claimantId = String(formData.get("claimantId") ?? "").trim();
 
   const supabase = await createClient();
@@ -354,7 +363,7 @@ export async function acceptInvite(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  requirePlatform();
+  requireOpenPath("/invite");
   // `redirect()` throws to unwind, so it is kept out of the body above: a
   // `catch` anywhere in that flow would swallow NEXT_REDIRECT and turn a
   // successful acceptance into a generic error.

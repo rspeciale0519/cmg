@@ -33,7 +33,14 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ writeAudit: vi.fn() }));
-vi.mock("@/lib/authz", () => ({ requireStaff: vi.fn(async () => stub.session) }));
+/* `requireOpenPath` is a no-op here on purpose: this file is about *who* may
+   issue an invite, and the mode boundary that decides whether `/invite` exists
+   at all is pinned in `platform-mode.test.ts`. Left unstubbed it would read the
+   ambient SITE_MODE and make every case in this file depend on it. */
+vi.mock("@/lib/authz", () => ({
+  requireStaff: vi.fn(async () => stub.session),
+  requireOpenPath: vi.fn(() => {}),
+}));
 vi.mock("@/lib/email/outbox", () => ({ resendApiKey: vi.fn(() => null) }));
 vi.mock("@/lib/invites", () => ({
   issueInvite: stub.issueInvite,

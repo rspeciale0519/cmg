@@ -75,21 +75,60 @@ afterEach(() => {
   delete process.env.SITE_MODE;
 });
 
-describe("simple mode — every platform prefix closes before any client exists", () => {
+/**
+ * The mode gate as a matrix: six prefixes by three modes, every cell asserted.
+ *
+ * `openIn` is the same table `site-mode.ts` holds, restated here rather than
+ * imported, so a change to that table has to be made deliberately in two places
+ * and cannot be rubber-stamped by a test that reads its own answer.
+ */
+const PREFIX_MATRIX = [
+  { prefix: "/login", openIn: ["platform", "staff"] },
+  { prefix: "/mfa", openIn: ["platform", "staff"] },
+  { prefix: "/admin", openIn: ["platform", "staff"] },
+  { prefix: "/invite", openIn: ["platform"] },
+  { prefix: "/portal", openIn: ["platform"] },
+  { prefix: "/partner", openIn: ["platform"] },
+] as const;
+
+describe.each([
+  ["simple", []],
+  ["staff", ["/login", "/mfa", "/admin"]],
+  ["platform", ["/login", "/mfa", "/admin", "/invite", "/portal", "/partner"]],
+  // Fail-closed: anything unrecognised must behave exactly like simple.
+  ["not-a-mode", []],
+  ["", []],
+] as const)("mode gate — SITE_MODE=%j", (mode, openPrefixes) => {
   beforeEach(() => {
-    process.env.SITE_MODE = "simple";
+    process.env.SITE_MODE = mode;
   });
 
-  it.each(["/login", "/mfa", "/invite", "/admin", "/portal", "/partner"])(
-    "redirects %s to /platform-disabled without constructing a Supabase client",
-    async (prefix) => {
-      const response = await updateSession(request(`${prefix}/sub/path`));
+  for (const { prefix } of PREFIX_MATRIX) {
+    const open = (openPrefixes as readonly string[]).includes(prefix);
 
-      expect(response.status).toBe(307);
-      expect(response.headers.get("location")).toBe("https://cmg.test/platform-disabled");
-      expect(createServerClient).not.toHaveBeenCalled();
-    },
-  );
+    if (open) {
+      it(`lets ${prefix} past the mode gate and on to the session check`, async () => {
+        mockClient(null, null);
+
+        await updateSession(request(`${prefix}/sub/path`));
+
+        /* The gate did not answer this request: the Supabase client exists,
+           which is the observable difference between "closed by mode" and
+           "open, and then decided on by session and role". */
+        expect(createServerClient).toHaveBeenCalledOnce();
+      });
+    } else {
+      it(`redirects ${prefix} to /platform-disabled without constructing a Supabase client`, async () => {
+        const response = await updateSession(request(`${prefix}/sub/path`));
+
+        expect(response.status).toBe(307);
+        expect(response.headers.get("location")).toBe(
+          "https://cmg.test/platform-disabled",
+        );
+        expect(createServerClient).not.toHaveBeenCalled();
+      });
+    }
+  }
 
   it("does not touch a marketing path", async () => {
     mockClient(null, null);
@@ -98,6 +137,103 @@ describe("simple mode — every platform prefix closes before any client exists"
 
     expect(response.headers.get("location")).toBeNull();
   });
+
+  it("does not redirect /platform-disabled to itself", async () => {
+    mockClient(null, null);
+
+    const response = await updateSession(request("/platform-disabled"));
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+});
+
+describe("staff mode — the claims desk is open and authorization is unchanged", () => {
+  beforeEach(() => {
+    process.env.SITE_MODE = "staff";
+  });
+
+  it("still sends a signed-out caller at /admin to /login", async () => {
+    mockClient(null, null);
+
+    const response = await updateSession(request("/admin/claims"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://cmg.test/login?next=%2Fadmin%2Fclaims",
+    );
+  });
+
+  it("still sends an aal1 staff session to /mfa — the second factor is not waived", async () => {
+    mockClient({ sub: "user-1", aal: "aal1" }, "adjuster");
+
+    const response = await updateSession(request("/admin/claims"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://cmg.test/mfa?next=%2Fadmin%2Fclaims",
+    );
+  });
+
+  it("lets an aal2 staff session through to /admin", async () => {
+    mockClient({ sub: "user-1", aal: "aal2" }, "adjuster");
+
+    const response = await updateSession(request("/admin/claims"));
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("refuses a session whose profile is unreadable, exactly as in platform mode", async () => {
+    mockClient({ sub: "user-1", aal: "aal2" }, null);
+
+    const response = await updateSession(request("/admin"));
+
+    expect(response.headers.get("location")).toBe("https://cmg.test/login");
+  });
+
+  /**
+   * Requirement: a customer or partner who does sign in must not land on an open
+   * portal, and must not be bounced around a chain either. `landingPathFor`
+   * resolves to `/platform-disabled` because their own prefix is closed, so the
+   * refusal is one hop and terminal — `/platform-disabled` is not gated, so it
+   * cannot redirect again.
+   */
+  it.each([
+    ["customer", "customer"],
+    ["partner", "partner"],
+  ])("sends a %s at /admin straight to /platform-disabled", async (_label, role) => {
+    mockClient({ sub: "user-1", aal: "aal2" }, role);
+
+    const response = await updateSession(request("/admin/claims"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://cmg.test/platform-disabled",
+    );
+  });
+
+  it("carries a rotated session cookie onto that refusal", async () => {
+    mockClient({ sub: "user-1", aal: "aal2" }, "customer", {
+      name: "sb-access-token",
+      value: "rotated-closed-surface",
+    });
+
+    const response = await updateSession(request("/admin"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://cmg.test/platform-disabled",
+    );
+    expect(response.cookies.get("sb-access-token")?.value).toBe(
+      "rotated-closed-surface",
+    );
+  });
+
+  it.each(["/api/cron/outbox", "/api/pandadoc/webhook"])(
+    "leaves %s ungated",
+    async (path) => {
+      mockClient(null, null);
+
+      const response = await updateSession(request(path));
+
+      expect(response.headers.get("location")).toBeNull();
+    },
+  );
 });
 
 describe("platform mode — ungated API paths pass through regardless of session", () => {

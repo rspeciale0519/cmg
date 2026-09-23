@@ -73,6 +73,71 @@ afterEach(() => {
   delete process.env.SITE_MODE;
 });
 
+/**
+ * The template filter across all three modes, template by template.
+ *
+ * Written as a matrix because the failure mode is a template nobody classified:
+ * a new claim-lifecycle email added later must be refused by default in simple
+ * and staff mode, and a staff alert must not silently become deliverable in a
+ * marketing build.
+ */
+const TEMPLATE_MATRIX = [
+  // Public forms — the only thing a marketing build sends.
+  ["intake_staff_alert", { simple: true, staff: true, platform: true }],
+  ["intake_confirmation", { simple: true, staff: true, platform: true }],
+  ["lead_staff_alert", { simple: true, staff: true, platform: true }],
+  ["lead_auto_reply", { simple: true, staff: true, platform: true }],
+  // Staff-inbox alerts — staff mode opens /admin, which is where they link.
+  ["question_staff_alert", { simple: false, staff: true, platform: true }],
+  ["referral_staff_alert", { simple: false, staff: true, platform: true }],
+  ["esign_staff_alert", { simple: false, staff: true, platform: true }],
+  // Portal- and invite-linked — the prefix each one points at is closed in
+  // staff mode, so delivering it would mail a dead link.
+  ["invite", { simple: false, staff: false, platform: true }],
+  ["claim_status_update", { simple: false, staff: false, platform: true }],
+  ["settled_notice", { simple: false, staff: false, platform: true }],
+  ["partner_status_update", { simple: false, staff: false, platform: true }],
+  ["reply_posted", { simple: false, staff: false, platform: true }],
+  ["lor_signed", { simple: false, staff: false, platform: true }],
+] as const;
+
+describe.each(["simple", "staff", "not-a-mode", ""] as const)(
+  "dispatchOutbox — template filter with SITE_MODE=%j",
+  (mode) => {
+    /* An unrecognised mode has to filter like simple, so the matrix is read
+       under the simple column for those rows too — fail closed. */
+    const column = mode === "staff" ? "staff" : "simple";
+
+    it.each(TEMPLATE_MATRIX)(
+      `${mode}: %s`,
+      async (template, allowed) => {
+        process.env.SITE_MODE = mode;
+        process.env.RESEND_API_KEY = "re_test_key";
+
+        const { builder } = fakeQuery({
+          data: [{ id: "id-1", template }],
+          error: null,
+        });
+        const admin = { from: vi.fn(() => builder) } as unknown as Parameters<
+          typeof dispatchOutbox
+        >[0];
+
+        await dispatchOutbox(admin, ["id-1"]);
+
+        if (allowed[column]) {
+          expect(deliverClaimed).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.any(Function),
+            expect.objectContaining({ ids: ["id-1"] }),
+          );
+        } else {
+          expect(deliverClaimed).not.toHaveBeenCalled();
+        }
+      },
+    );
+  },
+);
+
 describe("dispatchOutbox — simple mode template filter", () => {
   it("keeps only public-form templates and hands the filtered ids to delivery", async () => {
     process.env.SITE_MODE = "simple";
@@ -135,6 +200,49 @@ describe("dispatchOutbox — platform mode", () => {
       expect.any(Function),
       expect.objectContaining({ ids, limit: 3 }),
     );
+  });
+});
+
+describe("dispatchOutbox — staff mode keeps a mixed batch apart", () => {
+  it("dispatches the staff alert and holds the portal-linked rows back", async () => {
+    process.env.SITE_MODE = "staff";
+    process.env.RESEND_API_KEY = "re_test_key";
+
+    const { builder } = fakeQuery({
+      data: [
+        { id: "id-1", template: "esign_staff_alert" },
+        { id: "id-2", template: "lor_signed" }, // "a copy is in your portal"
+        { id: "id-3", template: "claim_status_update" }, // links into /portal
+        { id: "id-4", template: "intake_confirmation" },
+      ],
+      error: null,
+    });
+    const admin = { from: vi.fn(() => builder) } as unknown as Parameters<
+      typeof dispatchOutbox
+    >[0];
+
+    await dispatchOutbox(admin, ["id-1", "id-2", "id-3", "id-4"]);
+
+    expect(deliverClaimed).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(Function),
+      expect.objectContaining({ ids: ["id-1", "id-4"], limit: 2 }),
+    );
+  });
+
+  it("still looks the templates up rather than trusting the id list", async () => {
+    process.env.SITE_MODE = "staff";
+    process.env.RESEND_API_KEY = "re_test_key";
+
+    const { builder } = fakeQuery({ data: [], error: null });
+    const admin = { from: vi.fn(() => builder) } as unknown as Parameters<
+      typeof dispatchOutbox
+    >[0];
+
+    await dispatchOutbox(admin, ["id-1"]);
+
+    expect(admin.from).toHaveBeenCalledWith("notifications_outbox");
+    expect(deliverClaimed).not.toHaveBeenCalled();
   });
 });
 

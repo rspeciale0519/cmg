@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { landingPathFor, safeNextPath } from "@/lib/auth/roles";
-import { getSession, requirePlatform } from "@/lib/authz";
+import { getSession, requireOpenPath } from "@/lib/authz";
 import { site, telHref } from "@/lib/site";
 import { LoginForm } from "./login-form";
 
@@ -28,7 +28,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  requirePlatform();
+  requireOpenPath("/login");
   const params = await searchParams;
   const rawNext = Array.isArray(params.next) ? params.next[0] : params.next;
   const next = safeNextPath(rawNext);

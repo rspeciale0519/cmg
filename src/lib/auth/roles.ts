@@ -1,4 +1,10 @@
 import type { Database } from "@/types/database-app";
+import {
+  isSurfaceOpen,
+  PLATFORM_DISABLED_PATH,
+  siteMode,
+  type SiteMode,
+} from "@/lib/site-mode";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -60,10 +66,34 @@ export function surfaceForPath(pathname: string): Surface | null {
   return null;
 }
 
-export function landingPathFor(role: AppRole): string {
-  if (isStaffRole(role)) return SURFACES.admin.prefix;
-  if (role === "partner") return SURFACES.partner.prefix;
-  return SURFACES.customer.prefix;
+/** The surface each role owns, ignoring whether this mode opens it. */
+export function surfaceForRole(role: AppRole): Surface {
+  if (isStaffRole(role)) return "admin";
+  if (role === "partner") return "partner";
+  return "customer";
+}
+
+/**
+ * Where a signed-in role is sent — and, in staff mode, where they are refused.
+ *
+ * Staff mode opens `/login` and `/mfa` but not `/portal` or `/partner`, so a
+ * homeowner or a referring contractor can still authenticate and then has
+ * nowhere to go. Sending them to their own prefix anyway would bounce them off
+ * the proxy's mode gate to `/platform-disabled` on a second request — the right
+ * destination by accident, and one hop of a redirect chain that a future prefix
+ * change could close into a loop. Answered here instead, once, in the function
+ * every caller already uses to decide a destination: the proxy, the login page,
+ * the sign-in action, `acceptInvite` and the MFA flow.
+ *
+ * In `simple` mode this is unreachable — nobody can sign in — and in `platform`
+ * mode every surface is open, so production behaviour is unchanged.
+ */
+export function landingPathFor(role: AppRole, mode?: SiteMode): string {
+  const surface = surfaceForRole(role);
+  const prefix = SURFACES[surface].prefix;
+  return isSurfaceOpen(prefix, mode ?? siteMode())
+    ? prefix
+    : PLATFORM_DISABLED_PATH;
 }
 
 export function roleMayEnter(role: AppRole, surface: Surface): boolean {
