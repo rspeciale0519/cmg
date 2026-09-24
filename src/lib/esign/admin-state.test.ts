@@ -47,6 +47,32 @@ describe("adminESignState", () => {
     expect(state.recoverable).toBe(false);
   });
 
+  it("keeps a manual request pending while the claim is still at lor_sent", () => {
+    expect(adminESignState("manual_pending", "lor_sent")).toMatchObject({
+      key: "manual_pending",
+      label: "Manual signature pending",
+      tone: "active",
+    });
+  });
+
+  it.each(["lor_signed", "documenting", "settled", "reopened"])(
+    "treats a manual request as completed once the claim reaches %s",
+    (claimStatus) => {
+      const state = adminESignState("manual_pending", claimStatus);
+      expect(state).toMatchObject({
+        key: "completed",
+        label: "Representation completed",
+        tone: "success",
+        recoverable: false,
+      });
+      expect(state.detail).toMatch(/Documents/);
+    },
+  );
+
+  it("does not call a manual request completed when the claim was rejected at lor_sent", () => {
+    expect(adminESignState("manual_pending", "rejected").key).toBe("manual_pending");
+  });
+
   it("treats a legacy claim past representation as completed when no provider mirror exists", () => {
     expect(adminESignState(null, "settlement_offered")).toMatchObject({
       key: "completed",

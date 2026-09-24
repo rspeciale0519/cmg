@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-09-22 (evening). Rewrite this file in place. Do not append dated updates to it.
+Reconciled 2026-09-23. Rewrite this file in place. Do not append dated updates to it.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence and checklists.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for the owner-decision register.
@@ -22,7 +22,7 @@ Production carries the direct-to-Storage upload transport, contractor intake fie
 
 Production environment facts set on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only, so Production runs the manual e-signing path and refuses every webhook call. Supabase public sign-up is disabled; accounts are created only by invitation.
 
-Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (LOR sent, manual signature pending, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
+Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (`lor_signed`, signed letter uploaded, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
 
 ## Pull requests
 
@@ -57,7 +57,7 @@ Invitation is the only way to create an account, so staff mode cannot add new st
 
 The first release uses the manual path. Staff download a prefilled Letter of Representation from the claim screen, upload it to PandaDoc's web app, send it from there, then click "Mark letter as sent." The signed copy is uploaded to the claim as document kind `lor_signed`. This path needs no PandaDoc API key and no webhook. The API path remains in the code for later.
 
-## Staff-desk acceptance — 2026-09-22
+## Staff-desk acceptance — 2026-09-22 and 2026-09-23
 
 | Step | Result |
 |---|---|
@@ -69,8 +69,10 @@ The first release uses the manual path. Staff download a prefilled Letter of Rep
 | Mark letter as sent | Pass; claim moved to `lor_sent`, feed entry recorded |
 | `lor_signed` blocked until a signed letter is uploaded | Pass |
 | Accept intake | Pass; 20% fee seeded, no invitations issued in staff mode |
-| Password recovery routes | Pass for routing and expired-link handling; real email delivery not yet exercised |
-| Upload a signed letter | Not yet run |
+| Password recovery routes | Pass, including real email delivery. On 2026-09-23 Resend showed "Reset your CMG password" delivered to the owner's address. |
+| Forgot-password retry | Watch item. The first submission in Chrome was refused once. The retry succeeded. The cause is unknown. |
+| Upload a signed letter | Pass on 2026-09-23. A signed LOR was uploaded to `CMG-2026-0003` as kind `lor_signed` (CMG only). The claim moved to `lor_signed`, and the Representation signed milestone was recorded. |
+| Letter panel after `lor_signed` | Defect. The panel still showed "Manual signature pending" and the download button after the move. Fixed by branch `fix/esign-panel-signed-state`. |
 
 ## Environment
 
@@ -88,9 +90,7 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 
 | Item | Who | Status |
 |---|---|---|
-| Upload a signed letter and advance to `lor_signed` | owner | Needs a real file; run by hand on `CMG-2026-0003` |
-| Password recovery email delivery | owner | Request a reset for your own address and confirm the email arrives |
-| Adding staff while `/invite` is closed | engineering | Invitations are the only account path; staff mode cannot onboard new staff yet |
+| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Current priority. Owner decision 2026-09-23: admins must be able to invite all three. This needs `/invite`, `/portal`, and `/partner`, so Production must run `SITE_MODE=platform`. Switch only after local and hosted acceptance of all three invitation flows. |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
 | Delete stray root folders | owner | Pending |
@@ -108,14 +108,13 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 - The SEO origin fix in `src/lib/site.ts`, which hardcodes `www`, and the `app.` to `www.` cutover are deliberately last.
 - Owner and legal approval of public copy is deliberately second-to-last. It covers the statistics, the testimonial, "Se habla español", "licensed and bonded in every state", and the partner payment promises.
 - E-signing ships in the first release through the manual prefilled-PDF path, which avoids PandaDoc API fees.
-- The staff desk opens first. Customer and partner logins wait for a separate decision.
+- The staff desk opens first. On 2026-09-23 the owner decided that admins must be able to invite staff, vendors, and homeowners. This opens customer and partner logins through `SITE_MODE=platform`.
 - The CMG standard fee is 20 percent. Each vendor can have its own rate, set by owners only. The public form never sets a fee.
 - Backups stay declined. Recovery is reviewed forward repair.
 
 ## Ordered next steps
 
-1. Finish staff-desk acceptance: upload a signed letter on `CMG-2026-0003`, and confirm a password-recovery email arrives.
-2. Decide how to onboard new staff while the customer portal stays closed.
-3. Send one real Letter of Representation through PandaDoc's web app.
-4. Obtain owner and legal approval of the public copy.
-5. Apply the SEO origin fix and cut `app.` over to `www.` last.
+1. Make all three invitation types work: staff, vendor, and homeowner. Run local acceptance in platform mode. Then the owner switches Production to `SITE_MODE=platform`. Then run hosted acceptance.
+2. Send one real Letter of Representation through PandaDoc's web app.
+3. Obtain owner and legal approval of the public copy.
+4. Apply the SEO origin fix and cut `app.` over to `www.` last.

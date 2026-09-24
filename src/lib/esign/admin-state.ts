@@ -45,11 +45,30 @@ export function adminESignState(
     };
   }
 
-  if (
-    status === null &&
+  const pastRepresentation =
     claimStatus !== undefined &&
-    !["new_intake", "under_review", "lor_sent"].includes(claimStatus)
+    !["new_intake", "under_review", "lor_sent"].includes(claimStatus);
+
+  /* `manual_pending` is never cleared when a manual letter is filed: the claim
+     simply moves on. `lor_sent → lor_signed` is gated on a `lor_signed`
+     document, so any later status proves the signed copy is in Documents.
+     `rejected` is the one exit from `lor_sent` that skips that gate, so it
+     keeps the pending state rather than claiming representation. */
+  if (
+    status === "manual_pending" &&
+    pastRepresentation &&
+    claimStatus !== "rejected"
   ) {
+    return {
+      key: "completed",
+      label: "Representation completed",
+      detail: "The signed letter was uploaded and is filed in Documents.",
+      tone: "success",
+      recoverable: false,
+    };
+  }
+
+  if (status === null && pastRepresentation) {
     return {
       key: "completed",
       label: "Representation completed",
