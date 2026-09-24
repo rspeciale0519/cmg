@@ -44,6 +44,7 @@ const stub = vi.hoisted(() => {
       referrer_name: null as string | null,
       referrer_email: null as string | null,
       carrier: "Citizens Property Insurance",
+      partner_company_id: null as string | null,
     },
     inviteIntakeClaimants: vi.fn(async () => ({
       issued: 2,
@@ -113,6 +114,7 @@ beforeEach(() => {
     referrer_name: null,
     referrer_email: null,
     carrier: "Citizens Property Insurance",
+    partner_company_id: null,
   };
   stub.inviteIntakeClaimants.mockResolvedValue({
     issued: 2,

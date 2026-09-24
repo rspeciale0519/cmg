@@ -43,6 +43,8 @@ const stub = vi.hoisted(() => {
       referrer_name: "Summit Exteriors LLC — Tyler Boone",
       referrer_email: "partner@cmg.test",
       carrier: null as string | null,
+      /** Set only by `/partner/refer`; see intake-accept-attribution.test.ts. */
+      partner_company_id: null as string | null,
     },
     updated: vi.fn(),
     rpcCalled: vi.fn(),
@@ -133,6 +135,7 @@ beforeEach(() => {
     referrer_name: "Summit Exteriors LLC — Tyler Boone",
     referrer_email: "partner@cmg.test",
     carrier: null,
+    partner_company_id: null,
   };
 });
 

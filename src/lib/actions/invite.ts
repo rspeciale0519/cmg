@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { hashInviteToken } from "@/lib/auth/invite-token";
@@ -121,6 +122,13 @@ export async function issueClaimantInvite(
           : GENERIC_ERROR,
     };
   }
+
+  /* The invitation row exists from here on, queued or not, so the Claimants
+     tab's "No invitation outstanding" line and its "Send invite" label are now
+     stale. Layout scope, like the claim's other tab actions, so the tab strip
+     re-reads with the page. The control keeps its action state across the
+     refresh, so a manual link below stays on screen. */
+  revalidatePath(`/admin/claims/${claimant.claim_id}`, "layout");
 
   /* With no RESEND_API_KEY the outbox row is queued and nothing is delivered —
      which is the configured state in local development. Returning the link to

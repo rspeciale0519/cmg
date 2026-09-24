@@ -98,6 +98,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
+import { revalidatePath } from "next/cache";
 import { issueClaimantInvite } from "./invite";
 import { invitePartnerRep } from "./partners";
 import { inviteStaff } from "./staff";
@@ -164,5 +165,35 @@ describe.each(CASES)("%s and the /invite surface", (_name, run) => {
 
     expect(state.status).toBe("success");
     expect(stub.issueInvite).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * The Claimants tab reads the pending invitation to print "Invitation sent,
+ * not yet accepted" and to label the button "Resend invite". Without a
+ * revalidation the tab kept saying "No invitation outstanding" after a
+ * successful send, until the operator reloaded it.
+ */
+describe("issueClaimantInvite and the Claimants tab", () => {
+  it("revalidates the claim's layout after issuing, so the tab re-reads", async () => {
+    vi.stubEnv("SITE_MODE", "platform");
+
+    const state = await issueClaimantInvite(idleInviteIssueState, claimantForm());
+
+    expect(state.status).toBe("success");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/admin/claims/${stub.claimant.claim_id}`,
+      "layout",
+    );
+  });
+
+  it("revalidates nothing when issuance fails", async () => {
+    vi.stubEnv("SITE_MODE", "platform");
+    stub.issueInvite.mockResolvedValueOnce({ ok: false, reason: "insert_failed" } as never);
+
+    const state = await issueClaimantInvite(idleInviteIssueState, claimantForm());
+
+    expect(state.status).toBe("error");
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

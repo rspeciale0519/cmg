@@ -44,6 +44,7 @@ const ACCEPT_FIELDS = [
   "carrierTenure",
   "lorContractType",
   "note",
+  "replacePortalReferral",
 ] as const;
 
 const NOT_IN_QUEUE =
@@ -64,6 +65,9 @@ type QueueClaim = {
    *  the presence of a form field is a client's choice, and the requirement is
    *  a fact about the claim. */
   carrier: string | null;
+  /** Set on a queued claim only by `/partner/refer`, so it is attribution the
+   *  referring firm's reps already rely on, not a triage suggestion. */
+  partner_company_id: string | null;
 };
 
 async function loadQueuedClaim(
@@ -77,7 +81,7 @@ async function loadQueuedClaim(
   const { data, error } = await supabase
     .from("claims")
     .select(
-      "id, claim_ref, status, assigned_adjuster_id, referrer_name, referrer_email, carrier",
+      "id, claim_ref, status, assigned_adjuster_id, referrer_name, referrer_email, carrier, partner_company_id",
     )
     .eq("id", claimId)
     .maybeSingle();
@@ -196,7 +200,31 @@ export async function acceptIntake(
         values: typed,
       };
     }
+  }
 
+  /* A partner-portal referral is already attributed. `accept_intake_transaction`
+     writes whatever attribution it is given — `none` nulls the column and `new`
+     mints a company and moves the claim to it — so a form that defaulted to
+     "Create" (as this one did) or a stale client took the claim off the
+     referring firm's portal without anyone choosing that. Anything other than
+     keeping that company now needs the explicit confirmation box. */
+  const keepsPortalReferral =
+    partnerChoice === "existing" && partnerCompanyId === claim.partner_company_id;
+  if (
+    claim.partner_company_id !== null &&
+    !keepsPortalReferral &&
+    formData.get("replacePortalReferral") !== "yes"
+  ) {
+    return {
+      status: "error",
+      fieldErrors: {
+        replacePortalReferral:
+          "Confirm that you are replacing the partner-portal referral.",
+      },
+      message:
+        "This claim came in through the partner portal. Keep the referring company, or confirm the change and accept again.",
+      values: typed,
+    };
   }
 
   // ── 2. Assignment ─────────────────────────────────────────────────────
