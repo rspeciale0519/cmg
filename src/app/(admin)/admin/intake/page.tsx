@@ -65,7 +65,7 @@ export default async function IntakeQueuePage({
   let queueQuery = supabase
     .from("claims")
     .select(
-      `id, claim_ref, created_at, assigned_adjuster_id,
+      `id, claim_ref, created_at, assigned_adjuster_id, partner_company_id,
        property_street, property_street2, property_city, property_state, property_zip,
        carrier, policy_number, carrier_tenure, prior_roof_claim, prior_outcome,
        loss_date, loss_time, cause, description,
@@ -291,6 +291,7 @@ export default async function IntakeQueuePage({
                   partners={partners}
                   referrerName={claim.referrer_name}
                   intakeReferralPartnerId={claim.intake_referrer?.id ?? null}
+                  portalPartnerId={claim.partner_company_id}
                   needsPolicyDetails={claim.carrier === null}
                   canAccept={can.canManage}
                   canLinkPartner={can.isOwner}

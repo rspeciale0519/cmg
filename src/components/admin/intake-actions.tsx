@@ -17,10 +17,10 @@ import {
   AdminInput,
   AdminSelect,
   AdminTextarea,
+  FieldError,
   SubmitButton,
 } from "./form-controls";
-
-type PartnerChoice = "none" | "existing" | "new";
+import { acceptPartnerDefaults, type PartnerChoice } from "./intake-partner-defaults";
 
 /**
  * Accept and decline sit side by side and open in place. A modal would be the
@@ -41,6 +41,7 @@ export function IntakeActions({
   partners,
   referrerName,
   intakeReferralPartnerId,
+  portalPartnerId,
   needsPolicyDetails,
   canAccept,
   canLinkPartner,
@@ -53,6 +54,10 @@ export function IntakeActions({
   /** The company the server resolved from the vendor's intake link, if any.
    *  Provenance only — the operator confirms the attachment on accept. */
   intakeReferralPartnerId: string | null;
+  /** `claims.partner_company_id` while the claim is still queued. Only a
+   *  `/partner/refer` submission sets it, so it is already attribution, not a
+   *  hint: that company's reps see the claim on their portal now. */
+  portalPartnerId: string | null;
   /** A partner referral arrives with no carrier, policy number or tenure — §6
    *  has staff take them from the homeowner at this moment. */
   needsPolicyDetails: boolean;
@@ -109,6 +114,7 @@ export function IntakeActions({
           partners={partners}
           referrerName={referrerName}
           intakeReferralPartnerId={intakeReferralPartnerId}
+          portalPartnerId={portalPartnerId}
           needsPolicyDetails={needsPolicyDetails}
           canLinkPartner={canLinkPartner}
         />
@@ -125,6 +131,7 @@ function AcceptForm({
   partners,
   referrerName,
   intakeReferralPartnerId,
+  portalPartnerId,
   needsPolicyDetails,
   canLinkPartner,
 }: {
@@ -133,23 +140,31 @@ function AcceptForm({
   partners: PartnerOption[];
   referrerName: string | null;
   intakeReferralPartnerId: string | null;
+  portalPartnerId: string | null;
   needsPolicyDetails: boolean;
   canLinkPartner: boolean;
 }) {
   const [state, formAction] = useActionState(resilient(acceptIntake), idleState);
 
-  // Pre-selected from the intake's own referral facts. A vendor-link intake
-  // already names a known company, so "Existing" with that company is the
-  // default; a submission that only typed a contractor name defaults to
-  // "Create". Either way the operator confirms — the default saves a click, it
-  // does not decide the attribution.
-  const knownVendor =
-    intakeReferralPartnerId && partners.some((partner) => partner.id === intakeReferralPartnerId)
-      ? intakeReferralPartnerId
-      : null;
-  const [choice, setChoice] = useState<PartnerChoice>(
-    !canLinkPartner ? "none" : knownVendor ? "existing" : referrerName ? "new" : "none",
-  );
+  const defaults = acceptPartnerDefaults({
+    partners,
+    referrerName,
+    intakeReferralPartnerId,
+    portalPartnerId,
+    canLinkPartner,
+  });
+  const [choice, setChoice] = useState<PartnerChoice>(defaults.choice);
+  const initialCompany = state.values?.partnerCompanyId ?? defaults.partnerCompanyId ?? "";
+  /* Tracked only to decide whether the replacement confirmation shows. The
+     select stays uncontrolled, and its reset value is this same submitted
+     value, so the two cannot disagree after a refusal. */
+  const [selectedCompany, setSelectedCompany] = useState(initialCompany);
+  const portalPartnerName =
+    partners.find((partner) => partner.id === portalPartnerId)?.name ?? null;
+  const replacesPortalReferral =
+    portalPartnerId !== null &&
+    canLinkPartner &&
+    !(choice === "existing" && selectedCompany === portalPartnerId);
   const groupName = useId();
 
   return (
@@ -228,7 +243,12 @@ function AcceptForm({
                     name="partnerChoiceUi"
                     value={value}
                     checked={choice === value}
-                    onChange={() => setChoice(value)}
+                    onChange={() => {
+                      setChoice(value);
+                      // The select remounts on its default, so the tracked
+                      // value goes back to that default with it.
+                      if (value === "existing") setSelectedCompany(initialCompany);
+                    }}
                     className="sr-only"
                     aria-controls={groupName}
                   />
@@ -237,11 +257,21 @@ function AcceptForm({
               ))}
             </div>
 
+            {portalPartnerId ? (
+              <p className="mt-[8px] text-[12px] leading-[1.55] text-ink/62">
+                {portalPartnerName
+                  ? `Referred through the partner portal by ${portalPartnerName}.`
+                  : "Referred through the partner portal by a company that is no longer active."}{" "}
+                The claim is already on that company&rsquo;s portal.
+              </p>
+            ) : null}
+
             <div id={groupName} className="mt-[8px]">
               {choice === "existing" ? (
                 <AdminSelect
                   name="partnerCompanyId"
-                  defaultValue={state.values?.partnerCompanyId ?? knownVendor ?? ""}
+                  defaultValue={initialCompany}
+                  onChange={(event) => setSelectedCompany(event.currentTarget.value)}
                   error={state.fieldErrors?.partnerCompanyId}
                 >
                   <option value="" disabled>
@@ -264,6 +294,37 @@ function AcceptForm({
                 />
               ) : null}
             </div>
+
+            {/* `acceptIntake` refuses any other attribution for a portal
+                referral without this box, so a stale form or a mistaken click
+                cannot move the claim off the referring firm's portal. It is
+                uncontrolled and re-seeded from `state.values`, like every
+                other field that must survive the post-action reset. */}
+            {replacesPortalReferral ? (
+              <div className="mt-[8px]">
+                <label className="flex min-h-[24px] cursor-pointer items-start gap-[8px] text-[12.5px] leading-[1.55] text-ink/78">
+                  <input
+                    id="admin-replacePortalReferral"
+                    type="checkbox"
+                    name="replacePortalReferral"
+                    value="yes"
+                    defaultChecked={state.values?.replacePortalReferral === "yes"}
+                    aria-invalid={state.fieldErrors?.replacePortalReferral ? true : undefined}
+                    aria-describedby={
+                      state.fieldErrors?.replacePortalReferral
+                        ? "admin-replacePortalReferral-error"
+                        : undefined
+                    }
+                    className="mt-[3px] size-4 flex-none cursor-pointer accent-accent"
+                  />
+                  Replace the partner-portal referral. The referring company&rsquo;s
+                  reps lose this claim from their portal.
+                </label>
+                <FieldError name="replacePortalReferral">
+                  {state.fieldErrors?.replacePortalReferral}
+                </FieldError>
+              </div>
+            ) : null}
           </fieldset>
         ) : (
           <p className="self-end text-[12px] leading-[1.55] text-ink/55">
