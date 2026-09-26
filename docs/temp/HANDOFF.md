@@ -1,6 +1,6 @@
 # CMG release handoff — engineering evidence
 
-Reconciled 2026-09-17. This file holds current engineering evidence and acceptance checklists only.
+Reconciled 2026-09-26. This file holds current engineering evidence and acceptance checklists only.
 Rewrite it in place. Do not append dated sections.
 The full dated record is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
 
@@ -13,10 +13,12 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 
 ## Current release evidence
 
-The current PR #2 head is `fc3dd43`. Its GitHub `verify` and `database` jobs, Vercel Preview, and CodeRabbit checks pass.
-GitHub reports the PR mergeable. A green check is not release acceptance.
+PRs #1 through #17 are merged. GitHub lists no open PR on 2026-09-26.
+The remote `develop` head is `2fdf6bd`. GitHub run `36003466471` passed its `verify` and `database` jobs for that head.
+GitHub reports a successful Production deployment for that commit. Exact alias mapping still needs a Vercel session check.
+The test totals below are retained evidence from the earlier PR #2 release checks. They do not describe the latest head.
 
-| Check | Latest result |
+| Check | Historical PR #2 result |
 |---|---|
 | `npm test`, simple mode | 100 files and 1,072 tests pass; one live PandaDoc test skipped |
 | `npm run db:test` | 41 files and 1,287 assertions pass after an isolated reset |
@@ -32,8 +34,12 @@ Use Node.js 22. A shell on a different Node.js version is not project evidence.
 
 ## Hosted state
 
-Production runs `SITE_MODE=simple` on `app.cmgpropertysolutions.net` from merge commit `383a999`.
-The hosted database has 33 migrations through `20260916020100`, applied in one approved transaction without a backup.
+Production runs `SITE_MODE=staff` on `app.cmgpropertysolutions.net`.
+On 2026-09-26, public route checks returned 200 for `/` and `/login` with HSTS and CSP.
+`/invite`, `/portal`, and `/partner` returned 307 to `/platform-disabled`.
+The unauthenticated outbox cron returned 401.
+Read-only hosted migration inspection found 35 migrations through `20260917130000`.
+See RELEASE_STATE for the staff-desk acceptance and owner decisions.
 
 Read-only verification confirms the added columns, constraints, the ready and valid index, unique vendor codes,
 RLS on claims and partner companies, service-role-only execution of the submission RPC, and the reference-capacity guard.
@@ -46,15 +52,15 @@ Recovery uses reviewed forward repair. Immediate restoration is unverified.
 
 | Environment | Result |
 |---|---|
-| Production public routes | `/`, `/contact`, `/file-a-claim`, and the marketing routes return 200 with HSTS and CSP |
-| Production private routes | `/login`, `/mfa`, `/invite`, `/admin`, `/portal`, `/partner` return 307 to `/platform-disabled` |
+| Production public routes | `/` returned 200 with HSTS and CSP on 2026-09-26. Other public routes need a fresh check. |
+| Production private routes | `/login` returns 200; `/invite`, `/portal`, and `/partner` return 307 to `/platform-disabled`. Other routes need a fresh browser check. |
 | Production cron routes | 401 without a bearer token |
-| Production PandaDoc webhook | 404 `platform_disabled` for POST; 405 for GET |
-| PR #2 Preview | Public routes 200; private entry routes reach `/platform-disabled` |
+| Production PandaDoc webhook | Manual signing is active. No webhook response was checked in this pass. |
+| Historical PR #2 Preview | Public routes returned 200; private entry routes reached `/platform-disabled` at that checkpoint. |
 
 ## Browser acceptance
 
-Native checks on the PR #2 Preview cover Home, Services, Contractors, About, Contact, and File a claim
+Historical native checks on the PR #2 Preview cover Home, Services, Contractors, About, Contact, and File a claim
 at 320, 390, and 1280 pixels. Each route has its main heading and no horizontal overflow.
 No completed broken images were observed. The inspected console log returned no warnings or errors.
 
@@ -62,11 +68,11 @@ The intake form shows four optional contractor fields and no loss-time input.
 Keyboard Tab moves from First name to Last name. The empty form reports 23 invalid required controls.
 A vendor link renders the same seven public sections with no vendor directory.
 
-Open browser work:
+Current browser work:
 
-- Successful public submission on a hosted environment, with full network tracing.
 - Maximum-size upload boundary acceptance.
-- Authenticated vendor-link and claim-detail screens against a migrated database.
+- Local and hosted Preview acceptance for staff, vendor, and homeowner invitation flows before platform activation.
+- Fresh public form and private-role checks against the latest deployed commit.
 - Native menu activation by Enter or Space, which has not passed a fresh interaction test.
 
 Record a fresh navigation timestamp before collecting console evidence.
@@ -86,7 +92,11 @@ and waits on the owner's Resend sign-in.
 
 A `sent` state means the provider accepted the request. It does not prove inbox delivery.
 Old dead and failed public messages from August and September remain retained for operator review. Do not resend or erase them automatically.
-Simple mode processes only the four public-form email templates.
+Staff mode processes the four public-form templates and three staff-alert templates.
+Read-only hosted inspection on 2026-09-26 found four pending `claim_status_update` rows.
+Two are older than seven days. No message was sent or changed during inspection.
+The Storage cleanup queue has zero open rows and three processed rows.
+Review the pending customer messages before opening platform mode; it permits those templates.
 
 `vercel.json` schedules the outbox daily at 14:00 UTC and Storage cleanup daily at 14:17 UTC.
 Hobby scheduling does not guarantee the exact minute, and a backlog can take several days.
@@ -98,7 +108,7 @@ Scheduler attribution is unverified because the Vercel session expired before th
 
 The application advertises ten files of 25 MiB each. The private `claim-docs` bucket permits 25 MiB objects.
 File bytes bypass Server Actions, which are limited to [4.5 MB request payloads](https://vercel.com/docs/functions/limitations).
-Production commit `383a999` contains this transport. Only maximum-size boundary acceptance remains open.
+Production contains this transport. Maximum-size boundary acceptance remains open.
 
 The controls are:
 

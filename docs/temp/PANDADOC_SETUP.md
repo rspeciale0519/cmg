@@ -1,7 +1,8 @@
 # PandaDoc setup for CMG
 
-PandaDoc is deferred while `SITE_MODE=simple`.
-Do not enable platform mode to complete the public launch.
+Production uses the manual prefilled-PDF signing path in `SITE_MODE=staff`.
+The PandaDoc API path is not part of the current manual release.
+Do not activate platform mode until the approved invitation flows pass local and hosted Preview acceptance.
 [HANDOFF.md](HANDOFF.md) contains current account, deployment, migration, and verification evidence.
 This guide describes setup requirements, not proof that a hosted environment meets them.
 
@@ -154,8 +155,8 @@ Do not clear ledger rows or retry an uncertain send without checking provider st
 ## Production activation
 
 Production key changes, webhook changes, deployments, and live sends each require approval.
-Keep `SITE_MODE=simple` until all platform gates pass.
-Complete retention, export, erasure, legal-hold, and hosted integration work before activation.
+Keep Production in `SITE_MODE=staff` until the approved invitation checks pass and the owner approves the mode change.
+Track retention, export, erasure, and legal holds as separate release work in RELEASE_STATE.
 The manual provider remains available in platform mode without a PandaDoc API key.
 
 See the [current integration blueprint](../reference/pandadoc/06-cmg-integration-blueprint.md) for source mappings.

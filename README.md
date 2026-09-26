@@ -1,9 +1,10 @@
 # CMG Property Solutions
 
 CMG runs a public marketing site and a private claims platform.
-The release target is `SITE_MODE=simple`.
-This setting keeps the public site and forms available.
-Private platform features need separate approval and hosted acceptance checks.
+Production currently runs `SITE_MODE=staff` on `app.cmgpropertysolutions.net`.
+This mode opens the CMG staff desk and keeps customer, partner, and invitation routes closed.
+The owner has approved work toward `SITE_MODE=platform` after local and hosted Preview acceptance of all three invitation flows.
+Check [RELEASE_STATE.md](docs/RELEASE_STATE.md) before changing the Production mode.
 
 [RELEASE_STATE.md](docs/RELEASE_STATE.md) is the current release record.
 It contains production facts, open pull requests, migration heads, environment facts, open gates, and the ordered next steps.
@@ -157,7 +158,9 @@ Current code, tests, manifests, and configuration override older design records.
 [RETENTION.md](docs/RETENTION.md) separates implemented cleanup from proposed retention policy.
 The [original platform plan](.claude/plans/feature-claims-platform.md) and older progress records provide history.
 
-## Simple-mode production runbook
+<a id="simple-mode-production-runbook"></a>
+
+## Production runbook
 
 `develop` is the integration and production branch.
 Verify the current Vercel branch connection before release.
@@ -233,7 +236,7 @@ If repository settings cannot enforce required checks, record that release block
 Do not describe manual checks as branch protection.
 Approval for one Git or production action does not approve another action.
 
-27. Keep `SITE_MODE=simple` in the release environment.
+27. Verify the approved `SITE_MODE` in the release environment. Production currently uses `staff`.
 28. Redeploy after changing Vercel environment values.
 29. Confirm that Production uses the merged commit and intended environment.
 30. Verify approved public submissions, confirmation emails, staff alerts, queues, crons, logs, DNS, TLS, and redirects.
@@ -261,7 +264,7 @@ Possession of a link does not prove the submitter works for that vendor.
 Contractor contact fields and public partner IDs cannot override the server mapping.
 An existing immutable upload reservation retains its source during its normal lifetime.
 
-Apply the pending schema migrations before deploying code that reads the new columns.
+Apply any new schema migrations before deploying code that reads their columns.
 Old submission functions can ignore new contractor fields, so an application-first deployment risks incomplete records.
 Retain the added columns during application rollback. Use reviewed forward repair for database corrections.
 See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for migration order and verification limits.

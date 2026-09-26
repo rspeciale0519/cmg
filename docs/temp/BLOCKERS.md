@@ -1,6 +1,6 @@
 # Owner decision register
 
-Reconciled 2026-09-17. This file lists only current owner-controlled decisions.
+Reconciled 2026-09-26. This file lists only current owner-controlled decisions.
 Rewrite it in place. Do not add dated layers.
 The superseded layered version is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/BLOCKERS.md).
 
@@ -19,22 +19,22 @@ This record requests no approval and authorizes no action.
 - No Supabase backup. Recovery for the applied migrations is reviewed forward repair. Immediate restoration is unverified.
 - PandaDoc e-signing ships in the first release, through a manual prefilled-PDF flow.
 - The CMG standard fee is 20 percent. A per-vendor fee is a staff-only setting.
-- PR #2 may be merged. The owner runs the merge.
+- PRs #1 through #17 are merged. Production currently runs `SITE_MODE=staff`.
+- On 2026-09-23, the owner decided that admins must be able to invite staff, vendors, and homeowners.
 
 ## 1. Release sequence
 
 The owner fixed this order. Later items must not move earlier.
 
-1. Merge PR #2 and check the deployment.
-2. Land PR #3, PR #4, the per-vendor fee schema branch, and the test-coverage branch.
-3. Build the manual prefilled-PDF PandaDoc path.
-4. Open the staff admin desk for CMG staff.
-5. Approve the public copy. This is second-to-last.
-6. Apply the SEO origin fix and cut `app.` over to `www.`. This is last.
+1. Complete local and hosted Preview acceptance of staff, vendor, and homeowner invitations.
+2. Approve the Production change to `SITE_MODE=platform` only after those checks pass and pending customer messages are reviewed.
+3. Send one real Letter of Representation through PandaDoc's web app.
+4. Approve the public copy. This is second-to-last.
+5. Apply the SEO origin fix and cut `app.` over to `www.`. This is last.
 
-Customer and partner logins wait for a separate owner decision.
+Customer and partner logins remain closed until the approved platform activation.
 
-**Owner action:** confirm any change to this order before engineering work moves.
+**Owner action:** approve the Production mode change after acceptance. Confirm any change to this order.
 
 ## 2. Public business and legal approval
 
@@ -96,7 +96,7 @@ The hosted database holds real records. Never treat it as empty or disposable.
 Never seed or reset production.
 
 **Owner action:** approve each production migration, repair, backup, or restore separately.
-Approve each hosted test submission and live message separately.
+Approve each hosted test submission and live message separately. Do not create a Supabase backup under the current decision.
 If a backup is later required, confirm that it covers private object bytes, not only database metadata.
 An invalid existing document path can stop migration validation; a repair needs reviewed metadata and Storage evidence.
 Do not authorize automatic renaming, deletion, quarantine, or constraint removal as a default response.
@@ -107,9 +107,9 @@ Approval for one action never approves another.
 Commit, push, PR description change, branch protection, merge, deployment, and domain change stay separate.
 A merge to `develop` can start a Production deployment automatically.
 
-## 9. Deferred until customer and partner access opens
+## 9. Customer and partner access
 
-Private authentication, invitations, customer access, and partner access remain deferred.
+The owner approved work on all three invitation flows. Production customer and partner routes stay closed during acceptance.
 Do not create a first owner merely because an old record says no accounts exist.
 Confirm existing identities and roles through an approved process.
 Retention automation, export, erasure, and legal holds need separate implementation and approval.

@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-09-23. Rewrite this file in place. Do not append dated updates to it.
+Reconciled 2026-09-26. Rewrite this file in place. Do not append dated updates to it.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence and checklists.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for the owner-decision register.
@@ -13,33 +13,29 @@ Use [README.md](../README.md#simple-mode-production-runbook) for the release pro
 | Vercel project | `cmgps`, Hobby plan |
 | Site mode | `SITE_MODE=staff` (Production only; Preview and Development stay `simple`) |
 | Public host | `app.cmgpropertysolutions.net` |
-| Deployed code | `develop`, through the PR #14 merge |
-| Hosted migrations | 35 applied, through `20260917130000`. A dry run on 2026-09-22 reported "Remote database is up to date." |
+| Deployed code | GitHub reports a successful Production deployment of `develop` commit `2fdf6bd` on 2026-09-24; the public host still needs an exact deployment-alias check |
+| Hosted migrations | Read-only query on 2026-09-26 found 35 applied, through `20260917130000` |
 | Backups | The owner declined backups for the applied migrations |
 | Recovery path | Reviewed forward repair; immediate restoration is unverified |
 
 Production carries the direct-to-Storage upload transport, contractor intake fields, vendor intake links, the per-vendor fee setting, the prefilled Letter of Representation download, the corrected agreement-type checkbox positions, password recovery on the sign-in form, and the `staff` site mode. The staff desk is live: `/login`, `/mfa`, and `/admin` are open; `/portal`, `/partner`, and `/invite` stay closed.
 
-Production environment facts set on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only, so Production runs the manual e-signing path and refuses every webhook call. Supabase public sign-up is disabled; accounts are created only by invitation.
+Production environment facts recorded on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only. Production uses the manual e-signing path. A current webhook response has not been checked. Supabase public sign-up is disabled; accounts are created only by invitation.
 
 Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (`lor_signed`, signed letter uploaded, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
 
 ## Pull requests
 
-PRs #1 through #14 are merged into `develop`. No pull request is open.
+PRs #1 through #17 are merged into `develop`. GitHub listed no open pull request on 2026-09-26.
+GitHub run `36003466471` passed `verify` and `database` for head `2fdf6bd`.
 
 ## Migration heads
 
 The hosted head and the repository head on `develop` are both `20260917130000`.
 Compare hosted history against repository files before every approved production write.
 
-The agent cannot read or write the production database. Claude Code's permission classifier blocks it even with chat approval. The owner runs hosted migrations with the Supabase CLI installed directly:
-
-```powershell
-$env:PROD_SUPABASE_DIRECT_URL = ((Select-String -Path .env.local -Pattern '^PROD_SUPABASE_DIRECT_URL=').Line -split '=',2)[1].Trim('"'); supabase db push --dry-run --db-url $env:PROD_SUPABASE_DIRECT_URL
-```
-
-Remove `--dry-run` and add `--yes` to apply. Do not call it through `npx`. npm consumes `--yes` and echoes the full connection string, including the password, into its output.
+The 2026-09-26 migration check used a read-only connection and did not print the database password.
+Do not pass a production database URL on a visible command line. Obtain separate approval for every Production write.
 
 ## Site modes
 
@@ -72,7 +68,7 @@ The first release uses the manual path. Staff download a prefilled Letter of Rep
 | Password recovery routes | Pass, including real email delivery. On 2026-09-23 Resend showed "Reset your CMG password" delivered to the owner's address. |
 | Forgot-password retry | Watch item. The first submission in Chrome was refused once. The retry succeeded. The cause is unknown. |
 | Upload a signed letter | Pass on 2026-09-23. A signed LOR was uploaded to `CMG-2026-0003` as kind `lor_signed` (CMG only). The claim moved to `lor_signed`, and the Representation signed milestone was recorded. |
-| Letter panel after `lor_signed` | Defect. The panel still showed "Manual signature pending" and the download button after the move. Fixed by branch `fix/esign-panel-signed-state`. |
+| Letter panel after `lor_signed` | The panel showed stale pending controls on 2026-09-23. PR #16 merged a fix; current rendered behavior still needs confirmation. |
 
 ## Environment
 
@@ -84,13 +80,24 @@ The first release uses the manual path. Staff download a prefilled Letter of Rep
 | DMARC | `v=DMARC1; p=none;` |
 | Cron | `/api/cron/outbox` daily at 14:00 UTC; `/api/cron/storage-cleanup` daily at 14:17 UTC |
 
+Read-only checks on 2026-09-26 found the `app.` CNAME at `50238cf0f774d850.vercel-dns-017.com`.
+The Microsoft 365 MX remains present, and DMARC remains `v=DMARC1; p=none;`.
+The `app.` TLS certificate passed normal validation with TLS 1.3 and expires on 2026-12-08.
+No DNS record or certificate setting changed during these checks.
+
 Daily cron caveat: Hobby scheduling does not guarantee the configured minute, and a retry or cleanup backlog can take several days to drain.
+Read-only inspection on 2026-09-26 found four pending `claim_status_update` messages.
+Two were older than seven days. None was sent during this inspection.
+The Storage cleanup queue had no open jobs; all three retained rows were processed.
+Before platform activation, review the four pending messages and approve their intended delivery or retention.
+Platform mode permits customer templates, and the daily outbox job can act on pending rows.
 
 ## Open gates
 
 | Item | Who | Status |
 |---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Current priority. Owner decision 2026-09-23: admins must be able to invite all three. This needs `/invite`, `/portal`, and `/partner`, so Production must run `SITE_MODE=platform`. Switch only after local and hosted acceptance of all three invitation flows. |
+| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Current priority. Owner decision 2026-09-23: admins must be able to invite all three. This needs `/invite`, `/portal`, and `/partner`, so Production must run `SITE_MODE=platform`. Complete local and hosted Preview acceptance before switching Production; then verify Production. |
+| Pending customer status messages | engineering, then owner | Four pending; two older than seven days on 2026-09-26. Review before platform activation so the outbox does not decide their delivery by default. |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
 | Delete stray root folders | owner | Pending |
@@ -114,7 +121,7 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 
 ## Ordered next steps
 
-1. Make all three invitation types work: staff, vendor, and homeowner. Run local acceptance in platform mode. Then the owner switches Production to `SITE_MODE=platform`. Then run hosted acceptance.
+1. Test all three invitation types in local and hosted Preview platform mode, including role boundaries and private documents. Review pending outbox messages. Obtain approval before changing Production to `SITE_MODE=platform`. Then run Production acceptance.
 2. Send one real Letter of Representation through PandaDoc's web app.
 3. Obtain owner and legal approval of the public copy.
 4. Apply the SEO origin fix and cut `app.` over to `www.` last.
