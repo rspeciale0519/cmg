@@ -81,4 +81,4 @@ jobs:
           set -euo pipefail
           eval "$(supabase status -o env)"
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
-            npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup
+            npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup src/lib/admin/partners.test.ts
