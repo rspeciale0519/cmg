@@ -96,7 +96,7 @@ Platform mode permits customer templates, and the daily outbox job can act on pe
 
 | Item | Who | Status |
 |---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Current priority. Owner decision 2026-09-23: admins must be able to invite all three. This needs `/invite`, `/portal`, and `/partner`, so Production must run `SITE_MODE=platform`. Complete local and hosted Preview acceptance before switching Production; then verify Production. |
+| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26, including staff MFA and role boundaries. A partner-directory count defect has a locally tested candidate fix. Hosted Preview acceptance and remaining replay, document-byte, and responsive checks stay open. Review pending messages before requesting Production `SITE_MODE=platform`. |
 | Pending customer status messages | engineering, then owner | Four pending; two older than seven days on 2026-09-26. Review before platform activation so the outbox does not decide their delivery by default. |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |

@@ -32,6 +32,15 @@ The test totals below are retained evidence from the earlier PR #2 release check
 The `verify` and `database` selections overlap. Do not add their totals together.
 Use Node.js 22. A shell on a different Node.js version is not project evidence.
 
+The 2026-09-26 isolated acceptance checkout started at `2fdf6bd` and tested the partner-directory candidate fix.
+The disposable Supabase stack used a separate project and port block; Production and the shared development stack were not reset.
+After an isolated reset, `npm test` passed 119 files and 1,665 tests; one live file and test were skipped.
+The same checkout passed `npm run lint`, both default and platform `npm run build`, and `npm audit --audit-level=high` with zero vulnerabilities.
+The main checkout passed `npm run type-check` after the fix and test changes.
+The focused partner-directory database regression passed in both platform and staff modes with a synthetic AAL2 owner.
+The isolated `supabase test db` passed 43 files and 1,322 assertions before the application fix; no migration changed.
+These local results do not replace required CI or hosted Preview acceptance.
+
 ## Hosted state
 
 Production runs `SITE_MODE=staff` on `app.cmgpropertysolutions.net`.
@@ -68,10 +77,27 @@ The intake form shows four optional contractor fields and no loss-time input.
 Keyboard Tab moves from First name to Last name. The empty form reports 23 invalid required controls.
 A vendor link renders the same seven public sections with no vendor directory.
 
+On 2026-09-26, an isolated local Supabase stack and native browser exercised all three invitation types in `SITE_MODE=platform`.
+Email delivery was disabled; the forms returned manual links, and no live messages were sent.
+The owner enrolled MFA, issued synthetic staff, vendor, and homeowner invitations, and each link reached its expected account setup form.
+The new adjuster enrolled MFA, reached an empty assigned caseload, and received not-found on the owner-only partner page.
+The new vendor reached the partner portal with two referred claims; `/admin` and `/portal` redirected to `/partner`.
+The homeowner reached her claim and two visible documents; another claim's document page returned not-found.
+At 390px, the homeowner overview and document list rendered without horizontal overflow; desktop overview also had no overflow.
+The seeded signed-letter row failed to download because its local seed has metadata without object bytes.
+The browser file picker stalled before it showed a selected test image, so an uploaded document byte check remains open.
+These checks do not prove hosted Preview delivery, one-time link replay, document byte download, or Production access.
+
+The first partner-directory browser check failed with `permission denied for table claims` and showed zero companies.
+The directory embedded a count from `claims`, whose authenticated SELECT grant covers only safe columns.
+Changing the count embed to `claim_partner_summaries` restored the seeded company, one rep, and two referred claims.
+A database-backed regression with a synthetic AAL2 owner passed against the isolated stack.
+The candidate fix passed local checks. CI and hosted Preview still need to verify it.
+
 Current browser work:
 
 - Maximum-size upload boundary acceptance.
-- Local and hosted Preview acceptance for staff, vendor, and homeowner invitation flows before platform activation.
+- Hosted Preview acceptance and remaining invitation replay, document-byte, and role-specific responsive checks before platform activation.
 - Fresh public form and private-role checks against the latest deployed commit.
 - Native menu activation by Enter or Space, which has not passed a fresh interaction test.
 

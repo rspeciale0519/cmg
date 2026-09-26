@@ -61,7 +61,10 @@ describeDb("private direct intake uploads against local Postgres and Storage", (
     const body = new Uint8Array(size);
     body.set(new TextEncoder().encode(valid ? "%PDF-1.7\n" : "invalid!\n"));
     const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
-    if (url.protocol !== "http:" || !["localhost", "127.0.0.1"].includes(url.hostname) || url.port !== "15421") {
+    // An explicit port permits an isolated disposable stack without touching
+    // the default CMG development database. The target must stay on loopback.
+    const storagePort = process.env.CMG_TEST_STORAGE_PORT || "15421";
+    if (url.protocol !== "http:" || !["localhost", "127.0.0.1"].includes(url.hostname) || url.port !== storagePort) {
       throw new Error("Signed upload tests require local CMG Storage.");
     }
     url.pathname = `/storage/v1/object/upload/sign/claim-docs/${entry.path}`;
