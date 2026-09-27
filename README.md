@@ -93,7 +93,7 @@ Do not treat a cleanup error as a passing test run.
 CI also runs this selection against its local Supabase stack:
 
 ```powershell
-npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup
+npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup src/lib/admin/partners.test.ts
 ```
 
 Supply only local database credentials when running that selection.
