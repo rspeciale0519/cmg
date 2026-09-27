@@ -85,19 +85,23 @@ The new vendor reached the partner portal with two referred claims; `/admin` and
 The homeowner reached her claim and two visible documents; another claim's document page returned not-found.
 At 390px, the homeowner overview and document list rendered without horizontal overflow; desktop overview also had no overflow.
 The seeded signed-letter row failed to download because its local seed has metadata without object bytes.
-The browser file picker stalled before it showed a selected test image, so an uploaded document byte check remains open.
-These checks do not prove hosted Preview delivery, one-time link replay, document byte download, or Production access.
+On 2026-09-26, the owner selected `synthetic-upload.png` in the built-in browser after automated file selection failed.
+The local portal accepted the 152 KB file, listed it on the claim, and downloaded it through a signed URL.
+The earlier seeded signed-letter download failure was limited to seed metadata without object bytes.
+These checks do not prove hosted Preview delivery, one-time link replay, maximum-size upload, or Production access.
 
 The first partner-directory browser check failed with `permission denied for table claims` and showed zero companies.
 The directory embedded a count from `claims`, whose authenticated SELECT grant covers only safe columns.
 Changing the count embed to `claim_partner_summaries` restored the seeded company, one rep, and two referred claims.
 A database-backed regression with a synthetic AAL2 owner passed against the isolated stack.
-The candidate fix passed local checks. CI and hosted Preview still need to verify it.
+The candidate fix passed local checks and was pushed as `bugfix/partner-directory-count` at `242ab01`.
+Vercel showed the branch Preview ready on 2026-09-26. CI runs only for pull requests and pushes to `develop` or `main`, so this branch push did not start CI.
+CI and hosted Preview platform-mode acceptance still need to verify it.
 
 Current browser work:
 
 - Maximum-size upload boundary acceptance.
-- Hosted Preview acceptance and remaining invitation replay, document-byte, and role-specific responsive checks before platform activation.
+- Hosted Preview acceptance and remaining invitation replay, hosted document-byte, and role-specific responsive checks before platform activation.
 - Fresh public form and private-role checks against the latest deployed commit.
 - Native menu activation by Enter or Space, which has not passed a fresh interaction test.
 

@@ -96,7 +96,7 @@ Platform mode permits customer templates, and the daily outbox job can act on pe
 
 | Item | Who | Status |
 |---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26, including staff MFA and role boundaries. A partner-directory count defect has a locally tested candidate fix. Hosted Preview acceptance and remaining replay, document-byte, and responsive checks stay open. Review pending messages before requesting Production `SITE_MODE=platform`. |
+| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26, including staff MFA, role boundaries, and uploaded document download. The partner-directory count fix is on `bugfix/partner-directory-count`; Vercel Preview is ready, but CI requires a pull request. Hosted Preview platform acceptance, invitation replay, hosted document bytes, and responsive checks stay open. Review pending messages before requesting Production `SITE_MODE=platform`. |
 | Pending customer status messages | engineering, then owner | Four pending; two older than seven days on 2026-09-26. Review before platform activation so the outbox does not decide their delivery by default. |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
