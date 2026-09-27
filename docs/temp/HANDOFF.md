@@ -1,6 +1,6 @@
 # CMG release handoff — engineering evidence
 
-Reconciled 2026-09-26. This file holds current engineering evidence and acceptance checklists only.
+Reconciled 2026-09-27. This file holds current engineering evidence and acceptance checklists only.
 Rewrite it in place. Do not append dated sections.
 The full dated record is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
 
@@ -13,9 +13,10 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 
 ## Current release evidence
 
-PRs #1 through #17 are merged. GitHub lists no open PR on 2026-09-26.
+PRs #1 through #17 are merged. PR #18 is open against `develop` at `1bdeba1`.
 The remote `develop` head is `2fdf6bd`. GitHub run `36003466471` passed its `verify` and `database` jobs for that head.
-GitHub reports a successful Production deployment for that commit. Exact alias mapping still needs a Vercel session check.
+Vercel maps `app.cmgpropertysolutions.net` to the ready Production deployment for that commit.
+PR #18 run `36349862708` passed `verify` and `database`; its branch Preview deployment is ready.
 The test totals below are retained evidence from the earlier PR #2 release checks. They do not describe the latest head.
 
 | Check | Historical PR #2 result |
@@ -94,16 +95,23 @@ The first partner-directory browser check failed with `permission denied for tab
 The directory embedded a count from `claims`, whose authenticated SELECT grant covers only safe columns.
 Changing the count embed to `claim_partner_summaries` restored the seeded company, one rep, and two referred claims.
 A database-backed regression with a synthetic AAL2 owner passed against the isolated stack.
-The candidate fix passed local checks and was pushed as `bugfix/partner-directory-count` at `242ab01`.
-Vercel showed the branch Preview ready on 2026-09-26. CI runs only for pull requests and pushes to `develop` or `main`, so this branch push did not start CI.
-CI and hosted Preview platform-mode acceptance still need to verify it.
+The fix passed local checks and is in PR #18 on `bugfix/partner-directory-count`.
+CI passed at `1bdeba1`. A branch-specific Vercel override sets `SITE_MODE=platform` for this Preview only.
+Unauthenticated `/portal`, `/partner`, and `/admin` routes reach sign-in, rather than `/platform-disabled`.
+Hosted owner, staff, partner, and homeowner acceptance still requires sign-in and approved test writes.
+
+The PR #18 hostname was absent from the Cloudflare Turnstile widget. The Preview contact and password-reset forms showed verification failure.
+On 2026-09-27, the widget retained its four existing hosts and added this exact Preview hostname as the fifth.
+Vercel's public site key matched the widget key. After propagation, the password-reset widget showed Success.
+One approved reset request for `rob@thespeciales.com` reached the generic "Check your email" state.
+Resend marked email `01a0e4ac-4e53-7162-8e75-89282abcb0ac` Delivered. Inbox receipt and the owner's password change are unverified.
 
 Current browser work:
 
 - Maximum-size upload boundary acceptance.
 - Hosted Preview acceptance and remaining invitation replay, hosted document-byte, and role-specific responsive checks before platform activation.
 - Fresh public form and private-role checks against the latest deployed commit.
-- Native menu activation by Enter or Space, which has not passed a fresh interaction test.
+- Contact FAQ activation by Enter passed. Other native menus still need a fresh interaction check.
 
 Record a fresh navigation timestamp before collecting console evidence.
 Earlier Preview errors can remain visible in a later evaluation.
@@ -123,8 +131,9 @@ and waits on the owner's Resend sign-in.
 A `sent` state means the provider accepted the request. It does not prove inbox delivery.
 Old dead and failed public messages from August and September remain retained for operator review. Do not resend or erase them automatically.
 Staff mode processes the four public-form templates and three staff-alert templates.
-Read-only hosted inspection on 2026-09-26 found four pending `claim_status_update` rows.
-Two are older than seven days. No message was sent or changed during inspection.
+Read-only hosted inspection on 2026-09-27 found four pending `claim_status_update` rows for synthetic claims.
+Two are older than seven days and have a stale `www` portal URL; the newer two use `app.`.
+No outbox message was sent or changed during inspection. All four require an owner disposition before platform activation.
 The Storage cleanup queue has zero open rows and three processed rows.
 Review the pending customer messages before opening platform mode; it permits those templates.
 

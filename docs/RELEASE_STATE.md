@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-09-26. Rewrite this file in place. Do not append dated updates to it.
+Reconciled 2026-09-27. Rewrite this file in place. Do not append dated updates to it.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence and checklists.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for the owner-decision register.
@@ -11,9 +11,9 @@ Use [README.md](../README.md#simple-mode-production-runbook) for the release pro
 | Item | Current state |
 |---|---|
 | Vercel project | `cmgps`, Hobby plan |
-| Site mode | `SITE_MODE=staff` (Production only; Preview and Development stay `simple`) |
+| Site mode | Production uses `SITE_MODE=staff`. Default Preview and Development use `simple`; selected branch Previews have `platform` overrides. |
 | Public host | `app.cmgpropertysolutions.net` |
-| Deployed code | GitHub reports a successful Production deployment of `develop` commit `2fdf6bd` on 2026-09-24; the public host still needs an exact deployment-alias check |
+| Deployed code | Vercel mapped `app.cmgpropertysolutions.net` to the ready Production deployment of `develop` commit `2fdf6bd` on 2026-09-27 |
 | Hosted migrations | Read-only query on 2026-09-26 found 35 applied, through `20260917130000` |
 | Backups | The owner declined backups for the applied migrations |
 | Recovery path | Reviewed forward repair; immediate restoration is unverified |
@@ -26,8 +26,9 @@ Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-000
 
 ## Pull requests
 
-PRs #1 through #17 are merged into `develop`. GitHub listed no open pull request on 2026-09-26.
+PRs #1 through #17 are merged into `develop`. PR #18, `bugfix/partner-directory-count`, is open against `develop`.
 GitHub run `36003466471` passed `verify` and `database` for head `2fdf6bd`.
+PR #18 head `1bdeba1` passed `verify` and `database` in run `36349862708`; its Vercel Preview is ready.
 
 ## Migration heads
 
@@ -74,7 +75,7 @@ The first release uses the manual path. Staff download a prefilled Letter of Rep
 
 | Item | Current state |
 |---|---|
-| Turnstile | Managed widget with four authorized hostnames, covering `cmgpropertysolutions.net` and a Preview host |
+| Turnstile | Managed widget with five authorized hostnames, including the PR #18 Preview host added on 2026-09-27; existing hosts stayed in place |
 | Resend domain | `cmgpropertysolutions.net`, verified 2026-09-09; sender `claims@cmgpropertysolutions.net` |
 | Mail DNS | Microsoft 365 MX and SPF unchanged; Resend DKIM and `send.` subdomain records verified |
 | DMARC | `v=DMARC1; p=none;` |
@@ -86,8 +87,8 @@ The `app.` TLS certificate passed normal validation with TLS 1.3 and expires on 
 No DNS record or certificate setting changed during these checks.
 
 Daily cron caveat: Hobby scheduling does not guarantee the configured minute, and a retry or cleanup backlog can take several days to drain.
-Read-only inspection on 2026-09-26 found four pending `claim_status_update` messages.
-Two were older than seven days. None was sent during this inspection.
+Read-only inspection on 2026-09-27 found four pending `claim_status_update` messages for synthetic test claims.
+Two were older than seven days and have a stale `www` portal link. The newer two link to `app.`. None was sent during this inspection.
 The Storage cleanup queue had no open jobs; all three retained rows were processed.
 Before platform activation, review the four pending messages and approve their intended delivery or retention.
 Platform mode permits customer templates, and the daily outbox job can act on pending rows.
@@ -96,8 +97,8 @@ Platform mode permits customer templates, and the daily outbox job can act on pe
 
 | Item | Who | Status |
 |---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26, including staff MFA, role boundaries, and uploaded document download. The partner-directory count fix is on `bugfix/partner-directory-count`; Vercel Preview is ready, but CI requires a pull request. Hosted Preview platform acceptance, invitation replay, hosted document bytes, and responsive checks stay open. Review pending messages before requesting Production `SITE_MODE=platform`. |
-| Pending customer status messages | engineering, then owner | Four pending; two older than seven days on 2026-09-26. Review before platform activation so the outbox does not decide their delivery by default. |
+| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26, including staff MFA, role boundaries, and uploaded document download. PR #18 CI passed, and its branch Preview runs `platform`. Hosted sign-in, invitation replay, document bytes, and responsive checks stay open. Review pending messages before requesting Production `SITE_MODE=platform`. |
+| Pending customer status messages | engineering, then owner | Four synthetic-claim messages remain pending. Two are older than seven days with stale `www` links; two newer ones link to `app.`. Approve delivery or retention before platform activation. |
 | Maximum-size upload boundary acceptance | engineering | Open |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
 | Delete stray root folders | owner | Pending |
