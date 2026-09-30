@@ -996,6 +996,104 @@ export type Database = {
         }
         Relationships: []
       }
+      private_upload_files: {
+        Row: {
+          copy_started_at: string | null
+          index: number
+          kind: Database["public"]["Enums"]["document_kind"]
+          last_reconciled_at: string | null
+          mime: string
+          original_name: string
+          session_id: string
+          size_bytes: number
+          storage_path: string
+          upload_path: string
+          verification: Json | null
+          visibility: Database["public"]["Enums"]["document_visibility"]
+        }
+        Insert: {
+          copy_started_at?: string | null
+          index: number
+          kind: Database["public"]["Enums"]["document_kind"]
+          last_reconciled_at?: string | null
+          mime: string
+          original_name: string
+          session_id: string
+          size_bytes: number
+          storage_path: string
+          upload_path: string
+          verification?: Json | null
+          visibility: Database["public"]["Enums"]["document_visibility"]
+        }
+        Update: {
+          copy_started_at?: string | null
+          index?: number
+          kind?: Database["public"]["Enums"]["document_kind"]
+          last_reconciled_at?: string | null
+          mime?: string
+          original_name?: string
+          session_id?: string
+          size_bytes?: number
+          storage_path?: string
+          upload_path?: string
+          verification?: Json | null
+          visibility?: Database["public"]["Enums"]["document_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_upload_files_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "private_upload_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_upload_sessions: {
+        Row: {
+          claim_id: string
+          cleanup_after: string
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          file_count: number
+          id: string
+          result: Json | null
+          sign_until: string
+          status: string
+          token_hash: string
+          uploaded_by: string
+        }
+        Insert: {
+          claim_id: string
+          cleanup_after: string
+          completed_at?: string | null
+          created_at: string
+          expires_at: string
+          file_count: number
+          id: string
+          result?: Json | null
+          sign_until: string
+          status?: string
+          token_hash: string
+          uploaded_by: string
+        }
+        Update: {
+          claim_id?: string
+          cleanup_after?: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          file_count?: number
+          id?: string
+          result?: Json | null
+          sign_until?: string
+          status?: string
+          token_hash?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1170,7 +1268,21 @@ export type Database = {
         Args: { p_attempt_id: string; p_token_hash: string }
         Returns: Json
       }
+      begin_private_upload_session: {
+        Args: {
+          p_claim_id: string
+          p_files: Json
+          p_id: string
+          p_token_hash: string
+          p_uploaded_by: string
+        }
+        Returns: Json
+      }
       cancel_intake_upload_session: {
+        Args: { p_id: string; p_token_hash: string }
+        Returns: Json
+      }
+      cancel_private_upload_session: {
         Args: { p_id: string; p_token_hash: string }
         Returns: Json
       }
@@ -1235,6 +1347,10 @@ export type Database = {
           p_lease_seconds?: number
           p_payload_hash: string
         }
+        Returns: Json
+      }
+      claim_private_upload_copy: {
+        Args: { p_id: string; p_index: number; p_token_hash: string }
         Returns: Json
       }
       claim_status_counts: {
@@ -1308,6 +1424,10 @@ export type Database = {
         }
         Returns: Json
       }
+      finalize_private_upload_session: {
+        Args: { p_document_ids: string[]; p_id: string; p_token_hash: string }
+        Returns: Json
+      }
       issue_invite_transaction: {
         Args: {
           p_claim_id: string
@@ -1373,6 +1493,10 @@ export type Database = {
         Returns: string
       }
       reconcile_intake_upload_cleanup: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      reconcile_private_upload_cleanup: {
         Args: { p_limit?: number }
         Returns: Json
       }

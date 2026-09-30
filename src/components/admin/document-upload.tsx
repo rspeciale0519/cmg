@@ -1,14 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
-import { uploadClaimDocument } from "@/lib/actions/documents";
-import { idleState, resilient } from "@/lib/actions/types";
+import { finalizeClaimDocumentUpload, prepareClaimDocumentUpload } from "@/lib/actions/documents";
 import {
   DOCUMENT_KIND_LABEL,
   DOCUMENT_KINDS,
   isRepresentationKind,
 } from "@/lib/claims/documents";
 import { FILE_ACCEPT_ATTRIBUTE, FILE_RULES_HINT } from "@/lib/validators/files";
+import { usePrivateDocumentUpload } from "@/components/forms/use-private-document-upload";
 import { ActionFeedback, AdminField, AdminSelect, SubmitButton } from "./form-controls";
 
 /**
@@ -31,7 +30,11 @@ export function DocumentUpload({
   claimId: string;
   canUploadRepresentation: boolean;
 }) {
-  const [state, formAction] = useActionState(resilient(uploadClaimDocument), idleState);
+  const upload = usePrivateDocumentUpload(
+    prepareClaimDocumentUpload,
+    finalizeClaimDocumentUpload,
+    "Add to the file",
+  );
 
   const kinds = DOCUMENT_KINDS.filter(
     (kind) => canUploadRepresentation || !isRepresentationKind(kind),
@@ -45,12 +48,18 @@ export function DocumentUpload({
        otherwise quietly return `visibility` to "CMG only" — re-asking a
        disclosure decision the operator had already made. The file itself
        cannot be handed back; no page may set a file input's value. */
-    <form action={formAction} noValidate>
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        upload.submit(event.currentTarget);
+      }}
+    >
       <input type="hidden" name="claimId" value={claimId} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <fieldset disabled={upload.locked || upload.pending} className="grid gap-4 sm:grid-cols-2 border-0 p-0">
         <AdminField name="kind" label="What is it">
-          <AdminSelect name="kind" defaultValue={state.values?.kind ?? "other"}>
+          <AdminSelect name="kind" defaultValue="other">
             {kinds.map((kind) => (
               <option key={kind} value={kind}>
                 {DOCUMENT_KIND_LABEL[kind]}
@@ -62,13 +71,13 @@ export function DocumentUpload({
         <AdminField name="visibility" label="Who can see it">
           <AdminSelect
             name="visibility"
-            defaultValue={state.values?.visibility ?? "internal"}
+            defaultValue="internal"
           >
             <option value="internal">CMG only</option>
             <option value="customer">Homeowner can see it</option>
           </AdminSelect>
         </AdminField>
-      </div>
+      </fieldset>
 
       {/* The refusal marks the field, which it did not before. A rejected upload
           answered with one sentence at the foot of the form, 105px below a file
@@ -85,7 +94,7 @@ export function DocumentUpload({
         name="files"
         label="File"
         hint={FILE_RULES_HINT}
-        error={state.fieldErrors?.files}
+        error={upload.state.fieldErrors?.files}
         className="mt-4"
       >
         <input
@@ -95,17 +104,29 @@ export function DocumentUpload({
           multiple
           required
           accept={FILE_ACCEPT_ATTRIBUTE}
-          aria-invalid={state.fieldErrors?.files ? true : undefined}
-          aria-describedby={state.fieldErrors?.files ? "admin-files-error" : undefined}
+          disabled={upload.locked || upload.pending}
+          onChange={(event) => upload.selectFiles(event.currentTarget.files)}
+          aria-invalid={upload.state.fieldErrors?.files ? true : undefined}
+          aria-describedby={upload.state.fieldErrors?.files ? "admin-files-error" : undefined}
           className="w-full rounded-md border border-ink/15 bg-canvas/70 p-[9px] text-[13px] leading-[1.5] text-ink/78 transition-colors duration-150 hover:border-ink/40 focus-visible:border-accent focus-visible:outline-offset-0 file:mr-3 file:rounded file:border file:border-ink/20 file:bg-transparent file:px-[9px] file:py-[3px] file:text-[12.5px] file:text-ink/78 aria-invalid:border-[#E08C6A] aria-invalid:hover:border-[#E08C6A] aria-invalid:focus-visible:border-[#E08C6A] aria-invalid:focus-visible:outline-[#E08C6A]"
         />
       </AdminField>
 
       <div className="mt-[14px]">
-        <SubmitButton pendingLabel="Uploading…">Add to the file</SubmitButton>
+        <SubmitButton
+          disabled={upload.pending || (upload.locked && !upload.state.message)}
+          pendingLabel={upload.buttonLabel}
+        >
+          {upload.buttonLabel}
+        </SubmitButton>
       </div>
 
-      <ActionFeedback state={state} />
+      {upload.progressMessage ? (
+        <p role="status" aria-live="polite" className="mt-2 text-[12px] text-ink/55">
+          {upload.progressMessage}
+        </p>
+      ) : null}
+      <ActionFeedback state={upload.state} />
     </form>
   );
 }

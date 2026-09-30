@@ -22,6 +22,7 @@ export async function proxy(request: NextRequest) {
     nonce,
     process.env.NODE_ENV === "development",
     !isLoopback,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
   );
 
   request.headers.set("x-nonce", nonce);

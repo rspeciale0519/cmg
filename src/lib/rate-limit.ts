@@ -69,6 +69,11 @@ export const RATE_LIMITS = {
      typo and none for a search. */
   portalQuestionUser: { scope: "portal-question:user", max: 12, window: "1 hour" },
   portalUploadUser: { scope: "portal-upload:user", max: 20, window: "1 hour" },
+  portalUploadFinalizeUser: { scope: "portal-upload-finalize:user", max: 250, window: "1 hour" },
+  portalUploadFinalizeToken: { scope: "portal-upload-finalize:token", max: 30, window: "1 hour" },
+  staffUploadPrepareUser: { scope: "staff-upload-prepare:user", max: 20, window: "1 hour" },
+  staffUploadFinalizeUser: { scope: "staff-upload-finalize:user", max: 250, window: "1 hour" },
+  staffUploadFinalizeToken: { scope: "staff-upload-finalize:token", max: 30, window: "1 hour" },
   portalPasswordUser: { scope: "portal-password:user", max: 5, window: "15 minutes" },
 
   /* A referral is a claim file, so this budget is nearer the intake's than the
