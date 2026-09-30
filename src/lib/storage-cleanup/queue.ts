@@ -95,6 +95,13 @@ export async function sweepStorageCleanup(admin: Admin, limit: number) {
       typeof reconciliationData.blocked === "number" && reconciliationData.blocked > 0) {
     console.error("[storage] intake upload paths require cleanup review", { count: reconciliationData.blocked });
   }
+  const privateReconciliation = await admin.rpc("reconcile_private_upload_cleanup", { p_limit: limit });
+  if (privateReconciliation.error) throw new Error("Private upload cleanup reconciliation failed.");
+  const privateData = privateReconciliation.data;
+  if (privateData && typeof privateData === "object" && !Array.isArray(privateData) &&
+      typeof privateData.blocked === "number" && privateData.blocked > 0) {
+    console.error("[storage] private upload paths require cleanup review", { count: privateData.blocked });
+  }
   return drainStorageCleanup(
     supabaseCleanupStore(admin),
     (bucketId, objectPath) =>

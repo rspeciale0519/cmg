@@ -18,6 +18,11 @@ import { createClient } from "@/lib/supabase/server";
 import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
+import { parsePrivateUploadManifest } from "@/lib/private-upload/manifest";
+import { finalizePrivateUploadSession, privateUploadRetryMessage } from "@/lib/private-upload/finalize";
+import { checkPrivateUploadFinalizeLimit, checkPrivateUploadPrepareLimit } from "@/lib/private-upload/rate-limit";
+import { parsePrivateUploadCapability, preparePrivateUploadSession, privateUploadTokenHash, readPrivateUploadSession } from "@/lib/private-upload/session";
+import type { PrivateFinalizeState, PrivatePrepareState } from "@/lib/private-upload/types";
 import type { Database } from "@/types/database-app";
 import {
   GENERIC_ERROR,
@@ -71,7 +76,7 @@ export async function uploadPortalDocument(
      the person re-answer a question they already answered. */
   const typed = submittedValues(formData, ["kind"]);
 
-  if (!(await checkRateLimit(RATE_LIMITS.portalUploadUser, session.userId))) {
+  if (!(await checkPrivateUploadPrepareLimit("portal", session.userId))) {
     return { status: "error", message: RATE_LIMIT_ERROR, values: typed };
   }
 
@@ -180,6 +185,63 @@ export async function uploadPortalDocument(
         ? "Sent. Your adjuster can see it now."
         : `${validation.files.length} files sent. Your adjuster can see them now.`,
   };
+}
+
+/** Reserve exact paths and return signed Storage capabilities. Request bodies carry metadata only. */
+export async function preparePortalDocumentUpload(
+  _previous: FormState,
+  formData: FormData,
+): Promise<PrivatePrepareState> {
+  const session = await requireRole("customer");
+  const claimId = String(formData.get("claimId") ?? "").trim();
+  const kindRaw = String(formData.get("kind") ?? "");
+  const values = submittedValues(formData, ["kind"]);
+  const failure = (message: string, fieldErrors?: Record<string, string>): PrivatePrepareState => ({
+    status: "error", message, values, ...(fieldErrors ? { fieldErrors } : {}),
+  });
+
+  if (!(await checkRateLimit(RATE_LIMITS.portalUploadUser, session.userId))) {
+    return failure(RATE_LIMIT_ERROR);
+  }
+  if (!isPortalDocumentKind(kindRaw)) return failure("Tell us what this file is.", { kind: "Choose a document type." });
+  if (!UUID.test(claimId)) return failure(NOT_YOURS);
+
+  const supabase = await createClient();
+  const { data: claim } = await supabase.from("claims")
+    .select("id,claim_ref").eq("id", claimId).maybeSingle();
+  if (!claim) return failure(NOT_YOURS);
+  const metadata = parsePrivateUploadManifest(formData);
+  if (!metadata) return failure("Choose valid files to send.", { files: "Check the selected files and try again." });
+
+  const prepared = await preparePrivateUploadSession(
+    createAdminClient(), claimId, session.userId, metadata, kindRaw, "customer",
+  );
+  return prepared.status === "error" ? { ...prepared, values } : prepared;
+}
+
+/** Confirm one reserved upload. The customer and claim are checked again under RLS. */
+export async function finalizePortalDocumentUpload(formData: FormData): Promise<PrivateFinalizeState> {
+  const user = await requireRole("customer");
+  const capability = parsePrivateUploadCapability(formData);
+  if (!capability) return { status: "error", message: privateUploadRetryMessage };
+  const { id, token } = capability;
+  const hash = privateUploadTokenHash(token);
+  if (!(await checkPrivateUploadFinalizeLimit("portal", user.userId, hash))) {
+    return { status: "error", message: RATE_LIMIT_ERROR };
+  }
+  const admin = createAdminClient();
+  const reserved = await readPrivateUploadSession(admin, id, hash);
+  if (!reserved || reserved.uploaded_by !== user.userId) return { status: "error", message: privateUploadRetryMessage };
+  const supabase = await createClient();
+  const { data: claim } = await supabase.from("claims")
+    .select("id,claim_ref").eq("id", reserved.claim_id).maybeSingle();
+  if (!claim) return { status: "error", message: NOT_YOURS };
+  const result = await finalizePrivateUploadSession(admin, supabase, id, token, user.userId, claim.id);
+  if (result.status === "success") {
+    revalidatePath(`/portal/claims/${claim.id}/documents`);
+    return { ...result, message: "Your documents were sent to your adjuster." };
+  }
+  return result;
 }
 
 /**
