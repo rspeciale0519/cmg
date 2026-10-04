@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { idleState, type FormState } from "@/lib/actions/types";
 import { MAX_FILES } from "@/lib/validators/files";
 import {
@@ -17,11 +17,16 @@ const PREPARE_ERROR = "We could not prepare this upload. Your choices and files 
 const RETRY_ERROR = "We could not confirm this upload. Keep this page open and retry.";
 const RESTART_ERROR = "This upload session has ended. Check the details and submit again.";
 
+const subscribeToHydration = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 export function usePrivateDocumentUpload(
   prepare: PrepareAction,
   finalize: FinalizeAction,
   idleButtonLabel: string,
 ) {
+  const ready = useSyncExternalStore(subscribeToHydration, clientReady, serverReady);
   const [state, setState] = useState<FormState>(idleState);
   const [phase, setPhase] = useState<Phase>("idle");
   const [locked, setLocked] = useState(false);
@@ -110,7 +115,7 @@ export function usePrivateDocumentUpload(
   }
 
   function submit(form: HTMLFormElement) {
-    if (inFlight.current || received.current) return;
+    if (!ready || inFlight.current || received.current) return;
     const existing = attemptRef.current;
     formRef.current = form;
     const prepared = existing ? null : privateUploadStartData(new FormData(form), filesRef.current);
@@ -155,5 +160,5 @@ export function usePrivateDocumentUpload(
     : phase === "finalizing" ? (confirmed === null ? "Confirming your upload."
       : `Confirming your upload. ${confirmed} of ${progress.total} documents checked.`)
     : locked ? `${progress.completed} of ${progress.total} documents uploaded.` : "";
-  return { state, pending, locked, buttonLabel, progressMessage, selectFiles, submit };
+  return { state, ready, pending, locked, buttonLabel, progressMessage, selectFiles, submit };
 }
