@@ -32,15 +32,17 @@ export function DocumentUpload({ claimId }: { claimId: string }) {
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
         upload.submit(event.currentTarget);
       }}
     >
+      <noscript>Enable JavaScript to upload documents.</noscript>
       <input type="hidden" name="claimId" value={claimId} />
 
-      <fieldset disabled={upload.locked || upload.pending} className="grid gap-[18px] border-0 p-0">
+      <fieldset disabled={!upload.ready || upload.locked || upload.pending} className="grid gap-[18px] border-0 p-0">
         <SelectField
           name="kind"
           label="What is this?"
@@ -60,14 +62,14 @@ export function DocumentUpload({ claimId }: { claimId: string }) {
           accept={FILE_ACCEPT_ATTRIBUTE}
           error={upload.state.fieldErrors?.files}
           hint={FILE_RULES_HINT}
-          disabled={upload.locked || upload.pending}
+          disabled={!upload.ready || upload.locked || upload.pending}
           onChange={(event) => upload.selectFiles(event.currentTarget.files)}
         />
       </fieldset>
 
       <div className="mt-[18px]">
         <fieldset
-          disabled={upload.pending || (upload.locked && !upload.state.message)}
+          disabled={!upload.ready || upload.pending || (upload.locked && !upload.state.message)}
           className="border-0 p-0"
         >
           <SubmitButton pendingLabel={upload.buttonLabel}>{upload.buttonLabel}</SubmitButton>

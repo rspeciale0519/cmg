@@ -49,15 +49,17 @@ export function DocumentUpload({
        disclosure decision the operator had already made. The file itself
        cannot be handed back; no page may set a file input's value. */
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
         upload.submit(event.currentTarget);
       }}
     >
+      <noscript>Enable JavaScript to upload documents.</noscript>
       <input type="hidden" name="claimId" value={claimId} />
 
-      <fieldset disabled={upload.locked || upload.pending} className="grid gap-4 sm:grid-cols-2 border-0 p-0">
+      <fieldset disabled={!upload.ready || upload.locked || upload.pending} className="grid gap-4 sm:grid-cols-2 border-0 p-0">
         <AdminField name="kind" label="What is it">
           <AdminSelect name="kind" defaultValue="other">
             {kinds.map((kind) => (
@@ -104,7 +106,7 @@ export function DocumentUpload({
           multiple
           required
           accept={FILE_ACCEPT_ATTRIBUTE}
-          disabled={upload.locked || upload.pending}
+          disabled={!upload.ready || upload.locked || upload.pending}
           onChange={(event) => upload.selectFiles(event.currentTarget.files)}
           aria-invalid={upload.state.fieldErrors?.files ? true : undefined}
           aria-describedby={upload.state.fieldErrors?.files ? "admin-files-error" : undefined}
@@ -114,7 +116,7 @@ export function DocumentUpload({
 
       <div className="mt-[14px]">
         <SubmitButton
-          disabled={upload.pending || (upload.locked && !upload.state.message)}
+          disabled={!upload.ready || upload.pending || (upload.locked && !upload.state.message)}
           pendingLabel={upload.buttonLabel}
         >
           {upload.buttonLabel}
