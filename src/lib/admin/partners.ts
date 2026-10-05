@@ -98,9 +98,15 @@ export async function loadPartnerPage(
     activeQuery,
   ]);
 
-  if (listResult.error) {
-    console.error("[partners] list failed", listResult.error.message);
-    return { companies: [], total: 0, activeTotal: 0 };
+  if (
+    listResult.error ||
+    activeResult.error ||
+    listResult.count === null ||
+    activeResult.count === null
+  ) {
+    // The route boundary offers recovery without presenting failed reads as
+    // an empty directory or exposing database error details.
+    throw new Error("Partner directory could not be loaded.");
   }
 
   return {
@@ -115,8 +121,8 @@ export async function loadPartnerPage(
       claimCount: firstCount(row.claims as CountEmbed | null),
       createdAt: row.created_at,
     })),
-    total: listResult.count ?? 0,
-    activeTotal: activeResult.count ?? 0,
+    total: listResult.count,
+    activeTotal: activeResult.count,
   };
 }
 
