@@ -1,14 +1,24 @@
 # PandaDoc setup for CMG
 
-PandaDoc is deferred while `SITE_MODE=simple`.
-Do not enable platform mode to complete the public launch.
+Production uses the manual prefilled-PDF signing path in `SITE_MODE=staff`.
+The PandaDoc API path is not part of the current manual release.
+Do not activate platform mode until the approved invitation flows pass local and hosted Preview acceptance.
 [HANDOFF.md](HANDOFF.md) contains current account, deployment, migration, and verification evidence.
 This guide describes setup requirements, not proof that a hosted environment meets them.
 
+Current PR #19 Preview reports API and webhook keys as configured.
+It therefore selects the PandaDoc API provider, unlike Production's selected manual path.
+`src/lib/esign/config.ts` treats absent or blank key values as unconfigured.
+Manual Preview acceptance needs separately approved branch-only overrides for both keys and redeployment.
+Verify manual mode and disabled webhook configuration after that deployment.
+Keep Production settings and shared Preview key values unchanged.
+Do not send an API document to test the manual flow.
+
 ## Bundled LOR documents
 
-The current provider uploads a PDF to PandaDoc.
-It does not create the LOR from a PandaDoc template UUID.
+Both signing paths use the bundled PDFs below.
+The optional API provider uploads them to PandaDoc without a template UUID.
+For the selected manual path, staff upload the downloaded, prefilled PDF themselves.
 
 | Signers | Bundled file | PandaDoc roles |
 |---|---|---|
@@ -42,27 +52,58 @@ It refuses a claim with no carrier, no policy number, no agreement type, no save
 It records an `esign.lor_prefilled` audit row for every download.
 It does not advance the claim status and does not consume the dispatch lease.
 
-The downloaded PDF carries every claim value in place of its data tag.
+The downloaded PDF replaces supported data tags with the available claim values.
 It keeps every initial and signature tag: `i1`–`i4`, `i8`, `s5`–`s7`, `s9` for `H1`.
 A two-signer letter also keeps `j1`–`j4`, `j8`, `t5`–`t7`, `t9` for `H2`.
-PandaDoc detects those tags when staff upload the file.
+The API uses role-qualified tags; successful recognition in the manual web upload remains unverified.
+PandaDoc's [web upload guide](https://support.pandadoc.com/en/articles/9714598-field-tags-recognition) requires field placement and recipient assignment.
+Its [API tag guide](https://developers.pandadoc.com/docs/field-tags) describes a separate role-qualified format.
+Do not infer manual field recognition from a passing local tag test.
+
+Obtain approval for the exact claim, document, signers, and PandaDoc destination before uploading a real letter.
+Obtain separate approval before sending it or changing its hosted claim state.
+Staff must check every signer, agreement category, fee, date, and printed value before sending.
+Long values can be shortened during prefilling; unsupported characters can be removed.
+Stop when a printed value does not correctly identify the person, policy, property, or agreement term.
+Do not treat the printed download date as the signature date.
 
 Procedure:
 
-1. Open the claim in the workspace and download the letter.
-2. Upload the PDF to PandaDoc as a new document.
-3. Check that PandaDoc created the `H1` fields, and the `H2` fields on a two-signer letter.
-4. Assign `H1` to the primary policyholder.
-5. Assign `H2` to the second policyholder when the letter has one.
-6. Send the document from PandaDoc.
-7. Download the completed PDF from PandaDoc after every signature.
-8. Upload it to the claim's Documents tab with kind `lor_signed`.
+1. Open the approved claim as its owner or assigned adjuster.
+2. Confirm that the claim is ready for representation and has the required policy, agreement, fee, and claimant data.
+3. Select **Download letter for signing**.
+4. Check every page and every printed value.
+5. Upload the approved PDF to PandaDoc as a new document.
+6. Inspect every signature and initial field for each signer before continuing.
+7. Assign the `H1` fields to the primary policyholder.
+8. Assign the `H2` fields to the second policyholder when present.
+9. Confirm that every required field is assigned to the correct signer.
+10. Stop if tags remain visible, fields are missing, or the assignments are wrong.
+11. Send the document only after the separate send approval.
+12. Confirm the provider's send result before recording the send in CMG.
+13. With hosted-write approval, select **Mark letter as sent** in CMG.
+14. Confirm `lor_sent` and the recorded send activity.
+15. Wait until every required signer completes the document.
+16. Download the final signed PDF from PandaDoc.
+17. Check all signatures and retain the provider's completion evidence.
+18. Upload the approved final PDF under Documents as **LOR — signed** (`lor_signed`).
+19. Select the approved visibility: **CMG only** or **Homeowner can see**.
+20. Confirm the stored document and download its bytes through the authorized CMG account.
+21. With status-change approval, select **LOR signed** and submit **Move to lor signed**.
+22. Confirm `lor_signed`, its timestamp, status history, activity, and any required email evidence.
 
-The claim advances to `lor_signed` through the existing database gate.
-Check every page before sending, because the download is not reviewed by anyone else.
-The printed date is the download date, not the signature date.
+Uploading a manual signed letter does not automatically advance the claim.
+The status action and database gate require a stored `lor_signed` document before that transition.
+Status changes can create customer and partner notifications; approve the intended recipients before a live test.
+Manual signing does not report viewed, declined, expired, or signed provider states to CMG automatically.
+If a send result is uncertain, inspect PandaDoc before another send or status change.
+Keep the signed PDF unchanged; do not regenerate or flatten it.
+This procedure does not authorize a legal signature or decide whether the agreement is legally sufficient.
 
-## Account and environment preparation
+## Optional API account and environment preparation
+
+The following sections apply only when CMG separately approves the API path.
+They are not requirements to use the selected manual signing flow.
 
 1. Confirm PandaDoc API access with the account owner.
 2. Confirm current sandbox recipient restrictions with PandaDoc.
@@ -123,7 +164,20 @@ It does not verify field placement, legal wording, signatures, email delivery, o
 Review the draft in PandaDoc before any separate send test.
 Record the result and any approved draft cleanup in HANDOFF.
 
-## Hosted platform acceptance
+## Manual hosted acceptance
+
+Use the procedure above after its separate upload, send, and hosted-write approvals.
+Verify one-signer and two-signer field placement before the first real send.
+Check all three agreement categories and the saved fee against the reviewed document.
+Use required Signature fields, not text fields, for signatures.
+PandaDoc's [field guide](https://support.pandadoc.com/en/articles/9714583-fields-new-experience) explains that distinction.
+Record the environment, commit, signer count, field review, send result, final document, status, and access checks in HANDOFF.
+Keep private names, document content, signed links, and passwords out of repository evidence.
+A provider draft, a stored PDF, or a staff status label alone does not prove completed signing.
+Check homeowner visibility and foreign-claim refusal without disclosing the document to another account.
+No live signing acceptance is claimed by this guide.
+
+## Optional API hosted acceptance
 
 Run this phase only after separate platform and external-write approvals.
 Use isolated test data and approved signer addresses.
@@ -147,15 +201,16 @@ Use isolated test data and approved signer addresses.
 
 The webhook path is `/api/pandadoc/webhook`.
 Simple mode returns 404 before processing the body.
-Platform mode verifies the raw-body HMAC before event handling.
+Staff and platform modes reach raw-body HMAC verification before event handling.
+Production is recorded as manual; recheck the approved environment before any API activation.
 The event ledger records leases and completed work.
 Do not clear ledger rows or retry an uncertain send without checking provider state.
 
 ## Production activation
 
 Production key changes, webhook changes, deployments, and live sends each require approval.
-Keep `SITE_MODE=simple` until all platform gates pass.
-Complete retention, export, erasure, legal-hold, and hosted integration work before activation.
+Keep Production in `SITE_MODE=staff` until the approved invitation checks pass and the owner approves the mode change.
+Track retention, export, erasure, and legal holds as separate release work in RELEASE_STATE.
 The manual provider remains available in platform mode without a PandaDoc API key.
 
 See the [current integration blueprint](../reference/pandadoc/06-cmg-integration-blueprint.md) for source mappings.

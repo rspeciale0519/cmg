@@ -17,16 +17,16 @@ import { AdminButton } from "@/components/admin/form-controls";
  * that ties this screen to the server log entry, which is what somebody
  * chasing it actually needs.
  *
- * "Try again" first, because `reset()` genuinely does re-render the segment and
- * a transient database hiccup really is fixed by it. The way out of the page is
+ * "Try again" first: Next's `retry()` refreshes server data before resetting
+ * the boundary, so recovery does not render the same cached failure. The way out is
  * offered next to it rather than instead of it.
  */
 export default function AdminError({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error("[admin] route error", {
@@ -56,7 +56,7 @@ export default function AdminError({
       <Panel title="What to do">
         <PanelBody>
           <div className="flex flex-wrap items-center gap-2">
-            <AdminButton variant="primary" onClick={() => reset()}>
+            <AdminButton variant="primary" onClick={() => retry()}>
               Try again
             </AdminButton>
             <Link

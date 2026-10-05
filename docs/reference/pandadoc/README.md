@@ -1,8 +1,8 @@
 # PandaDoc integration reference
 
-The current CMG LOR flow uploads bundled PDFs to PandaDoc.
+The selected CMG manual flow uses staff uploads of prefilled bundled PDFs to PandaDoc.
 Template UUIDs are not required.
-PandaDoc remains deferred while `SITE_MODE=simple`.
+Production currently uses `SITE_MODE=staff`; the manual signing flow is available there.
 
 Use the [current integration blueprint](06-cmg-integration-blueprint.md) for code mappings.
 Use [PandaDoc setup](../../temp/PANDADOC_SETUP.md) for configuration and approved live tests.
@@ -31,12 +31,14 @@ The dual-signer PDF uses `H1` and `H2`.
 Internal `Homeowner1` and `Homeowner2` roles map to those external roles.
 `src/lib/esign/lor-pdf.ts` controls the mapping.
 
-The provider creates a draft from a bundled PDF.
+The optional API provider creates a draft from a bundled PDF.
 It waits for `document.draft` before sending.
 Signed events and completed PDFs return through the verified webhook.
 Database leases and duplicate-detection records protect dispatch and recovery.
 
-A missing API key selects the manual provider in platform mode.
+A missing API key selects the manual provider in staff or platform mode.
+Manual signing requires staff to record the send, upload the signed PDF, and advance the claim status separately.
+Use the complete procedure in the setup guide; web-upload recognition remains unverified.
 A configured key does not prove that legal approval or hosted acceptance is complete.
 Production environment changes require redeployment.
 
@@ -49,4 +51,4 @@ The test creates a real draft and does not send it.
 Do not run it automatically.
 
 Keep private MFA, AAL2, role, PandaDoc, retention, export, and erasure checks as platform activation gates.
-Public legal approval remains a simple-mode launch prerequisite.
+Public legal approval remains a launch prerequisite in every mode.

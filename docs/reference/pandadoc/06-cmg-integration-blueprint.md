@@ -1,12 +1,13 @@
 # CMG PandaDoc integration
 
-The current LOR flow uploads bundled PDFs to PandaDoc.
+The selected manual LOR flow uses prefilled copies of the bundled PDFs.
+Staff upload those copies to PandaDoc; the application does not call its API in manual mode.
 It does not require a PandaDoc template UUID.
 `SITE_MODE=simple` keeps PandaDoc webhook processing disabled.
 Platform activation remains a separate release.
 
 [HANDOFF.md](../../temp/HANDOFF.md) contains current release evidence and unresolved risks.
-[PandaDoc setup](../../temp/PANDADOC_SETUP.md) contains the approved test procedure.
+[PandaDoc setup](../../temp/PANDADOC_SETUP.md) contains the test procedure and separate approval requirements.
 The [original platform plan](../../../.claude/plans/feature-claims-platform.md) records earlier design decisions.
 Current code and tests take priority.
 
@@ -90,25 +91,20 @@ It leaves every initial and signature tag exactly as drawn.
 A covered tag is not enough: PandaDoc reads invisible text on upload.
 Values wider than their tag are condensed, then truncated with `...`.
 
-Staff procedure:
-
-1. Open the claim and download the letter from the representation panel.
-2. Upload the PDF to PandaDoc as a new document.
-3. Confirm PandaDoc detected the `H1` tags, and the `H2` tags on a two-signer letter.
-4. Assign `H1` to the primary policyholder and `H2` to the second policyholder.
-5. Send the document from PandaDoc.
-6. Download the completed PDF from PandaDoc after every signature.
-7. Upload it to the claim's Documents tab with kind `lor_signed`.
-
-The claim advances to `lor_signed` through the existing database gate.
-That gate still requires a `documents` row of kind `lor_signed`.
+Use the complete [manual procedure](../../temp/PANDADOC_SETUP.md#manual-prefilled-pdf-signing), including its separate approvals.
+Confirm actual field recognition and recipient assignment in the web upload before sending.
+Local API tag tests do not prove that web-upload behavior.
+After a confirmed provider send, staff select **Mark letter as sent** in CMG.
+After all signatures, staff upload the final PDF as `lor_signed` with the approved visibility.
+Upload alone does not change the claim status.
+The separate status action requires that document before advancing the claim to `lor_signed`.
 Prefilled date text is not evidence of the signature time.
 
 ## Environment
 
 | Variable | Current use |
 |---|---|
-| `SITE_MODE` | Keep `simple` until platform activation is approved |
+| `SITE_MODE` | Production currently uses `staff`; customer and partner access remain closed until approved platform activation |
 | `PANDADOC_API_KEY` | Selects PandaDoc instead of the manual provider |
 | `PANDADOC_WEBHOOK_SHARED_KEY` | Verifies inbound HMAC signatures |
 | `PANDADOC_API_BASE_URL` | Optional API URL override |
@@ -119,11 +115,12 @@ Prefilled date text is not evidence of the signature time.
 Keep PandaDoc credentials server-only.
 Confirm account access and provider limits before any live test.
 An available API key does not prove that the complete workflow is ready.
-A missing webhook key prevents completed signatures from returning through the webhook.
+A missing webhook key prevents optional API completion events from being accepted.
+The selected manual flow uses neither an API key nor a webhook.
 Vercel environment changes require redeployment.
 See [Vercel environment behavior](https://vercel.com/docs/environment-variables).
 
-## Dispatch sequence
+## Optional API dispatch sequence
 
 1. Authorize the staff caller and require AAL2.
 2. Verify claim access, status, policy facts, agreement category, and signers.

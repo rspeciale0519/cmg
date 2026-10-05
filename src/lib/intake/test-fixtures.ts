@@ -1,6 +1,19 @@
 import { spawnSync } from "node:child_process";
 import { intakeSchema } from "@/lib/validators/intake";
 
+const LOCAL_STACKS = {
+  CMGPA: { apiPort: "15421", dbPort: "15422", dbContainer: "supabase_db_CMGPA" },
+  CMGPA_private_upload_disposable: {
+    apiPort: "15521", dbPort: "15522", dbContainer: "supabase_db_CMGPA_private_upload_disposable",
+  },
+} as const;
+
+export function localIntakeFixtureStack() {
+  const name = process.env.CMG_TEST_STACK ?? "CMGPA";
+  if (!(name in LOCAL_STACKS)) throw new Error("Unknown local CMG test stack.");
+  return LOCAL_STACKS[name as keyof typeof LOCAL_STACKS];
+}
+
 export function intakeFixtureInput() {
   return intakeSchema.parse({
     firstName: "Upload", lastName: "Fixture", email: "intake-upload@example.invalid",
@@ -22,19 +35,20 @@ export function removeLocalIntakeFixtureRecords(ids: readonly string[]): void {
     throw new Error("An exact intake fixture ID is required.");
   }
   const endpoint = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+  const stack = localIntakeFixtureStack();
   if (endpoint.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(endpoint.hostname) ||
-      endpoint.port !== "15421" || endpoint.username || endpoint.password ||
+      endpoint.port !== stack.apiPort || endpoint.username || endpoint.password ||
       endpoint.pathname !== "/" || endpoint.search || endpoint.hash) {
     throw new Error("Intake fixture cleanup requires the local CMG API.");
   }
   const port = spawnSync("docker", ["inspect", "--format",
-    '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}', "supabase_db_CMGPA"],
+    '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}', stack.dbContainer],
   { encoding: "utf8", timeout: 10_000, windowsHide: true });
-  if (port.status !== 0 || port.stdout.trim() !== "15422") {
+  if (port.status !== 0 || port.stdout.trim() !== stack.dbPort) {
     throw new Error("The local CMG database container could not be confirmed.");
   }
   const literals = ids.map((id) => `'${id}'::uuid`).join(",");
-  const result = spawnSync("docker", ["exec", "-i", "supabase_db_CMGPA", "psql",
+  const result = spawnSync("docker", ["exec", "-i", stack.dbContainer, "psql",
     "-X", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], {
     input: `begin; delete from public.intake_upload_files where session_id in (${literals});
       delete from public.intake_upload_sessions where id in (${literals}); commit;`,

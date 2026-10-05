@@ -3,13 +3,15 @@
 import { useActionState, useEffect, useRef } from "react";
 import { FileField, SelectField } from "@/components/forms/controls";
 import {
+  finalizePortalDocumentUpload,
   issuePortalDownload,
-  uploadPortalDocument,
+  preparePortalDocumentUpload,
 } from "@/lib/actions/portal-documents";
-import { idleDownloadState, idleState, resilient } from "@/lib/actions/types";
+import { idleDownloadState, resilient } from "@/lib/actions/types";
 import { PORTAL_DOCUMENT_KINDS } from "@/lib/portal/documents";
 import { FILE_ACCEPT_ATTRIBUTE, FILE_RULES_HINT } from "@/lib/validators/files";
 import { FormFeedback, SubmitButton } from "./form-controls";
+import { usePrivateDocumentUpload } from "@/components/forms/use-private-document-upload";
 
 /**
  * Send CMG a file.
@@ -22,45 +24,64 @@ import { FormFeedback, SubmitButton } from "./form-controls";
  * underneath both.
  */
 export function DocumentUpload({ claimId }: { claimId: string }) {
-  const [state, formAction] = useActionState(resilient(uploadPortalDocument), idleState);
+  const upload = usePrivateDocumentUpload(
+    preparePortalDocumentUpload,
+    finalizePortalDocumentUpload,
+    "Send to CMG",
+  );
 
   return (
-    <form action={formAction} noValidate>
+    <form
+      method="post"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        upload.submit(event.currentTarget);
+      }}
+    >
+      <noscript>Enable JavaScript to upload documents.</noscript>
       <input type="hidden" name="claimId" value={claimId} />
 
-      <div className="grid gap-[18px]">
+      <fieldset disabled={!upload.ready || upload.locked || upload.pending} className="grid gap-[18px] border-0 p-0">
         <SelectField
           name="kind"
           label="What is this?"
           required
-          error={state.fieldErrors?.kind}
-          defaultValue={state.values?.kind ?? "photo"}
+          error={upload.state.fieldErrors?.kind}
+          defaultValue="photo"
           options={PORTAL_DOCUMENT_KINDS.map((kind) => ({
             value: kind.value,
             label: kind.label,
           }))}
         />
 
-        {/* No `defaultValue`, and it is not an oversight: no page may set a file
-            input's value, so a refusal loses the chosen file and the person has
-            to pick it again. The dropdown above is handed back precisely because
-            it is the part that *can* be, and re-answering one question is better
-            than re-answering two. */}
         <FileField
           name="files"
           label="Choose files"
           multiple
           accept={FILE_ACCEPT_ATTRIBUTE}
-          error={state.fieldErrors?.files}
+          error={upload.state.fieldErrors?.files}
           hint={FILE_RULES_HINT}
+          disabled={!upload.ready || upload.locked || upload.pending}
+          onChange={(event) => upload.selectFiles(event.currentTarget.files)}
         />
-      </div>
+      </fieldset>
 
       <div className="mt-[18px]">
-        <SubmitButton pendingLabel="Sending…">Send to CMG</SubmitButton>
+        <fieldset
+          disabled={!upload.ready || upload.pending || (upload.locked && !upload.state.message)}
+          className="border-0 p-0"
+        >
+          <SubmitButton pendingLabel={upload.buttonLabel}>{upload.buttonLabel}</SubmitButton>
+        </fieldset>
       </div>
 
-      <FormFeedback state={state} />
+      {upload.progressMessage ? (
+        <p role="status" aria-live="polite" className="mt-2 text-[13px] text-ink/55">
+          {upload.progressMessage}
+        </p>
+      ) : null}
+      <FormFeedback state={upload.state} />
     </form>
   );
 }

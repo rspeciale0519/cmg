@@ -4,7 +4,7 @@ This document separates proposed retention periods from implemented cleanup.
 CMG must approve the policy with counsel.
 These engineering proposals do not establish legal retention duties.
 
-Public legal approval is required before the simple-mode launch.
+Public legal approval is required before launch.
 Retention automation, export, erasure, and platform access remain separate work.
 [RELEASE_STATE.md](RELEASE_STATE.md) records the current release state and open gates.
 [HANDOFF.md](temp/HANDOFF.md) records current engineering evidence.
@@ -57,6 +57,13 @@ Detached consent therefore needs its own approved retention rule.
 A withdrawal record does not prove that every delivery path applies the required contact restrictions.
 Confirm those rules before platform activation or any new messaging use.
 Do not erase claim evidence automatically after a subject request.
+
+Source review found that withdrawal updates the consent record and audit history.
+The portal distinguishes stopped marketing email from continuing claim messages.
+Current email templates are transactional; no separate marketing producer was identified.
+The delivery worker does not consult `withdrawn_at`.
+CMG must define any email category that withdrawal must suppress before the corresponding acceptance test.
+Do not change transactional delivery rules without that decision.
 
 ## Audit records
 
@@ -145,18 +152,21 @@ See [Vercel cron rollback behavior](https://vercel.com/docs/cron-jobs/manage-cro
 ## Backup and recovery
 
 Database backups do not contain Storage file contents.
-Use a separate object backup with the database backup.
+A future approved backup plan must include separate object protection.
 See [Supabase backup scope](https://supabase.com/docs/guides/platform/backups).
 
 Before an approved production migration:
 
 1. Confirm the target project and pending migrations.
-2. Obtain production backup and write approvals.
-3. Back up database data and Storage objects.
-4. Verify the backup and restore procedure.
-5. Record recovery identifiers in RELEASE_STATE without secrets.
+2. Review the forward-repair procedure and compatible application recovery.
+3. Obtain separate approval for the exact Production write.
+4. Verify the applied migration, schema, policies, and relevant Storage controls.
+5. Record results and recovery limits in RELEASE_STATE without secrets.
 
-The owner's current decision declines backups and accepts reviewed forward repair, which overrides steps 3 and 4 until that decision is revisited.
+The owner declined Supabase backups and approved reviewed forward repair.
+Create no Supabase backup under the current decision.
+Immediate restoration remains unverified.
+Forward repair cannot recover data that has already been lost.
 
 Never seed or reset production.
 Do not delete recovery ledgers during a release.
@@ -170,6 +180,30 @@ CMG must handle requests through an approved manual process until those features
 Do not promise deletion that conflicts with an approved hold or retention duty.
 Do not deny a request based only on the engineering periods in this file.
 
+### Proposed manual request procedure
+
+This procedure needs owner and legal approval.
+It does not authorize access, export, transmission, erasure, or a hosted test.
+No request register, complete export tool, or database-enforced legal hold exists in the application.
+
+1. Assign one CMG owner to the request.
+2. Record receipt and scope in an owner-approved private register.
+3. Verify the requester through an approved identity procedure.
+4. Ask counsel to confirm the applicable response dates, retention duties, and holds.
+5. Identify related database records, private files, provider records, and other people's information.
+6. Approve the exact access or export scope before collecting records.
+7. Exclude another person's information unless the approved scope permits disclosure.
+8. Verify record counts, relationships, file counts, file bytes, and unreadable or missing objects.
+9. Test export completeness and access boundaries with synthetic data before using real data.
+10. Obtain separate approval for transmission through the recipient's approved secure channel.
+11. Obtain separate approval for any exact erasure operation after the hold and retention review.
+12. Verify the approved result and record its limits without placing private data in repository documents.
+
+A written hold does not automatically block the application's document deletion controls.
+The owner must approve workable operator controls or separate hold enforcement before relying on this procedure.
+The export and erasure checks remain incomplete.
+Keep existing records until an approved procedure applies.
+
 Before platform activation:
 
 1. Approve retention periods, legal holds, and subject-request procedures.
@@ -178,7 +212,10 @@ Before platform activation:
 4. Define erasure, backup expiry, provider data, and audit requirements with counsel.
 5. Test approved cleanup and recovery against a hosted test environment.
 6. Verify owner MFA, AAL2, roles, customer isolation, and partner isolation.
-7. Complete hosted e-signature, webhook, email, and storage checks.
+7. Complete the selected manual e-signature flow, email checks, and Storage checks.
 8. Record results before requesting activation.
 
-Keep `SITE_MODE=simple` until those activation gates pass.
+Production currently uses `SITE_MODE=staff`.
+Keep customer and vendor routes closed until the platform activation gates pass.
+The selected manual PandaDoc flow needs no API key or webhook.
+Any API or webhook activation requires separate approval and acceptance checks.

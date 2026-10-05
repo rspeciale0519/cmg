@@ -54,7 +54,14 @@ describe("siteMode — fails closed", () => {
     ["path traversal", "../platform"],
     ["null string", "null"],
   ] as const)("resolves %s to simple", (_label, value) => {
-    expect(siteMode(value)).toBe("simple");
+    // Passing undefined uses the environment default. Test the missing-value
+    // case with an actually missing variable, regardless of the launch mode.
+    if (value === undefined) vi.stubEnv("SITE_MODE", undefined);
+    try {
+      expect(siteMode(value)).toBe("simple");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it.each(["platform", "PLATFORM", " platform ", " PlAtFoRm\t"])(
@@ -71,17 +78,17 @@ describe("siteMode — fails closed", () => {
     },
   );
 
-  it("reads SITE_MODE from the environment when no value is passed", () => {
-    vi.stubEnv("SITE_MODE", "staff");
+  it.each(MODES)("reads %s from SITE_MODE when no value is passed", (mode) => {
+    vi.stubEnv("SITE_MODE", mode);
     try {
-      expect(siteMode()).toBe("staff");
+      expect(siteMode()).toBe(mode);
     } finally {
       vi.unstubAllEnvs();
     }
   });
 
   it("falls back to simple when the environment variable is unset", () => {
-    vi.stubEnv("SITE_MODE", "");
+    vi.stubEnv("SITE_MODE", undefined);
     try {
       expect(siteMode()).toBe("simple");
     } finally {
