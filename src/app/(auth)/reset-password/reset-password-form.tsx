@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter";
 import { TextField } from "@/components/forms/controls";
+import { PasswordField } from "@/components/forms/password-field";
 import { FormAlert, formAlertMessage } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { resetPassword } from "@/lib/actions/password-reset";
@@ -56,10 +57,9 @@ export function ResetPasswordForm({
       ) : null}
 
       <div>
-        <TextField
+        <PasswordField
           name="password"
           label="New password"
-          type="password"
           required
           autoFocus={!needsCode}
           autoComplete="new-password"
@@ -70,10 +70,9 @@ export function ResetPasswordForm({
         <PasswordStrengthMeter password={password} email={email} />
       </div>
 
-      <TextField
+      <PasswordField
         name="confirmPassword"
         label="Confirm new password"
-        type="password"
         required
         autoComplete="new-password"
         className="mt-5"

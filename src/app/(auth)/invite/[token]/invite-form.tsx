@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { TextField } from "@/components/forms/controls";
+import { PasswordField } from "@/components/forms/password-field";
 import { FormAlert, formAlertMessage } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter";
@@ -59,11 +60,24 @@ export function InviteForm({
         />
       </div>
 
+      {/* Shown to everyone, on purpose. An address that already has an account
+          keeps its own password — `acceptInvite` never changes it, since the
+          link proves nothing about the account — and the person is sent to
+          sign in with it. Showing this only to them would tell anyone holding
+          the link whether an account exists before it is redeemed. */}
+      <p
+        id="invite-existing-account-hint"
+        className="mt-5 border-l-2 border-accent/60 pl-[12px] text-[13px] leading-[1.6] text-ink/72"
+      >
+        Already have a CMG account with this email? Your password will not
+        change. Keep using the password you have now. After you click &ldquo;Set
+        my password,&rdquo; we will ask you to sign in with it.
+      </p>
+
       <div className="mt-5">
-        <TextField
+        <PasswordField
           name="password"
           label="Create a password"
-          type="password"
           required
           autoComplete="new-password"
           value={password}
@@ -73,10 +87,9 @@ export function InviteForm({
         <PasswordStrengthMeter password={password} email={email} />
       </div>
 
-      <TextField
+      <PasswordField
         name="confirmPassword"
         label="Confirm password"
-        type="password"
         required
         autoComplete="new-password"
         className="mt-5"

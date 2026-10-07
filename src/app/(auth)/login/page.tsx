@@ -12,8 +12,14 @@ export const metadata: Metadata = {
 };
 
 const NOTICES: Record<string, string> = {
+  /* Reached when the address already had an account — whose password the
+     invitation never changes — and also when a brand-new account was created
+     but the automatic sign-in failed. The wording holds for both. The new
+     password typed on the invitation page is the one people try first, so the
+     way back is named: the "Forgot password?" link the login form always
+     shows under the password box. */
   "invite-accepted":
-    "Your invitation is accepted. You already have an account with this address — sign in with your existing password.",
+    "Your invitation is accepted. Please sign in. If you already had a CMG account with this email, use the password you already had. It did not change. Forgot it? Click “Forgot password?” under the password box to get a reset link.",
   /* The invitation asked for one kind of access and the address already held
      another — a contractor with a partner login who has also filed a claim of
      his own, most often. His account is not rewritten to match the invitation,

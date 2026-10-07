@@ -72,6 +72,16 @@ const INPUT_BASE =
  *  wearing the same name. */
 export const INPUT_CLASS = `${INPUT_BASE} min-h-[46px] px-[10px] py-[6px]`;
 
+/** The text control with room on the right for the 44px show/hide button, so
+ *  typed characters never run under it. Written as a whole string for the
+ *  reason `INPUT_BASE` documents: a `pr-*` appended beside `px-[10px]` ties on
+ *  specificity and the emitted sheet decides which one paints.
+ *
+ *  `::-ms-reveal` is Edge's own eye button. Left in place it would draw a
+ *  second toggle beside this one. */
+export const PASSWORD_INPUT_CLASS =
+  `${INPUT_BASE} min-h-[46px] py-[6px] pl-[10px] pr-[50px] [&::-ms-reveal]:hidden`;
+
 /** The prototype's file control, which overrides `.input`'s padding to 12px
  *  so the native "Choose files" button has room to sit in. */
 export const FILE_INPUT_CLASS = `${INPUT_BASE} min-h-[46px] p-[12px]`;
