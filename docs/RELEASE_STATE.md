@@ -1,9 +1,11 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-09-23. Rewrite this file in place. Do not append dated updates to it.
+Reconciled 2026-10-07. Rewrite this file in place. Do not append dated updates to it.
+Keep this file short. Put narrative evidence, commit IDs, run numbers, and preview URLs in HANDOFF.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence and checklists.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for the owner-decision register.
+Use [LAUNCH_CHECKLIST.md](temp/LAUNCH_CHECKLIST.md) for full-platform completion requirements.
 Use [README.md](../README.md#simple-mode-production-runbook) for the release procedure.
 
 ## Production
@@ -11,35 +13,43 @@ Use [README.md](../README.md#simple-mode-production-runbook) for the release pro
 | Item | Current state |
 |---|---|
 | Vercel project | `cmgps`, Hobby plan |
-| Site mode | `SITE_MODE=staff` (Production only; Preview and Development stay `simple`) |
-| Public host | `app.cmgpropertysolutions.net` |
-| Deployed code | `develop`, through the PR #14 merge |
-| Hosted migrations | 35 applied, through `20260917130000`. A dry run on 2026-09-22 reported "Remote database is up to date." |
+| Site mode | `SITE_MODE=platform` in Production since 2026-10-07. Preview and Development default to `simple`; selected branch Previews can carry overrides. |
+| Public host | `app.cmgpropertysolutions.net`. Production `NEXT_PUBLIC_SITE_URL` is `https://app.cmgpropertysolutions.net`. |
+| Deployed code | Production deploys from `develop`. PRs #16 and #17 are live and verified. Confirm the deployed commit in Vercel before each release. |
+| Hosted migrations | 36 applied, through `20260927120000` (private upload sessions, applied 2026-09-30 ahead of its code) |
 | Backups | The owner declined backups for the applied migrations |
 | Recovery path | Reviewed forward repair; immediate restoration is unverified |
 
-Production carries the direct-to-Storage upload transport, contractor intake fields, vendor intake links, the per-vendor fee setting, the prefilled Letter of Representation download, the corrected agreement-type checkbox positions, password recovery on the sign-in form, and the `staff` site mode. The staff desk is live: `/login`, `/mfa`, and `/admin` are open; `/portal`, `/partner`, and `/invite` stay closed.
+Platform mode opens the public site, `/login`, `/mfa`, `/admin`, `/portal`, `/partner`, and `/invite`.
+The owner switched from `staff` to `platform` after PRs #16 and #17 merged and the five old outbox rows were confirmed safe.
 
-Production environment facts set on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only, so Production runs the manual e-signing path and refuses every webhook call. Supabase public sign-up is disabled; accounts are created only by invitation.
+`PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only, so Production uses the manual e-signing path.
+A current Production webhook response has not been checked.
+Supabase public sign-up is disabled; accounts are created only by invitation.
 
-Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (`lor_signed`, signed letter uploaded, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
+Synthetic test records in Production: claims `CMG-2026-0001` through `CMG-2026-0005`, test vendor companies including "CMG Test Vendor" (standard 20% fee), and test staff, vendor, and homeowner accounts.
+Their descriptions or names mark them as tests. Do not treat them as customer data, and do not delete them without approval.
 
 ## Pull requests
 
-PRs #1 through #14 are merged into `develop`. No pull request is open.
+PRs #1 through #17 and #21 are merged into `develop`.
+
+| PR | State |
+|---|---|
+| #18 partner-directory count | Open. Superseded by `bugfix/launch-integration-v2` once that branch merges. |
+| #19 private upload transport | Open. Superseded by `bugfix/launch-integration-v2` once that branch merges. Its dependency commits are already in `develop` through #21. |
+| #20 password show/hide toggle and invite hint | Approved and passing. Not merged. Independent of the combined branch. |
+
+`bugfix/launch-integration-v2` rebuilds the code of #18 and #19 and the later launch repairs on current `develop`.
+It replaces the earlier `bugfix/launch-integration` branch, which was built on an older base.
 
 ## Migration heads
 
-The hosted head and the repository head on `develop` are both `20260917130000`.
-Compare hosted history against repository files before every approved production write.
-
-The agent cannot read or write the production database. Claude Code's permission classifier blocks it even with chat approval. The owner runs hosted migrations with the Supabase CLI installed directly:
-
-```powershell
-$env:PROD_SUPABASE_DIRECT_URL = ((Select-String -Path .env.local -Pattern '^PROD_SUPABASE_DIRECT_URL=').Line -split '=',2)[1].Trim('"'); supabase db push --dry-run --db-url $env:PROD_SUPABASE_DIRECT_URL
-```
-
-Remove `--dry-run` and add `--yes` to apply. Do not call it through `npx`. npm consumes `--yes` and echoes the full connection string, including the password, into its output.
+The hosted head is `20260927120000`. The repository head on `develop` is `20260917130000`.
+`bugfix/launch-integration-v2` adds `20260927120000_private_upload_sessions.sql`, which is already applied in Production.
+After that merge, the hosted and repository heads match. Do not apply the migration again.
+Compare hosted history against repository files before every approved Production write.
+The owner runs hosted migrations. Do not pass a production database URL on a visible command line.
 
 ## Site modes
 
@@ -49,49 +59,65 @@ Remove `--dry-run` and add `--yes` to apply. Do not call it through `npx`. npm c
 | `staff` | `/login`, `/mfa`, `/admin` | `/portal`, `/partner`, `/invite` |
 | `platform` | Everything | Nothing |
 
-Unknown or missing values resolve to `simple`. In `staff` mode, only the three staff-alert email templates are added, because the other private templates link into portals that stay closed. Outbox rows older than `OUTBOX_MAX_AGE_DAYS` (default 7) are dead-lettered instead of sent. While `/invite` is closed, accepting an intake issues no invitations, and every admin invite control shows a "paused" note.
-
-Invitation is the only way to create an account, so staff mode cannot add new staff members until `/invite` reopens.
+Unknown or missing values resolve to `simple`.
+Staff mode adds only the three staff-alert email templates; platform mode delivers every template.
+Outbox rows older than `OUTBOX_MAX_AGE_DAYS` (default 7) are dead-lettered instead of sent.
 
 ## E-signing
 
-The first release uses the manual path. Staff download a prefilled Letter of Representation from the claim screen, upload it to PandaDoc's web app, send it from there, then click "Mark letter as sent." The signed copy is uploaded to the claim as document kind `lor_signed`. This path needs no PandaDoc API key and no webhook. The API path remains in the code for later.
+The first release uses the manual path.
+Staff download a prefilled letter, upload it to PandaDoc, and record the confirmed send with **Mark letter as sent**.
+After all signatures, staff upload the final copy as `lor_signed` and separately advance the claim to **LOR signed**.
+Upload alone does not advance the claim status.
+Web-upload field recognition, signer assignment, and a real signing remain open acceptance requirements.
+See [PANDADOC_SETUP.md](temp/PANDADOC_SETUP.md).
 
-## Staff-desk acceptance — 2026-09-22 and 2026-09-23
+## Hosted acceptance on Production
 
-| Step | Result |
+| Area | Result |
 |---|---|
-| Owner sign-in with TOTP | Pass |
-| Dashboard, intake queue, claims list, partners, staff, settings | Pass; no console errors |
-| Letter refuses with no saved fee | Pass |
-| Save fee on Financials | Pass |
-| Download prefilled letter | Pass; valid 2.3 MB PDF |
-| Mark letter as sent | Pass; claim moved to `lor_sent`, feed entry recorded |
-| `lor_signed` blocked until a signed letter is uploaded | Pass |
-| Accept intake | Pass; 20% fee seeded, no invitations issued in staff mode |
-| Password recovery routes | Pass, including real email delivery. On 2026-09-23 Resend showed "Reset your CMG password" delivered to the owner's address. |
-| Forgot-password retry | Watch item. The first submission in Chrome was refused once. The retry succeeded. The cause is unknown. |
-| Upload a signed letter | Pass on 2026-09-23. A signed LOR was uploaded to `CMG-2026-0003` as kind `lor_signed` (CMG only). The claim moved to `lor_signed`, and the Representation signed milestone was recorded. |
-| Letter panel after `lor_signed` | Defect. The panel still showed "Manual signature pending" and the download button after the move. Fixed by branch `fix/esign-panel-signed-state`. |
+| Staff invitation (adjuster) | Pass on 2026-10-07: password set, TOTP enrolled, assigned claims only, owner-only pages not found, `/portal` and `/partner` redirect to `/admin` |
+| Vendor invitation | Pass on 2026-10-07: rep lands on `/partner`, sees only the company's referred claim without documents, policy, or homeowner contact, and cannot open `/admin` or `/portal` |
+| Homeowner invitation to an existing account | Pass on 2026-10-07: claim linked, password unchanged by design, portal shows only that account's claims |
+| New homeowner through public intake | Pass on 2026-10-07 with `CMG-2026-0005`: receipt and invitation emails delivered; adjuster and vendor rep each see exactly that claim |
+| Manual signature panel after `lor_signed` (PR #16) | Live and verified |
+| Partner referral attribution and claimants refresh (PR #17) | Live and verified |
+| Password-reset email and `lor_signed` upload | Pass on 2026-09-23 |
+
+Details are in [HANDOFF.md](temp/HANDOFF.md).
+
+## Known Production gaps
+
+| Gap | Fix |
+|---|---|
+| Staff and homeowner document uploads use Server Actions while the UI offers 25 MiB. Vercel limits function request bodies to 4.5 MB, so larger files fail. | `bugfix/launch-integration-v2` uploads private documents directly to Storage. Its migration is already in Production. |
+| The owner partner directory embeds a count from `claims`, which the authenticated column grant refuses. The directory shows no companies. Observed on a Preview of the same code and hosted database on 2026-10-05. | `bugfix/launch-integration-v2` counts `claim_partner_summaries` and shows a recoverable error if a count fails. |
 
 ## Environment
 
 | Item | Current state |
 |---|---|
-| Turnstile | Managed widget with four authorized hostnames, covering `cmgpropertysolutions.net` and a Preview host |
+| Turnstile | Managed widget with six authorized hostnames, including `cmgpropertysolutions.net` and selected Preview hosts |
 | Resend domain | `cmgpropertysolutions.net`, verified 2026-09-09; sender `claims@cmgpropertysolutions.net` |
 | Mail DNS | Microsoft 365 MX and SPF unchanged; Resend DKIM and `send.` subdomain records verified |
 | DMARC | `v=DMARC1; p=none;` |
 | Cron | `/api/cron/outbox` daily at 14:00 UTC; `/api/cron/storage-cleanup` daily at 14:17 UTC |
 
-Daily cron caveat: Hobby scheduling does not guarantee the configured minute, and a retry or cleanup backlog can take several days to drain.
+Hobby scheduling does not guarantee the configured minute, and a retry or cleanup backlog can take several days to drain.
+Scheduled cron execution has not been verified from logs.
 
 ## Open gates
 
 | Item | Who | Status |
 |---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Current priority. Owner decision 2026-09-23: admins must be able to invite all three. This needs `/invite`, `/portal`, and `/partner`, so Production must run `SITE_MODE=platform`. Switch only after local and hosted acceptance of all three invitation flows. |
-| Maximum-size upload boundary acceptance | engineering | Open |
+| Merge `bugfix/launch-integration-v2` | engineering, then owner | Open. Requires green CI and a successful Vercel Preview. Watch the Preview for `next/font/google` build errors. |
+| Hosted 25 MiB upload boundary for staff and homeowner documents | engineering | Open until the combined branch deploys |
+| Owner partner directory in Production | engineering | Open until the combined branch deploys |
+| PR #20 merge | owner | Approved and passing; not merged |
+| Remaining full-platform acceptance | engineering | See LAUNCH_CHECKLIST: invitation replay and expiry, upload boundaries, cleanup recovery, private routes at 390px, browser diagnostics |
+| Real PandaDoc signing test | owner | Open |
+| Email operations | owner | Named daily operator, monitored reply mailbox, and inbox receipt are open |
+| Retention, export, erasure, and legal holds | owner and counsel | Open. Platform mode is live, so these are active obligations. See RETENTION. |
 | Rotate the old preview PandaDoc webhook key | owner | Pending |
 | Delete stray root folders | owner | Pending |
 | Cron delay acceptance | owner | Open question |
@@ -108,13 +134,17 @@ Daily cron caveat: Hobby scheduling does not guarantee the configured minute, an
 - The SEO origin fix in `src/lib/site.ts`, which hardcodes `www`, and the `app.` to `www.` cutover are deliberately last.
 - Owner and legal approval of public copy is deliberately second-to-last. It covers the statistics, the testimonial, "Se habla español", "licensed and bonded in every state", and the partner payment promises.
 - E-signing ships in the first release through the manual prefilled-PDF path, which avoids PandaDoc API fees.
-- The staff desk opens first. On 2026-09-23 the owner decided that admins must be able to invite staff, vendors, and homeowners. This opens customer and partner logins through `SITE_MODE=platform`.
+- Admins invite staff, vendors, and homeowners (decided 2026-09-23). Production runs `SITE_MODE=platform` from 2026-10-07.
 - The CMG standard fee is 20 percent. Each vendor can have its own rate, set by owners only. The public form never sets a fee.
 - Backups stay declined. Recovery is reviewed forward repair.
 
 ## Ordered next steps
 
-1. Make all three invitation types work: staff, vendor, and homeowner. Run local acceptance in platform mode. Then the owner switches Production to `SITE_MODE=platform`. Then run hosted acceptance.
-2. Send one real Letter of Representation through PandaDoc's web app.
-3. Obtain owner and legal approval of the public copy.
-4. Apply the SEO origin fix and cut `app.` over to `www.` last.
+1. Merge `bugfix/launch-integration-v2` after CI and the Vercel Preview pass. Then close PRs #18 and #19 as superseded.
+2. Verify hosted 25 MiB staff and homeowner uploads and the owner partner directory in Production.
+3. Merge PR #20 when the owner chooses.
+4. Complete the remaining acceptance in LAUNCH_CHECKLIST.
+5. Send one real Letter of Representation through PandaDoc's web app.
+6. Resolve commercial hosting, repository protection, email operations, privacy, retention, and legal gates.
+7. Obtain owner and legal approval of the public copy.
+8. Apply the SEO origin fix and cut `app.` over to `www.` last.
