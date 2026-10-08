@@ -1,9 +1,10 @@
 # CMG Property Solutions
 
 CMG runs a public marketing site and a private claims platform.
-The release target is `SITE_MODE=simple`.
-This setting keeps the public site and forms available.
-Private platform features need separate approval and hosted acceptance checks.
+Production runs `SITE_MODE=platform` on `app.cmgpropertysolutions.net`.
+This mode opens the public site, the staff desk, the customer portal, the partner portal, and invitation redemption.
+The owner switched Production from `staff` to `platform` on 2026-10-07 after hosted invitation acceptance.
+Check [RELEASE_STATE.md](docs/RELEASE_STATE.md) before changing the Production mode.
 
 [RELEASE_STATE.md](docs/RELEASE_STATE.md) is the current release record.
 It contains production facts, open pull requests, migration heads, environment facts, open gates, and the ordered next steps.
@@ -78,10 +79,8 @@ Record the reset command's exit status, not only its migration and seed output.
 Do not retry a blocked reset without the required approval.
 Never reset or seed production.
 
-Run affected tests first.
-Then run type checks, lint, Vitest, and the production build.
-Run database checks for database, authentication, or storage changes.
-Test affected behavior in both site modes.
+Use [AGENTS.md completion checks](AGENTS.md#completion-checks) to select the required checks for the change.
+The application supports `simple`, `staff`, and `platform` site modes.
 Keep credential-dependent skips explicit in HANDOFF.
 
 Vitest uses one isolated fork worker on Windows and four on other hosts.
@@ -92,7 +91,7 @@ Do not treat a cleanup error as a passing test run.
 CI also runs this selection against its local Supabase stack:
 
 ```powershell
-npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup
+npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup src/lib/admin/partners.test.ts
 ```
 
 Supply only local database credentials when running that selection.
@@ -157,7 +156,9 @@ Current code, tests, manifests, and configuration override older design records.
 [RETENTION.md](docs/RETENTION.md) separates implemented cleanup from proposed retention policy.
 The [original platform plan](.claude/plans/feature-claims-platform.md) and older progress records provide history.
 
-## Simple-mode production runbook
+<a id="simple-mode-production-runbook"></a>
+
+## Production runbook
 
 `develop` is the integration and production branch.
 Verify the current Vercel branch connection before release.
@@ -196,6 +197,8 @@ The advertised upload allowance remains ten files of 25 MiB each.
 The Server Action receives text fields and a small file manifest only.
 The browser uploads file bytes directly to private Supabase Storage with one-time signed capabilities.
 The server copies each upload to an immutable document path, verifies its signature, and then commits the claim.
+Staff and homeowner document uploads use the same pattern with `private_upload_sessions`.
+Their Server Actions reserve paths and confirm the upload; the browser sends the file bytes directly to Storage.
 The implementation and local Storage tests preserve the ten-file and 25 MiB limits.
 Check HANDOFF for hosted migration and configuration evidence. Maximum-size hosted acceptance remains release work.
 See [Vercel function limits](https://vercel.com/docs/functions/limitations).
@@ -233,7 +236,7 @@ If repository settings cannot enforce required checks, record that release block
 Do not describe manual checks as branch protection.
 Approval for one Git or production action does not approve another action.
 
-27. Keep `SITE_MODE=simple` in the release environment.
+27. Verify the approved `SITE_MODE` in the release environment. Production currently uses `platform`.
 28. Redeploy after changing Vercel environment values.
 29. Confirm that Production uses the merged commit and intended environment.
 30. Verify approved public submissions, confirmation emails, staff alerts, queues, crons, logs, DNS, TLS, and redirects.
@@ -261,7 +264,7 @@ Possession of a link does not prove the submitter works for that vendor.
 Contractor contact fields and public partner IDs cannot override the server mapping.
 An existing immutable upload reservation retains its source during its normal lifetime.
 
-Apply the pending schema migrations before deploying code that reads the new columns.
+Apply any new schema migrations before deploying code that reads their columns.
 Old submission functions can ignore new contractor fields, so an application-first deployment risks incomplete records.
 Retain the added columns during application rollback. Use reviewed forward repair for database corrections.
 See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for migration order and verification limits.
@@ -277,8 +280,9 @@ See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for mi
 
 Both routes require `CRON_SECRET`.
 The outbox attempts delivery after a public submission commits.
-The daily sweep retries queued public messages in simple mode.
-Private-platform email templates remain excluded.
+The daily sweep retries queued messages that the current site mode permits.
+Simple mode delivers only the public-form templates. Staff mode adds the staff-alert templates.
+Platform mode delivers every template.
 
 Daily schedules can delay retries and cleanup until a later day.
 A backlog can need several daily batches.
@@ -309,14 +313,18 @@ See [Vercel cron rollback behavior](https://vercel.com/docs/cron-jobs/manage-cro
 A data restore can remove changes after the recovery point.
 Never use a destructive schema rollback as an automatic recovery step.
 
-## Later platform activation
+<a id="later-platform-activation"></a>
 
-Keep platform mode disabled until CMG approves activation.
-Before activation, verify owner MFA, AAL2 enforcement, roles, customer isolation, partner isolation, storage access, and invitation recovery.
-Require hosted integration checks for e-signature, webhooks, retries, and cleanup.
+## Platform activation
+
+The owner activated `SITE_MODE=platform` in Production on 2026-10-07.
+Hosted acceptance before and after the switch covered owner MFA, staff and vendor invitations, homeowner invitations, and role isolation.
+See RELEASE_STATE for the current open gates and HANDOFF for the evidence.
+Keep checking AAL2 enforcement, customer isolation, partner isolation, storage access, and invitation recovery after each release.
+Hosted e-signature, retry, and cleanup checks remain release work.
 Verify both bundled LOR PDFs and the `H1` / `H2` signer mapping.
 Template UUIDs are not required by the current PDF upload flow.
 
 Retention automation, export, erasure, and legal holds require separate implementation and approval.
-Public legal approval remains a simple-mode launch prerequisite.
+Public legal approval remains a launch prerequisite.
 See [PandaDoc setup](docs/temp/PANDADOC_SETUP.md) and [RETENTION.md](docs/RETENTION.md).

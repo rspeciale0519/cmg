@@ -5,13 +5,15 @@
  * THREE MODES, ONE RULE
  *
  *   simple    — nothing private. The marketing site, the public forms, and the
- *               four public-form emails. This is what production runs.
+ *               four public-form emails.
  *   staff     — the CMG claims desk only: `/login`, `/mfa`, `/admin`, and the
  *               three password-recovery routes that belong to `/login`. The
  *               customer portal, the partner portal and invitation redemption
  *               stay closed, so staff can run claims and e-signing before those
  *               surfaces have had hosted acceptance testing.
  *   platform  — everything.
+ *
+ * See docs/RELEASE_STATE.md for the current production mode.
  *
  * The rule the rest of the codebase asks about is never "which mode is this"
  * but "is *this* surface open". `isPathOpen`, `isSurfaceOpen` and

@@ -16,9 +16,15 @@ import { createClient } from "@/lib/supabase/server";
 import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
+import { parsePrivateUploadManifest } from "@/lib/private-upload/manifest";
+import { finalizePrivateUploadSession, privateUploadRetryMessage } from "@/lib/private-upload/finalize";
+import { checkPrivateUploadFinalizeLimit, checkPrivateUploadPrepareLimit } from "@/lib/private-upload/rate-limit";
+import { parsePrivateUploadCapability, preparePrivateUploadSession, privateUploadTokenHash, readPrivateUploadSession } from "@/lib/private-upload/session";
+import type { PrivateFinalizeState, PrivatePrepareState } from "@/lib/private-upload/types";
 import type { Database } from "@/types/database-app";
 import {
   GENERIC_ERROR,
+  RATE_LIMIT_ERROR,
   submittedValues,
   type DownloadState,
   type FormState,
@@ -191,6 +197,70 @@ export async function uploadClaimDocument(
         ? `Added to ${claim.claim_ref}.`
         : `${validation.files.length} files added to ${claim.claim_ref}.`,
   };
+}
+
+/** Reserve exact paths and return signed Storage capabilities. Request bodies carry metadata only. */
+export async function prepareClaimDocumentUpload(
+  _previous: FormState,
+  formData: FormData,
+): Promise<PrivatePrepareState> {
+  const session = await requireStaff("/admin");
+  const claimId = String(formData.get("claimId") ?? "").trim();
+  const kindRaw = String(formData.get("kind") ?? "other");
+  const visibilityRaw = String(formData.get("visibility") ?? "internal");
+  const values = submittedValues(formData, ["kind", "visibility"]);
+  const failure = (message: string, fieldErrors?: Record<string, string>): PrivatePrepareState => ({
+    status: "error", message, values, ...(fieldErrors ? { fieldErrors } : {}),
+  });
+
+  if (!(await checkPrivateUploadPrepareLimit("staff", session.userId))) {
+    return failure(RATE_LIMIT_ERROR);
+  }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claimId)) {
+    return failure(NOT_YOURS);
+  }
+  if (!isDocumentKind(kindRaw)) return failure("Pick what kind of document this is.", { kind: "Pick a document type." });
+  if (!isDocumentVisibility(visibilityRaw)) return failure("Pick who can see this document.", { visibility: "Pick who can see this document." });
+  const supabase = await createClient();
+  const { data: claim } = await supabase.from("claims")
+    .select("id,claim_ref,assigned_adjuster_id").eq("id", claimId).maybeSingle();
+  if (!claim) return failure(NOT_YOURS);
+  if (isRepresentationKind(kindRaw) && session.role !== "owner" &&
+      !(session.role === "adjuster" && claim.assigned_adjuster_id === session.userId)) {
+    return failure("Representation documents can only be filed by the owner or the assigned adjuster.");
+  }
+  const metadata = parsePrivateUploadManifest(formData);
+  if (!metadata) return failure("Choose valid files to upload.", { files: "Check the selected files and try again." });
+
+  const prepared = await preparePrivateUploadSession(
+    createAdminClient(), claimId, session.userId, metadata, kindRaw, visibilityRaw,
+  );
+  return prepared.status === "error" ? { ...prepared, values } : prepared;
+}
+
+/** Confirm one reserved upload. The caller and claim are checked again under RLS. */
+export async function finalizeClaimDocumentUpload(formData: FormData): Promise<PrivateFinalizeState> {
+  const user = await requireStaff("/admin");
+  const capability = parsePrivateUploadCapability(formData);
+  if (!capability) return { status: "error", message: privateUploadRetryMessage };
+  const { id, token } = capability;
+  const hash = privateUploadTokenHash(token);
+  if (!(await checkPrivateUploadFinalizeLimit("staff", user.userId, hash))) {
+    return { status: "error", message: RATE_LIMIT_ERROR };
+  }
+  const admin = createAdminClient();
+  const reserved = await readPrivateUploadSession(admin, id, hash);
+  if (!reserved || reserved.uploaded_by !== user.userId) return { status: "error", message: privateUploadRetryMessage };
+  const supabase = await createClient();
+  const { data: claim } = await supabase.from("claims")
+    .select("id,claim_ref").eq("id", reserved.claim_id).maybeSingle();
+  if (!claim) return { status: "error", message: NOT_YOURS };
+  const result = await finalizePrivateUploadSession(admin, supabase, id, token, user.userId, claim.id);
+  if (result.status === "success") {
+    revalidatePath(`/admin/claims/${claim.id}`, "layout");
+    return { ...result, message: "The documents were added to the claim." };
+  }
+  return result;
 }
 
 /**

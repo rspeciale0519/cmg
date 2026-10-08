@@ -56,10 +56,10 @@ export type PartnerPage = {
 /**
  * Counts come from PostgREST's embedded aggregate rather than from N follow-up
  * queries or a JS reduce over every claim in the business — one round trip, and
- * the counting happens where the rows are. The foreign keys are named
- * explicitly: `profiles` and `claims` each hold exactly one FK into
- * `partner_companies` today, but an unhinted embed resolves by guessing from the
- * table name and would become ambiguous the moment a second one is added.
+ * the counting happens where the rows are. Count the maintained partner
+ * summaries, which have one row per referred claim and a table-level SELECT
+ * grant. Embedding `claims` fails because its SELECT grant covers only safe
+ * columns. Name both foreign keys to keep the relationships unambiguous.
  *
  * `total` and `activeTotal` are separate `count: "exact"` reads rather than
  * `data.length`, because the page is a window: the header used to state the
@@ -77,7 +77,7 @@ export async function loadPartnerPage(
     .select(
       `id, name, status, contact_name, contact_email, contact_phone, created_at,
        reps:profiles!profiles_partner_company_id_fkey(count),
-       claims:claims!claims_partner_company_id_fkey(count)`,
+       claims:claim_partner_summaries!claim_partner_summaries_partner_company_id_fkey(count)`,
       { count: "exact" },
     );
   if (status) listQuery = listQuery.eq("status", status);
@@ -98,9 +98,15 @@ export async function loadPartnerPage(
     activeQuery,
   ]);
 
-  if (listResult.error) {
-    console.error("[partners] list failed", listResult.error.message);
-    return { companies: [], total: 0, activeTotal: 0 };
+  if (
+    listResult.error ||
+    activeResult.error ||
+    listResult.count === null ||
+    activeResult.count === null
+  ) {
+    // The route boundary offers recovery without presenting failed reads as
+    // an empty directory or exposing database error details.
+    throw new Error("Partner directory could not be loaded.");
   }
 
   return {
@@ -115,8 +121,8 @@ export async function loadPartnerPage(
       claimCount: firstCount(row.claims as CountEmbed | null),
       createdAt: row.created_at,
     })),
-    total: listResult.count ?? 0,
-    activeTotal: activeResult.count ?? 0,
+    total: listResult.count,
+    activeTotal: activeResult.count,
   };
 }
 

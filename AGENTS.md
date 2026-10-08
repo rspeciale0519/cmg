@@ -23,6 +23,7 @@ These rules add repository facts to the global working agreement.
 
 ## Sources of truth
 
+- Read the sources that apply to the current task.
 - Current code, tests, manifests, and configuration override old documentation.
 - Use `README.md` for setup and production deployment.
 - Use `docs/RELEASE_STATE.md` for the current release state, open pull requests, migration heads, and open gates.
@@ -31,6 +32,14 @@ These rules add repository facts to the global working agreement.
 - Use `docs/temp/BLOCKERS.md` for owner-only decisions.
 - Use `docs/RETENTION.md` for data-retention requirements.
 - Treat `.claude/plans/feature-claims-platform.md` as design history when current evidence disagrees.
+
+## Task scope and skills
+
+- Select skills for the requested operation, not only for a shared technology name.
+- Load supporting skill documents when the current task needs them.
+- Follow the global browser-tool order when browser skills suggest different tools.
+- Continue authorized local work through implementation, required checks, and fixes for failures caused by the change.
+- Stop at completion, a genuine blocker, or an action that requires approval under the global agreement.
 
 ## Architecture
 
@@ -54,7 +63,6 @@ These rules add repository facts to the global working agreement.
 - Keep user-facing failures generic.
 - Keep secrets and personal data out of logs, URLs, client code, and error responses.
 - Preserve e-signature leases, deduplication, and ambiguous-send protections.
-- Test affected behavior in both `SITE_MODE=simple` and `SITE_MODE=platform`.
 
 ## Database changes
 
@@ -65,7 +73,8 @@ These rules add repository facts to the global working agreement.
 - Keep TypeScript and database enforcement aligned.
 - Regenerate `src/types/database.ts` with `npm run db:types`.
 - Do not hand-edit `src/types/database.ts`.
-- Confirm that the local database contains disposable data before `npm run db:reset`.
+- Confirm disposable local data and obtain explicit reset approval before `npm run db:reset`.
+- Follow the isolation safeguards in `README.md` when the local database contains retained acceptance data.
 
 ## Files and tests
 
@@ -82,34 +91,31 @@ These rules add repository facts to the global working agreement.
 
 ## Commands
 
-- Start the local database with `npm run db:start`.
-- Start the application with `npm run dev`.
+- Use `package.json` for command definitions and `README.md` for local setup and command usage.
 - The default application port is 3000. A launcher can select another free port.
 - Local Supabase uses the 15420 through 15429 host-port block.
-- Run TypeScript checks with `npm run type-check`.
-- Run lint checks with `npm run lint`.
-- Run Vitest with `npm test`.
-- Run the production build with `npm run build`.
-- Reset the local database with `npm run db:reset`.
-- Run pgTAP with `npm run db:test`.
-- Regenerate database types with `npm run db:types`.
-- CI also runs database-backed Vitest suites after starting Supabase.
 
 ## Completion checks
 
-- For application changes, run the affected tests first.
-- Then run `npm run type-check`, `npm run lint`, `npm test`, and `npm run build`.
-- For database, authentication, or storage changes, also run `npm run db:reset` and `npm run db:test`.
-- Run the CI database-backed Vitest selection for affected e-signature, webhook, or cleanup work.
+- For documentation-only or comment-only changes, verify references and facts against current sources. Run `git diff --check`.
+- For application changes, run affected tests, then `npm run type-check`, `npm run lint`, `npm test`, and `npm run build`.
+- For database, authentication, or storage changes, also run `npm run db:reset` and `npm run db:test` after reset approval.
+- If reset approval or a disposable database is unavailable, report the database checks as incomplete.
+- Run the database-backed Vitest selection in `.github/workflows/ci.yml` for affected e-signature, webhook, cleanup, or partner-directory work.
 - For dependency or release changes, run `npm audit --audit-level=high`.
+- Test affected application behavior in `SITE_MODE=simple`, `SITE_MODE=staff`, and `SITE_MODE=platform`.
 - For UI changes, check affected routes at desktop width and 390px.
 - Check the relevant roles, site modes, loading states, errors, console, and network requests.
+- Repeat successful checks only when later changes or unresolved concerns affect their validity.
 - Report all skipped credential-dependent checks.
 - Do not report a green result while local checks or required CI checks fail.
 
 ## Git and deployment
 
 - Base project branches on `develop`.
-- GitHub Actions checks pull requests and pushes for `develop`.
+- Target project pull requests at `develop`.
+- GitHub Actions currently checks pull requests and pushes for both `develop` and `main`.
+- Skill defaults, including `fullpush`, do not authorize staging unrelated files or promoting `develop` into `main`.
+- Keep separate authorization for each Git action under the global agreement.
 - Follow the production runbook in `README.md`.
 - Do not encode temporary commit IDs, test totals, migration heads, preview URLs, or local test ports here.
