@@ -32,13 +32,12 @@ Their descriptions or names mark them as tests. Do not treat them as customer da
 
 ## Pull requests
 
-PRs #1 through #17 and #21 are merged into `develop`.
+PRs #1 through #17, #20, and #21 are merged into `develop`.
 
 | PR | State |
 |---|---|
 | #18 partner-directory count | Open. Superseded by `bugfix/launch-integration-v2` once that branch merges. |
 | #19 private upload transport | Open. Superseded by `bugfix/launch-integration-v2` once that branch merges. Its dependency commits are already in `develop` through #21. |
-| #20 password show/hide toggle and invite hint | Approved and passing. Not merged. Independent of the combined branch. |
 
 `bugfix/launch-integration-v2` rebuilds the code of #18 and #19 and the later launch repairs on current `develop`.
 It replaces the earlier `bugfix/launch-integration` branch, which was built on an older base.
@@ -113,7 +112,6 @@ Scheduled cron execution has not been verified from logs.
 | Merge `bugfix/launch-integration-v2` | engineering, then owner | Open. Requires green CI and a successful Vercel Preview. Watch the Preview for `next/font/google` build errors. |
 | Hosted 25 MiB upload boundary for staff and homeowner documents | engineering | Open until the combined branch deploys |
 | Owner partner directory in Production | engineering | Open until the combined branch deploys |
-| PR #20 merge | owner | Approved and passing; not merged |
 | Remaining full-platform acceptance | engineering | See LAUNCH_CHECKLIST: invitation replay and expiry, upload boundaries, cleanup recovery, private routes at 390px, browser diagnostics |
 | Real PandaDoc signing test | owner | Open |
 | Email operations | owner | Named daily operator, monitored reply mailbox, and inbox receipt are open |
@@ -142,9 +140,8 @@ Scheduled cron execution has not been verified from logs.
 
 1. Merge `bugfix/launch-integration-v2` after CI and the Vercel Preview pass. Then close PRs #18 and #19 as superseded.
 2. Verify hosted 25 MiB staff and homeowner uploads and the owner partner directory in Production.
-3. Merge PR #20 when the owner chooses.
-4. Complete the remaining acceptance in LAUNCH_CHECKLIST.
-5. Send one real Letter of Representation through PandaDoc's web app.
-6. Resolve commercial hosting, repository protection, email operations, privacy, retention, and legal gates.
-7. Obtain owner and legal approval of the public copy.
-8. Apply the SEO origin fix and cut `app.` over to `www.` last.
+3. Complete the remaining acceptance in LAUNCH_CHECKLIST.
+4. Send one real Letter of Representation through PandaDoc's web app.
+5. Resolve commercial hosting, repository protection, email operations, privacy, retention, and legal gates.
+6. Obtain owner and legal approval of the public copy.
+7. Apply the SEO origin fix and cut `app.` over to `www.` last.

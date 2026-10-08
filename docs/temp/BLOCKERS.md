@@ -42,7 +42,7 @@ The owner partner directory also shows no companies until it deploys.
 `bugfix/launch-integration-v2` rebuilds PRs #18 and #19 and the later launch repairs on current `develop`.
 Its migration is already applied in Production. After it merges, PRs #18 and #19 can close as superseded.
 The earlier `bugfix/launch-integration` branch is also superseded. HANDOFF records its approvals, commit, push, and failed Preview.
-PR #20 (password show/hide and invite hint) is approved and independent; its merge is a separate owner decision.
+PR #20 (password show/hide and invite hint) is merged and live.
 PR changes, remote merges, Preview configuration, and Production changes remain separately controlled.
 
 
