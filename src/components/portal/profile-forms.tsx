@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { TextField } from "@/components/forms/controls";
+import { PasswordField } from "@/components/forms/password-field";
 import { changePassword, updateProfile } from "@/lib/actions/portal";
 import { idleState, resilient } from "@/lib/actions/types";
 import { FormFeedback, SubmitButton } from "./form-controls";
@@ -107,27 +108,24 @@ export function PasswordForm({ email }: { email: string | null }) {
         tabIndex={-1}
       />
       <div className="grid gap-[18px]">
-        <TextField
+        <PasswordField
           name="currentPassword"
           label="Current password"
-          type="password"
           required
           autoComplete="current-password"
           error={state.fieldErrors?.currentPassword}
         />
-        <TextField
+        <PasswordField
           name="newPassword"
           label="New password"
-          type="password"
           required
           autoComplete="new-password"
           error={state.fieldErrors?.newPassword}
           hint="At least 12 characters, with upper and lower case letters and a number."
         />
-        <TextField
+        <PasswordField
           name="confirmPassword"
           label="Repeat the new password"
-          type="password"
           required
           autoComplete="new-password"
           error={state.fieldErrors?.confirmPassword}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { TextField } from "@/components/forms/controls";
+import { PasswordField } from "@/components/forms/password-field";
 import { FormAlert } from "@/components/forms/form-feedback";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/actions/auth";
@@ -30,10 +31,9 @@ export function LoginForm({ next }: { next: string | null }) {
         autoComplete="username"
         autoFocus
       />
-      <TextField
+      <PasswordField
         name="password"
         label="Password"
-        type="password"
         required
         autoComplete="current-password"
         className="mt-5"
