@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
 import { validateUploads } from "@/lib/validators/files";
+import { verifyFileSignature } from "@/lib/intake/file-signatures";
 import { parsePrivateUploadManifest } from "@/lib/private-upload/manifest";
 import { finalizePrivateUploadSession, privateUploadRetryMessage } from "@/lib/private-upload/finalize";
 import { checkPrivateUploadFinalizeLimit, checkPrivateUploadPrepareLimit } from "@/lib/private-upload/rate-limit";
@@ -45,6 +46,29 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const NOT_YOURS =
   "That file is not on your claim, or it is no longer there.";
+const FILE_SIGNATURE_ERROR = "One or more files do not match their file type. Choose valid files and try again.";
+
+async function hasValidFileSignatures(
+  files: Array<{ file: File; mime: string; size: number }>,
+): Promise<boolean> {
+  for (const upload of files) {
+    try {
+      const valid = await verifyFileSignature(
+        upload.mime,
+        upload.size,
+        async (start, endInclusive) =>
+          new Uint8Array(await upload.file.slice(start, endInclusive + 1).arrayBuffer()),
+      );
+      if (!valid) return false;
+    } catch (error) {
+      if (error instanceof DOMException && ["AbortError", "NotFoundError", "NotReadableError"].includes(error.name)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+  return true;
+}
 
 /**
  * Upload lands in two systems that can disagree, so the order is chosen to make
@@ -119,6 +143,14 @@ export async function uploadPortalDocument(
       status: "error",
       fieldErrors: { files: "Choose a file to send." },
       message: "Check the highlighted field and try again.",
+      values: typed,
+    };
+  }
+  if (!(await hasValidFileSignatures(validation.files))) {
+    return {
+      status: "error",
+      fieldErrors: { files: FILE_SIGNATURE_ERROR },
+      message: FILE_SIGNATURE_ERROR,
       values: typed,
     };
   }

@@ -137,7 +137,9 @@ import { uploadPortalDocument } from "./portal-documents";
 import { idleState } from "./types";
 
 function photo(name: string): File {
-  return new File([new Uint8Array(64)], name, { type: "image/jpeg" });
+  const bytes = new Uint8Array(64);
+  bytes.set([0xff, 0xd8, 0xff, 0xe0]);
+  return new File([bytes.buffer as ArrayBuffer], name, { type: "image/jpeg" });
 }
 
 function form(fields: Record<string, string>, names: string[]): FormData {

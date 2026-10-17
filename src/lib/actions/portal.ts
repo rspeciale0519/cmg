@@ -3,6 +3,7 @@
 import { createClient as createStatelessClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
 import { isLeakedPassword } from "@/lib/auth/leaked-password";
 import { requireRole } from "@/lib/authz";
@@ -279,22 +280,40 @@ export async function changePassword(
     return { status: "error", message: GENERIC_ERROR };
   }
 
-  // Spec §7.7 names auth-sensitive actions as explicit application audit
-  // writes: no trigger can see this one, because the change happens in
-  // `auth.users` rather than in `public`.
-  await writeAudit(admin, {
-    actorId: session.userId,
-    action: "auth.password_changed",
-    entity: "auth",
-    entityId: session.userId,
-    meta: { surface: "portal" },
-    ip,
-  });
+  // Revoke refresh tokens on every device. Existing access tokens can remain
+  // valid until expiry; the sign-in notice must not promise immediate removal.
+  let signedOut = false;
+  try {
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
+    signedOut = !signOutError;
+  } catch {
+    // A transport failure must not report an unchanged password or return secrets.
+  }
 
-  return {
-    status: "success",
-    message: "Password changed. Your other devices stay signed in.",
-  };
+  // Audit is best-effort and must not prevent the security action or its redirect.
+  try {
+    await writeAudit(admin, {
+      actorId: session.userId,
+      action: "auth.password_changed",
+      entity: "auth",
+      entityId: session.userId,
+      meta: { surface: "portal" },
+      ip,
+    });
+  } catch {
+    console.error("[portal] password-change audit failed");
+  }
+
+  if (!signedOut) {
+    console.error("[portal] global sign-out failed after password change");
+    return {
+      status: "error",
+      message:
+        "Your password changed, but we could not sign out all devices. Sign out and contact CMG before you continue.",
+    };
+  }
+
+  redirect("/login?notice=password-changed");
 }
 
 /**

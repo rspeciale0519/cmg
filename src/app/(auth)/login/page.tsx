@@ -32,6 +32,8 @@ const NOTICES: Record<string, string> = {
      authenticator code after this, as at any other sign-in. */
   "password-reset":
     "Your password is changed and every device was signed out. Sign in with your new password.",
+  "password-changed":
+    "Your password changed. Sign in with your new password. Other devices must sign in again when their current access expires.",
 };
 
 export default async function LoginPage({
