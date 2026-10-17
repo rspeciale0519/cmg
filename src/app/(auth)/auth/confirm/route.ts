@@ -2,7 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { writeAudit } from "@/lib/audit";
 import { isWellFormedTokenHash, RECOVERY_EXPIRED_PATH } from "@/lib/auth/recovery";
-import { clientIpFromHeaders, inetOrNull } from "@/lib/rate-limit";
+import {
+  checkRateLimit,
+  clientIpFromHeaders,
+  inetOrNull,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 import { isPathOpen, PLATFORM_DISABLED_PATH } from "@/lib/site-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/database-app";
@@ -47,6 +52,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const type = single(params, "type");
 
   if (type !== "recovery" || !tokenHash || !isWellFormedTokenHash(tokenHash)) {
+    return redirectTo(request, RECOVERY_EXPIRED_PATH);
+  }
+
+  const ip = clientIpFromHeaders(request.headers);
+  if (!(await checkRateLimit(RATE_LIMITS.recoveryConfirmIp, ip))) {
     return redirectTo(request, RECOVERY_EXPIRED_PATH);
   }
 
@@ -95,7 +105,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     action: "auth.password_reset_link_verified",
     entity: "auth",
     entityId: data.user.id,
-    ip: inetOrNull(clientIpFromHeaders(request.headers)),
+    ip: inetOrNull(ip),
   });
 
   return success;

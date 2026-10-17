@@ -17,7 +17,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
-import { validateUploads } from "@/lib/validators/files";
+import { safeOriginalName, validateUploads } from "@/lib/validators/files";
 import { verifyFileSignature } from "@/lib/intake/file-signatures";
 import { parsePrivateUploadManifest } from "@/lib/private-upload/manifest";
 import { finalizePrivateUploadSession, privateUploadRetryMessage } from "@/lib/private-upload/finalize";
@@ -319,11 +319,13 @@ export async function issuePortalDownload(
     return { status: "error", message: NOT_YOURS };
   }
 
+  // Stored names can predate the upload sanitizer.
+  const filename = safeOriginalName(document.original_name);
   const admin = createAdminClient();
   const { data: signed, error: signError } = await admin.storage
     .from(BUCKET)
     .createSignedUrl(document.storage_path, SIGNED_URL_TTL_SECONDS, {
-      download: document.original_name,
+      download: filename,
     });
 
   if (signError || !signed?.signedUrl) {
@@ -375,7 +377,7 @@ export async function issuePortalDownload(
   return {
     status: "success",
     url: signed.signedUrl,
-    filename: document.original_name,
-    message: `${document.original_name} is ready. The link works for 5 minutes.`,
+    filename,
+    message: `${filename} is ready. The link works for 5 minutes.`,
   };
 }
