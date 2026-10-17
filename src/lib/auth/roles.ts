@@ -100,20 +100,33 @@ export function roleMayEnter(role: AppRole, surface: Surface): boolean {
   return (SURFACES[surface].roles as readonly AppRole[]).includes(role);
 }
 
+const SAFE_NEXT_BASE = "https://cmg.invalid";
+
 /**
  * Sanitises a `?next=` value into a same-origin path or nothing.
  *
  * The rejected shapes are all real redirect vectors rather than tidiness:
  * `//evil.test` and `/\evil.test` are protocol-relative URLs that browsers
  * resolve against another host, and an absolute `https://evil.test` needs no
- * explanation. Anything that is not a single leading slash followed by a
- * non-slash, non-backslash character is refused outright, so the caller falls
- * back to the role's own landing page.
+ * explanation. WHATWG parsers also strip C0 controls before parsing, so a
+ * tab or line-feed after the first slash — `/%09//evil.test` in a query
+ * string — becomes `//evil.test`. Backslash is treated as a slash in the
+ * same parsers. Anything that is not a same-origin path is refused, and
+ * the caller falls back to the role's own landing page.
  */
 export function safeNextPath(raw: string | null | undefined): string | null {
-  if (typeof raw !== "string" || raw.length === 0) return null;
+  if (typeof raw !== "string" || raw.length === 0 || raw.length > 2048) return null;
+  if (/[\u0000-\u0020\u007f]/.test(raw)) return null;
   if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
-  if (raw.includes("\\")) return null;
+  if (raw.startsWith("//") || raw.includes("\\")) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw, SAFE_NEXT_BASE);
+  } catch {
+    return null;
+  }
+  if (parsed.origin !== SAFE_NEXT_BASE) return null;
+  if (parsed.username || parsed.password) return null;
   return raw;
 }

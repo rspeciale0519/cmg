@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES, MAX_FILES, validateUploads } from "./files";
+import {
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_BYTES,
+  MAX_FILES,
+  safeOriginalName,
+  validateUploads,
+} from "./files";
 
 const fileOf = (name: string, type: string, size = 1024) => {
   const file = new File(["x"], name, { type });
@@ -113,6 +119,12 @@ describe("validateUploads", () => {
     ]);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.files[0].originalName).toBe("passwd.pdf");
+  });
+
+  it("strips quotes and header delimiters that would break Content-Disposition", () => {
+    expect(safeOriginalName('roof.pdf"; filename="evil.exe')).toBe("roof.pdf filenameevil.exe");
+    expect(safeOriginalName("scan.pdf\r\nX-Injected: yes")).toBe("scan.pdfX-Injected: yes");
+    expect(safeOriginalName("notes<script>.pdf")).toBe("notesscript.pdf");
   });
 
   it("tolerates a mime type carrying parameters", () => {
