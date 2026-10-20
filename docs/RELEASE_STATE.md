@@ -148,7 +148,7 @@ The owner then approved the exact synthetic file batch. Both owner staff-form an
 Both forms refused 26,214,401-byte files. Two hosted sessions are completed, with one verified 26,214,400-byte file and document each.
 The owner sees six documents; the homeowner sees four and cannot see the owner's internal test image in its list.
 Each new file was downloaded once. Both saved files have their exact prepared SHA-256 values; the audit shows exactly two matching issuance entries.
-Both audit entries record attachment disposition and a 300-second lifetime. A live expired-link refusal now passes once, as recorded below. The latest first-download bytes remain unverified.
+Both audit entries record attachment disposition and a 300-second lifetime. A live expired-link refusal now passes once, as recorded below. The saved 68-byte file now matches the recorded Storage size and fingerprint. Its PNG fixture checksum issue is separate.
 The two document lists fit measured 390px and 1280px widths. Captured warning/error logs are empty for both tested sessions.
 At file-batch completion, cleanup had eleven rows: nine processed and two staging rows pending without errors or dead rows.
 The private-upload guard prevents cleanup until 2 hours 15 minutes after session creation. No cleanup job was run or record removed.
@@ -172,7 +172,11 @@ Do not treat current `develop` as launch-ready while the security correction rem
 
 One owner Download click issued a 300-second link for the existing 68-byte `synthetic-upload.png` on synthetic claim `CMG-2026-0003`. It created audit row 195. The same in-memory link was replayed once, 379.358 seconds after issuance. Storage returned rendered JSON with status 400, `InvalidJWT`, and an expired `exp` claim. No file bytes rendered. The audit still has one issuance row, no new outbox rows were found, and the raw link was not retained.
 
-The initial browser download event did not report a save path. The first download's bytes remain unverified. There is no raw network status trace. Do not click Download again or reissue this test link. Evidence: `pr24-expiry-test-2026-10-20.json`, `pr24-expiry-link-issued-2026-10-20.png`, and `pr24-expired-link-refused-2026-10-20.png`.
+The initial browser event did not report a save path. The owner confirmed the saved file in Chrome. The file is 68 bytes, and its MD5 matches the recorded Storage ETag. No additional download or link was issued.
+
+The PNG has an invalid IDAT chunk checksum. Its chunk boundaries and decompressed pixel bytes are present. This is a failed fixture image-validity check. The size and recorded-fingerprint comparison does not establish remote SHA-256 equality or image-decoder validity. Do not replace the hosted fixture under this approval.
+
+No raw network status trace is available. Do not click Download again or reissue this link. Evidence: `pr24-expiry-initial-file-check-2026-10-20.json` and `pr24-expiry-test-2026-10-20.json`.
 
 The read-only cleanup check found zero staging-object records, zero unaccepted-copy records, and zero document rows at the exact path for cancelled session `c68baab2-61f4-4864-bd22-8049f9ecaf94`. Queue rows 12 and 13 completed at `2026-10-20T14:27:40.125Z` and `.473Z`, each after one attempt with null error and dead timestamps. The cleanup table has thirteen rows. This proves cleanup state, not scheduler attribution. No worker or manual cleanup ran during the read. Evidence: `pr24-invalid-cleanup-read-2026-10-20.json`, `pr24-cleanup-rows-12-13-paths-2026-10-20.png`, and `pr24-cleanup-rows-12-13-times-2026-10-20.png`.
 
@@ -344,7 +348,7 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 1. Review draft PR #24 at `d523469` and PDF PR #25 at `56cff18`. Their exact-head CI jobs and automatic Previews pass.
 2. Preserve the completed role reads, Partner note, upload boundaries, and invalid-file refusal. Do not repeat one-time actions or unchanged Preview setup.
-3. Keep the invalid-file cleanup result and one-time expired-link refusal recorded. Do not invoke cleanup again or issue another link. Scheduler attribution and first-download bytes remain unverified.
+3. Keep the invalid-file cleanup result and one-time expired-link refusal recorded. Do not invoke cleanup again or issue another link. The saved-file size and recorded-fingerprint checks pass. Scheduler attribution remains unverified; fixture image validity is a separate limitation.
 4. Obtain exact approval for remaining hosted acceptance batches. Preserve the database, accounts, files, and recipients outside each defined batch.
 5. Complete legal review and the approved manual-signing acceptance, including the signed file, claim state, and access checks.
 6. Resolve hosting, repository protection, email operations, privacy, retention, and other owner decisions. Obtain separate merge and Production release approvals; merges can deploy automatically.

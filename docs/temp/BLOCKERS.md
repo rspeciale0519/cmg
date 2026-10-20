@@ -129,11 +129,11 @@ The owner later approved one invalid-file test on claim 0005. It was submitted o
 Read-only inspection confirms cancelled session `c68baab2-61f4-4864-bd22-8049f9ecaf94`, null verification, and zero document rows at its exact permanent path.
 At the time of the October 19 read, one staging object and one unaccepted copy remained, each nine bytes. The October 20 read confirms zero matching staging objects, unaccepted copies, and exact document rows. Cleanup queue rows 12 and 13 each completed once, without an error or dead marker. No worker ran during the read. This does not prove scheduler attribution. Do not retry the upload, invoke cleanup, or delete objects manually.
 
-The one-time expiry replay is complete. Verification of the first download remains open. One link was issued for the existing 68-byte `synthetic-upload.png` on claim `CMG-2026-0003`. The same link was replayed once after 379.358 seconds and returned Storage JSON 400 `InvalidJWT` for the expired `exp` claim; no file bytes rendered.
+The one-time expiry replay is complete. The saved file is 68 bytes. Its MD5 matches the recorded Storage ETag. No remote SHA-256 comparison is available. One link was issued for the existing 68-byte `synthetic-upload.png` on claim `CMG-2026-0003`. The same link was replayed once after 379.358 seconds and returned Storage JSON 400 `InvalidJWT` for the expired `exp` claim; no file bytes rendered.
 
 One issuance audit row remains. Do not click Download again or reissue this link. No raw link was retained.
 
-**Owner action:** approve the next exact hosted write batch before it changes hosted state. Remaining examples include interruption/retry, a direct internal-file refusal, or non-overwrite. Scheduler attribution, first-download bytes, legal review, and manual signing remain open.
+**Owner action:** approve the next exact hosted write batch before it changes hosted state. Remaining examples include interruption/retry, a direct internal-file refusal, or non-overwrite. Scheduler attribution, legal review, and manual signing remain open. The 68-byte PNG has an invalid IDAT checksum; do not use it as image-decoder proof.
 Remote merge, further live-data tests, and Production deployment remain separate actions. No extension permission was changed.
 
 ## 2. Public business and legal approval

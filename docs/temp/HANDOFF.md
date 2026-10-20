@@ -30,7 +30,13 @@ On October 20, one owner Download click issued a 300-second link for the existin
 
 The audit still has one issuance row, and no new outbox rows were found. The raw link was not retained and no second link was issued.
 
-The first browser download event did not report a save path. Its bytes remain unverified. No raw network status trace is available. Do not click Download again or reissue this link. Evidence: `pr24-expiry-test-2026-10-20.json`, `pr24-expiry-link-issued-2026-10-20.png`, and `pr24-expired-link-refused-2026-10-20.png`.
+The first browser event did not report a save path. The owner confirmed the saved file in Chrome. The file is 68 bytes, and its MD5 matches the recorded Storage ETag. No additional download or link was issued.
+
+The local SHA-256 is `01dd7f08f84eca35384fd4e7d49f70e2cc33c2dd99a45b199bdd2297be5b0462`. Local MD5 and recorded Storage ETag are `f0c94e82190ea356f04404f0b8a51882`. The recorded object size is 68 bytes. The saved file contains a 1x1 PNG. Its IDAT checksum is `efa33f5b`; the calculated checksum is `efa2a75b`.
+
+The PNG has an invalid IDAT chunk checksum. Its chunk boundaries and decompressed pixel bytes are present. This is a failed fixture image-validity check. The size and recorded-fingerprint comparison does not establish remote SHA-256 equality or image-decoder validity. Do not replace the hosted fixture under this approval.
+
+No raw network status trace is available. Do not click Download again or reissue this link. Evidence: `pr24-expiry-initial-file-check-2026-10-20.json`, `pr24-expiry-test-2026-10-20.json`, and `pr24-expired-link-refused-2026-10-20.png`.
 
 The read-only check found zero matching staging objects, unaccepted copies, and document rows for invalid-file session `c68baab2-61f4-4864-bd22-8049f9ecaf94`. Cleanup queue rows 12 and 13 completed at `2026-10-20T14:27:40.125Z` and `.473Z`, each after one attempt with null error and dead timestamps. The table has thirteen rows. This proves cleanup state, not scheduler attribution. No worker or manual cleanup ran during the read. Evidence: `pr24-invalid-cleanup-read-2026-10-20.json`, `pr24-cleanup-rows-12-13-paths-2026-10-20.png`, and `pr24-cleanup-rows-12-13-times-2026-10-20.png`.
 
@@ -453,7 +459,7 @@ The owner audit viewer filtered to today's document issuances shows exactly two 
 Both record attachment disposition and `ttl_seconds=300`, with the correct internal/customer visibility.
 Automatic review blocked direct signed-token inspection. No workaround or token decoding ran.
 The owner download's automatic AX result included its temporary URL; do not copy it into retained evidence or logs.
-At the time of this earlier check, the URL was limited to the synthetic image and a live expired-link refusal remained unverified. The current section above records the later one-time refusal result; the first download's bytes remain unverified.
+At the time of this earlier check, the URL was limited to the synthetic image and a live expired-link refusal remained unverified. The current section above records the later one-time refusal result; the later saved-file check passes by size and recorded Storage fingerprint.
 
 Read-only Supabase Table Editor checks confirm two upload sessions, both completed; two file rows have verified object versions and exact size/MIME.
 At file-batch completion, cleanup had eleven rows: nine processed and two pending staging paths, IDs 9 and 11.
