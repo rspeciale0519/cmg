@@ -1,6 +1,6 @@
 # CMG release handoff — engineering evidence
 
-Reconciled 2026-10-19. The current section supersedes older dated release and deployment claims below.
+Reconciled 2026-10-20. The current section supersedes older dated release and deployment claims below.
 Rewrite it in place. Do not append dated sections.
 The full dated record is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
 
@@ -23,6 +23,16 @@ Production alias inspection resolves to Ready `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF`
 Current unauthenticated Production `/portal` and `/partner` return 307 to `/login`; this matches the owner-recorded October 7 platform activation.
 No Production setting, DNS record, or message changed during this review.
 The later combined Preview empty-file check spent a hosted rate-limit attempt, as recorded below.
+
+### Current private-file expiry and cleanup evidence
+
+On October 20, one owner Download click issued a 300-second link for the existing 68-byte `synthetic-upload.png` on synthetic claim `CMG-2026-0003`. Audit row 195 records one issuance. The same in-memory link was replayed once, 379.358 seconds after issuance. Storage returned rendered JSON status 400, `InvalidJWT`, with an expired `exp` claim. No file bytes rendered.
+
+The audit still has one issuance row, and no new outbox rows were found. The raw link was not retained and no second link was issued.
+
+The first browser download event did not report a save path. Its bytes remain unverified. No raw network status trace is available. Do not click Download again or reissue this link. Evidence: `pr24-expiry-test-2026-10-20.json`, `pr24-expiry-link-issued-2026-10-20.png`, and `pr24-expired-link-refused-2026-10-20.png`.
+
+The read-only check found zero matching staging objects, unaccepted copies, and document rows for invalid-file session `c68baab2-61f4-4864-bd22-8049f9ecaf94`. Cleanup queue rows 12 and 13 completed at `2026-10-20T14:27:40.125Z` and `.473Z`, each after one attempt with null error and dead timestamps. The table has thirteen rows. This proves cleanup state, not scheduler attribution. No worker or manual cleanup ran during the read. Evidence: `pr24-invalid-cleanup-read-2026-10-20.json`, `pr24-cleanup-rows-12-13-paths-2026-10-20.png`, and `pr24-cleanup-rows-12-13-times-2026-10-20.png`.
 
 ### Current verification limits and results
 
@@ -443,7 +453,7 @@ The owner audit viewer filtered to today's document issuances shows exactly two 
 Both record attachment disposition and `ttl_seconds=300`, with the correct internal/customer visibility.
 Automatic review blocked direct signed-token inspection. No workaround or token decoding ran.
 The owner download's automatic AX result included its temporary URL; do not copy it into retained evidence or logs.
-The URL was limited to the synthetic image. A live expired-link refusal remains unverified; the audit and source are the TTL evidence.
+At the time of this earlier check, the URL was limited to the synthetic image and a live expired-link refusal remained unverified. The current section above records the later one-time refusal result; the first download's bytes remain unverified.
 
 Read-only Supabase Table Editor checks confirm two upload sessions, both completed; two file rows have verified object versions and exact size/MIME.
 At file-batch completion, cleanup had eleven rows: nine processed and two pending staging paths, IDs 9 and 11.
@@ -1305,7 +1315,7 @@ Both objects exist in private bucket `claim-docs`, each with nine-byte Storage m
 - Unaccepted copy: `claims/153a2250-297d-4b81-ab20-65da3b590852/214a044b-7bde-4430-9bd7-1b1e0d1eb11d.pdf`.
 
 Cleanup eligibility is October 20 at 03:09:57.319759 UTC, or October 19 at 11:09:57 PM EDT.
-Removal after the normal scheduled cleanup remains unverified. No cron, retry, manual cleanup, deletion, or compensating write ran.
+At the time of this read, removal after normal cleanup remained unverified. The current section above confirms the later cleanup state; scheduler attribution remains unverified. No cron, retry, manual cleanup, deletion, or compensating write ran during this earlier read.
 The outbox has zero rows created since 00:37 UTC, covering both the Partner note and this upload test.
 No SQL snippet was saved. Only dashboard read filters were used for this independent check.
 Evidence: `pr24-invalid-file-ui-2026-10-19.json`, `pr24-invalid-file-db-read-2026-10-19.json`, and `pr24-note-invalid-file-outbox-read-2026-10-19.json`.

@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-10-19. Rewrite this file in place. Keep exact test evidence in HANDOFF.
+Reconciled 2026-10-20. Rewrite this file in place. Keep exact test evidence in HANDOFF.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for owner decisions.
@@ -16,7 +16,7 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 | Production | `app.cmgpropertysolutions.net` resolves to ready deployment `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF`. GitHub associates that deployment with the current `develop` commit. |
 | Site mode | The owner's recorded activation was `platform` on 2026-10-07. Current unauthenticated `/portal` and `/partner` requests redirect to `/login`, rather than `/platform-disabled`. No environment value was changed in this review. |
 | Preview | PR #24 is Ready at exact `d523469`, as `dpl_3HYMqaJ4UicNYTR47GfUmoeyGi3s`. Its approved branch overrides remain unchanged. PR #25's automatic Preview is also Ready. PR #23's earlier rebuild remains unchanged. |
-| Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The later invalid-file test adds one cancelled session and two unaccepted nine-byte objects, pending normal cleanup. No migration was reapplied. |
+| Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
 
 No Production deployment, DNS record, or email changed during this review.
@@ -148,7 +148,7 @@ The owner then approved the exact synthetic file batch. Both owner staff-form an
 Both forms refused 26,214,401-byte files. Two hosted sessions are completed, with one verified 26,214,400-byte file and document each.
 The owner sees six documents; the homeowner sees four and cannot see the owner's internal test image in its list.
 Each new file was downloaded once. Both saved files have their exact prepared SHA-256 values; the audit shows exactly two matching issuance entries.
-Both audit entries record attachment disposition and a 300-second lifetime. A live expired-link refusal was not tested.
+Both audit entries record attachment disposition and a 300-second lifetime. A live expired-link refusal now passes once, as recorded below. The latest first-download bytes remain unverified.
 The two document lists fit measured 390px and 1280px widths. Captured warning/error logs are empty for both tested sessions.
 At file-batch completion, cleanup had eleven rows: nine processed and two staging rows pending without errors or dead rows.
 The private-upload guard prevents cleanup until 2 hours 15 minutes after session creation. No cleanup job was run or record removed.
@@ -164,9 +164,17 @@ The report and main-checkout release/signing records remain uncommitted beside p
 No unrelated main-checkout edit is included in either feature push. Remaining hosted batches and release actions need their defined approvals.
 The later approved invalid-file batch submits one nine-byte synthetic PDF on claim 0005, once, as Other and CMG only.
 The page refuses it. Read-only inspection confirms cancelled session `c68baab2-61f4-4864-bd22-8049f9ecaf94`, null verification, and zero document rows at its exact path.
-One staging object and one unaccepted copy remain, each nine bytes. Cleanup eligibility is October 19 at 11:09:57 PM EDT.
-Normal scheduled removal remains unverified. No retry, manual cleanup, email, or additional hosted write is approved by that test.
+At the time of the October 19 invalid-file read, one staging object and one unaccepted copy remained, each nine bytes. Cleanup eligibility began October 19 at 11:09:57 PM EDT. The October 20 read below confirms both objects are now absent. No retry, manual cleanup, email, or additional hosted write occurred.
+The October 20 read found zero matching staging objects, unaccepted copies, or document rows for the exact invalid-file path. Cleanup queue rows 12 and 13 each completed with one attempt and no error or dead marker. No worker ran during the read. The rows do not prove which scheduled worker processed them.
 Do not treat current `develop` as launch-ready while the security correction remains unmerged.
+
+### October 20 expiry and cleanup acceptance
+
+One owner Download click issued a 300-second link for the existing 68-byte `synthetic-upload.png` on synthetic claim `CMG-2026-0003`. It created audit row 195. The same in-memory link was replayed once, 379.358 seconds after issuance. Storage returned rendered JSON with status 400, `InvalidJWT`, and an expired `exp` claim. No file bytes rendered. The audit still has one issuance row, no new outbox rows were found, and the raw link was not retained.
+
+The initial browser download event did not report a save path. The first download's bytes remain unverified. There is no raw network status trace. Do not click Download again or reissue this test link. Evidence: `pr24-expiry-test-2026-10-20.json`, `pr24-expiry-link-issued-2026-10-20.png`, and `pr24-expired-link-refused-2026-10-20.png`.
+
+The read-only cleanup check found zero staging-object records, zero unaccepted-copy records, and zero document rows at the exact path for cancelled session `c68baab2-61f4-4864-bd22-8049f9ecaf94`. Queue rows 12 and 13 completed at `2026-10-20T14:27:40.125Z` and `.473Z`, each after one attempt with null error and dead timestamps. The cleanup table has thirteen rows. This proves cleanup state, not scheduler attribution. No worker or manual cleanup ran during the read. Evidence: `pr24-invalid-cleanup-read-2026-10-20.json`, `pr24-cleanup-rows-12-13-paths-2026-10-20.png`, and `pr24-cleanup-rows-12-13-times-2026-10-20.png`.
 
 Baseline local verification used the original clean v2 tree, which matches `develop`:
 
@@ -336,7 +344,7 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 1. Review draft PR #24 at `d523469` and PDF PR #25 at `56cff18`. Their exact-head CI jobs and automatic Previews pass.
 2. Preserve the completed role reads, Partner note, upload boundaries, and invalid-file refusal. Do not repeat one-time actions or unchanged Preview setup.
-3. Confirm removal of the two invalid-file objects after normal cleanup. Eligibility starts October 19 at 11:09:57 PM EDT; do not invoke cleanup manually.
+3. Keep the invalid-file cleanup result and one-time expired-link refusal recorded. Do not invoke cleanup again or issue another link. Scheduler attribution and first-download bytes remain unverified.
 4. Obtain exact approval for remaining hosted acceptance batches. Preserve the database, accounts, files, and recipients outside each defined batch.
 5. Complete legal review and the approved manual-signing acceptance, including the signed file, claim state, and access checks.
 6. Resolve hosting, repository protection, email operations, privacy, retention, and other owner decisions. Obtain separate merge and Production release approvals; merges can deploy automatically.

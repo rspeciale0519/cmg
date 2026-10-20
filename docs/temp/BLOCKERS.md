@@ -1,6 +1,6 @@
 # Owner decision register
 
-Current code and release decisions reconciled 2026-10-19. Other dated decisions retain their recorded scope.
+Current code and release decisions reconciled 2026-10-20. Other dated decisions retain their recorded scope.
 This file lists only current owner-controlled decisions.
 Rewrite it in place. Do not add dated layers.
 The superseded layered version is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/BLOCKERS.md).
@@ -127,10 +127,13 @@ The staging prefix is absent from the loaded Storage root; both approved permane
 These Preview tests changed the Production database's synthetic records. Production code, settings, DNS, and email stayed unchanged.
 The owner later approved one invalid-file test on claim 0005. It was submitted once and refused, with no accepted document.
 Read-only inspection confirms cancelled session `c68baab2-61f4-4864-bd22-8049f9ecaf94`, null verification, and zero document rows at its exact permanent path.
-One staging object and one unaccepted copy remain, each nine bytes. Cleanup eligibility is October 19 at 11:09:57 PM EDT.
-Normal scheduled removal remains unverified. Do not retry the upload, invoke cleanup, or delete either object manually.
-No new outbox row exists since October 20, 00:37 UTC, covering both newly approved test writes.
-**Owner action:** approve the next exact failure-path, portal-write, vendor-referral, or manual-signing batch before it changes hosted state.
+At the time of the October 19 read, one staging object and one unaccepted copy remained, each nine bytes. The October 20 read confirms zero matching staging objects, unaccepted copies, and exact document rows. Cleanup queue rows 12 and 13 each completed once, without an error or dead marker. No worker ran during the read. This does not prove scheduler attribution. Do not retry the upload, invoke cleanup, or delete objects manually.
+
+The one-time expiry replay is complete. Verification of the first download remains open. One link was issued for the existing 68-byte `synthetic-upload.png` on claim `CMG-2026-0003`. The same link was replayed once after 379.358 seconds and returned Storage JSON 400 `InvalidJWT` for the expired `exp` claim; no file bytes rendered.
+
+One issuance audit row remains. Do not click Download again or reissue this link. No raw link was retained.
+
+**Owner action:** approve the next exact hosted write batch before it changes hosted state. Remaining examples include interruption/retry, a direct internal-file refusal, or non-overwrite. Scheduler attribution, first-download bytes, legal review, and manual signing remain open.
 Remote merge, further live-data tests, and Production deployment remain separate actions. No extension permission was changed.
 
 ## 2. Public business and legal approval
