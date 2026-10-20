@@ -1,18 +1,72 @@
 # PandaDoc setup for CMG
 
-Production uses the manual prefilled-PDF signing path in `SITE_MODE=platform`.
-The owner switched Production from `staff` to `platform` on 2026-10-07.
+Production uses the manual prefilled-PDF signing path. The owner recorded `SITE_MODE=platform` activation on 2026-10-07.
 The PandaDoc API path is not part of the current manual release.
+Do not repeat or undo the completed platform activation. Any further Production change needs separate approval after acceptance.
 [HANDOFF.md](HANDOFF.md) contains current account, deployment, migration, and verification evidence.
 This guide describes setup requirements, not proof that a hosted environment meets them.
 
-The shared Preview environment carries API and webhook keys.
-A Preview that inherits them selects the PandaDoc API provider, unlike Production's selected manual path.
+The earlier PR #19 Preview reported API and webhook keys as configured.
+PR #23 and combined PR #24 have their approved branch-only blank-key overrides and Ready rebuilds.
 `src/lib/esign/config.ts` treats absent or blank key values as unconfigured.
-Manual Preview acceptance needs separately approved branch-only overrides for both keys and redeployment.
-Verify manual mode and disabled webhook configuration after that deployment.
+Its authenticated Settings panel confirms Manual, bundled PDF, and webhook key not set.
+Do not repeat the completed setup approval or redeploy. Revised manual field recognition now passes for both signer variants.
 Keep Production settings and shared Preview key values unchanged.
 Do not send an API document to test the manual flow.
+
+The original Single synthetic draft failed because black tag text remained visible under the fields.
+That unsent draft is retained. The original Dual file was not uploaded; its unchanged-file approval does not cover revised bytes.
+The owner approved an isolated local repair on `bugfix/manual-signing-tag-visibility`, based on current `develop` commit `1b7f7f9`.
+The local repair preserves bundled assets, data values, legal text, and API bytes.
+The first white-glyph repair leaves small gaps in underlying lines and was rejected locally.
+The second local output uses scoped non-painting tag text. All eighteen rendered pages preserve the printed lines and original text.
+Both revised hashes and regression evidence are recorded in HANDOFF.
+Type checking, lint, the normal build, and 124 focused tests in each site mode pass.
+The final full unit run passes 1,682 tests, with 56 database/live tests skipped because the needed local services are unavailable.
+
+The owner then approved the exact revised Single `589d1a8f` and Dual `613747b4` files as two new unsent drafts.
+Both were uploaded once in the existing CMG workspace on 2026-10-19. The tag text is no longer visible.
+Single draft `GxuADmbyQZ5rJDCtZXnpH5` has five Initials and four Signature fields, on the expected pages.
+Dual draft `9o6Qkr27Yyu5MvhgyRMo9N` has ten Initials and eight Signature fields, two per page.
+All twenty-seven fields are required. A fresh reopen retains nine and eighteen fields, with Draft status and no Connecting or Syncing state.
+Both drafts assign all fields to the current account. Intended signer assignment is not verified.
+Both Add recipient searches require **Create as new contact** for the approved test addresses.
+No contact was saved because that write was excluded. PandaDoc's [recipient guide](https://support.pandadoc.com/en/articles/9714650-add-and-manage-recipients) describes this contact step.
+Single's page 7 rectangle reaches the last affidavit line area. Dual's two page 7 rectangles overlap each other and reach that area.
+Text remains visible through the editor boxes. Completed-signature appearance was not tested.
+Before signing, each box must sit on its intended INSURED line, clear of text and other fields.
+At that point, correction and separate assignment needed approval for those existing drafts and two saved test contacts.
+Those draft-only checks needed no upload. The later local layout correction below now requires new-file approval.
+No contact, finalization, email, signature, deletion, or CMG write occurred.
+At that stage, no Git action or deployment was approved for the local repair.
+The owner later approved a local printed-value correction, including the generator, coordinate manifest, and both shared PDF assets.
+The v3 local outputs correct twelve data baselines per variant, including dates, page 1 values, and the page 9 adjuster.
+All eighteen background images, legal text, printed values, and signer positions remain unchanged apart from the measured data moves.
+The new coordinate checks refuse stale assets. Focused, three-mode, type, lint, build, and page-comparison checks pass.
+The fresh full unit run passes 1,686 tests in 121 files; 56 database/live tests in thirteen files skip.
+Docker is unavailable, so database/live coverage remains incomplete. No schema, hosted data, API implementation, or service setting changed.
+The owner separately approved the six-file commit, exact v3 provider batch, push, and draft PR.
+Signed commit `56cff18` is published in draft PR #25 targeting `develop`, with exactly six files.
+CI run `39349972823` passes type check, lint, build, audit, 1,686 unit tests, 1,350 pgTAP assertions, and 253 database-backed tests.
+Unit skips 56 database/live tests. The database selection skips one live PandaDoc test. The automatic Preview is Ready.
+No merge, Production change, legal acceptance, send, or signature is approved.
+The two v3 drafts now retain nine and eighteen required fields after reopening. Both hidden-tag checks pass.
+Only the three page 7 boxes were resized and moved. They remain clear of legal text, labels, dates, and each other after reopening.
+All three edited fields remain required. Both editor views are restored to 100 percent.
+PandaDoc rejects `cmg-test-1@example.invalid` and disables Save. Root canceled contact creation; no contact was saved.
+The owner then approved CMG Synthetic Signer 1 (`4miodio@gmail.com`) and CMG Synthetic Signer 2 (`robspeciale@gmail.com`).
+Signer 1 is saved once and reused. Single saves all nine fields for signer 1; the current account is CC.
+The two-recipient plan counted the current account and blocked adding signer 2. No upgrade was purchased.
+The owner separately approved replacing only the current account's Dual draft recipient entry with signer 2.
+Signer 2 is now saved once. The replacement transferred exactly nine right/lower fields and preserved all nine left/upper signer 1 fields.
+The current account is not retained as a third CC recipient. Saved account and existing contact details remain unchanged.
+Each Dual signer has five initials and four signatures, one field on each page. All eighteen individual Required checks pass.
+Field types, positions, and sizes stay unchanged. The saved reload retains all eighteen assignments and unchanged geometry.
+Both synthetic drafts remain unsent and unsigned. No new upload occurred. Recovery uses a reviewed draft correction; the provider has no Undo for replacement.
+Keep every older draft and fixture. Legal review and completed signed appearance remain open.
+Push, PR, finalization, email, signatures, purchases, deletion, CMG database writes, Production changes, and DNS changes remain excluded.
+Do not send mail, save contacts, purchase access, or change a CMG record without separate exact approval.
+See HANDOFF for file hashes, render limits, and the remaining full signing test.
 
 ## Bundled LOR documents
 
@@ -55,7 +109,8 @@ It does not advance the claim status and does not consume the dispatch lease.
 The downloaded PDF replaces supported data tags with the available claim values.
 It keeps every initial and signature tag: `i1`–`i4`, `i8`, `s5`–`s7`, `s9` for `H1`.
 A two-signer letter also keeps `j1`–`j4`, `j8`, `t5`–`t7`, `t9` for `H2`.
-The API uses role-qualified tags; successful recognition in the manual web upload remains unverified.
+The API uses role-qualified tags. The revised manual outputs pass synthetic web recognition and separate recipient assignment in the retained v3 drafts.
+This does not verify a real claim's Preview download, legal acceptance, completed signatures, or filing.
 PandaDoc's [web upload guide](https://support.pandadoc.com/en/articles/9714598-field-tags-recognition) requires field placement and recipient assignment.
 Its [API tag guide](https://developers.pandadoc.com/docs/field-tags) describes a separate role-qualified format.
 Do not infer manual field recognition from a passing local tag test.
@@ -197,7 +252,7 @@ Use isolated test data and approved signer addresses.
 13. Verify replay, concurrency, delayed-webhook, and uncertain-send recovery.
 14. Confirm no duplicate document, notification, feed item, or status history.
 15. Verify customer and partner access boundaries.
-16. Record exact results before requesting platform activation.
+16. Record exact results before requesting the next Production release.
 
 The webhook path is `/api/pandadoc/webhook`.
 Simple mode returns 404 before processing the body.
@@ -209,7 +264,7 @@ Do not clear ledger rows or retry an uncertain send without checking provider st
 ## Production activation
 
 Production key changes, webhook changes, deployments, and live sends each require approval.
-Production runs `SITE_MODE=platform` after the approved invitation checks passed on 2026-10-07.
+Production platform activation is recorded as complete. Keep Production unchanged during remaining acceptance unless the owner approves an exact change.
 Track retention, export, erasure, and legal holds as separate release work in RELEASE_STATE.
 The manual provider remains available in platform mode without a PandaDoc API key.
 
