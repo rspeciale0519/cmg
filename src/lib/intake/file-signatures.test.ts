@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { deflateRawSync } from "node:zlib";
+import { crc32, deflateRawSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
 import { MAX_FILE_BYTES } from "@/lib/validators/files";
 import { verifyFileSignature } from "./file-signatures";
@@ -21,15 +21,6 @@ function checkedReader(bytes: Uint8Array) {
 
 async function recognizes(mime: string, bytes: Uint8Array) {
   return verifyFileSignature(mime, bytes.length, checkedReader(bytes));
-}
-
-function crc32(bytes: Uint8Array) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
-  }
-  return (crc ^ 0xffffffff) >>> 0;
 }
 
 type ZipOptions = {
