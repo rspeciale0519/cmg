@@ -141,11 +141,15 @@ Do not request or repeat this consumed approval. Other account, consent, file, s
 
 Records CI run `39643163538` at `c032ee3` fails at the audit for development-only Vite `8.2.1`. The database job and Preview pass; type, lint, unit, and build steps skip.
 The owner approved the exact local Vite `8.2.4` installation and repair. A clean install with setup scripts disabled, audit, dependency-tree, type, lint, and independent scope checks pass.
+
 The repair changes eighteen development-only lock records. The manifest and all 115 production entries remain unchanged. Build passes.
 A prior full unit run has one tooling timeout: 1,675 pass and 56 skip. The unchanged tooling file passes in isolation.
+
 The final full run passes 1,676 tests and skips 56 database/live tests. No test rule or timeout changed.
+
 Signed `5c3886d` is published as draft PR #27 with one lockfile. Exact-head CI `39651682681` passes both jobs: 1,676 unit tests, 1,350 pgTAP assertions, and 243 selected database tests.
 Unit skips 56 database/live tests; database skips one live PandaDoc test. The automatic Preview is Ready.
+
 Do not request installation approval again. Shared merges and Production releases remain separate owner actions.
 
 **Owner action:** approve the next exact hosted write batch before it changes hosted state. Remaining examples include interruption/retry, a direct internal-file refusal, or non-overwrite. Scheduler attribution, legal review, and manual signing remain open. The 68-byte PNG has an invalid IDAT checksum; do not use it as image-decoder proof.

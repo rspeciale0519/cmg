@@ -33,16 +33,22 @@ Do not report this CI run as green.
 The [Vite advisory](https://github.com/advisories/GHSA-587h-7wmj-h5pm) lists `8.2.4` as patched for this release line. A separate `codex/vite-audit-repair` branch starts at verified `develop`.
 The owner approved local installation and checks. Both npm 10 exact-update attempts failed with `edgesOut` before producing a patch.
 The existing npm 11 CLI under Node 22 generated the repair. A clean npm 10 install with setup scripts disabled passed afterward.
+
 Only eighteen development lock records changed: Vite `8.2.4`, Rolldown `1.2.15`, its optional bindings, and Oxc types. The manifest, root metadata, and all 115 production entries are unchanged.
 The audit reports zero vulnerabilities. Dependency-tree, type, lint, build, and independent scope checks pass.
+
 The first full unit attempt was stopped after 455.768 seconds without completed results. A detailed rerun passed 1,675 tests, failed one 5,000 ms tooling timeout, and skipped 56 database/live tests.
 The unchanged tooling file then passed all four cases in isolation. The final full rerun passes 120 files and 1,676 tests; 13 files and 56 database/live tests skip.
 Its previously timed-out case passes in 2,310 ms. The final process exits zero after 437.449 seconds.
+
 The delay has no confirmed cause. No test assertion, pool, isolation, or timeout was changed.
+
 Signed commit `5c3886d6cb555341746f22c1da49d778eead85a5` is published in draft [PR #27](https://github.com/rspeciale0519/cmg/pull/27), targeting `develop`. It contains only `package-lock.json`.
+
 Exact-head CI run `39651682681` passes both jobs. Verify passes audit, type check, lint, build, and 1,676 unit tests; 56 database/live tests skip.
 The database job passes all 44 pgTAP files and 1,350 assertions. Its selected Vitest suites pass 34 files and 243 tests; one live PandaDoc test skips.
 The automatic Preview is Ready; its Vercel commit status is successful. The older records CI failure remains valid for its unchanged lockfile.
+
 Keep the audit active. Shared merges and Production changes remain unapproved.
 
 ### Current homeowner profile acceptance
