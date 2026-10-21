@@ -1,6 +1,6 @@
 # CMG release handoff — engineering evidence
 
-Reconciled 2026-10-20. The current section supersedes older dated release and deployment claims below.
+Reconciled 2026-10-21. The current section supersedes older dated release and deployment claims below.
 Rewrite it in place. Do not append dated sections.
 The full dated record is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
 
@@ -23,6 +23,28 @@ Production alias inspection resolves to Ready `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF`
 Current unauthenticated Production `/portal` and `/partner` return 307 to `/login`; this matches the owner-recorded October 7 platform activation.
 No Production setting, DNS record, or message changed during this review.
 The later combined Preview empty-file check spent a hosted rate-limit attempt, as recorded below.
+
+### Current homeowner profile acceptance
+
+The October 21 batch used PR #24 at `d523469` and existing test homeowner `rob@miodiollc.com`.
+The saved CMG connection resolves to project `vdtqxglhlgatpbgehsjk` in organization `hzvstnfnlwohkessbnxg`. The project ID was verified before read-only SQL. No Supabase CLI setup was assumed.
+
+Exactly four submissions ran once each. Empty first name returned `First name is required.` Phone `123` returned `Enter a phone number we can reach you on, or leave it empty.`
+Each refusal showed the one-field feedback banner. After both refusals, SQL confirms the original values and `updated_at=2026-09-27 21:46:31.535635+00` remained unchanged.
+
+One save changed `first_name` from `CMG` to `CMG Synthetic Profile Test`. The next save restored `CMG`.
+Both returned `Saved.` and persisted after reload. The original last name `Upload Acceptance Test` and null phone are restored.
+
+The temporary and final snapshots show role `customer`, null company, and active status unchanged.
+The successful saves advanced `updated_at` to `2026-10-21 17:14:09.852622+00`, then `2026-10-21 17:14:56.558493+00`. The timestamp remains new.
+
+The final outbox count since `2026-10-21T16:26:22.741Z` is zero. Captured console warnings and errors are empty.
+Normal sign-in audit and rate records are within approval. No email, upload, password, consent, claim, permission, Production-code, setting, DNS, or backup change was submitted.
+
+The exact batch is complete. Do not repeat it. Other hosted tests still need their exact approvals.
+
+Evidence: `pr24-profile-test-2026-10-21.json`, `pr24-profile-empty-name-refused-2026-10-21.png`, `pr24-profile-invalid-phone-refused-2026-10-21.png`, `pr24-profile-temporary-name-saved-2026-10-21.png`, and `pr24-profile-original-name-reloaded-2026-10-21.png`.
+The browser showed Saving states, both refusals, and both success states. There is no complete raw network trace or independent per-update database log.
 
 ### Current private-file expiry and cleanup evidence
 
@@ -594,7 +616,7 @@ No credential, code, session token, or private link was read.
 Proof images: `pr23-homeowner-documents-mobile-2026-10-17.jpg` and `pr23-homeowner-list-mobile-2026-10-17.jpg` in the session visualization folder.
 The screenshot API included a wider backing surface; a 390-by-844 clip captures the measured document viewport.
 All temporary viewport overrides were reset. The owner later closed the homeowner tab; earlier acceptance evidence remains valid.
-Hosted uploads, downloads with audit entries, questions, profile writes, password changes, consent withdrawal, and sign-out remain untested on this candidate.
+At this earlier PR #23 checkpoint, hosted uploads, audited downloads, and profile writes were untested. The later PR #24 file and profile batches above supersede those limits. Questions, password changes, consent withdrawal, and sign-out remain open on the current candidate.
 
 ### Current vendor acceptance
 

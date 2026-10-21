@@ -1,6 +1,6 @@
 # Release state — CMG Property Solutions
 
-Reconciled 2026-10-20. Rewrite this file in place. Keep exact test evidence in HANDOFF.
+Reconciled 2026-10-21. Rewrite this file in place. Keep exact test evidence in HANDOFF.
 
 Use [HANDOFF.md](temp/HANDOFF.md) for engineering evidence.
 Use [BLOCKERS.md](temp/BLOCKERS.md) for owner decisions.
@@ -167,6 +167,22 @@ The page refuses it. Read-only inspection confirms cancelled session `c68baab2-6
 At the time of the October 19 invalid-file read, one staging object and one unaccepted copy remained, each nine bytes. Cleanup eligibility began October 19 at 11:09:57 PM EDT. The October 20 read below confirms both objects are now absent. No retry, manual cleanup, email, or additional hosted write occurred.
 The October 20 read found zero matching staging objects, unaccepted copies, or document rows for the exact invalid-file path. Cleanup queue rows 12 and 13 each completed with one attempt and no error or dead marker. No worker ran during the read. The rows do not prove which scheduled worker processed them.
 Do not treat current `develop` as launch-ready while the security correction remains unmerged.
+
+### Homeowner profile acceptance
+
+The owner-approved four-submission profile batch completed on October 21 through PR #24 Preview at `d523469`.
+The empty first name and phone `123` each produced the expected refusal once. Read-only SQL confirms the original profile values and update time remained unchanged after both refusals.
+
+One save set the test first name to `CMG Synthetic Profile Test`; one further save restored `CMG`. Both returned `Saved.` and persisted after reload.
+The original last name and null phone are restored. Role, company, and active status stayed unchanged.
+
+The two successful saves advanced `updated_at` to `17:14:09.852622 UTC` and `17:14:56.558493 UTC` on October 21. That timestamp remains new.
+The saved CMG connection was verified against project `vdtqxglhlgatpbgehsjk` before read-only SQL use. No Supabase CLI configuration was assumed.
+
+No new email-outbox row was found since the first attempt. Captured console warnings and errors are empty.
+This exact batch is complete and must not repeat. Normal sign-in records are included. No email, file, password, consent, claim, permission, Production-code, setting, DNS, or backup change was submitted.
+
+Evidence: `pr24-profile-test-2026-10-21.json`. There is no independent per-update database log or complete raw network trace. Other hosted acceptance and owner launch gates remain open.
 
 ### October 20 expiry and cleanup acceptance
 

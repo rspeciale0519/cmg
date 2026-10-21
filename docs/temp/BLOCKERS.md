@@ -1,6 +1,6 @@
 # Owner decision register
 
-Current code and release decisions reconciled 2026-10-20. Other dated decisions retain their recorded scope.
+Current code and release decisions reconciled 2026-10-21. Other dated decisions retain their recorded scope.
 This file lists only current owner-controlled decisions.
 Rewrite it in place. Do not add dated layers.
 The superseded layered version is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/BLOCKERS.md).
@@ -132,6 +132,12 @@ At the time of the October 19 read, one staging object and one unaccepted copy r
 The one-time expiry replay is complete. The saved file is 68 bytes. Its MD5 matches the recorded Storage ETag. No remote SHA-256 comparison is available. One link was issued for the existing 68-byte `synthetic-upload.png` on claim `CMG-2026-0003`. The same link was replayed once after 379.358 seconds and returned Storage JSON 400 `InvalidJWT` for the expired `exp` claim; no file bytes rendered.
 
 One issuance audit row remains. Do not click Download again or reissue this link. No raw link was retained.
+
+The exact October 21 homeowner profile batch is complete. Both invalid submissions were refused without advancing the stored update time. One temporary-name save and one restoration save passed with database readback and reload.
+The original first name, last name, and null phone are restored. Role, company, and active status stayed unchanged. The update timestamp remains new.
+
+The verified saved CMG connection supplies read-only checks without browser reauthentication. No new outbox row was found; captured console warnings and errors are empty.
+Do not request or repeat this consumed approval. Other account, consent, file, signing, and release requirements remain open.
 
 **Owner action:** approve the next exact hosted write batch before it changes hosted state. Remaining examples include interruption/retry, a direct internal-file refusal, or non-overwrite. Scheduler attribution, legal review, and manual signing remain open. The 68-byte PNG has an invalid IDAT checksum; do not use it as image-decoder proof.
 Remote merge, further live-data tests, and Production deployment remain separate actions. No extension permission was changed.
