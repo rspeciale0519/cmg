@@ -667,7 +667,12 @@ All three remain retained. No record correction or deletion was attempted.
 
 Outbox `edf69c04-a420-485a-a1b5-e7d554fe8162` uses `referral_staff_alert` and the verified CMG staff inbox.
 Its status is `sent`, attempts is one, and last error is null. The sent timestamp is `2026-10-21T19:12:11.144Z`.
-This proves provider acceptance, not delivery. The Resend session expired; owner sign-in was requested for read-only delivery verification.
+
+After sign-in, Resend reports Delivered to `Austin@CMGPropertySolutions.net` for the matching subject.
+Subject: "New referral CMG-2026-0006 — CMG Test Vendor". Provider record: `01a15fe0-cf49-7eec-ac11-1ac3d5a4e957`.
+This confirms provider delivery. Independent recipient-inbox receipt was not checked.
+Provider proof is `pr24-vendor-referral-resend-delivered-2026-10-21.png` in the session visualization folder.
+
 No second submission, manual resend, claim acceptance, customer email, access grant, upload, or worker invocation occurred.
 
 The prior opaque Cloudflare-frame warnings and errors did not prevent this successful submission. Full request traces remain unavailable.

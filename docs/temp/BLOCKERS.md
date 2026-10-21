@@ -84,7 +84,8 @@ It created synthetic claim `CMG-2026-0006`; the vendor list now shows claims 000
 One claimant and summary persist. No consent, document, or claim-event row was created.
 
 Three audit entries persist, including two automatic entries omitted from the approval description. This discrepancy was disclosed; no correction or deletion occurred.
-One staff-only outbox alert is sent on its first attempt. Provider delivery awaits restored Resend access.
+One staff-only outbox alert is sent on its first attempt. Resend reports Delivered for the matching subject and recipient. Independent inbox receipt remains unverified.
+
 The referral submission approval is consumed. Do not repeat it or manually resend its email.
 
 Other vendor writes and notification tests still need exact approval.

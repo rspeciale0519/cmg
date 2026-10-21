@@ -296,7 +296,7 @@ The vendor list now shows claims 0005 and 0006. The new summary opens with the e
 Database readback confirms one primary claimant, one partner summary, and no consent, document, or claim-event rows.
 
 The audit has three entries: two automatic inserts and the explicit referral action. The approval description understated this as one entry.
-One staff-only outbox row is sent after one attempt, without an error. Provider delivery remains unverified while Resend sign-in is pending.
+One staff-only outbox row is sent after one attempt, without an error. Resend reports Delivered for the matching subject and recipient. Independent inbox receipt remains unverified.
 
 No second submission, resend, claim acceptance, customer email, upload, or access grant occurred. Test records remain retained.
 Other notifications, direct actions, and full request traces remain open. Further hosted writes need exact approval. Production code, settings, and DNS stay unchanged.
