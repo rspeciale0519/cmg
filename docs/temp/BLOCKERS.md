@@ -78,7 +78,17 @@ The owner sees one matching note after reload, labeled `Partner`. The vendor see
 Claim 0005's customer-only event stays hidden from the vendor. Both layouts fit without global overflow; captured warning/error logs are empty.
 The entry remains in the shared Production database. No email was authorized; source review confirms this visibility excludes the homeowner email path.
 Read-only database inspection confirms one matching `partner` note. The outbox has zero rows created since October 20, 00:37 UTC.
-Full network traces remain unverified. Other vendor writes and notification tests still need exact approval.
+
+Full network traces remain unverified. The later approved referral batch completed once on October 21 through PR #24.
+It created synthetic claim `CMG-2026-0006`; the vendor list now shows claims 0005 and 0006.
+One claimant and summary persist. No consent, document, or claim-event row was created.
+
+Three audit entries persist, including two automatic entries omitted from the approval description. This discrepancy was disclosed; no correction or deletion occurred.
+One staff-only outbox alert is sent on its first attempt. Provider delivery awaits restored Resend access.
+The referral submission approval is consumed. Do not repeat it or manually resend its email.
+
+Other vendor writes and notification tests still need exact approval.
+
 Owner sign-in and this one-entry approval are resolved. Do not post the note again or sign out the current test sessions.
 This permits no file, invitation, access, Git, Production code/settings, or DNS change.
 Remaining direct actions, data-changing acceptance, and full request traces remain open.

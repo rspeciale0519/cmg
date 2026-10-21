@@ -19,7 +19,7 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 | Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
 
-No Production deployment, DNS record, or email changed during this review.
+No Production deployment or DNS record changed. The approved vendor referral and staff alert changed hosted test data, as recorded below.
 One later empty-file check spent a shared hosted rate-limit attempt; its exact effect is recorded below.
 The owner-approved PR #23 Preview setup changed four branch overrides and added one Turnstile hostname.
 The later separately approved PR #24 setup added four overrides only for `codex/security-upload-session-checks` and one more hostname.
@@ -290,7 +290,17 @@ Read-only database inspection confirms exactly two claim events, including the n
 The outbox has zero rows created since October 20, 00:37 UTC. Source review also excludes the homeowner email path for Partner notes.
 Full network traces remain unverified. The owner company page displays a correct branch Preview intake link, and its GET opens the form.
 The GET preserves the referral code in the URL. It does not establish company resolution or persistence without submission.
-Referral submission, notifications, and direct actions remain open. No other hosted write, Production setting, or DNS change occurred.
+
+One approved referral was submitted on October 21 through PR #24 at `d523469`. It created `CMG-2026-0006` for the existing test vendor.
+The vendor list now shows claims 0005 and 0006. The new summary opens with the expected synthetic name, address, and New intake status.
+Database readback confirms one primary claimant, one partner summary, and no consent, document, or claim-event rows.
+
+The audit has three entries: two automatic inserts and the explicit referral action. The approval description understated this as one entry.
+One staff-only outbox row is sent after one attempt, without an error. Provider delivery remains unverified while Resend sign-in is pending.
+
+No second submission, resend, claim acceptance, customer email, upload, or access grant occurred. Test records remain retained.
+Other notifications, direct actions, and full request traces remain open. Further hosted writes need exact approval. Production code, settings, and DNS stay unchanged.
+
 The mobile menu requires horizontal scrolling. Right Arrow reveals the full company-profile link, and Enter opens it.
 This confirms keyboard access without a CSS change. The initial partial label alone did not prove an access defect.
 Owner invitation disclosures open, focus the email field with Tab, and close at measured 390px and 1280px.

@@ -169,7 +169,8 @@ Proof images are in the session visualization folder: `pr23-turnstile-seven-host
 Additional form images are `pr23-intake-mobile-2026-10-17.jpg`, `pr23-contact-mobile-2026-10-17.jpg`, and `pr23-contact-desktop-2026-10-17.jpg`.
 All temporary viewport overrides were cleared. Browser tabs remain open. The owner sign-in tab uses `/login?next=%2Fadmin`.
 The owner was asked to enter credentials and complete MFA only on that page. No password, code, or session token was read.
-T20 remains incomplete: server validation, rate-limit counters, persistence, referral submission, and email require separately approved data-changing tests.
+At this earlier checkpoint, T20 still required separately approved validation, rate-limit, persistence, referral, and email tests.
+The later PR #24 referral result is recorded under [Current vendor acceptance](#current-vendor-acceptance); public intake acceptance remains open.
 The authenticated Settings panel now confirms Manual, bundled PDF, and webhook key not set.
 Rollback would remove only the four new branch overrides and the added hostname, then rebuild Preview. That external change needs separate approval.
 
@@ -462,7 +463,8 @@ The size validator runs on submit, not selection. Accepted files create sessions
 Signed downloads create audit entries. These tests require exact separate approval because Preview shares the Production database.
 Do not promise a direct internal-file action refusal through the browser when that file has no homeowner button.
 List exclusion and backend authorization tests are different evidence. A direct hosted action check remains open until a supported test path exists.
-Vendor positive-company acceptance also remains open; creating a referral can queue a staff email and needs its own approval.
+At this earlier checkpoint, positive company acceptance remained open.
+The later approved referral and staff alert are recorded under [Current vendor acceptance](#current-vendor-acceptance).
 Three valid synthetic PNG fixtures are ready in session scratch folder `cmg-pr24-file-tests-e142f5f` under the visualization folder.
 The owner and homeowner fixtures each have 26,214,400 bytes; the over-limit fixture has 26,214,401 bytes.
 All three reopen, verify, and decode as 160 by 90 RGB PNGs. Their manifest records exact SHA-256 values.
@@ -647,6 +649,36 @@ At this earlier PR #23 checkpoint, hosted uploads, audited downloads, and profil
 
 ### Current vendor acceptance
 
+The owner approved one referral submission on PR #24 at `d523469` on October 21.
+The saved CMG connection was verified against project `vdtqxglhlgatpbgehsjk` before read-only SQL.
+Vendor1 Tester used the existing account `4miodio+cmgvendor@gmail.com` and active company `CMG Test Vendor`.
+Its profile is `377a70f3-b200-4221-aff4-6cbf274ed25c`; its company is `9c0aa48d-76da-4b07-873e-7273aee3ed97`.
+The initial company claim count was one. The exact synthetic email had no claimant or outbox match.
+
+One click created `CMG-2026-0006`, UUID `76824e46-c8de-4ad9-89b2-6225032ceaee`, at `2026-10-21T19:12:10.685417Z`.
+The page showed Referral sent and the new reference. The vendor list then showed exactly claims 0005 and 0006.
+The new summary opens with the approved name, address, and New intake status. Milestones and settlement remain private.
+Readback confirms exact input, one primary claimant, one partner summary, and zero consent, document, or claim-event rows.
+
+Three audit entries were created: `claims.insert` 197, `claimants.insert` 198, and `claim.partner_referral` 199.
+The first two are normal insert-trigger entries with null actors. Entry 199 identifies the approved vendor actor and company.
+The approval description counted only one audit entry. It understated the two automatic entries; this discrepancy was disclosed to the owner.
+All three remain retained. No record correction or deletion was attempted.
+
+Outbox `edf69c04-a420-485a-a1b5-e7d554fe8162` uses `referral_staff_alert` and the verified CMG staff inbox.
+Its status is `sent`, attempts is one, and last error is null. The sent timestamp is `2026-10-21T19:12:11.144Z`.
+This proves provider acceptance, not delivery. The Resend session expired; owner sign-in was requested for read-only delivery verification.
+No second submission, manual resend, claim acceptance, customer email, access grant, upload, or worker invocation occurred.
+
+The prior opaque Cloudflare-frame warnings and errors did not prevent this successful submission. Full request traces remain unavailable.
+The exact input is retained in `pr24-vendor-referral-proposal-2026-10-21.json`.
+Result evidence is `pr24-vendor-referral-acceptance-2026-10-21.json` in the session visualization folder.
+Prepared-form, success, and vendor-list images use the matching `pr24-vendor-referral-` prefix and `2026-10-21.png` date suffix.
+
+This approval is consumed. Do not submit again. Production code, settings, DNS, and unrelated retained work remain unchanged.
+
+The following earlier read checks retain their original dates and scope.
+
 The owner signed in as `robspeciale@gmail.com` on PR #23 at `15ea5f6`. Its portal identifies RS Gmail and CMG Synthetic Vendor Test.
 This company has no linked claims. The account is sufficient for empty pages and refusal tests; no new invitation is needed.
 
@@ -690,7 +722,7 @@ No password, code, or session token was read.
 | PR #24 linked-vendor check | Result |
 |---|---|
 | Positive pages | List, claim 0005 summary, activity, and company profile pass eight layouts at measured 1280px and 390px. Each has one main heading and no global overflow. |
-| Company and claim | The profile shows CMG Test Vendor. The list contains only claim 0005. Its summary shows the expected homeowner, property, status, and milestones. |
+| Company and claim | At this earlier read, the profile shows CMG Test Vendor and the list contains only claim 0005. Its summary matches the expected fields. The later approved referral adds claim 0006, as recorded above. |
 | Data limits | No policy, contact, document, or download control appears on the claim summary. Settlement remains private while the claim is under review. These are rendered-page checks, not direct data-action tests. |
 | Activity exclusion before the approved write | Both widths show the empty partner feed. The existing customer-only event does not appear. No partner/shared event exists at this point. The later approved note test is recorded below. |
 | Claim refusal | Unattributed claim 0003 and an invalid UUID return identical main text and document titles on summary/activity at both widths. Eight cases pass. No claim data appears. |
