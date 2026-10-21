@@ -40,6 +40,8 @@ The main checkout has unrelated dirty files. They remain unstaged and preserved.
 | #23 | Open and draft at `15ea5f6a5d21a9b66bef84e8f61d24d3a1a5e26c`. Security fixes have green verify/database jobs. Its one approved Preview rebuild is Ready. No submitted GitHub review, merge approval, or Production release approval exists. |
 | #24 | Open and draft at `d523469e88149c76b8181ed4f277d757f608f47c`, targeting `develop`, with 21 changed files. CI run `39351780332` passes both jobs after the test-fixture repair. The automatic Preview is Ready. No remote merge or Production approval exists. |
 | #25 | Open and draft at `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26`, targeting `develop`. It contains only the six reviewed PDF files. CI run `39349972823` passes both jobs. Its automatic Preview is Ready; real signing and legal acceptance remain open. |
+| #26 | Open and draft with five documentation files only. Recorded run `39643163538` fails the inherited Vite audit; its database job and Preview pass. It does not contain the dependency repair. |
+| #27 | Open and draft at `5c3886d6cb555341746f22c1da49d778eead85a5`, targeting `develop`. One lockfile updates development Vite to `8.2.4`; all production entries remain unchanged. Local checks and both CI jobs in run `39651682681` pass; the automatic Preview is Ready. |
 
 PR #22's review suggestion to replace `retry()` with `unstable_retry()` conflicts with the installed Next.js 16.3.8 implementation, types, and documentation.
 Keep `retry()`; no source change was made for that comment.
@@ -167,6 +169,27 @@ The page refuses it. Read-only inspection confirms cancelled session `c68baab2-6
 At the time of the October 19 invalid-file read, one staging object and one unaccepted copy remained, each nine bytes. Cleanup eligibility began October 19 at 11:09:57 PM EDT. The October 20 read below confirms both objects are now absent. No retry, manual cleanup, email, or additional hosted write occurred.
 The October 20 read found zero matching staging objects, unaccepted copies, or document rows for the exact invalid-file path. Cleanup queue rows 12 and 13 each completed with one attempt and no error or dead marker. No worker ran during the read. The rows do not prove which scheduled worker processed them.
 Do not treat current `develop` as launch-ready while the security correction remains unmerged.
+
+### Current CI audit and separate repair
+
+The profile batch passed, but records CI run `39643163538` at `c032ee3` fails at the dependency audit. It reports one high finding in development-only Vite `8.2.1`.
+Type check, lint, normal unit tests, and build were skipped. The database job passes 44 pgTAP files with 1,350 assertions and 243 Vitest tests. One live PandaDoc test skips. Exact-head Vercel status is successful.
+Do not report this CI run as green.
+
+The [Vite advisory](https://github.com/advisories/GHSA-587h-7wmj-h5pm) lists `8.2.4` as patched for this release line. A separate `codex/vite-audit-repair` branch starts at verified `develop`.
+The owner approved local installation and checks. Both npm 10 exact-update attempts failed with `edgesOut` before producing a patch.
+The existing npm 11 CLI under Node 22 generated the repair. A clean npm 10 install with setup scripts disabled passed afterward.
+Only eighteen development lock records changed: Vite `8.2.4`, Rolldown `1.2.15`, its optional bindings, and Oxc types. The manifest, root metadata, and all 115 production entries are unchanged.
+The audit reports zero vulnerabilities. Dependency-tree, type, lint, build, and independent scope checks pass.
+The first full unit attempt was stopped after 455.768 seconds without completed results. A detailed rerun passed 1,675 tests, failed one 5,000 ms tooling timeout, and skipped 56 database/live tests.
+The unchanged tooling file then passed all four cases in isolation. The final full rerun passes 120 files and 1,676 tests; 13 files and 56 database/live tests skip.
+Its previously timed-out case passes in 2,310 ms. The final process exits zero after 437.449 seconds.
+The delay has no confirmed cause. No test assertion, pool, isolation, or timeout was changed.
+Signed commit `5c3886d6cb555341746f22c1da49d778eead85a5` is published in draft [PR #27](https://github.com/rspeciale0519/cmg/pull/27), targeting `develop`. It contains only `package-lock.json`.
+Exact-head CI run `39651682681` passes both jobs. Verify passes audit, type check, lint, build, and 1,676 unit tests; 56 database/live tests skip.
+The database job passes all 44 pgTAP files and 1,350 assertions. Its selected Vitest suites pass 34 files and 243 tests; one live PandaDoc test skips.
+The automatic Preview is Ready; its Vercel commit status is successful. The older records CI failure remains valid for its unchanged lockfile.
+Keep the audit active. Shared merges and Production changes remain unapproved.
 
 ### Homeowner profile acceptance
 
