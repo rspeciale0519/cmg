@@ -18,9 +18,10 @@ import manifest from "./lor-tag-manifest.json";
  * `pandadoc.ts` uploads the bundled tagged PDF and lets PandaDoc fill the text
  * tags from the field map. Without an API key nobody is there to do that, so
  * this module does the same substitution locally: every *data* tag becomes the
- * claim's value, and every signature and initial tag is left exactly as drawn.
- * Staff upload the result to PandaDoc's web app, where those surviving tags are
- * what PandaDoc detects and turns into signature fields.
+ * claim's value. Signature and initial tags keep their exact text and position,
+ * but use invisible text rendering so their glyphs do not cover printed lines.
+ * Staff upload the result to PandaDoc's web app for field recognition.
+ * Both variants need a provider check when the PDF preparation changes.
  *
  * Which tag is which is not guessed here. `scripts/build-lor-tagged-pdfs.py`
  * drew every tag and therefore knows every one of them; `--manifest` exports
@@ -28,11 +29,9 @@ import manifest from "./lor-tag-manifest.json";
  * and `lor-prefill.test.ts` checks that export against the bundled PDFs so a
  * regenerated asset cannot drift away from it silently.
  *
- * The substitution replaces the drawn string rather than painting over it.
- * Covering a tag with ink would leave the characters `{{t:H1:ph___}}` in the
- * page's text — invisible, and still exactly what PandaDoc scans for on
- * upload, so every filled field would come back as an empty field laid over
- * the value. A tag is only gone when the string is gone.
+ * Data tags are replaced in the page text. Signature tags remain searchable
+ * text for PandaDoc, but their text rendering mode prevents glyph paint. White
+ * paint would hide the tags but could also cover parts of printed lines.
  */
 
 type Placement = {
@@ -125,6 +124,65 @@ function contentRefs(pdf: PDFDocument, pageIndex: number): PDFRef[] {
   return parts.filter((part): part is PDFRef => part instanceof PDFRef);
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function pdfNumber(value: number): string {
+  return String(value).replace(".", "\\.");
+}
+
+/** Hide only the tagged glyphs that the manual uploader needs to detect. */
+function hideSignatureTags(pdf: PDFDocument, signerCount: number): void {
+  const pages = pdf.getPages().map((_, pageIndex) =>
+    contentRefs(pdf, pageIndex).flatMap((ref) => {
+      const stream = pdf.context.lookup(ref);
+      return stream instanceof PDFRawStream
+        ? [{ ref, content: Buffer.from(decodePDFRawStream(stream).decode()).toString("latin1"), changed: false }]
+        : [];
+    }),
+  );
+  const placements = VARIANTS[lorVariantKey(signerCount)].signature;
+
+  for (const placement of placements) {
+    const showTag = new RegExp(`\\(${escapeRegExp(escapePdfString(placement.tag))}\\)\\s+Tj`, "g");
+    const matches = pages.flat().reduce(
+      (total, stream) => total + [...stream.content.matchAll(showTag)].length,
+      0,
+    );
+    if (matches !== 1) {
+      const reason = matches === 0 ? "missing" : "duplicate";
+      throw new Error(`Expected one signing tag ${placement.tag} on page ${placement.page}; found ${reason}.`);
+    }
+
+    const standaloneObject = new RegExp(
+      `(?<!\\S)BT\\s+1\\s+0\\s+0\\s+1\\s+${pdfNumber(placement.x)}\\s+${pdfNumber(placement.y)}\\s+Tm\\s+\\(${escapeRegExp(escapePdfString(placement.tag))}\\)\\s+Tj\\s+T\\*\\s+ET(?!\\S)`,
+      "g",
+    );
+    const pageStreams = pages[placement.page - 1] ?? [];
+    const positioned = pageStreams.flatMap((stream) =>
+      [...stream.content.matchAll(standaloneObject)]
+        .map((match) => match[0])
+        .map((object) => ({ stream, object })),
+    );
+    if (positioned.length !== 1) {
+      const reason = positioned.length === 0 ? "missing" : "duplicate";
+      throw new Error(`Expected one positioned signing tag ${placement.tag} on page ${placement.page}; found ${reason}.`);
+    }
+
+    const { stream, object } = positioned[0];
+    stream.content = stream.content.replace(object, `q 1 g ${object.replace(/^BT\b/, "BT 3 Tr")} Q`);
+    stream.changed = true;
+  }
+
+  for (const stream of pages.flat()) {
+    if (stream.changed) {
+      const ref = stream.ref;
+      pdf.context.assign(ref, pdf.context.flateStream(Buffer.from(stream.content, "latin1")));
+    }
+  }
+}
+
 /** The operators that draw one value inside the box its tag occupied. */
 function showText(
   raw: string,
@@ -207,6 +265,8 @@ export async function buildPrefilledLorPdf(
       }
     }
   }
+
+  hideSignatureTags(pdf, signerCount);
 
   return pdf.save();
 }

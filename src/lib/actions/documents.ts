@@ -15,7 +15,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isDocumentStoragePath } from "@/lib/validators/storage-path";
 import { registerCleanupIntent, removeOrQueueExact } from "@/lib/storage-cleanup";
-import { validateUploads } from "@/lib/validators/files";
+import { safeOriginalName, validateUploads } from "@/lib/validators/files";
+import { verifyFileSignature } from "@/lib/intake/file-signatures";
 import { parsePrivateUploadManifest } from "@/lib/private-upload/manifest";
 import { finalizePrivateUploadSession, privateUploadRetryMessage } from "@/lib/private-upload/finalize";
 import { checkPrivateUploadFinalizeLimit, checkPrivateUploadPrepareLimit } from "@/lib/private-upload/rate-limit";
@@ -41,6 +42,29 @@ const SIGNED_URL_TTL_SECONDS = 300;
 
 const NOT_YOURS =
   "That document is not available to you, or it no longer exists.";
+const FILE_SIGNATURE_ERROR = "One or more files do not match their file type. Choose valid files and try again.";
+
+async function hasValidFileSignatures(
+  files: Array<{ file: File; mime: string; size: number }>,
+): Promise<boolean> {
+  for (const upload of files) {
+    try {
+      const valid = await verifyFileSignature(
+        upload.mime,
+        upload.size,
+        async (start, endInclusive) =>
+          new Uint8Array(await upload.file.slice(start, endInclusive + 1).arrayBuffer()),
+      );
+      if (!valid) return false;
+    } catch (error) {
+      if (error instanceof DOMException && ["AbortError", "NotFoundError", "NotReadableError"].includes(error.name)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+  return true;
+}
 
 /**
  * Upload lands in two systems and they can disagree, so the order is chosen to
@@ -120,6 +144,14 @@ export async function uploadClaimDocument(
       status: "error",
       message: "Choose a file to upload.",
       fieldErrors: { files: "Choose a file to upload." },
+      values: typed,
+    };
+  }
+  if (!(await hasValidFileSignatures(validation.files))) {
+    return {
+      status: "error",
+      message: FILE_SIGNATURE_ERROR,
+      fieldErrors: { files: FILE_SIGNATURE_ERROR },
       values: typed,
     };
   }
@@ -305,11 +337,13 @@ export async function issueDocumentDownload(
     return { status: "error", message: NOT_YOURS };
   }
 
+  // Stored names can predate the upload sanitizer.
+  const filename = safeOriginalName(document.original_name);
   const admin = createAdminClient();
   const { data: signed, error: signError } = await admin.storage
     .from(BUCKET)
     .createSignedUrl(document.storage_path, SIGNED_URL_TTL_SECONDS, {
-      download: document.original_name,
+      download: filename,
     });
 
   if (signError || !signed?.signedUrl) {
@@ -345,8 +379,8 @@ export async function issueDocumentDownload(
   return {
     status: "success",
     url: signed.signedUrl,
-    filename: document.original_name,
-    message: `Link ready for ${document.original_name}. It expires in 5 minutes.`,
+    filename,
+    message: `Link ready for ${filename}. It expires in 5 minutes.`,
   };
 }
 

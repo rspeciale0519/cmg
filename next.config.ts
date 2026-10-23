@@ -28,7 +28,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      {
+        source: "/auth/confirm",
+        // This URL carries a recovery token. Keep the global rule from replacing
+        // the route handler's no-referrer policy on the actual HTTP response.
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+    ];
   },
 
   outputFileTracingExcludes: {
@@ -39,10 +47,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Private platform upload actions still use multipart bodies. Public
-      // intake sends metadata only and uploads bytes directly to Storage.
-      // This framework setting does not change Vercel's request payload limit.
-      bodySizeLimit: "256mb",
+      // Upload bytes go directly to Storage. Action bodies carry form fields
+      // and file metadata only. Vercel still caps hosted requests at 4.5 MB;
+      // this bound stops a local or self-hosted process from buffering a
+      // 256 MiB multipart body into memory.
+      bodySizeLimit: "2mb",
     },
   },
 };

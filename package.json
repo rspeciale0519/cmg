@@ -34,16 +34,16 @@
     "@react-email/components": "^1.0.12",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.18.1",
     "server-only": "^0.0.1",
-    "zod": "^4.4.3"
+    "zod": "4.6.6"
   },
   "overrides": {
-    "@next/eslint-plugin-next@16.3.8": {
+    "@next/eslint-plugin-next@16.4.3": {
       "fast-glob": "$fast-glob"
     }
   },
@@ -56,10 +56,10 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "4.1.12"
   }
 }
