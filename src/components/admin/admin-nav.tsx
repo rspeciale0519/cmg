@@ -65,8 +65,14 @@ export function AdminNav({
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
+                  onFocus={(event) =>
+                    event.currentTarget.scrollIntoView({
+                      inline: "nearest",
+                      block: "nearest",
+                    })
+                  }
                   className={cx(
-                    "relative flex items-center gap-2 whitespace-nowrap px-3 py-[14px] text-[13px] leading-[1.4] no-underline",
+                    "relative flex scroll-mx-1 items-center gap-2 whitespace-nowrap px-3 py-[14px] text-[13px] leading-[1.4] no-underline focus-visible:outline-offset-[-2px]",
                     "transition-colors duration-150",
                     "after:absolute after:inset-x-2 after:-bottom-px after:h-[2px] after:content-['']",
                     active
