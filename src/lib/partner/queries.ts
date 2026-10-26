@@ -51,10 +51,10 @@ export async function loadPartnerClaimPage(from: number, to: number): Promise<{
   return { summaries: (data ?? []) as PartnerClaimSummary[], total: count ?? 0 };
 }
 
-export const requirePartnerClaim = cache(
-  async (claimId: string): Promise<PartnerClaimSummary> => {
+export const loadPartnerClaim = cache(
+  async (claimId: string): Promise<PartnerClaimSummary | null> => {
     await requireRole("partner");
-    if (!isUuid(claimId)) notFound();
+    if (!isUuid(claimId)) return null;
 
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -64,8 +64,15 @@ export const requirePartnerClaim = cache(
       .maybeSingle();
 
     if (error) throw new Error(`Partner claim could not be loaded: ${error.message}`);
-    if (!data) notFound();
-    return data as PartnerClaimSummary;
+    return (data as PartnerClaimSummary | null) ?? null;
+  },
+);
+
+export const requirePartnerClaim = cache(
+  async (claimId: string): Promise<PartnerClaimSummary> => {
+    const summary = await loadPartnerClaim(claimId);
+    if (!summary) notFound();
+    return summary;
   },
 );
 

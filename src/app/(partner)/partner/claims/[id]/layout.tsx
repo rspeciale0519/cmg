@@ -4,8 +4,9 @@ import Link from "next/link";
 import { PortalShell } from "@/components/auth/portal-shell";
 import { PartnerNav } from "@/components/partner/partner-nav";
 import { ClaimTabs } from "@/components/portal/claim-tabs";
+import { NOT_FOUND_TITLE } from "@/lib/authz";
 import { humanizeEnum } from "@/lib/format";
-import { requirePartnerClaim } from "@/lib/partner/queries";
+import { loadPartnerClaim, requirePartnerClaim } from "@/lib/partner/queries";
 import { partnerIdentity } from "@/lib/portal/partner-identity";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,8 +18,11 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const summary = await requirePartnerClaim(id);
-  return { title: summary.claim_ref, robots: { index: false, follow: false } };
+  const summary = await loadPartnerClaim(id);
+  return {
+    title: summary?.claim_ref ?? NOT_FOUND_TITLE,
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function PartnerClaimLayout({
