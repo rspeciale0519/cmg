@@ -1,7 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { cx } from "@/lib/cx";
 import { isAdminRouteActive, type AdminNavItem } from "./nav";
@@ -31,7 +31,16 @@ export function AdminNav({
   counts: NavCounts;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const previousPathname = useRef(pathname);
   const rail = useRef<HTMLDivElement>(null);
+
+  // The shared layout persists across navigation, so refresh its queue counts.
+  useEffect(() => {
+    if (previousPathname.current === pathname) return;
+    previousPathname.current = pathname;
+    router.refresh();
+  }, [pathname, router]);
 
   // The rail is 733px of items in a 390px phone. Left alone it opens at
   // scrollLeft 0, so on Partners, Staff, Audit and Settings the marked item sat
