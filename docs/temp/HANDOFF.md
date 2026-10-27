@@ -1,8 +1,16 @@
 # CMG release handoff — engineering evidence
 
-Verified application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner/staff focus checks remain open. A later records-only commit may advance the PR head.
+On October 27, the owner approved one Preview email-consent test. The form was submitted once. One synthetic lead `2f318635-431a-44ee-b7df-36ce72df34e0` and one email-consent record were saved. The staff menu count changed from three to four after client navigation without a page reload. Two outbox rows addressed to `rob@miodiollc.com` were sent on attempt one; Resend reports both Delivered. Both messages reached the Roundcube inbox. The staff alert matched the synthetic name, phone, email and message; the automatic reply rendered successfully. Keep the test records; do not submit or send again.
 
-Final-source local checks pass: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
+On October 27, staff menu count fix `4c974eacbe6be09a874c9e5fc73f797c83cad41c` was pushed to draft PR #28. In the disposable local database, a synthetic lead changed the count from one to two after staff navigation without a page reload. The staff menu passed desktop and 390px checks; the active phone link remained visible. Simple mode kept the admin page closed; staff and platform modes opened the staff menu. Type, lint, build, and focused tests passed; the full suite passed 1,764 tests and skipped 57. No browser warnings or errors were captured; full network traces were unavailable. The Preview deployment for this commit is Ready. Read-only hosted staff navigation passed at desktop and 390px with the existing lead count; the active phone link stayed visible and no browser warnings or errors were captured. No new hosted lead was created. GitHub verify and database checks passed for this commit. The approved hosted count-change proof passed. One synthetic lead and its synthetic staff MFA setup remain in the disposable database. No hosted data or Production setting changed.
+
+On October 27, the approved Preview contact form was submitted once. One synthetic lead was saved and appeared in the staff list. One alert to `rob@miodiollc.com` was sent on attempt one; Resend reports Delivered. Inbox receipt and the synthetic message contents were verified in Roundcube. The existing staff menu count updated after page refresh. Keep the test records and do not resubmit. Evidence: `contact-preview-result-2026-10-27.json` in session scratch.
+
+Owner menu acceptance on Preview `71bd6ea` passed 46 checks at 1280px and 390px. These include 36 forward/reverse focus cases, six keyboard navigation cases, and four scrolled-page cases. No browser warnings or errors were captured. Staff menu acceptance passed 34 checks: 20 keyboard focus cases, 10 link checks, and four scrolled-page cases. Evidence: `t63-staff-hosted-menu-2026-10-27.json` in session scratch. Evidence: `t63-owner-hosted-menu-2026-10-27.json` and `t63-owner-hosted-phone-settings-2026-10-27.png` in session scratch.
+
+Earlier application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner and staff menu checks passed. A later records-only commit may advance the PR head.
+
+Earlier source checks passed: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
 
 Portable Node 22 was verified by SHA-256. The current local checks used that runtime. No dependency setup scripts ran during the approved scripts-disabled install.
 
@@ -152,7 +160,7 @@ The earlier page reported as staff showed the owner header and did not consume a
 Owner Settings confirms Manual signing, bundled PDF, an unset webhook, Supabase project `vdtqxglhlgatpbgehsjk`, and zero pending or failed outbox entries. This closes only provider configuration. Real manual signing and legal approval remain open.
 Initial keyboard review passed seven of nine checks. Hidden Claims and Settings focus stayed in the stable menu. T63 now focuses the nearest item and sets scroll-mx-1, which applies a 4px inline scroll margin. The resulting scroll distance varies. The component uses focus-visible outline-offset -2px and retains the full 2px ring. The horizontal-only first variant failed vertical geometry 9/9.
 
-The corrected local T63 harness passes 56 owner and adjuster keyboard geometry cases at 390px and 1280px, in forward and reverse order. It also passes eight client-route checks with zero local console errors. The harness excludes the full shell, authentication, and already-scrolled behavior; sampled pageY values were zero. T63 is included in signed PR #28. Hosted owner/staff focus checks remain open.
+The corrected local T63 harness passes 56 owner and adjuster keyboard geometry cases at 390px and 1280px, in forward and reverse order. It also passes eight client-route checks with zero local console errors. The harness excludes the full shell, authentication, and already-scrolled behavior; sampled pageY values were zero. T63 is included in signed PR #28. Hosted owner and staff menu checks passed.
 Historical evidence: `t63-menu-browser-acceptance-2026-10-24.json` and `t63-owner-phone-focus-fixed-2026-10-24.png`. The earlier local changes are now part of signed PR #28; they are not uncommitted.
 
 The three public candidate pages rendered at 1280px and 390px without global horizontal overflow. Mobile menu navigation passed.
@@ -165,7 +173,7 @@ The October 23 zero-row query is dated history. It does not show what happened d
 
 
 
-Preview setup, rebuild, and hostname addition are complete. All four role sign-ins and both MFA checks are verified. Vendor title/access checks pass. Hosted T63 owner/staff focus checks remain open. The earlier owner-header page did not consume a staff sign-in or MFA check.
+Preview setup, rebuild, and hostname addition are complete. All four role sign-ins and both MFA checks are verified. Vendor title/access checks pass. Hosted T63 owner and staff menu checks passed. The earlier owner-header page did not consume a staff sign-in or MFA check.
 
 
 Independent review found no Critical or Important candidate defect.

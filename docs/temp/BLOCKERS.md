@@ -1,8 +1,16 @@
 # Owner decision register
 
-Verified application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner/staff focus checks remain open. A later records-only commit may advance the PR head.
+On October 27, the owner approved one Preview email-consent test. The form was submitted once. One synthetic lead `2f318635-431a-44ee-b7df-36ce72df34e0` and one email-consent record were saved. The staff menu count changed from three to four after client navigation without a page reload. Two outbox rows addressed to `rob@miodiollc.com` were sent on attempt one; Resend reports both Delivered. Both messages reached the Roundcube inbox. The staff alert matched the synthetic name, phone, email and message; the automatic reply rendered successfully. Keep the test records; do not submit or send again.
 
-Final-source local checks pass: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
+On October 27, staff menu count fix `4c974eacbe6be09a874c9e5fc73f797c83cad41c` was pushed to draft PR #28. In the disposable local database, a synthetic lead changed the count from one to two after staff navigation without a page reload. The staff menu passed desktop and 390px checks; the active phone link remained visible. Simple mode kept the admin page closed; staff and platform modes opened the staff menu. Type, lint, build, and focused tests passed; the full suite passed 1,764 tests and skipped 57. No browser warnings or errors were captured; full network traces were unavailable. The Preview deployment for this commit is Ready. Read-only hosted staff navigation passed at desktop and 390px with the existing lead count; the active phone link stayed visible and no browser warnings or errors were captured. No new hosted lead was created. GitHub verify and database checks passed for this commit. The approved hosted count-change proof passed. One synthetic lead and its synthetic staff MFA setup remain in the disposable database. No hosted data or Production setting changed.
+
+On October 27, the approved Preview contact form was submitted once. One synthetic lead was saved and appeared in the staff list. One alert to `rob@miodiollc.com` was sent on attempt one; Resend reports Delivered. Inbox receipt and the synthetic message contents were verified in Roundcube. The existing staff menu count updated after page refresh. Keep the test records and do not resubmit. Evidence: `contact-preview-result-2026-10-27.json` in session scratch.
+
+Owner menu acceptance on Preview `71bd6ea` passed 46 checks at 1280px and 390px. These include 36 forward/reverse focus cases, six keyboard navigation cases, and four scrolled-page cases. No browser warnings or errors were captured. Staff menu acceptance passed 34 checks: 20 keyboard focus cases, 10 link checks, and four scrolled-page cases. Evidence: `t63-staff-hosted-menu-2026-10-27.json` in session scratch. Evidence: `t63-owner-hosted-menu-2026-10-27.json` and `t63-owner-hosted-phone-settings-2026-10-27.png` in session scratch.
+
+Earlier application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner and staff menu checks passed. A later records-only commit may advance the PR head.
+
+Earlier source checks passed: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
 
 Current release-candidate and staff-alert decisions are recorded below. Earlier approvals retain their exact scope.
 This file lists only current owner-controlled decisions.
@@ -20,7 +28,7 @@ This record requests no approval and authorizes no action.
 - PR #28 verified application source is signed at `8ae5c70`. Its local checks, audit, exact-source CI, database job, and Ready Preview pass. A later records-only commit may advance the PR head.
 - The approved exact disposable reset and local checks are complete. Do not request these same actions again.
 - Both candidate CI jobs pass. The initial simple-mode Preview and its thirteen GET checks remain historical evidence. Later hosted setup and account checks have their own exact approval below.
-- The three approved PR #28 setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor read-only checks pass on the current Preview; hosted T63 owner/staff focus checks still need a new bounded login.
+- The three approved PR #28 setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor read-only checks pass on the current Preview; hosted T63 owner and staff focus checks passed.
 - The approved hostname is complete and verified after reopening the widget. It has nine hosts and retains all prior hosts, Managed mode, no pre-clearance, and existing keys. Vendor title checks pass on the current Preview; no staff MFA remains.
 - The owner prohibits further agent emails, invitations, and access grants to `cmgpropertysolutions.net`, including subdomains. Earlier recipient approvals do not override this restriction.
 - Public pages stay public. Restrict private platform access only. No site-wide sign-in wall is approved.
@@ -177,7 +185,7 @@ Local and CI checks have different database selections; HANDOFF records their ex
 
 The owner approved exactly three candidate batches. Four branch-only overrides (`SITE_MODE=platform`, the stable branch `NEXT_PUBLIC_SITE_URL`, and blank `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY`) and one Preview rebuild are complete.
 The approved hostname `cmgps-git-codex-launch-release-candidate-robs-projects-c72886ba.vercel.app` is saved and verified after reopening. Nine hosts are present; all prior hosts and widget settings remain.
-All four role sign-ins and both MFA checks are complete. Vendor title and access checks pass on the current Preview. Hosted owner/staff focus checks remain open; no owner or vendor action is implied by this record.
+All four role sign-ins and both MFA checks are complete. Vendor title and access checks pass on the current Preview. Hosted owner and staff focus checks passed; no owner or vendor action is implied by this record.
 Owner Settings confirms Manual signing, bundled PDF, an unset webhook, the expected Supabase project `vdtqxglhlgatpbgehsjk`, and zero pending or failed outbox entries. Real signing and legal approval remain open.
 The setup ledger lacks pre-write snapshots for other scopes and Vercel CLI record IDs. Commands targeted only the approved candidate branch.
 
@@ -318,10 +326,7 @@ The sender sets no explicit `replyTo`; receipt of replies at the sender mailbox 
 Recommendation: approve the daily operator procedure in [HANDOFF.md](HANDOFF.md#current-email-provider-delivery-evidence) and name its CMG operator.
 Confirm a monitored reply mailbox before launch. Do not change mail routing or recipient details without exact approval.
 
-A contact and staff-alert preflight is a draft only. It is not approved or executed. A Vercel step-up is required before revealing only the staff inbox setting; the owner's code or passkey is pending.
-If separately approved, the test would create one lead, one staff-alert outbox row, and one contact IP counter. Blank email creates no auto-reply or consent.
-The sender can retry up to five times with one stable outbox UUID. An ambiguous result can still cause a duplicate email. Do not promise one delivery.
-No email test has run for this preflight. Verify that the specific Preview recipient is Rob before seeking contact-test approval.
+The owner approved one synthetic contact submission. One lead and one staff-alert outbox row were created. Resend reports the alert to `rob@miodiollc.com` as Delivered after one attempt. Inbox receipt and message contents were verified in Roundcube. Keep the records and do not resubmit.
 
 **Owner action:** confirm inbox receipt for the 2026-09-15 lead. Provider delivery does not prove receipt in the inbox.
 The Vercel connector verified the current Production deployment and project on 2026-10-04.

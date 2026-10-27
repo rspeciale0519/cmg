@@ -1,8 +1,16 @@
 # Release state — CMG Property Solutions
 
-Verified application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner/staff focus checks remain open. A later records-only commit may advance the PR head.
+On October 27, the owner approved one Preview email-consent test. The form was submitted once. One synthetic lead `2f318635-431a-44ee-b7df-36ce72df34e0` and one email-consent record were saved. The staff menu count changed from three to four after client navigation without a page reload. Two outbox rows addressed to `rob@miodiollc.com` were sent on attempt one; Resend reports both Delivered. Both messages reached the Roundcube inbox. The staff alert matched the synthetic name, phone, email and message; the automatic reply rendered successfully. Keep the test records; do not submit or send again.
 
-Final-source local checks pass: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
+On October 27, staff menu count fix `4c974eacbe6be09a874c9e5fc73f797c83cad41c` was pushed to draft PR #28. In the disposable local database, a synthetic lead changed the count from one to two after staff navigation without a page reload. The staff menu passed desktop and 390px checks; the active phone link remained visible. Simple mode kept the admin page closed; staff and platform modes opened the staff menu. Type, lint, build, and focused tests passed; the full suite passed 1,764 tests and skipped 57. No browser warnings or errors were captured; full network traces were unavailable. The Preview deployment for this commit is Ready. Read-only hosted staff navigation passed at desktop and 390px with the existing lead count; the active phone link stayed visible and no browser warnings or errors were captured. No new hosted lead was created. GitHub verify and database checks passed for this commit. The approved hosted count-change proof passed. One synthetic lead and its synthetic staff MFA setup remain in the disposable database. No hosted data or Production setting changed.
+
+On October 27, the approved Preview contact form was submitted once. One synthetic lead was saved and appeared in the staff list. One alert to `rob@miodiollc.com` was sent on attempt one; Resend reports Delivered. Inbox receipt and the synthetic message contents were verified in Roundcube. The existing staff menu count updated after page refresh. Keep the test records and do not resubmit. Evidence: `contact-preview-result-2026-10-27.json` in session scratch.
+
+Owner menu acceptance on Preview `71bd6ea` passed 46 checks at 1280px and 390px. These include 36 forward/reverse focus cases, six keyboard navigation cases, and four scrolled-page cases. No browser warnings or errors were captured. Staff menu acceptance passed 34 checks: 20 keyboard focus cases, 10 link checks, and four scrolled-page cases. Evidence: `t63-staff-hosted-menu-2026-10-27.json` in session scratch. Evidence: `t63-owner-hosted-menu-2026-10-27.json` and `t63-owner-hosted-phone-settings-2026-10-27.png` in session scratch.
+
+Earlier application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner and staff menu checks passed. A later records-only commit may advance the PR head.
+
+Earlier source checks passed: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
 
 Current release-candidate and staff-alert evidence is recorded below. Other dated checks retain their recorded scope. Rewrite this file in place. Keep exact test evidence in HANDOFF.
 
@@ -187,9 +195,9 @@ Verified application source `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` is publis
 It combines exact PR #24 `d523469`, PR #25 `56cff18`, and PR #27 `5c3886d` on `codex/launch-release-candidate`.
 Tested application source `8ae5c70` changes 36 paths. A later records-only commit can add four documentation paths.
 
-Current status: verified application source is signed at `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0`. T63 local focused tests, 56 geometry cases, and eight client-route checks pass. Hosted owner/staff focus checks await a new bounded login. A later records-only commit may advance the PR head.
+Current status: verified application source is signed at `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0`. T63 local focused tests, 56 geometry cases, and eight client-route checks pass. Hosted owner and staff focus checks passed. A later records-only commit may advance the PR head.
 
-The T63 harness excludes the full shell, authentication, and already-scrolled behavior. Full-shell hosted owner/staff focus checks remain open.
+The T63 harness excludes the full shell, authentication, and already-scrolled behavior. Full-shell hosted owner and staff focus checks passed.
 
 The final audit passes after the approved lock-only Undici update to 8.12.3. `package.json`, React versions, Node requirements, and 115 production package entries remain unchanged.
 
@@ -244,12 +252,12 @@ Production deployment metadata records creation at `2026-10-23T19:15:04.774Z`; t
 The October 24 bounded runtime-log queries returned zero rows. Execution, HTTP success, and scheduler attribution remain unverified. No job was invoked.
 Evidence: `cmgps-cron-evidence-2026-10-24.md`. The October 23 zero-row query is dated history and does not show what happened during the October 24 windows.
 
-The three approved setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor title and access checks pass on the current Preview. Hosted T63 owner/staff focus checks remain open.
+The three approved setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor title and access checks pass on the current Preview. Hosted T63 owner and staff menu checks passed.
 The branch-only overrides are `SITE_MODE=platform`, the stable branch `NEXT_PUBLIC_SITE_URL`, and empty `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` values. All four overrides and the single rebuild are complete.
 The approved hostname `cmgps-git-codex-launch-release-candidate-robs-projects-c72886ba.vercel.app` was added to the managed widget. The saved list has nine hosts, retains all prior hosts, and keeps no pre-clearance and the existing keys. The widget reopened with the saved list. Evidence: `pr28-turnstile-hostname-execution-2026-10-24.json` and `pr28-turnstile-saved-nine-hosts-2026-10-24.png` in session scratch.
 Owner sign-in/MFA passed with 30 route and layout checks at 1280px and 390px. Homeowner sign-in passed 20 read-only checks at both widths. Claims 0003/0004 were readable; foreign 0005/0006 returned the same refusal. The customer list showed four documents. The owner-side 25 MiB fixture was hidden from the customer and present in the owner check. Evidence: `pr28-owner-readonly-acceptance-2026-10-24.json` and `pr28-customer-readonly-acceptance-2026-10-24.json`.
 
-Initial keyboard review passed seven of nine checks. T63 local repair passes nine focused tests, 56 geometry cases, and eight client-route checks. The harness excludes the full shell, auth, and already-scrolled behavior. Hosted owner/staff focus checks remain open.
+Initial keyboard review passed seven of nine checks. T63 local repair passes nine focused tests, 56 geometry cases, and eight client-route checks. The harness excludes the full shell, auth, and already-scrolled behavior. Hosted owner and staff menu checks passed.
 
 Staff1 Tester ADJUSTER passed 26 read-only checks at both widths. Assigned claim 0005 was visible. Foreign 0003 and owner-only pages returned generic refusals. Portal and partner redirected to admin. Console errors were zero. Evidence: `pr28-staff-readonly-acceptance-2026-10-24.json`. Vendor title and access checks now pass on the current Preview.
 
@@ -465,7 +473,7 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 ## Ordered next steps
 
-1. Complete the bounded hosted T63 owner/staff focus checks after the new login session is ready. Vendor title and access checks pass on the current Preview. Owner Settings confirms Manual signing; legal review and real signing remain open.
+1. Hosted owner and staff menu acceptance passed. Vendor title and access checks pass on the current Preview. Owner Settings confirms Manual signing; legal review and real signing remain open.
 2. Preserve the completed role reads, Partner note, upload boundaries, and invalid-file refusal. Do not repeat one-time actions or unchanged Preview setup.
 3. Keep the invalid-file cleanup result and one-time expired-link refusal recorded. Do not invoke cleanup again or issue another link. The saved-file size and recorded-fingerprint checks pass. Scheduler attribution remains unverified; fixture image validity is a separate limitation.
 4. Obtain exact approval for any new hosted data-changing test. Do not repeat consumed one-time actions.
