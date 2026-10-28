@@ -1,16 +1,24 @@
 # Release state — CMG Property Solutions
 
-The current October 28 batch changes three UI files and adds three regression files and two local integration tests. Under Node 22.22.2, the full suite passed 1,773 tests and skipped 65 in 288.06 seconds, with exit 0. Of 149 files, 132 passed and 17 skipped. Full type check, lint, and build passed.
+Earlier application revision `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` passed CI run `40724185151`: 1,773 unit tests passed, 65 skipped. Database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low audit findings remain. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` is Ready for that exact revision.
 
-The focused UI run passed six tests after three expected failures before repair. Real local signout passed one test in 9.49 seconds. Real local access checks passed six tests in 16.99 seconds. The separate earlier upload-recovery test passed once in 31.53 seconds. Synthetic local fixtures remain retained.
+Signed application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the lint-glob repair. It awaits resulting exact-head CI and Preview checks. Email tests passed 28 focused cases and 28 cases in each site mode. Final type check and lint passed after the glob repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs.
 
-Published baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Its Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These results predate this batch. Verify the resulting PR #28 head checks and Preview before engineering completion.
+Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-Earlier worker failures remain recorded; their cause is unconfirmed. The earlier serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. Its 128 passing files, 14 skipped files, and exit 0 remain historical evidence. Earlier finalization, invitation-refusal, and upload checks retain their recorded scope. The earlier audit passed the high-severity threshold with four low findings.
+The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
 
-This batch changes no authentication implementation, schema, or dependency. Earlier database and audit evidence remains relevant; final-head CI results must be read from PR #28. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing local and hosted evidence does not require an automatic repeat. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
+
+No authentication implementation, schema, or dependency changes are part of these new repairs. The new audit passed the high-severity threshold with four low deepmerge-chain findings; no fix is available. Earlier database evidence remains relevant. Verify the resulting PR #28 head and Preview after the repairs. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing evidence does not require an automatic repeat.
+
+Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
 
 See [TEST_STATUS.md](temp/TEST_STATUS.md) for the October 28 evidence and limits.
+
+Resend confirmed claim `CMG-2026-0007` status-email delivery to `rob@miodiollc.com` on October 28 at 10:34 AM. Provider ID `01a182ef-3fc8-7258-b332-be9ff214b502` returned SMTP `250 OK`. This proves recipient-server acceptance, not inbox placement. Roundcube receipt and scheduler attribution remain unverified. No email was resent.
+
+Use the [release approval packet](temp/RELEASE_APPROVAL.md) for exact preflight steps, owner decisions, and recovery limits.
 
 On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account.
 
@@ -45,10 +53,10 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 |---|---|
 | Integration branch | GitHub `develop` remains `1b7f7f98e54a358b3a95875483a63d3f882573a3`. No release-candidate merge into `develop` has occurred. |
 | Combined fixes | PR #22 already merged the earlier upload, partner-count, hydration, and admin-retry fixes. The later pending repairs are combined in draft PR #28. |
-| Release candidate | Published baseline `72bd57c` on `codex/launch-release-candidate`. Current eight-file batch passed full local checks. Verify final-head PR #28 CI and Preview. No merge or Production approval exists. |
+| Release candidate | Signed application `4ee4050` includes email repair `27cfd6b` and the lint-glob repair. Local checks passed, including 1,795 unit tests. Resulting exact-head PR #28 CI and Preview remain pending. No merge or Production approval exists. |
 | Production | `app.cmgpropertysolutions.net` resolves to Ready `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` at `cmgps-eyxviozc7-robs-projects-c72886ba.vercel.app`. Its source remains `develop` commit `1b7f7f98e54a358b3a95875483a63d3f882573a3`. |
 | Site mode | The owner's recorded activation was `platform` on 2026-10-07. October 23 anonymous `/admin`, `/portal`, and `/partner` requests redirect to `/login`. Public pages remain open. No Production site-mode value changed. |
-| Preview | Baseline `72bd57c` has Ready Preview [A7bzAYRkUfogAW5FE36wLUjf8ze1](https://vercel.com/robs-projects-c72886ba/cmgps/A7bzAYRkUfogAW5FE36wLUjf8ze1). It predates this batch. Verify the resulting PR #28 head Preview. |
+| Preview | Application `cc27f38` has Ready Preview [3ucqe9EgAwCfRk7Mq5BafwXdaiiR](https://vercel.com/robs-projects-c72886ba/cmgps/3ucqe9EgAwCfRk7Mq5BafwXdaiiR). It does not contain the new email or lint-glob repairs. Verify the resulting PR #28 head and Preview before release. |
 | Staff alerts | The approved `EMAIL_STAFF_INBOX=rob@miodiollc.com` update covers Production, Preview, and Development. One same-source rebuild per target completed. No test email was sent. Older deployments retain their original settings. This is not a domain-wide mail block. |
 | Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
@@ -80,7 +88,7 @@ The main checkout has unrelated dirty files. They remain unstaged and preserved.
 | #25 | Open and draft at `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26`, targeting `develop`. It contains only the six reviewed PDF files. CI run `39349972823` passes both jobs. Its automatic Preview is Ready; real signing and legal acceptance remain open. |
 | #26 | Open and draft with five documentation files only. Recorded run `39643163538` fails the inherited Vite audit; its database job and Preview pass. It does not contain the dependency repair. |
 | #27 | Open and draft at `5c3886d6cb555341746f22c1da49d778eead85a5`, targeting `develop`. One lockfile updates development Vite to `8.2.4`; all production entries remain unchanged. Local checks and both CI jobs in run `39651682681` pass; the automatic Preview is Ready. |
-| #28 | Open and draft. Baseline `72bd57c` passed CI run `40718012838` and Preview checks. Current local checks pass; final-head CI and Preview results must be read from PR #28. |
+| #28 | Open and draft. Reviewed source `4ee4050` passed local checks and is 20 commits ahead of verified `develop` at `1b7f7f9`, with 61 changed files. Earlier `cc27f38` passed CI `40724185151`. Read final PR-head CI and Preview results after publication. |
 
 PR #22's review suggestion to replace `retry()` with `unstable_retry()` conflicts with the installed Next.js 16.3.8 implementation, types, and documentation.
 Keep `retry()`; no source change was made for that comment.
@@ -495,7 +503,7 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 ## Ordered next steps
 
-1. Publish reviewed changes under standing feature approvals. Verify required CI and Preview checks on the resulting PR #28 head.
+1. Publish reviewed changes within existing approvals. Verify the resulting exact PR #28 head CI and Preview.
 2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
 3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.

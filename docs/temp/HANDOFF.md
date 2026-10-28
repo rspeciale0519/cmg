@@ -1,16 +1,24 @@
 # CMG release handoff — engineering evidence
 
-The current October 28 batch changes three UI files and adds three regression files and two local integration tests. Under Node 22.22.2, the full suite passed 1,773 tests and skipped 65 in 288.06 seconds, with exit 0. Of 149 files, 132 passed and 17 skipped. Full type check, lint, and build passed.
+Earlier application revision `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` passed CI run `40724185151`: 1,773 unit tests passed, 65 skipped. Database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low audit findings remain. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` is Ready for that exact revision.
 
-The focused UI run passed six tests after three expected failures before repair. Real local signout passed one test in 9.49 seconds. Real local access checks passed six tests in 16.99 seconds. The separate earlier upload-recovery test passed once in 31.53 seconds. Synthetic local fixtures remain retained.
+Signed application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the lint-glob repair. It awaits resulting exact-head CI and Preview checks. Email tests passed 28 focused cases and 28 cases in each site mode. Final type check and lint passed after the glob repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs.
 
-Published baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Its Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These results predate this batch. Verify the resulting PR #28 head checks and Preview before engineering completion.
+Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-Earlier worker failures remain recorded; their cause is unconfirmed. The earlier serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. Its 128 passing files, 14 skipped files, and exit 0 remain historical evidence. Earlier finalization, invitation-refusal, and upload checks retain their recorded scope. The earlier audit passed the high-severity threshold with four low findings.
+The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
 
-This batch changes no authentication implementation, schema, or dependency. Earlier database and audit evidence remains relevant; final-head CI results must be read from PR #28. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing local and hosted evidence does not require an automatic repeat. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
+
+No authentication implementation, schema, or dependency changes are part of these new repairs. The new audit passed the high-severity threshold with four low deepmerge-chain findings; no fix is available. Earlier database evidence remains relevant. Verify the resulting PR #28 head and Preview after the repairs. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing evidence does not require an automatic repeat.
+
+Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
 
 See [TEST_STATUS.md](TEST_STATUS.md) for the October 28 evidence and limits.
+
+Resend confirmed claim `CMG-2026-0007` status-email delivery to `rob@miodiollc.com` on October 28 at 10:34 AM. Provider ID `01a182ef-3fc8-7258-b332-be9ff214b502` returned SMTP `250 OK`. This proves recipient-server acceptance, not inbox placement. Roundcube receipt and scheduler attribution remain unverified. No email was resent.
+
+Use the [release approval packet](RELEASE_APPROVAL.md) for exact preflight steps, owner decisions, and recovery limits.
 
 On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account.
 
@@ -47,7 +55,49 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 
 ## October 28 evidence
 
-### Current eight-file batch
+### Locally verified email wording and lint-glob repairs
+
+Signed email commit: `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4`.
+Signed adapter commit and current reviewed source: `4ee40506c50001f29ba0bd1e7822416175ea7873`.
+It is 20 commits ahead and zero behind verified `origin/develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 61 changed files.
+No Supabase or generated database-type diff exists. The local `develop` ref differs and was not used for this comparison.
+Later records-only commits can advance the head. Read final PR-head checks externally.
+
+The delivered `under_review` status-email preview used wording that implied representation before representation was established.
+Local fixes use neutral wording in status, customer invitation, customer-visible reply, and settled notices.
+The four changed email files are `claim-status.tsx`, `invite.tsx`, `thread.tsx`, and `render.test.tsx` under `src/lib/email/`.
+The first three are in its `templates/` folder.
+Email tests passed 28 focused cases and 28 cases in each site mode: simple, staff, and platform.
+Final type check and lint passed under Node 22.22.2 after the lint-glob repair.
+The application build passed after email changes and before the tooling-only glob repair. Application source did not change afterward.
+The new `npm audit --audit-level=high` returned exit 0 with four low deepmerge-chain findings and no available fix.
+No package changed. Scratch log: `email-glob-audit-2026-10-28.log`.
+
+Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds.
+A focused rerun passed three tests and failed one in 8.59 seconds.
+Both failures were a 5,000 ms timeout in `src/lib/tooling/eslint-config.test.ts`.
+Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
+The repaired adapter passed 20 focused tests in 1.51 seconds: 16 new scope cases and four unchanged configuration cases.
+Nine independent virtual-filesystem compatibility checks passed under Node 22 without ancestor or network enumeration.
+The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0.
+Of 150 files, 133 passed and 17 skipped. Scratch log: `email-glob-final-full-suite-2026-10-28.log`.
+This passing run supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+This diagnosed failure does not establish the cause of the earlier worker-start failures.
+
+The adapter supports `globSync(string, { onlyDirectories: true })`; other options and non-string patterns still throw.
+Absolute paths and leading-parent paths with a literal prefix use the narrower search. Other leading-parent patterns retain tinyglobby behavior.
+UNC traversal remains unsupported. These checks do not cover every matcher combination.
+
+Scratch `cmg-email-copy-preview-2026-10-28` retains the actual rendered HTML, text, source/HTML hashes, and browser evidence.
+The renderer used installed dependencies, synthetic values, and `example.invalid` links. It called no email provider or application API.
+All four outputs passed at 1280px and 390px: neutral wording, visible body/footer, no horizontal overflow, and zero console warnings/errors.
+CTA and phone links were not activated. The viewport was reset.
+Normal viewport captures support layout checks. Full-page captures temporarily changed sizing and were excluded from layout proof.
+This is not mailbox, email-client, delivery, or full network proof.
+The fixture server was stopped after its command line and ownership of `127.0.0.1:3053` were verified.
+Process and listener absence were confirmed. Fixture files and browser tabs remain retained.
+
+### Published eight-file UI/test batch
 
 The batch changes portal and partner retry controls to use Next.js `retry()`.
 It moves profile loading text outside `aria-hidden`. Three regression files and two local integration files were added.
@@ -59,7 +109,8 @@ No authentication implementation, schema, or dependency changed. Earlier databas
 
 Baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed.
 One live database-selection test skipped. Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready.
-Those published checks predate this batch. Verify the resulting PR #28 head CI and Preview.
+Those checks predate this batch. Application `cc27f38` later passed CI `40724185151` and has Ready Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR`.
+Those results do not cover the new email or lint-glob repairs.
 
 Simple, staff, and platform each passed seven files and 285 tests under Node 22.22.2, with exit 0. Durations were 25.74, 41.72, and 28.05 seconds. Components, mode rules, and mocked Auth/proxy behavior were tested. Earlier actual 39-GET mode evidence remains separate.
 
@@ -132,7 +183,7 @@ No profile, password, or consent data was submitted. Captured console warnings a
 | Question action | Two mocked cases passed. A foreign claim caused no event insertion or notification call. | Real outbox and hosted behavior remain unverified. Scratch: `foreign-question.test.ts`, `foreign-question-config.mjs`. |
 | Homeowner download refusal | Missing or inaccessible rows and lookup errors returned the same refusal before privileged client creation or audit. | Real RLS and hosted behavior remain unverified. Scratch: `foreign-download.test.ts`, `foreign-download-config.mjs`. |
 | Owner-only partner status | Five mocked cases passed. Four non-owner roles were refused; an AAL2 owner reached the operation. | Hosted behavior remains unverified. Scratch: `owner-action-boundary.test.ts`, `owner-action-config.mjs`. |
-| Upload retry | Three component cases and six server finalization cases passed with mocks. | October 28 test updates are recorded here; final commit CI and Preview verification are required. Later assertions passed six focused tests and full lint. Hosted interruption, recovery, and non-overwrite remain unverified. |
+| Upload retry | Three component cases and six server finalization cases passed with mocks. | Published CI and Preview evidence is recorded above. Later assertions passed six focused tests and full lint. Hosted interruption, recovery, and non-overwrite remain unverified. |
 | Invitation refusal in candidate | The unchanged test passed one focused test, full type check, and file lint under Node 22. Its file SHA matches the original. | Existing candidate dependencies were used; no install is needed. Hosted replay and actual expiry remain unverified. The original isolated checkout remains retained and uncommitted, with its broader checks unverified. |
 
 On `CMGPA_private_upload_disposable`, customer 0004 could insert a question on own claim 0001 but not foreign claim 0002.
@@ -929,7 +980,7 @@ No credential, code, session token, or private link was read.
 Proof images: `pr23-homeowner-documents-mobile-2026-10-17.jpg` and `pr23-homeowner-list-mobile-2026-10-17.jpg` in the session visualization folder.
 The screenshot API included a wider backing surface; a 390-by-844 clip captures the measured document viewport.
 All temporary viewport overrides were reset. The owner later closed the homeowner tab; earlier acceptance evidence remains valid.
-At this earlier PR #23 checkpoint, hosted uploads, audited downloads, and profile writes were untested. The later PR #24 file and profile batches above supersede those limits. Questions, password changes, consent withdrawal, and sign-out remain open on the current candidate.
+At this earlier PR #23 checkpoint, hosted uploads, audited downloads, and profile writes were untested. The later PR #24 file and profile batches above supersede those limits. That checkpoint did not test hosted questions, password changes, consent withdrawal, or sign-out. Later local evidence appears above and retains its stated limits.
 
 ### Current vendor acceptance
 
