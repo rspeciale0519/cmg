@@ -93,3 +93,47 @@ describe("private document upload state", () => {
     expect(put).toHaveBeenCalledTimes(2);
   });
 });
+
+it("does not retry file upload when confirmation refuses", async () => {
+  put.mockResolvedValueOnce({ error: { message: "interrupted upload" } })
+    .mockResolvedValueOnce({ error: null });
+  const prepare = vi.fn(async () => ({ status: "idle" as const, uploadSession: session(1) }));
+  const finalize = vi.fn()
+    .mockResolvedValueOnce({ status: "idle", pendingFiles: 1 })
+    .mockResolvedValue({ status: "error", message: "access refused" });
+  const { result } = renderHook(() => usePrivateDocumentUpload(prepare, finalize, "Upload"));
+  const element = form();
+  act(() => result.current.selectFiles(fileList([pdf("one.pdf")])));
+  act(() => result.current.submit(element));
+  await waitFor(() => expect(result.current.state.status).toBe("error"));
+  expect(put).toHaveBeenCalledTimes(1);
+  act(() => result.current.submit(element));
+  await waitFor(() => expect(result.current.state.message).toBe("access refused"));
+  expect(put).toHaveBeenCalledTimes(1);
+  expect(finalize).toHaveBeenCalledTimes(2);
+  expect(prepare).toHaveBeenCalledTimes(1);
+  expect(result.current.locked).toBe(true);
+});
+
+it.each([
+  { outcome: "success", response: { status: "success" }, locked: false },
+  { outcome: "cancelled", response: { status: "error", restartAllowed: true }, locked: false },
+  { outcome: "request error", response: null, locked: true },
+])("does not upload after retry confirmation returns $outcome", async ({ response, locked }) => {
+  put.mockResolvedValueOnce({ error: { message: "interrupted upload" } });
+  const prepare = vi.fn(async () => ({ status: "idle" as const, uploadSession: session(1) }));
+  const finalize = vi.fn().mockResolvedValueOnce({ status: "idle", pendingFiles: 1 });
+  if (response) finalize.mockResolvedValueOnce(response);
+  else finalize.mockRejectedValueOnce(new Error("request failed"));
+  const { result } = renderHook(() => usePrivateDocumentUpload(prepare, finalize, "Upload"));
+  const element = form();
+  act(() => result.current.selectFiles(fileList([pdf("one.pdf")])));
+  act(() => result.current.submit(element));
+  await waitFor(() => expect(result.current.state.status).toBe("error"));
+  act(() => result.current.submit(element));
+  await waitFor(() => expect(finalize).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(result.current.locked).toBe(locked));
+  expect(put).toHaveBeenCalledTimes(1);
+  expect(prepare).toHaveBeenCalledTimes(1);
+  expect(result.current.state.status).toBe(response?.status === "success" ? "success" : "error");
+});
