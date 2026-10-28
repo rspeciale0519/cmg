@@ -1,6 +1,18 @@
 # CMG release handoff — engineering evidence
 
-On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account. The existing homeowner account then signed in and opened claim CMG-2026-0007; its synthetic details and assigned test adjuster were visible. The separate status email to Rob is queued with zero attempts and can be delivered by a later scheduled run. No PandaDoc document was created. Do not repeat acceptance, resend the invitation, run the worker manually, or delete records without separate approval.
+On October 28, PR #28 at `bacb4cf` had passing GitHub verify and database checks. Its Preview was Ready. The full local serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. It reported 128 passing files, 14 skipped files, and exit 0.
+
+Earlier worker failures remain recorded; their cause is unconfirmed. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The opt-in local upload test passed one real test in 31.53 seconds. The unchanged invitation refusal test passed one focused test, full type check, and file lint under Node 22. It used installed dependencies; no install was needed.
+
+Type check, lint, and build passed before the later test-only work. The new upload test passed Node 22 type check and focused lint; disabled mode skipped one test. Audit passed the high-severity threshold with four low findings. October 28 test updates are recorded here; final commit CI and Preview verification are required. Hosted interruption, recovery, and non-overwrite remain unverified. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+
+See [TEST_STATUS.md](TEST_STATUS.md) for the October 28 evidence and limits.
+
+On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account.
+
+The existing homeowner account then signed in and opened claim CMG-2026-0007; its synthetic details and assigned test adjuster were visible. At the October 27 stop, the separate status email to Rob was queued with zero attempts. The October 28 read records it as sent. Inbox receipt and scheduler attribution remain unverified.
+
+No PandaDoc document was created. Do not repeat acceptance, resend the invitation, run the worker manually, or delete records without separate approval.
 
 On October 27, the owner approved one synthetic Preview intake without files. It was submitted once and returned `CMG-2026-0007`. At submission, the hosted database saved claim `127cdecf-564f-4d70-8f32-138b93bc8bd8` in `new_intake`, one claimant, and email and SMS consent records. The upload session completed with zero files. At submission, no adjuster was assigned and no PandaDoc document existed. Two emails to `rob@miodiollc.com` were sent on attempt one; Resend shows Delivered and both messages reached the inbox. The staff alert and confirmation contain the synthetic reference and details. The adjuster account could not see this unassigned intake. The owner queue shows CMG-2026-0007 and the synthetic details. Keep all test records. Do not resubmit, resend, assign, sign, or delete without separate approval.
 
@@ -29,11 +41,77 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 
 <a id="current-release-evidence"></a>
 
-## Current release evidence
+## October 28 evidence
+
+The full serial suite returned exit 0 after 701.35 seconds: 128 files passed and 14 skipped; 1,767 tests passed and 57 skipped.
+The earlier default-worker run passed 1,697 tests, failed four, and skipped 57. It also reported ten worker-start errors.
+The Turnstile and ESLint configuration files then passed seven tests during a serial rerun. The worker-start cause remains unconfirmed.
+The later full serial pass supersedes the earlier failure for its tested source. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The real local upload test passed once in 31.53 seconds.
+Type check, lint, and build passed before those later changes. Audit passed the high-severity threshold with four low findings.
+
+### Browser and local boundaries
+
+The PR #28 homeowner claim 0007 activity and document controls passed forward and reverse keyboard-focus checks. No form was submitted.
+The profile page passed at 390px and 1280px, with one main heading, no horizontal overflow, and labels for all six visible inputs.
+Profile, password, and consent controls had visible keyboard focus. The disclosure opened and closed with Enter; withdrawal was not activated.
+No profile, password, or consent data was submitted. Captured console warnings and errors were empty; full request traces were unavailable.
+
+| Check | Result | Limit and evidence |
+|---|---|---|
+| Intake consent | Eight local boundary cases passed under Node 22.22.2. | Persistence and browser submission were not tested. Scratch: `intake-consent-boundary.test.ts`, `intake-consent-config.mjs`. |
+| Invitation reservation | Three mocked refusal cases passed before account creation. | Hosted Auth and database behavior remain unverified. Scratch: `invite-reservation-boundary.test.ts`, `invite-reservation-config.mjs`. |
+| Outbox retry | A mocked failure scheduled 60 seconds; success reused the idempotency key. | Provider and store were mocked. Scratch: `outbox-retry-boundary.test.ts`, `outbox-retry-config.mjs`. |
+| Question action | Two mocked cases passed. A foreign claim caused no event insertion or notification call. | Real outbox and hosted behavior remain unverified. Scratch: `foreign-question.test.ts`, `foreign-question-config.mjs`. |
+| Homeowner download refusal | Missing or inaccessible rows and lookup errors returned the same refusal before privileged client creation or audit. | Real RLS and hosted behavior remain unverified. Scratch: `foreign-download.test.ts`, `foreign-download-config.mjs`. |
+| Owner-only partner status | Five mocked cases passed. Four non-owner roles were refused; an AAL2 owner reached the operation. | Hosted behavior remains unverified. Scratch: `owner-action-boundary.test.ts`, `owner-action-config.mjs`. |
+| Upload retry | Three component cases and six server finalization cases passed with mocks. | October 28 test updates are recorded here; final commit CI and Preview verification are required. Later assertions passed six focused tests and full lint. Hosted interruption, recovery, and non-overwrite remain unverified. |
+| Invitation refusal in candidate | The unchanged test passed one focused test, full type check, and file lint under Node 22. Its file SHA matches the original. | Existing candidate dependencies were used; no install is needed. Hosted replay and actual expiry remain unverified. The original isolated checkout remains retained and uncommitted, with its broader checks unverified. |
+
+On `CMGPA_private_upload_disposable`, customer 0004 could insert a question on own claim 0001 but not foreign claim 0002.
+The database also refused a vendor activity insertion on its linked claim. Both transactions rolled back; the test events were absent afterward.
+These database results do not prove hosted application actions.
+
+### Real local private-upload recovery
+
+The opt-in test `src/lib/private-upload/private-upload-recovery.local.test.ts` passed one test under Node 22 in 31.53 seconds, with exit 0.
+It used only `CMGPA_private_upload_disposable`. It interrupted a 25 MiB signed PUT, retried the same session, and created one document.
+Changed-byte signed-token replay and duplicate copy were refused. The saved hashes, object IDs, and versions stayed unchanged.
+Repeated finalization returned the same document. This proves the tested local path; hosted interruption, recovery, and non-overwrite remain unverified.
+The test also passed Node 22 type check and focused lint. Disabled mode skipped one test successfully.
+Read-only retrieval confirmed exactly one completed session and one document. Keep the synthetic fixture and both objects; no cleanup is approved.
+
+| Retained local item | Verified value |
+|---|---|
+| Claim | `CMG-2099-8703`; `12044d85-d2ab-492e-bca4-6e0a0a69a141` |
+| Session | `311e179b-9621-4ab7-8cca-81a06244e316` |
+| Document | `622af082-4d86-4ea0-9e8f-a9bcd6c78b82` |
+| Synthetic user | `6e99ce10-3e4a-47b9-9b08-570bf31788ce` |
+| Object size | Both objects contain 26,214,400 bytes. |
+| Recorded hash | `9a494967ca57195442acb67325b4462006a208633001113a39c63aa73a653ced` |
+| Staging path | `private-upload/311e179b-9621-4ab7-8cca-81a06244e316/32348e41-ca79-4916-aca0-eeff9f63d95a.pdf` |
+| Permanent path | `claims/12044d85-d2ab-492e-bca4-6e0a0a69a141/138b7c64-9b9d-47b0-8505-ebb351f77eaf.pdf` |
+
+### Hosted email and cleanup reads
+
+The hosted outbox records claim `CMG-2026-0007` status mail as sent on attempt one at `2026-10-28 14:34:40 UTC`.
+It was pending with zero attempts at 14:24 UTC. Inbox receipt and scheduler attribution remain unverified. No manual resend or job invocation occurred.
+Production deployment `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` logged HTTP 200 for cleanup at 14:27:36 UTC and outbox at 14:34:37 UTC.
+These responses do not identify the requester or processed records. The nearby outbox timestamp does not establish scheduler attribution.
+A read-only query found no pending cleanup rows. No row completed or became dead during `2026-10-28 14:27:30–14:28:30 UTC`.
+The two retained synthetic rows completed on October 20 at 14:27:40 UTC, once each. Their records do not identify the requester.
+
+### Remaining approval limits
+
+Manual signing remains blocked while sender or recipient notifications can reach a CMG-domain address. The owner has no separate non-CMG workspace.
+Existing drafts remain unsent. API silent-send documentation does not prove that the manual flow is safe.
+Hosted writes, messages, uploads, signatures, merges, and Production releases need their separate approvals. Standing feature commit, push, and draft PR approvals remain valid. Do not repeat consumed one-time actions.
+See [BLOCKERS.md](BLOCKERS.md#remaining-actions--october-28) for the ordered remaining actions.
+
+## Earlier release evidence
 
 GitHub currently reports `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
 PRs #20, #21, and #22 are merged. PRs #18 and #19 are closed without merge; #22 includes their fixes.
-The earlier v2 tree matched `develop`. Verified application source `8ae5c70` is published in draft PR #28, targeting `develop`.
+The earlier v2 tree matched `develop`. Application source `8ae5c70` was published in draft PR #28, targeting `develop`.
 The old `9a80e09` branch and the dirty main checkout were not switched, merged, or reset.
 GitHub run `37713120551` passed `verify` and `database` for the current integration commit.
 PR #22 run `37712410380` also passed both jobs.
@@ -49,7 +127,7 @@ Its source remains `d523469e88149c76b8181ed4f277d757f608f47c` on `codex/security
 Both hosts returned 200 for `/`, `/contact`, and `/file-a-claim`. Both returned 307 to login for `/admin`, `/portal`, and `/partner`.
 All six public page loads also rendered in Codex. No form was submitted. Captured application-origin console errors were zero.
 Each tab captured two opaque Cloudflare-frame errors. Full browser request traces were unavailable. No test email was sent.
-Delivery through the updated setting remains untested. Historical delivery evidence below retains its original scope.
+Delivery through the updated setting was untested at the October 23 stop. The approved October 27 delivery and inbox checks passed.
 No source code, DNS, database, account, session, access grant, or backup changed. Local evidence records were updated without another build.
 The owner prohibits further agent emails, invitations, or access grants to the CMG domain or its subdomains. Public pages must remain public.
 Older deployments retain their original recipient settings. Other email types retain their own recipients. This is not a global provider-level domain block.
@@ -58,7 +136,7 @@ Evidence: `staff-alert-redirect-execution-2026-10-23.json`, both `staff-redirect
 Proof images: `staff-alert-setting-scopes-2026-10-23.png` and `staff-alert-rebuilds-ready-2026-10-23.png` in the session scratch folder.
 The later combined Preview empty-file check spent a hosted rate-limit attempt, as recorded below.
 
-### Current combined candidate verification
+### Earlier combined candidate verification — October 25–26
 
 Verified application source `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` is published in draft PR #28.
 It combines exact PR #24 `d523469`, PR #25 `56cff18`, and PR #27 `5c3886d` on `codex/launch-release-candidate`.
@@ -66,12 +144,12 @@ Tested application source `8ae5c70` changes 36 paths. A later records-only commi
 
 Signed `d72dc4d` contains the admin focus repair and Undici update. Signed `8ae5c70` contains the partner metadata repair and regression tests.
 
-Current local results: 1,763 tests passed and 57 skipped; 128 files passed and 14 skipped in 368.37 seconds.
-Type check, lint, and the safe-placeholder production build exit zero. The dependency audit reports zero vulnerabilities.
+For source `8ae5c70`, 1,763 tests passed and 57 skipped; 128 files passed and 14 skipped in 368.37 seconds.
+That source passed type check, lint, and the safe-placeholder production build. Its audit reported zero vulnerabilities. October 28 audit results appear above.
 All 39 local GET checks pass across simple, staff, and platform modes. Their owned server ports closed after testing.
 
 The 57 skips use database or live-service gates. Docker is stopped; no local stack reset ran during these repairs.
-Current CI run `40267147255` passes both jobs, including 1,350 pgTAP assertions and 253 database-backed Vitest tests.
+CI run `40267147255` passed both jobs for that earlier source, including 1,350 pgTAP assertions and 253 database-backed Vitest tests.
 One live PandaDoc test skips in the database job. Earlier local password-session proof remains separate evidence.
 
 The official portable Node 22.22.2 archive matched its published SHA-256 before use. No application check used the system Node 24 default.
@@ -101,9 +179,9 @@ No existing PR was closed or merged by this integration.
 
 The final T63 source passes nine focused tests, 56 geometry cases, and eight client-route checks. The harness excludes the full shell, auth, and already-scrolled behavior.
 
-Unit run 58689 was interrupted after a tool reset without a result; no process remained. Replacement run 31569 passed 1,752 tests with 57 skipped; 126 files passed and 14 skipped. This October 24 result is historical. The current final source passes 1,763 tests with 57 skipped.
+Unit run 58689 was interrupted after a tool reset without a result; no process remained. Replacement run 31569 passed 1,752 tests with 57 skipped; 126 files passed and 14 skipped. This October 24 result is historical. Source `8ae5c70` passed 1,763 tests with 57 skipped. October 28 results appear above.
 
-The final-source production build and audit both pass with exit 0.
+The production build and audit for that earlier source both passed with exit 0.
 The earlier 1,750-test result is historical; the later pre-style run passed 1,752 tests.
 Database-backed Vitest passes 254 tests across 37 files; one live PandaDoc test skips.
 This local selection includes the real portal password-session check, which is outside the 253-test CI selection.
@@ -172,7 +250,7 @@ No CMG-origin console error was observed in these checks. Earlier Vercel-dashboa
 Form verification previously displayed its generic refusal before the new hostname was approved. No form was entered or submitted during that earlier check.
 
 Read-only inspection on October 24 confirms current Production `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` from `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`; both daily schedules are enabled.
-Outbox uses `0 14 * * *`; Storage cleanup uses `17 14 * * *`, in UTC. Both windows passed before bounded runtime-log searches returned zero rows. Execution, HTTP success, and scheduler attribution remain unverified. No job was invoked. Evidence: `cmgps-cron-evidence-2026-10-24.md`.
+Outbox uses `0 14 * * *`; Storage cleanup uses `17 14 * * *`, in UTC. Both windows passed before the October 24 bounded runtime-log searches returned zero rows. No job was invoked during that review. October 28 HTTP responses are recorded above; scheduler attribution remains unverified. Evidence: `cmgps-cron-evidence-2026-10-24.md`.
 The October 23 zero-row query is dated history. It does not show what happened during the October 24 windows.
 
 

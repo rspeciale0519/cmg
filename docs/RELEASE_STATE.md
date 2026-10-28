@@ -1,6 +1,18 @@
 # Release state — CMG Property Solutions
 
-On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account. The existing homeowner account then signed in and opened claim CMG-2026-0007; its synthetic details and assigned test adjuster were visible. The separate status email to Rob is queued with zero attempts and can be delivered by a later scheduled run. No PandaDoc document was created. Do not repeat acceptance, resend the invitation, run the worker manually, or delete records without separate approval.
+On October 28, PR #28 at `bacb4cf` had passing GitHub verify and database checks. Its Preview was Ready. The full local serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. It reported 128 passing files, 14 skipped files, and exit 0.
+
+Earlier worker failures remain recorded; their cause is unconfirmed. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The opt-in local upload test passed one real test in 31.53 seconds. The unchanged invitation refusal test passed one focused test, full type check, and file lint under Node 22. It used installed dependencies; no install was needed.
+
+Type check, lint, and build passed before the later test-only work. The new upload test passed Node 22 type check and focused lint; disabled mode skipped one test. Audit passed the high-severity threshold with four low findings. October 28 test updates are recorded here; final commit CI and Preview verification are required. Hosted interruption, recovery, and non-overwrite remain unverified. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+
+See [TEST_STATUS.md](temp/TEST_STATUS.md) for the October 28 evidence and limits.
+
+On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account.
+
+The existing homeowner account then signed in and opened claim CMG-2026-0007; its synthetic details and assigned test adjuster were visible. At the October 27 stop, the separate status email to Rob was queued with zero attempts. The October 28 read records it as sent. Inbox receipt and scheduler attribution remain unverified.
+
+No PandaDoc document was created. Do not repeat acceptance, resend the invitation, run the worker manually, or delete records without separate approval.
 
 On October 27, the owner approved one synthetic Preview intake without files. It was submitted once and returned `CMG-2026-0007`. At submission, the hosted database saved claim `127cdecf-564f-4d70-8f32-138b93bc8bd8` in `new_intake`, one claimant, and email and SMS consent records. The upload session completed with zero files. At submission, no adjuster was assigned and no PandaDoc document existed. Two emails to `rob@miodiollc.com` were sent on attempt one; Resend shows Delivered and both messages reached the inbox. The staff alert and confirmation contain the synthetic reference and details. The adjuster account could not see this unassigned intake. The owner queue shows CMG-2026-0007 and the synthetic details. Keep all test records. Do not resubmit, resend, assign, sign, or delete without separate approval.
 
@@ -29,10 +41,10 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 |---|---|
 | Integration branch | GitHub `develop` remains `1b7f7f98e54a358b3a95875483a63d3f882573a3`. No release-candidate merge into `develop` has occurred. |
 | Combined fixes | PR #22 already merged the earlier upload, partner-count, hydration, and admin-retry fixes. The later pending repairs are combined in draft PR #28. |
-| Release candidate | Verified application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` on `codex/launch-release-candidate`; 36 application paths against `develop`. CI run `40267147255` passes verify and database. A later records-only commit may add four documentation paths. No shared merge or Production approval exists. |
+| Release candidate | Verified published baseline: `bacb4cf` on `codex/launch-release-candidate`. This update adds tests and records. Verify CI and Preview for the resulting PR head. No shared merge or Production approval exists. |
 | Production | `app.cmgpropertysolutions.net` resolves to Ready `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` at `cmgps-eyxviozc7-robs-projects-c72886ba.vercel.app`. Its source remains `develop` commit `1b7f7f98e54a358b3a95875483a63d3f882573a3`. |
 | Site mode | The owner's recorded activation was `platform` on 2026-10-07. October 23 anonymous `/admin`, `/portal`, and `/partner` requests redirect to `/login`. Public pages remain open. No Production site-mode value changed. |
-| Preview | Verified application source `8ae5c70` is Ready as `dpl_9ZKM7haagBLj7gdXrvoZXZT8qBsT` at `https://cmgps-h42kkknat-robs-projects-c72886ba.vercel.app`. The stable branch alias resolves to this deployment. |
+| Preview | The October 28 read confirms Ready Preview status for PR #28 at `bacb4cf`. Earlier deployment IDs retain their recorded source and date. The stable branch URL remains the candidate entry point. |
 | Staff alerts | The approved `EMAIL_STAFF_INBOX=rob@miodiollc.com` update covers Production, Preview, and Development. One same-source rebuild per target completed. No test email was sent. Older deployments retain their original settings. This is not a domain-wide mail block. |
 | Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
@@ -64,7 +76,7 @@ The main checkout has unrelated dirty files. They remain unstaged and preserved.
 | #25 | Open and draft at `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26`, targeting `develop`. It contains only the six reviewed PDF files. CI run `39349972823` passes both jobs. Its automatic Preview is Ready; real signing and legal acceptance remain open. |
 | #26 | Open and draft with five documentation files only. Recorded run `39643163538` fails the inherited Vite audit; its database job and Preview pass. It does not contain the dependency repair. |
 | #27 | Open and draft at `5c3886d6cb555341746f22c1da49d778eead85a5`, targeting `develop`. One lockfile updates development Vite to `8.2.4`; all production entries remain unchanged. Local checks and both CI jobs in run `39651682681` pass; the automatic Preview is Ready. |
-| #28 | Open and draft. Verified application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0`, with 36 application paths. CI run `40267147255` passes verify and database. Preview is Ready. A later records-only commit may advance the PR head. No shared merge or Production approval exists. |
+| #28 | Open and draft. Verified published baseline: `bacb4cf`. This update adds tests and records. Verify CI and Preview for the resulting PR head. No shared merge or Production approval exists. |
 
 PR #22's review suggestion to replace `retry()` with `unstable_retry()` conflicts with the installed Next.js 16.3.8 implementation, types, and documentation.
 Keep `retry()`; no source change was made for that comment.
@@ -193,13 +205,13 @@ At the time of the October 19 invalid-file read, one staging object and one unac
 The October 20 read found zero matching staging objects, unaccepted copies, or document rows for the exact invalid-file path. Cleanup queue rows 12 and 13 each completed with one attempt and no error or dead marker. No worker ran during the read. The rows do not prove which scheduled worker processed them.
 Do not treat current `develop` as launch-ready while the security correction remains unmerged.
 
-### Current combined candidate verification
+### Earlier combined candidate verification — October 25–26
 
-Verified application source `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` is published
+Earlier application source `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` was published.
 It combines exact PR #24 `d523469`, PR #25 `56cff18`, and PR #27 `5c3886d` on `codex/launch-release-candidate`.
 Tested application source `8ae5c70` changes 36 paths. A later records-only commit can add four documentation paths.
 
-Current status: verified application source is signed at `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0`. T63 local focused tests, 56 geometry cases, and eight client-route checks pass. Hosted owner and staff focus checks passed. A later records-only commit may advance the PR head.
+At that recorded stage, verified application source was signed at `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0`. T63 local focused tests, 56 geometry cases, and eight client-route checks pass. Hosted owner and staff focus checks passed. A later records-only commit may advance the PR head.
 
 The T63 harness excludes the full shell, authentication, and already-scrolled behavior. Full-shell hosted owner and staff focus checks passed.
 
@@ -213,11 +225,11 @@ Next.js and its ESLint packages use 16.4.3. Zod uses 4.6.6, Vitest uses 4.1.12, 
 PR #27 and the latest Undici repair left production package entries unchanged. Earlier approved runtime updates remain in the combined candidate.
 No existing PR was closed or merged by this integration.
 
-The final source passes 1,763 unit tests with 57 skipped; type, lint, build, audit, and all 39 local site-mode checks pass.
+Source `8ae5c70` passed 1,763 unit tests with 57 skipped. Its type, lint, build, audit, and 39 local site-mode checks passed. The October 28 results above supersede this local test summary.
 
-The October 24 unit run 58689 was interrupted after a tool reset and has no result. Its replacement run 31569 passed 1,752 tests with 57 skipped; it is historical evidence. Current final-source results are recorded above.
+The October 24 unit run 58689 was interrupted after a tool reset and has no result. Its replacement run 31569 passed 1,752 tests with 57 skipped; it is historical evidence. The later October 28 results are recorded above.
 
-The final-source build and audit pass with exit 0.
+The build and audit for that earlier source passed with exit 0.
 The earlier local database-backed Vitest selection passed 254 tests across 37 files; one live PandaDoc test skipped.
 This local selection includes the real portal password-session check, which is outside the 253-test CI selection.
 
@@ -239,7 +251,7 @@ No test assertion or timeout changed to hide a failure.
 Earlier PR #27 installation failures and timeout attempts remain in HANDOFF.
 Independent review found no Critical or Important candidate defect.
 
-Both jobs in exact-head CI run `40267147255` pass. The database job passes 1,350 pgTAP assertions and 253 Vitest tests across 35 files; one live PandaDoc test skips.
+Both jobs in CI run `40267147255` passed for the earlier recorded source. The database job passes 1,350 pgTAP assertions and 253 Vitest tests across 35 files; one live PandaDoc test skips.
 
 Historical initial Preview `dpl_2NCKXqNNGkywFFJm4hUp8Qzg9c25` was Ready at `cmgps-eqilllzi6-robs-projects-c72886ba.vercel.app`.
 The [stable branch URL](https://cmgps-git-codex-launch-release-candidate-robs-projects-c72886ba.vercel.app) now resolves to the newer application Preview recorded above.
@@ -253,7 +265,7 @@ Form verification displayed its generic refusal before the hostname approval was
 Read-only inspection on October 24 confirmed current Production `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` from `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with both daily schedules enabled.
 Outbox uses `0 14 * * *`; cleanup uses `17 14 * * *`, in UTC. Both windows passed. No undeployed or modified schedule entry was reported.
 Production deployment metadata records creation at `2026-10-23T19:15:04.774Z`; this is not evidence of a cron run.
-The October 24 bounded runtime-log queries returned zero rows. Execution, HTTP success, and scheduler attribution remain unverified. No job was invoked.
+The October 24 bounded runtime-log queries returned zero rows. No job was invoked during that review. October 28 logs show HTTP 200 for cleanup at 14:27:36 UTC and outbox at 14:34:37 UTC. Scheduler attribution and processed records remain unverified.
 Evidence: `cmgps-cron-evidence-2026-10-24.md`. The October 23 zero-row query is dated history and does not show what happened during the October 24 windows.
 
 The three approved setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor title and access checks pass on the current Preview. Hosted T63 owner and staff menu checks passed.
@@ -321,7 +333,7 @@ No source, test threshold, lint rule, dependency, or compiler setting was change
 
 The merged records contain owner-session acceptance from 2026-10-07 for staff, vendor, existing-homeowner, and new-homeowner invitations.
 Those are historical results, not proof of the final security candidate.
-Remaining hosted requirements include file-size boundaries, private visibility, signed downloads, invitation replay/expiry, role isolation, mobile layouts, and interruption cleanup.
+Recorded owner and homeowner upload boundaries, visibility, hashes, and audited downloads passed for the approved fixtures. Hosted invitation replay, actual expiry, direct-action isolation, remaining layouts, interruption, and non-overwrite remain open.
 Hosted submissions, uploads, audit-creating downloads, resets, invitations, and signing sends need exact separate approval.
 
 The existing v2 Preview closes private routes. PR #23 now has its approved branch-only platform, URL, blank PandaDoc keys, and Turnstile hostname.
@@ -435,7 +447,7 @@ The approved exact push is complete. Draft PR #25 targets `develop` with this on
 CI run `39349972823` passed both jobs: 1,686 unit tests, 1,350 pgTAP assertions, and 253 database-backed tests.
 Type check, lint, build, and the zero-vulnerability audit pass. Unit skips 56 database/live tests; the database selection skips one live PandaDoc test.
 Automatic Preview `dpl_Eko5QAw2p5ADdFDEicMZuNVz5wU2` is Ready. Main-checkout records and unrelated edits remain outside that commit.
-The current Node 22 dependency audit returns zero vulnerabilities. The first sandbox DNS failure and successful permitted retry are recorded in HANDOFF.
+That earlier Node 22 dependency audit returned zero vulnerabilities. The October 28 audit passed the high-severity threshold with four low findings. HANDOFF retains the earlier sandbox DNS failure and successful permitted retry.
 Single v3 draft `3Sh2wmDoV4Zziz4fpkDKx4` retains nine required fields. Dual v3 draft `K3TCRLokDjx6FC2WkYb4GX` retains eighteen.
 The three page 7 boxes now sit on their intended INSURED rules, clear of text and each other.
 Saved reopens retain the counts and corrections. The three edited fields remain required; both editor views are restored to 100 percent.
@@ -462,7 +474,7 @@ Keep the selected manual release path. Do not send through the API by default.
 PR #23 Settings reports zero pending or failed notifications. This does not prove provider or inbox delivery.
 The October 23 bounded log search returned no rows; this is dated evidence and does not show whether the October 24 scheduled jobs ran.
 The owner restored CMG Supabase access. A read-only transaction verified all migration versions and the stored SQL hash.
-The outbox has 24 sent and 11 dead rows, with no pending or failed rows. Cleanup has zero unprocessed rows.
+The earlier outbox read found 24 sent and 11 dead rows, with no pending or failed rows. The October 28 cleanup read found no pending rows. Claim 0007 status mail was sent at 14:34:40 UTC on attempt one; inbox receipt remains unverified.
 No cron endpoint, retry, cleanup execution, or hosted data write occurred.
 Provider delivery, reply handling, and operational ownership still need current evidence.
 The open owner inbox returned no matches for the current exact reset-email subject. No message body was opened or changed.
@@ -477,10 +489,12 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 ## Ordered next steps
 
-1. Hosted owner and staff menu acceptance passed. Vendor title and access checks pass on the current Preview. Owner Settings confirms Manual signing; legal review and real signing remain open.
-2. Preserve the completed role reads, Partner note, upload boundaries, and invalid-file refusal. Do not repeat one-time actions or unchanged Preview setup.
-3. Keep the invalid-file cleanup result and one-time expired-link refusal recorded. Do not invoke cleanup again or issue another link. The saved-file size and recorded-fingerprint checks pass. Scheduler attribution remains unverified; fixture image validity is a separate limitation.
-4. Obtain exact approval for any new hosted data-changing test. Do not repeat consumed one-time actions.
-5. Complete legal review and the approved manual-signing acceptance, including the signed file, claim state, and access checks.
-6. Resolve hosting, repository protection, email operations, privacy, retention, and other owner decisions. Obtain separate merge and Production release approvals; merges can deploy automatically.
-7. Obtain public-copy approval second-to-last. Complete SEO and domain work last, with exact approval for any DNS change.
+1. Review the final local test changes and records. Keep the full serial suite separate from the later focused and real local test results.
+2. Publish the reviewed feature changes under standing feature approvals. Verify required CI and Preview checks for the final commit.
+3. Complete remaining hosted isolation, invitation, recovery, consent, and upload acceptance. Obtain exact approval before each hosted data change.
+4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.
+5. Establish a manual signing test that cannot notify CMG-domain addresses. The owner has no separate non-CMG workspace.
+6. Obtain legal approval and exact approvals for the remaining signing download, upload, send, signature, filing, status, and access tests.
+7. Resolve hosting, repository protection, monitored replies, retention, legal holds, export, erasure, customer access, and contact-address decisions. Keep the no-backup decision.
+8. Obtain separate approvals for shared merge and Production release. A merge to `develop` can deploy automatically.
+9. Approve public copy and both PDF variants second-to-last. Complete SEO and domain work last, with exact approval for each DNS change.
