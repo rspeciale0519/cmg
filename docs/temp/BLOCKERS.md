@@ -1,10 +1,14 @@
 # Owner decision register
 
-On October 28, PR #28 at `bacb4cf` had passing GitHub verify and database checks. Its Preview was Ready. The full local serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. It reported 128 passing files, 14 skipped files, and exit 0.
+The current October 28 batch changes three UI files and adds three regression files and two local integration tests. Under Node 22.22.2, the full suite passed 1,773 tests and skipped 65 in 288.06 seconds, with exit 0. Of 149 files, 132 passed and 17 skipped. Full type check, lint, and build passed.
 
-Earlier worker failures remain recorded; their cause is unconfirmed. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The opt-in local upload test passed one real test in 31.53 seconds. The unchanged invitation refusal test passed one focused test, full type check, and file lint under Node 22. It used installed dependencies; no install was needed.
+The focused UI run passed six tests after three expected failures before repair. Real local signout passed one test in 9.49 seconds. Real local access checks passed six tests in 16.99 seconds. The separate earlier upload-recovery test passed once in 31.53 seconds. Synthetic local fixtures remain retained.
 
-Type check, lint, and build passed before the later test-only work. The new upload test passed Node 22 type check and focused lint; disabled mode skipped one test. Audit passed the high-severity threshold with four low findings. October 28 test updates are recorded here; final commit CI and Preview verification are required. Hosted interruption, recovery, and non-overwrite remain unverified. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+Published baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Its Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These results predate this batch. Verify the resulting PR #28 head checks and Preview before engineering completion.
+
+Earlier worker failures remain recorded; their cause is unconfirmed. The earlier serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. Its 128 passing files, 14 skipped files, and exit 0 remain historical evidence. Earlier finalization, invitation-refusal, and upload checks retain their recorded scope. The earlier audit passed the high-severity threshold with four low findings.
+
+This batch changes no authentication implementation, schema, or dependency. Earlier database and audit evidence remains relevant; final-head CI results must be read from PR #28. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing local and hosted evidence does not require an automatic repeat. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
 
 See [TEST_STATUS.md](TEST_STATUS.md) for the October 28 evidence and limits.
 
@@ -41,9 +45,9 @@ This record requests no approval and authorizes no action.
 
 ## Settled — do not ask again
 
-- PR #28 at `bacb4cf` passed GitHub verify and database checks; its Preview was Ready. The October 28 full serial suite passed. Later finalization assertions and the real local upload test also passed their separate checks.
+- Baseline `72bd57c` passed CI and Preview checks. Current full local checks and seven real local integration tests pass. Read final-head CI and Preview results from PR #28.
 - The approved exact disposable reset and local checks are complete. Do not request these same actions again.
-- Both candidate CI jobs pass. The initial simple-mode Preview and its thirteen GET checks remain historical evidence. Later hosted setup and account checks have their own exact approval below.
+- Both baseline CI jobs passed. This does not prove the new batch's CI. Earlier hosted checks retain their recorded scope.
 - The three approved PR #28 setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor read-only checks pass on the current Preview; hosted T63 owner and staff focus checks passed.
 - The approved hostname is complete and verified after reopening the widget. It has nine hosts and retains all prior hosts, Managed mode, no pre-clearance, and existing keys. Vendor title checks pass on the current Preview; no staff MFA remains.
 - The owner prohibits further agent emails, invitations, and access grants to `cmgpropertysolutions.net`, including subdomains. Earlier recipient approvals do not override this restriction.
@@ -68,9 +72,9 @@ This record requests no approval and authorizes no action.
 
 ## Remaining actions — October 28
 
-1. Review the final local test changes and records. Keep the full serial suite separate from the later focused and real local test results.
-2. Publish the reviewed feature changes under standing feature approvals. Verify required CI and Preview checks for the final commit.
-3. Complete remaining hosted isolation, invitation, recovery, consent, and upload acceptance. Obtain exact approval before each hosted data change.
+1. Publish reviewed changes under standing feature approvals. Verify required CI and Preview checks on the resulting PR #28 head.
+2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
+3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.
 5. Establish a manual signing test that cannot notify CMG-domain addresses. The owner has no separate non-CMG workspace.
 6. Obtain legal approval and exact approvals for the remaining signing download, upload, send, signature, filing, status, and access tests.
@@ -145,7 +149,7 @@ Other vendor writes and notification tests still need exact approval.
 
 Owner sign-in and this one-entry approval are resolved. Do not post the note again or sign out the current test sessions.
 This permits no file, invitation, access, Git, Production code/settings, or DNS change.
-Remaining direct actions, data-changing acceptance, and full request traces remain open.
+Current local tests cover named role refusals, consent withdrawal, and ordinary signout. Additional hosted action proof and full request traces remain unverified.
 Further PR changes, remote merges, Preview configuration, and Production changes remain separately controlled.
 Separate release approvals remain required after combined checks and hosted acceptance.
 
@@ -367,8 +371,10 @@ The current browser session can read request logs and enabled cron schedules.
 The earlier Production log window had no records. October 28 logs show HTTP 200 for cleanup and outbox; scheduler attribution remains unverified.
 The October 28 outbox read records claim 0007 status mail as sent on attempt one. Inbox receipt remains unverified.
 The earlier October 19 queue totals remain historical. The October 28 cleanup read found no pending rows. No message was retried.
-The historical CLI log request returned HTTP 400. Current browser history permits only Last hour; longer windows require Pro.
-The available Production/Cron Job hour contains zero records and excludes the cleanup completion time.
+The Cron filter exists. At noon, the October 28 10:25–10:40 local query returned `Outside of allowed range`.
+The bounded CLI query returned HTTP 400. Neither result identifies the scheduler caller.
+Roundcube remains at login. Automatic approval review rejected Outlook access because it was outside the approved scope.
+Status-email inbox receipt remains pending; no other mailbox was used.
 Do not infer a failed scheduled run from that missing window, or invoke a worker without exact approval.
 
 The Vercel browser session now permits a read-only configuration review.

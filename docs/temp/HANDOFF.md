@@ -1,10 +1,14 @@
 # CMG release handoff — engineering evidence
 
-On October 28, PR #28 at `bacb4cf` had passing GitHub verify and database checks. Its Preview was Ready. The full local serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. It reported 128 passing files, 14 skipped files, and exit 0.
+The current October 28 batch changes three UI files and adds three regression files and two local integration tests. Under Node 22.22.2, the full suite passed 1,773 tests and skipped 65 in 288.06 seconds, with exit 0. Of 149 files, 132 passed and 17 skipped. Full type check, lint, and build passed.
 
-Earlier worker failures remain recorded; their cause is unconfirmed. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The opt-in local upload test passed one real test in 31.53 seconds. The unchanged invitation refusal test passed one focused test, full type check, and file lint under Node 22. It used installed dependencies; no install was needed.
+The focused UI run passed six tests after three expected failures before repair. Real local signout passed one test in 9.49 seconds. Real local access checks passed six tests in 16.99 seconds. The separate earlier upload-recovery test passed once in 31.53 seconds. Synthetic local fixtures remain retained.
 
-Type check, lint, and build passed before the later test-only work. The new upload test passed Node 22 type check and focused lint; disabled mode skipped one test. Audit passed the high-severity threshold with four low findings. October 28 test updates are recorded here; final commit CI and Preview verification are required. Hosted interruption, recovery, and non-overwrite remain unverified. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+Published baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Its Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These results predate this batch. Verify the resulting PR #28 head checks and Preview before engineering completion.
+
+Earlier worker failures remain recorded; their cause is unconfirmed. The earlier serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. Its 128 passing files, 14 skipped files, and exit 0 remain historical evidence. Earlier finalization, invitation-refusal, and upload checks retain their recorded scope. The earlier audit passed the high-severity threshold with four low findings.
+
+This batch changes no authentication implementation, schema, or dependency. Earlier database and audit evidence remains relevant; final-head CI results must be read from PR #28. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing local and hosted evidence does not require an automatic repeat. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
 
 See [TEST_STATUS.md](TEST_STATUS.md) for the October 28 evidence and limits.
 
@@ -42,6 +46,70 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 <a id="current-release-evidence"></a>
 
 ## October 28 evidence
+
+### Current eight-file batch
+
+The batch changes portal and partner retry controls to use Next.js `retry()`.
+It moves profile loading text outside `aria-hidden`. Three regression files and two local integration files were added.
+Six focused UI tests passed, including the existing admin test. Three expected failures occurred before repair.
+
+Full unit result: 1,773 passed, 65 skipped; 132 files passed, 17 skipped; 288.06 seconds; exit 0.
+Full type check, lint, and production build passed. Versions: Node 22.22.2, TypeScript 6.0.3, ESLint 9.39.5.
+No authentication implementation, schema, or dependency changed. Earlier database and audit evidence remains relevant.
+
+Baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed.
+One live database-selection test skipped. Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready.
+Those published checks predate this batch. Verify the resulting PR #28 head CI and Preview.
+
+Simple, staff, and platform each passed seven files and 285 tests under Node 22.22.2, with exit 0. Durations were 25.74, 41.72, and 28.05 seconds. Components, mode rules, and mocked Auth/proxy behavior were tested. Earlier actual 39-GET mode evidence remains separate.
+
+Homeowner Preview checks covered the header, cards, switcher, and claim 0007 tabs at 1280px and 390px.
+Keyboard destinations, focus, and scrolled-page behavior passed. No horizontal overflow or console errors were captured.
+No hosted action was submitted. Full request traces remain unavailable.
+
+Three local error components and profile loading passed desktop/mobile checks. Generic text and digests rendered; each retry callback ran exactly once.
+Next.js, authentication, and router context were replaced. Actual server refresh and screen-reader announcement were not proved.
+Five synthetic error logs were expected from component mounts.
+Browser and Cron evidence: `cmg-final-ui-and-cron-evidence-2026-10-28.json` in session scratch.
+
+`src/lib/actions/auth-signout.local.test.ts` passed 1/1 in 9.49 seconds, with exit 0.
+The real action requested global logout, cleared the caller, refused the second refresh, redirected to `/login`, and saved one audit.
+Existing access tokens can remain valid until expiry.
+
+`src/lib/actions/access-matrix.local.test.ts` passed 6/6 in 16.99 seconds, with exit 0.
+Real Auth, AAL2, application guards, rate limits, RLS, and audit triggers remained active.
+Named staff, homeowner, and vendor refusals passed. Only the caller's consent was withdrawn, once, with one audit.
+Positive controls proved own-claim access, staff AAL2, and own-consent withdrawal. The final blocked-request count was zero.
+
+The tests replace framework context. They do not exercise Next.js action HTTP requests or browser cookies.
+The access test has no successful allowed-download action. A general document-read failure could also satisfy its refusal cases.
+
+Earlier hosted allowed downloads, hashes, and audits provide separate positive evidence.
+`portal-documents.ts`, `authz.ts`, Supabase server/admin clients, `audit.ts`, `storage-path.ts`, and `files.ts` match tested `d523469`.
+No migration differs. Dependencies differ, so an identical hosted runtime is not proved. This evidence combination does not require another hosted download.
+
+Both tests require explicit opt-in, stack `CMGPA_private_upload_disposable`, and exact origin `http://127.0.0.1:15521`.
+They check DB/Kong identity, ports, and shared Docker network before client creation. They read no environment file.
+Fixtures remain retained. No hosted session, email, reset, or deletion was used.
+
+| Retained local item | Verified value |
+|---|---|
+| Signout user and audit | `aa547e49-8c9e-42bb-924e-a4c886daee86`; audit `2071`; one record. |
+| Access company | `76ec448c-81cb-4dce-8a20-9b1ab00c17ab` |
+| Own and foreign claims | `5efacde2-675c-4d4c-9792-2edf83b447e5`; `9da3ca9e-37eb-41e8-b458-f2ca3aff67c1` |
+| Own and other adjusters | `68c05f24-5350-4fab-a60a-5f135fdd50d4`; `fb6fc204-c9b3-4f20-a921-54529cd41727` |
+| Homeowner and other claimant | `a8969bdd-416d-4e4d-9037-632b937a7fdf`; `2aae8ebe-d6df-45a2-9c37-c2f80827bcc4` |
+| Vendor user | `d9b112c9-7d20-4a7b-97f8-7b828b0667d9` |
+| Withdrawn and preserved consents | `66c46e30-4d19-4995-be65-9cc5ff01033d`; `55430410-0ff7-4be6-80b4-6b54d52df220` |
+| Withdrawal audit | `2081`, with the homeowner as actor. |
+| Access fixture counts | Five users, two claims, three claimants, two consents, and two document records. |
+
+Vercel has a Cron filter. At noon, the October 28 10:25–10:40 local query returned `Outside of allowed range`.
+The bounded CLI query returned HTTP 400. Neither result identifies the scheduler caller.
+Roundcube remains at login. Automatic approval review rejected Outlook access because it was outside the approved scope.
+Status-email inbox receipt remains pending. No other mailbox was used.
+
+### Earlier October 28 checks
 
 The full serial suite returned exit 0 after 701.35 seconds: 128 files passed and 14 skipped; 1,767 tests passed and 57 skipped.
 The earlier default-worker run passed 1,697 tests, failed four, and skipped 57. It also reported ten worker-start errors.

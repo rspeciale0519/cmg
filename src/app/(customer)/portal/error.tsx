@@ -21,10 +21,10 @@ import { site, telHref } from "@/lib/site";
  */
 export default function PortalError({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error("[portal] render failed", error);
@@ -55,7 +55,7 @@ export default function PortalError({
       <div className="mt-[24px] flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={reset}
+          onClick={() => retry()}
           className="inline-flex min-h-[46px] items-center rounded-md border border-accent px-[22px] text-sm leading-[1.2] font-medium text-accent transition-colors duration-200 hover:bg-accent/12 active:bg-accent/22"
         >
           Try again

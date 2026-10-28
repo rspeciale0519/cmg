@@ -4,6 +4,14 @@ This is a summary of the current evidence. See `LAUNCH_CHECKLIST.md` and `HANDOF
 
 ## Passed within the stated scope
 
+- Current eight-file batch: full type check, lint, and build passed under Node 22.22.2. Unit results: 1,773 passed, 65 skipped; 132 files passed, 17 skipped; 288.06 seconds; exit 0.
+- Baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These checks predate this batch.
+- Six focused UI tests passed after three expected failures before repair. Portal/partner controls use `retry()`; profile loading text is outside `aria-hidden`.
+- Real local signout passed 1/1 in 9.49 seconds. Global logout, caller clearing, second-refresh refusal, `/login` redirect, and one audit passed. Audit `2071` remains retained. Access tokens can last until expiry.
+- Real local access checks passed 6/6 in 16.99 seconds. Named role refusals and one caller-owned consent withdrawal passed. Audit `2081` and fixtures remain retained; exact IDs are in HANDOFF.
+- Current homeowner Preview header, cards, switcher, and claim 0007 tabs passed keyboard, focus, scroll, and layout checks at 1280px and 390px. No overflow or console errors were captured.
+- Three local error screens and profile loading passed both widths. Generic text and digests rendered; retry callbacks ran once. Five synthetic mount errors were expected.
+- Simple, staff, and platform each passed seven files and 285 tests under Node 22.22.2, with exit 0. Durations were 25.74, 41.72, and 28.05 seconds. Components, mode rules, and mocked Auth/proxy behavior were tested. Earlier actual 39-GET mode evidence remains separate.
 - PR #28 at `bacb4cf`: GitHub verify and database checks passed; Preview was Ready. This does not release the candidate to Production.
 - Owner and staff Preview menus passed recorded desktop, 390px, and keyboard checks. Customer claim 0007 activity and empty documents fit at 390px.
 - On PR #28 Preview, customer claim 0007 activity and document form controls passed forward and reverse keyboard-focus checks. No form was submitted.
@@ -29,6 +37,11 @@ This is a summary of the current evidence. See `LAUNCH_CHECKLIST.md` and `HANDOF
 
 ## Failed or limited checks
 
+- Local action tests replace framework context. They do not exercise Next.js HTTP actions or browser cookies. The download-refusal case has no allowed-download action.
+- Earlier hosted downloads, hashes, and audits provide separate positive evidence. Relevant source blobs match tested `d523469`, with no migration change. Dependencies differ.
+- Local error/loading checks do not prove actual server refresh or screen-reader announcement. Full browser traces remain unavailable.
+- Vercel has a Cron filter. At noon, the October 28 10:25–10:40 local query returned `Outside of allowed range`; bounded CLI returned 400. Neither identifies the scheduler caller.
+- Roundcube remains at login. Automatic approval review rejected Outlook access because it was outside approved scope. Status-email inbox receipt remains pending.
 - An earlier Vite audit failed on draft PR #26's inherited dependencies. The combined candidate has a later passing audit; that does not change the older PR's result.
 - The 68-byte downloaded PNG has an invalid IDAT checksum. It does not prove image decoding.
 - Full network traces were unavailable for earlier browser tests. Historical Cloudflare and listener errors have no confirmed cause.
@@ -46,17 +59,18 @@ This is a summary of the current evidence. See `LAUNCH_CHECKLIST.md` and `HANDOF
 
 ## Untested or not fully verified
 
-- Direct hosted action refusals for staff, homeowner, and vendor isolation; browser error and accessibility states for remaining pages.
+- Final-head PR #28 CI and Preview. Current local checks pass; baseline checks do not prove this batch.
+- Additional hosted action refusals and runtime accessibility proof remain unverified. Named local refusal and browser checks passed.
 - Hosted private-upload interruption, retry, and non-overwrite. Existing local tests do not prove the hosted path.
-- Hosted invitation replay and actual expiry, remaining form boundaries, consent and password-session actions.
+- Additional hosted invitation replay, expiry, consent, and session proof remains unverified. This does not require automatic repeated hosted writes.
 - Scheduler attribution, cleanup work during the successful endpoint request, and claim 0007 status-email inbox receipt remain unverified. Do not manually resend it.
 - Both end-to-end manual signing variants and final-candidate launch acceptance. No Production launch is authorized by this record.
 
 ## Ordered remaining actions
 
-1. Review the final local test changes and records. Keep the full serial suite separate from the later focused and real local test results.
-2. Publish the reviewed feature changes under standing feature approvals. Verify required CI and Preview checks for the final commit.
-3. Complete remaining hosted isolation, invitation, recovery, consent, and upload acceptance. Obtain exact approval before each hosted data change.
+1. Publish reviewed changes under standing feature approvals. Verify required CI and Preview checks on the resulting PR #28 head.
+2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
+3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.
 5. Establish a manual signing test that cannot notify CMG-domain addresses. The owner has no separate non-CMG workspace.
 6. Obtain legal approval and exact approvals for the remaining signing download, upload, send, signature, filing, status, and access tests.

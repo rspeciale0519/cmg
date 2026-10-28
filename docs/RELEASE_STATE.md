@@ -1,10 +1,14 @@
 # Release state — CMG Property Solutions
 
-On October 28, PR #28 at `bacb4cf` had passing GitHub verify and database checks. Its Preview was Ready. The full local serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. It reported 128 passing files, 14 skipped files, and exit 0.
+The current October 28 batch changes three UI files and adds three regression files and two local integration tests. Under Node 22.22.2, the full suite passed 1,773 tests and skipped 65 in 288.06 seconds, with exit 0. Of 149 files, 132 passed and 17 skipped. Full type check, lint, and build passed.
 
-Earlier worker failures remain recorded; their cause is unconfirmed. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The opt-in local upload test passed one real test in 31.53 seconds. The unchanged invitation refusal test passed one focused test, full type check, and file lint under Node 22. It used installed dependencies; no install was needed.
+The focused UI run passed six tests after three expected failures before repair. Real local signout passed one test in 9.49 seconds. Real local access checks passed six tests in 16.99 seconds. The separate earlier upload-recovery test passed once in 31.53 seconds. Synthetic local fixtures remain retained.
 
-Type check, lint, and build passed before the later test-only work. The new upload test passed Node 22 type check and focused lint; disabled mode skipped one test. Audit passed the high-severity threshold with four low findings. October 28 test updates are recorded here; final commit CI and Preview verification are required. Hosted interruption, recovery, and non-overwrite remain unverified. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+Published baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed. One live database-selection test skipped. Its Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready. These results predate this batch. Verify the resulting PR #28 head checks and Preview before engineering completion.
+
+Earlier worker failures remain recorded; their cause is unconfirmed. The earlier serial suite passed 1,767 tests, with 57 skipped, in 701.35 seconds. Its 128 passing files, 14 skipped files, and exit 0 remain historical evidence. Earlier finalization, invitation-refusal, and upload checks retain their recorded scope. The earlier audit passed the high-severity threshold with four low findings.
+
+This batch changes no authentication implementation, schema, or dependency. Earlier database and audit evidence remains relevant; final-head CI results must be read from PR #28. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing local and hosted evidence does not require an automatic repeat. Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
 
 See [TEST_STATUS.md](temp/TEST_STATUS.md) for the October 28 evidence and limits.
 
@@ -41,10 +45,10 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 |---|---|
 | Integration branch | GitHub `develop` remains `1b7f7f98e54a358b3a95875483a63d3f882573a3`. No release-candidate merge into `develop` has occurred. |
 | Combined fixes | PR #22 already merged the earlier upload, partner-count, hydration, and admin-retry fixes. The later pending repairs are combined in draft PR #28. |
-| Release candidate | Verified published baseline: `bacb4cf` on `codex/launch-release-candidate`. This update adds tests and records. Verify CI and Preview for the resulting PR head. No shared merge or Production approval exists. |
+| Release candidate | Published baseline `72bd57c` on `codex/launch-release-candidate`. Current eight-file batch passed full local checks. Verify final-head PR #28 CI and Preview. No merge or Production approval exists. |
 | Production | `app.cmgpropertysolutions.net` resolves to Ready `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` at `cmgps-eyxviozc7-robs-projects-c72886ba.vercel.app`. Its source remains `develop` commit `1b7f7f98e54a358b3a95875483a63d3f882573a3`. |
 | Site mode | The owner's recorded activation was `platform` on 2026-10-07. October 23 anonymous `/admin`, `/portal`, and `/partner` requests redirect to `/login`. Public pages remain open. No Production site-mode value changed. |
-| Preview | The October 28 read confirms Ready Preview status for PR #28 at `bacb4cf`. Earlier deployment IDs retain their recorded source and date. The stable branch URL remains the candidate entry point. |
+| Preview | Baseline `72bd57c` has Ready Preview [A7bzAYRkUfogAW5FE36wLUjf8ze1](https://vercel.com/robs-projects-c72886ba/cmgps/A7bzAYRkUfogAW5FE36wLUjf8ze1). It predates this batch. Verify the resulting PR #28 head Preview. |
 | Staff alerts | The approved `EMAIL_STAFF_INBOX=rob@miodiollc.com` update covers Production, Preview, and Development. One same-source rebuild per target completed. No test email was sent. Older deployments retain their original settings. This is not a domain-wide mail block. |
 | Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
@@ -76,7 +80,7 @@ The main checkout has unrelated dirty files. They remain unstaged and preserved.
 | #25 | Open and draft at `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26`, targeting `develop`. It contains only the six reviewed PDF files. CI run `39349972823` passes both jobs. Its automatic Preview is Ready; real signing and legal acceptance remain open. |
 | #26 | Open and draft with five documentation files only. Recorded run `39643163538` fails the inherited Vite audit; its database job and Preview pass. It does not contain the dependency repair. |
 | #27 | Open and draft at `5c3886d6cb555341746f22c1da49d778eead85a5`, targeting `develop`. One lockfile updates development Vite to `8.2.4`; all production entries remain unchanged. Local checks and both CI jobs in run `39651682681` pass; the automatic Preview is Ready. |
-| #28 | Open and draft. Verified published baseline: `bacb4cf`. This update adds tests and records. Verify CI and Preview for the resulting PR head. No shared merge or Production approval exists. |
+| #28 | Open and draft. Baseline `72bd57c` passed CI run `40718012838` and Preview checks. Current local checks pass; final-head CI and Preview results must be read from PR #28. |
 
 PR #22's review suggestion to replace `retry()` with `unstable_retry()` conflicts with the installed Next.js 16.3.8 implementation, types, and documentation.
 Keep `retry()`; no source change was made for that comment.
@@ -333,7 +337,9 @@ No source, test threshold, lint rule, dependency, or compiler setting was change
 
 The merged records contain owner-session acceptance from 2026-10-07 for staff, vendor, existing-homeowner, and new-homeowner invitations.
 Those are historical results, not proof of the final security candidate.
-Recorded owner and homeowner upload boundaries, visibility, hashes, and audited downloads passed for the approved fixtures. Hosted invitation replay, actual expiry, direct-action isolation, remaining layouts, interruption, and non-overwrite remain open.
+Recorded hosted uploads, visibility, hashes, and audited downloads passed. Current local tests add signout, role refusals, consent withdrawal, and upload recovery.
+Homeowner navigation and local error/loading screens passed at desktop and mobile widths. All three mode test runs passed.
+Additional hosted replay, expiry, direct-action, interruption, and non-overwrite proof remains unverified. These limits do not require automatic repeated hosted writes.
 Hosted submissions, uploads, audit-creating downloads, resets, invitations, and signing sends need exact separate approval.
 
 The existing v2 Preview closes private routes. PR #23 now has its approved branch-only platform, URL, blank PandaDoc keys, and Turnstile hostname.
@@ -489,9 +495,9 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 ## Ordered next steps
 
-1. Review the final local test changes and records. Keep the full serial suite separate from the later focused and real local test results.
-2. Publish the reviewed feature changes under standing feature approvals. Verify required CI and Preview checks for the final commit.
-3. Complete remaining hosted isolation, invitation, recovery, consent, and upload acceptance. Obtain exact approval before each hosted data change.
+1. Publish reviewed changes under standing feature approvals. Verify required CI and Preview checks on the resulting PR #28 head.
+2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
+3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.
 5. Establish a manual signing test that cannot notify CMG-domain addresses. The owner has no separate non-CMG workspace.
 6. Obtain legal approval and exact approvals for the remaining signing download, upload, send, signature, filing, status, and access tests.
