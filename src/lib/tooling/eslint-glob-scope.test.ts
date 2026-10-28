@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { createRequire, syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 
 const require = createRequire(import.meta.url);
 const nativeFs = require("node:fs") as typeof import("node:fs");
@@ -79,6 +79,18 @@ describe("Next.js glob traversal scope", () => {
     const relativeFixture = path.relative(process.cwd(), fixture).replace(/\\/g, "/");
     const result = withGuardedReads(() => roots(`${prefix}${relativeFixture}/app-*`));
     expect(result.sort()).toEqual([`${relativeFixture}/app-one`, `${relativeFixture}/app-two`]);
+  });
+
+  it("keeps static-prefix reads inside the fixture when leading parents reach the filesystem root", () => {
+    const virtualCwd = path.join(path.parse(fixture).root, "cmg-eslint-virtual-cwd");
+    const relativeFixture = path.relative(virtualCwd, fixture).replace(/\\/g, "/");
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(virtualCwd);
+    try {
+      const result = withGuardedReads(() => roots(`${relativeFixture}/app-*`));
+      expect(result.sort()).toEqual([`${relativeFixture}/app-one`, `${relativeFixture}/app-two`]);
+    } finally {
+      cwd.mockRestore();
+    }
   });
 
   it("preserves escaped literals and extglob negation", () => {

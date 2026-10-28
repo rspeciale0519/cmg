@@ -17,7 +17,7 @@ Relative patterns with a literal static prefix move only leading `.` and `..` se
 Their results remain relative to the original working directory.
 Relative patterns without that prefix keep their original call and matching behavior.
 This includes parent-only paths, leading exclamations, leading extglobs, and bare globstars.
-Relative patterns at a filesystem-root boundary also keep their original call.
+Literal static prefixes remain anchored when leading parents reach the filesystem root.
 This prevents outside-cwd patterns from scanning an unrelated common ancestor.
 The adapter does not resolve dynamic glob segments itself.
 Single exclusion patterns return no matches without a directory scan; `!(...)` remains an extglob.

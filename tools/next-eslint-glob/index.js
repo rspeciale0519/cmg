@@ -30,7 +30,7 @@ export function globSync(pattern, options) {
     // Without a literal prefix, rebasing changes tinyglobby's negation and
     // zero-segment matching. Preserve its original behavior for those calls.
     const firstComponent = searchPattern.split("/")[0];
-    if (!firstComponent || isDynamicPattern(firstComponent) || path.dirname(cwd) === cwd) {
+    if (!firstComponent || isDynamicPattern(firstComponent)) {
       cwd = originalCwd;
       searchPattern = pattern;
     }
