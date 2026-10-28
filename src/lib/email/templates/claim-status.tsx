@@ -24,7 +24,7 @@ export function ClaimStatusUpdate(payload: ClaimStatusUpdatePayload) {
   return (
     <EmailLayout
       preview={`${payload.claimRef} is now ${payload.statusLabel.toLowerCase()}.`}
-      reason="Sent because CMG Property Solutions is representing you on this claim. Every update to your file is emailed to you."
+      reason="Sent because CMG Property Solutions recorded a status update for your claim."
     >
       <Text style={emailStyles.kicker}>Claim update</Text>
       <Text style={emailStyles.heading}>
@@ -100,7 +100,7 @@ export function SettledNotice(payload: SettledNoticePayload) {
   return (
     <EmailLayout
       preview={`${payload.claimRef} has settled.`}
-      reason="Sent because CMG Property Solutions represented you on this claim. Every update to your file is emailed to you."
+      reason="Sent because CMG Property Solutions recorded your claim as settled."
     >
       <Text style={emailStyles.kicker}>Settled</Text>
       <Text style={emailStyles.heading}>Your claim has settled.</Text>

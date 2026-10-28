@@ -24,10 +24,9 @@ function Body({ payload }: { payload: InvitePayload }) {
     return (
       <>
         <Text style={emailStyles.paragraph}>
-          Hi {payload.firstName} — CMG Property Solutions is now representing you
-          {payload.claimRef ? ` on claim ${payload.claimRef}` : ""}. Set a password and
-          you can follow the claim from start to finish: where it stands, what we have
-          filed, and every document on the file.
+          Hi {payload.firstName} — CMG Property Solutions has invited you to view{" "}
+          {payload.claimRef ? `claim ${payload.claimRef}` : "your claim"} in your portal.
+          Use this invitation to see the claim status and documents shared with you.
         </Text>
         <Text style={emailStyles.paragraph}>
           You will also be able to ask your adjuster a question in writing and get the
