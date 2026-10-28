@@ -1,12 +1,20 @@
 # Full-platform launch checklist
 
-Earlier application revision `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` passed CI run `40724185151`: 1,773 unit tests passed, 65 skipped. Database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low audit findings remain. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` is Ready for that exact revision.
+Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
-Signed application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the lint-glob repair. It awaits resulting exact-head CI and Preview checks. Email tests passed 28 focused cases and 28 cases in each site mode. Final type check and lint passed after the glob repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs.
+Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.
+
+All three new scope failures observed an attempted `/` read. The filesystem-root fallback restored ancestor traversal on Linux. Signed and pushed repair `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714` changes one condition, adds a virtual-working-directory regression, and corrects one README statement. Before repair, the new regression failed by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds; type, lint, diff, and review checks passed. Both Linux CI and the default Windows suite passed.
+
+Database job `122982775171` passed 1,350 pgTAP assertions across 44 files, plus 253 database tests with one live PandaDoc test skipped. Database Vitest passed 35 files and skipped one in 27.84 seconds. Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. The browser control API was unavailable; final browser proof remains unverified.
+
+Published application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the first lint-glob repair. Email tests passed 28 focused cases and 28 cases in each site mode. Local type check and lint passed after that repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs. These local results do not override the Linux CI failure.
 
 Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+The first adapter repair passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. Its default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This resolved the earlier Windows timeout for that source. The later Linux failure required the separate root repair recorded above.
+
+Earlier source `cc27f38` passed CI `40724185151`: 1,773 unit tests passed, 65 skipped. Its database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low findings remained. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` was Ready for that exact revision.
 
 Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
 
@@ -61,8 +69,8 @@ Keep credentials, signed links, and customer data out of this record.
 | PR #18 partner directory count | On PR #23, both company details match directory counts: one rep/zero claims and one rep/one claim. Filters, empty state, page clamp, and six desktop/mobile layouts pass. PR #22 contains the fix. | Count acceptance passed; company writes and disposition tests remain separately controlled |
 | PR #19 private upload transport | Local and hosted owner staff-form/homeowner 25 MiB uploads pass. Hosted sessions each completed with one 26,214,400-byte file. Both forms refuse one byte over. Downloaded hashes match both fixtures. | Remaining failure/retry paths and final release checks; an owner test does not prove every adjuster permission |
 | Upload hydration protection | Regression tests and local browser passed at `d8e55fa` | Hosted staff and homeowner render and interaction checks |
-| Dependency audit and local checks | Application `cc27f38` passed CI `40724185151`. New repairs passed 1,795 unit tests, 20 focused and nine independent adapter checks, and final type/lint. The audit retained four low findings. | Verify resulting exact-head PR #28 CI and Preview. Earlier worker-start cause remains unconfirmed. No dependency changed. |
-| Customer email wording | Status, invitation, reply, and settled messages use neutral wording. Email tests passed 28 focused cases and 28 in each mode. Real rendered HTML passed at 1280px and 390px. | Resulting CI and Preview remain pending. Browser checks do not prove mailbox, email-client, delivery, or full network behavior. |
+| Dependency audit and local checks | Source `76cdc5a` passed exact-head Linux CI and the final Windows suite, each with 1,796 tests passed. Database checks, type/lint/build, and audit passed. Four low findings remain. | Check any later records-only head separately. Keep the earlier failed runs and their stated limits. |
+| Customer email wording | Status, invitation, reply, and settled messages use neutral wording. Email tests passed 28 focused cases and 28 in each mode. Real rendered HTML passed at 1280px and 390px. Source `76cdc5a` passed CI. | Vercel reported success; final browser proof is unavailable. Fixture checks do not prove mailbox, email-client, delivery, or full network behavior. |
 | Public site | PR #23 at `15ea5f6`: six public routes rendered at 1280px and 390px, with one main heading, no overflow, and no broken completed images. The contact menu and Escape focus return passed at 390px. The first contact FAQ opens. | Remaining navigation, loading, errors, and approved form acceptance |
 | Contact and claim intake | Approved October 27 contact, email-consent contact, and no-file intake tests saved their synthetic records. Their approved emails reached Rob. Eight local intake consent boundary cases passed on October 28. | Remaining form boundaries, rate limits, vendor links, file handling, and error states need their supported tests. New hosted data changes need exact approval. |
 | Sign-in and recovery | All four role sign-ins and both MFA checks are complete under the approved PR #28 account batch. Recovery displayed Success after the approved hostname addition; no reset email was sent. | Hosted T63 owner and staff focus checks passed. Vendor title/access checks pass on the current Preview; other live recovery and data-changing checks remain open. |
@@ -97,7 +105,7 @@ Keep credentials, signed links, and customer data out of this record.
 | Platform activation | The owner recorded platform activation on October 7. Current Production portal and partner requests redirect unauthenticated callers to login. Historical owner-session invitation acceptance is in merged HANDOFF. | Remaining full-platform acceptance; do not request the completed activation again |
 | Domain and SEO | `app.` remains the temporary host | Approved SEO and domain work last; preserve every existing DNS record unless an exact change is approved |
 | Recovery | Backups declined; immediate restore unverified | Reviewed forward repair, compatible code recovery, and clear operator steps; no backup or database reset |
-| Final records | Six records identify signed source `4ee4050`, email commit `27cfd6b`, local results, and the draft approval packet. Earlier PR #26 records do not establish current status. | Read final PR-head CI/Preview externally after publication. Standing feature approvals retain their original scope. Merge and Production release need separate approvals. |
+| Final records | Six records identify source `76cdc5a`, passing Windows and exact-head CI checks, prior failures, and the draft approval packet. Earlier PR #26 records do not establish current status. | Check the final records-only head separately. Standing feature approvals retain their original scope. Merge and Production release need separate approvals. |
 | Remaining security scan items | Local signout, role refusals, consent withdrawal, upload recovery, and earlier hosted positive evidence cover the reviewed engineering paths. | Finish resulting CI/Preview, mail/scheduler evidence, safe signing, and owner operational/legal/release decisions. Extra hosted proof does not require automatic repeats. |
 
 The first local tag-color repair failed rendering because white glyphs erase small parts of underlying lines.
@@ -169,8 +177,12 @@ Preview setup, rebuild, and hostname addition are complete. All four role sign-i
 
 Published `cc27f38` passed 1,773 unit tests, with 65 skipped, plus type, lint, build, CI, and mode checks.
 The email batch passed build, browser, and mode checks. Its full unit run failed one glob timeout before repair.
-The repaired adapter passed 20 focused tests, nine independent checks, and final type/lint.
-The final full unit run passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Resulting CI and Preview remain pending.
+The first adapter repair passed 20 focused tests, nine independent checks, and local type/lint.
+Its Windows suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0.
+Head `8b1aecb` failed Linux CI: 1,792 passed, three failed, and 65 skipped.
+Root repair `76cdc5a` passed 21 focused tests, type/lint/diff/review, and exact-head Linux CI with 1,796 tests passed and 65 skipped.
+The final Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0.
+Vercel reported deployment success, but final browser proof is unavailable. The database CI job passed.
 Real local signout and access checks passed seven tests. Earlier upload, audit, and worker-failure evidence remains recorded.
 Read final-head CI and Preview results from PR #28.
 Earlier evidence in session scratch: `t65-full-checks-2026-10-25`, `cmgps-undici-audit-2026-10-24`, `launch-candidate-mode-checks-2026-10-26T04-00-24-349Z-08162a93.json`, and `t65-vendor-title-hosted-2026-10-26.json`.

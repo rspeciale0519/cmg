@@ -2,23 +2,60 @@
 
 This is a summary of the current evidence. See `LAUNCH_CHECKLIST.md` and `HANDOFF.md` for details and earlier results. A partial pass does not close a wider requirement.
 
-## Published verification
+## Current verification
+
+Signed and pushed root repair: `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714`.
+It is 22 commits ahead and zero behind verified GitHub base `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 62 changed files.
+No schema or generated database-type diff exists.
+
+The repair changes one condition, adds a virtual-working-directory regression, and corrects one README statement.
+The regression failed before repair by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds.
+
+Final type, lint, diff, and review checks passed.
+The final Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0; 133 files passed and 17 skipped.
+It used Node 22.22.2 and unchanged default one-worker settings.
+Scratch log: `glob-root-final-full-suite-2026-10-28.log`. Later records-only head checks remain separate.
+
+Exact-head [CI 40735491808](https://github.com/rspeciale0519/cmg/actions/runs/40735491808) passed verify `122982775518` and database `122982775171`.
+Unit tests passed 1,796 and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped.
+All 17 scope tests passed in 48 ms; four existing compatibility tests passed in 113 ms.
+Audit, type check, lint, and build passed; audit retained four low findings.
+Build compilation took 13.8 seconds, TypeScript took 15.7 seconds, and static generation completed all five pages.
+
+Database CI passed 1,350 pgTAP assertions across 44 files.
+Database Vitest passed 253 tests and skipped one live PandaDoc test in 27.84 seconds; 35 files passed and one skipped.
+Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. Final browser proof remains unavailable.
+
+Earlier head `8b1aecb` failed [CI run 40734242301](https://github.com/rspeciale0519/cmg/actions/runs/40734242301).
+Verify job `122978378239` passed 1,792 tests, failed three, and skipped 65 in 97.17 seconds.
+Of 150 files, 132 passed, one failed, and 17 skipped.
+All three failures were new glob-scope tests whose read guard received `/` on Linux.
+The filesystem-root fallback restored ancestor traversal. Repair `76cdc5a` addresses that condition; its exact-head Linux CI now passes.
+Audit, type check, and lint passed; audit retained four low findings. The build step skipped after the test failure.
+
+Database job `122978378566` passed 1,350 pgTAP assertions across 44 files.
+Database Vitest passed 253 tests and skipped one live PandaDoc test; 35 files passed and one skipped.
+Vercel reported success for deployment `CFZf6BF6p8awJzrEZhmmZ5ejAoMx`.
+The browser control API was unavailable. Final browser proof remains unverified.
+The later Linux CI and final Windows passes supersede this failure for the repaired source.
+
+## Earlier published verification
 
 Signed commit `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` is pushed to draft [PR #28](https://github.com/rspeciale0519/cmg/pull/28). Its thirteen files contain eight source/test files and five release records.
 
 - [CI run 40724185151](https://github.com/rspeciale0519/cmg/actions/runs/40724185151) passed for that exact commit. Unit tests: 1,773 passed and 65 skipped. Type, lint, build, and audit passed. Audit has four low findings.
 - Database CI passed 1,350 pgTAP assertions across 44 files. Database Vitest passed 253 tests and skipped one live PandaDoc test.
 - Access, signout, password-session, and upload-recovery tests remained opt-in and skipped in CI. Their real local passes remain separate evidence.
-- [Preview deployment 3ucqe9EgAwCfRk7Mq5BafwXdaiiR](https://vercel.com/robs-projects-c72886ba/cmgps/3ucqe9EgAwCfRk7Mq5BafwXdaiiR) is Ready for the same commit. Its branch alias points to that deployment. Both build warnings describe the required Node 22 override of project setting 24; no setting changed.
+- [Preview deployment 3ucqe9EgAwCfRk7Mq5BafwXdaiiR](https://vercel.com/robs-projects-c72886ba/cmgps/3ucqe9EgAwCfRk7Mq5BafwXdaiiR) was Ready for the same commit. Its branch alias pointed to that deployment at that check. Both build warnings describe the required Node 22 override of project setting 24; no setting changed.
 - The homeowner portal opened after the new deployment. Its existing session and three synthetic claim links remained available. CodeRabbit reported `Review skipped`; this is not a completed review.
 
-This verification closes CI and Preview requirements for `cc27f38` only. New local email and lint-glob repairs are not covered. Production, DNS, and hosted data did not change during that verification.
+This verification covers `cc27f38` only. Later head `8b1aecb` failed Linux CI, as recorded above. Production, DNS, and hosted data did not change during that earlier verification.
 
-## Locally verified email and lint-glob repairs
+## Email and lint-glob evidence
 
 Signed email commit: `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4`.
-Signed adapter commit and current reviewed source: `4ee40506c50001f29ba0bd1e7822416175ea7873`.
-It is 20 commits ahead and zero behind verified `origin/develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 61 changed files.
+Signed first adapter commit: `4ee40506c50001f29ba0bd1e7822416175ea7873`.
+At `4ee4050`, the source was 20 commits ahead and zero behind verified `origin/develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 61 changed files.
 No Supabase or generated database-type diff exists. Later records-only commits can advance the head; read final PR-head checks externally.
 
 The read-only provider preview exposed wording that implied representation for an `under_review` claim. Current status rules do not establish representation at that stage.
@@ -37,7 +74,7 @@ The repaired adapter passed 20 focused tests in 1.51 seconds: 16 new scope cases
 Nine independent virtual-filesystem compatibility checks passed under Node 22 without ancestor or network enumeration.
 The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0.
 Of 150 files, 133 passed and 17 skipped. Scratch log: `email-glob-final-full-suite-2026-10-28.log`.
-This passing run supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+This passing Windows run superseded the earlier Windows timeout for that source. It does not override the later Linux CI failure.
 This diagnosed failure is distinct from the earlier worker-start failures, whose cause remains unconfirmed.
 
 The adapter supports `globSync(string, { onlyDirectories: true })`; other options and non-string patterns still throw.
@@ -121,7 +158,7 @@ See the [release approval packet](RELEASE_APPROVAL.md) for the remaining decisio
 
 ## Ordered remaining actions
 
-1. Verify the resulting exact PR head CI and Preview after approved publication.
+1. Check the final records-only PR head CI and Preview separately. Preserve the verified source results and browser evidence limits.
 2. Verify status-email inbox receipt and scheduler attribution through approved reads. Roundcube sign-in and available scheduler logs are required. Do not resend or invoke jobs.
 3. Establish a manual signing test that cannot notify CMG-domain addresses. Obtain legal approval and exact approvals for its external actions.
 4. Resolve hosting, repository protection, monitoring, monitored replies, retention, legal holds, export, erasure, customer access, and contact-address decisions. Preserve the no-backup decision.

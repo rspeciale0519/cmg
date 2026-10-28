@@ -2,7 +2,8 @@
 
 This packet prepares launch review. It authorizes no merge, deployment, message, account change, purchase, signature, or DNS change.
 
-The packet remains draft. New email and lint-glob repairs passed local checks. Resulting exact-head CI and Preview checks remain pending.
+The packet remains draft. Signed repair `76cdc5a` passed exact-head CI `40735491808`, superseding the three Linux failures at `8b1aecb`.
+Its final Windows suite also passed. Final browser proof remains unavailable.
 
 ## Reviewed application
 
@@ -10,10 +11,10 @@ The packet remains draft. New email and lint-glob repairs passed local checks. R
 |---|---|
 | Draft PR | [PR #28](https://github.com/rspeciale0519/cmg/pull/28) |
 | Feature branch | `codex/launch-release-candidate` |
-| Current reviewed application revision | Signed `4ee40506c50001f29ba0bd1e7822416175ea7873`; local checks passed; resulting CI/Preview pending |
+| Published application revision | Signed `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714`; exact-head CI, focused checks, and final Windows suite passed |
 | Email repair | Signed `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4`, included in current reviewed source |
 | Base branch and revision | `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3` |
-| Reviewed difference | 20 commits ahead, zero behind, 61 changed files against the verified GitHub base |
+| Reviewed source difference | At `76cdc5a`: 22 commits ahead, zero behind, 62 changed files against the verified GitHub base |
 | GitHub merge state | Last read at published `cc27f38`: `MERGEABLE` and `CLEAN`; still draft; no submitted review. Recheck the resulting head. |
 | Branch controls | `develop` is unprotected. Auto-merge and automatic branch deletion are disabled. |
 | Schema | No changes under `supabase/` or in generated database types; no migration is required by this PR. |
@@ -21,12 +22,36 @@ The packet remains draft. New email and lint-glob repairs passed local checks. R
 | Known Production | `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk`, source `develop` at `1b7f7f9`; recorded `SITE_MODE=platform` |
 
 These values were checked on October 28. The comparison uses verified `origin/develop`; the different local `develop` ref was not used.
-New email and lint-glob source changes passed local checks. Resulting PR checks remain pending.
+The first email and lint-glob changes passed local checks. Linux CI then failed at `8b1aecb`; repair `76cdc5a` passed exact-head Linux CI.
+The final Windows suite also passed. Later records-only head checks remain separate.
 Later records-only commits can advance the head. Read final PR-head checks externally before requesting exact merge approval.
 
 The candidate combines security, file validation, session, PDF, dependency, navigation, staff-count, and accessible loading/error fixes. It includes Next.js 16.4.3, Zod 4.6.6, and a Server Action limit change from `256mb` to `2mb`. Private large files use the tested direct-upload flow. Node remains 22. CI and cron configuration are unchanged.
 
 ## Passed and limited evidence
+
+Repair `76cdc5a` changes one condition, adds a virtual-working-directory regression, and corrects one README statement.
+The new regression failed before repair by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds.
+Final type, lint, diff, and review passed.
+The final Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0; 133 files passed and 17 skipped.
+It used Node 22.22.2 and unchanged default one-worker settings.
+
+Exact-head CI `40735491808` passed verify `122982775518` and database `122982775171`.
+Unit tests passed 1,796 and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped.
+Audit, type check, lint, and build passed; four low audit findings remain.
+Database checks passed 1,350 pgTAP assertions across 44 files and 253 tests, with one live PandaDoc test skipped.
+Database Vitest passed 35 files and skipped one in 27.84 seconds.
+Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`; final browser proof remains unavailable.
+
+Exact head `8b1aecb` failed [CI run 40734242301](https://github.com/rspeciale0519/cmg/actions/runs/40734242301), verify job `122978378239`.
+The run passed 1,792 tests, failed three, and skipped 65 in 97.17 seconds; 132 files passed, one failed, and 17 skipped.
+All three new scope guards received `/` on Linux because the filesystem-root fallback restored ancestor traversal.
+Audit, type check, and lint passed with four low audit findings. The build step skipped.
+
+Database job `122978378566` passed 1,350 pgTAP assertions across 44 files.
+Database Vitest passed 253 tests and skipped one live PandaDoc test; 35 files passed and one skipped.
+Vercel reported success for deployment `CFZf6BF6p8awJzrEZhmmZ5ejAoMx`.
+Browser control was unavailable, so final browser proof remains unverified. The later Linux CI pass supersedes this failure for repair `76cdc5a`.
 
 [Application CI 40724185151](https://github.com/rspeciale0519/cmg/actions/runs/40724185151) passed for `cc27f38`:
 
@@ -46,7 +71,7 @@ The new `npm audit --audit-level=high` passed with exit 0. Four low deepmerge-ch
 
 Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+The first adapter repair passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. Its default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This resolved the earlier Windows timeout for that source. The later Linux failure required the separate root repair recorded above.
 
 Narrower searches cover absolute paths and leading-parent paths with a literal prefix. Other leading-parent patterns retain tinyglobby behavior; UNC remains unsupported.
 

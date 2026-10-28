@@ -1,12 +1,20 @@
 # Owner decision register
 
-Earlier application revision `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` passed CI run `40724185151`: 1,773 unit tests passed, 65 skipped. Database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low audit findings remain. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` is Ready for that exact revision.
+Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
-Signed application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the lint-glob repair. It awaits resulting exact-head CI and Preview checks. Email tests passed 28 focused cases and 28 cases in each site mode. Final type check and lint passed after the glob repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs.
+Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.
+
+All three new scope failures observed an attempted `/` read. The filesystem-root fallback restored ancestor traversal on Linux. Signed and pushed repair `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714` changes one condition, adds a virtual-working-directory regression, and corrects one README statement. Before repair, the new regression failed by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds; type, lint, diff, and review checks passed. Both Linux CI and the default Windows suite passed.
+
+Database job `122982775171` passed 1,350 pgTAP assertions across 44 files, plus 253 database tests with one live PandaDoc test skipped. Database Vitest passed 35 files and skipped one in 27.84 seconds. Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. The browser control API was unavailable; final browser proof remains unverified.
+
+Published application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the first lint-glob repair. Email tests passed 28 focused cases and 28 cases in each site mode. Local type check and lint passed after that repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs. These local results do not override the Linux CI failure.
 
 Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+The first adapter repair passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. Its default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This resolved the earlier Windows timeout for that source. The later Linux failure required the separate root repair recorded above.
+
+Earlier source `cc27f38` passed CI `40724185151`: 1,773 unit tests passed, 65 skipped. Its database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low findings remained. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` was Ready for that exact revision.
 
 Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
 
@@ -53,9 +61,9 @@ This record requests no approval and authorizes no action.
 
 ## Settled — do not ask again
 
-- Published application `cc27f38` passed CI `40724185151` and has a Ready Preview. Seven real local signout/access tests passed separately. New email and lint-glob repairs passed local checks; resulting CI and Preview remain pending.
+- Source `76cdc5a` passed exact-head CI `40735491808` and the final Windows suite, superseding the three Linux failures at `8b1aecb`. Seven real local signout/access tests passed separately. Later records-only head checks remain separate.
 - The approved exact disposable reset and local checks are complete. Do not request these same actions again.
-- Both CI jobs passed for `cc27f38`. Those results do not prove the pending repairs. Earlier hosted checks retain their recorded scope.
+- Both CI jobs passed for `76cdc5a`. Earlier local and hosted checks retain their recorded scope.
 - The three approved PR #28 setup batches are complete. All four role sign-ins and both MFA checks are verified. Vendor read-only checks pass on the current Preview; hosted T63 owner and staff focus checks passed.
 - The approved hostname is complete and verified after reopening the widget. It has nine hosts and retains all prior hosts, Managed mode, no pre-clearance, and existing keys. Vendor title checks pass on the current Preview; no staff MFA remains.
 - The owner prohibits further agent emails, invitations, and access grants to `cmgpropertysolutions.net`, including subdomains. Earlier recipient approvals do not override this restriction.
@@ -80,7 +88,7 @@ This record requests no approval and authorizes no action.
 
 ## Remaining actions — October 28
 
-1. Publish reviewed changes within existing approvals. Verify the resulting exact PR #28 head CI and Preview.
+1. Check the final records-only PR head CI and Preview separately. Preserve the verified source results and browser evidence limits.
 2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
 3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.

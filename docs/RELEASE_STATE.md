@@ -1,12 +1,20 @@
 # Release state — CMG Property Solutions
 
-Earlier application revision `cc27f380ba58eaf4ed06c8d90af7a43eac9b5e57` passed CI run `40724185151`: 1,773 unit tests passed, 65 skipped. Database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low audit findings remain. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` is Ready for that exact revision.
+Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
-Signed application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the lint-glob repair. It awaits resulting exact-head CI and Preview checks. Email tests passed 28 focused cases and 28 cases in each site mode. Final type check and lint passed after the glob repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs.
+Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.
+
+All three new scope failures observed an attempted `/` read. The filesystem-root fallback restored ancestor traversal on Linux. Signed and pushed repair `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714` changes one condition, adds a virtual-working-directory regression, and corrects one README statement. Before repair, the new regression failed by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds; type, lint, diff, and review checks passed. Both Linux CI and the default Windows suite passed.
+
+Database job `122982775171` passed 1,350 pgTAP assertions across 44 files, plus 253 database tests with one live PandaDoc test skipped. Database Vitest passed 35 files and skipped one in 27.84 seconds. Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. The browser control API was unavailable; final browser proof remains unverified.
+
+Published application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the first lint-glob repair. Email tests passed 28 focused cases and 28 cases in each site mode. Local type check and lint passed after that repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs. These local results do not override the Linux CI failure.
 
 Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
 
-The repaired adapter passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This supersedes the diagnosed glob timeout for the repaired source. Resulting exact-head CI and Preview checks remain pending.
+The first adapter repair passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. Its default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This resolved the earlier Windows timeout for that source. The later Linux failure required the separate root repair recorded above.
+
+Earlier source `cc27f38` passed CI `40724185151`: 1,773 unit tests passed, 65 skipped. Its database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low findings remained. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` was Ready for that exact revision.
 
 Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
 
@@ -53,10 +61,10 @@ Use [README.md](../README.md#simple-mode-production-runbook) for release procedu
 |---|---|
 | Integration branch | GitHub `develop` remains `1b7f7f98e54a358b3a95875483a63d3f882573a3`. No release-candidate merge into `develop` has occurred. |
 | Combined fixes | PR #22 already merged the earlier upload, partner-count, hydration, and admin-retry fixes. The later pending repairs are combined in draft PR #28. |
-| Release candidate | Signed application `4ee4050` includes email repair `27cfd6b` and the lint-glob repair. Local checks passed, including 1,795 unit tests. Resulting exact-head PR #28 CI and Preview remain pending. No merge or Production approval exists. |
+| Release candidate | Signed source `76cdc5a` passed exact-head CI `40735491808` and the final Windows suite, each with 1,796 unit tests passed. Database CI passed. No merge or Production approval exists. |
 | Production | `app.cmgpropertysolutions.net` resolves to Ready `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` at `cmgps-eyxviozc7-robs-projects-c72886ba.vercel.app`. Its source remains `develop` commit `1b7f7f98e54a358b3a95875483a63d3f882573a3`. |
 | Site mode | The owner's recorded activation was `platform` on 2026-10-07. October 23 anonymous `/admin`, `/portal`, and `/partner` requests redirect to `/login`. Public pages remain open. No Production site-mode value changed. |
-| Preview | Application `cc27f38` has Ready Preview [3ucqe9EgAwCfRk7Mq5BafwXdaiiR](https://vercel.com/robs-projects-c72886ba/cmgps/3ucqe9EgAwCfRk7Mq5BafwXdaiiR). It does not contain the new email or lint-glob repairs. Verify the resulting PR #28 head and Preview before release. |
+| Preview | Vercel reported success for `76cdc5a` deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. Browser control was unavailable, so final browser proof is unverified. |
 | Staff alerts | The approved `EMAIL_STAFF_INBOX=rob@miodiollc.com` update covers Production, Preview, and Development. One same-source rebuild per target completed. No test email was sent. Older deployments retain their original settings. This is not a domain-wide mail block. |
 | Database | Hosted history matches all 36 source versions through `20260927120000`; the stored head SQL hash matches source. The earlier two accepted upload sessions and eleven processed cleanup rows remain retained. The invalid-file session is cancelled; its two nine-byte objects are now absent, and cleanup rows 12 and 13 processed. No migration was reapplied. |
 | Recovery | No Supabase backup. Use reviewed forward repair. Immediate restoration is unverified; forward repair cannot recover lost data. |
@@ -88,7 +96,7 @@ The main checkout has unrelated dirty files. They remain unstaged and preserved.
 | #25 | Open and draft at `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26`, targeting `develop`. It contains only the six reviewed PDF files. CI run `39349972823` passes both jobs. Its automatic Preview is Ready; real signing and legal acceptance remain open. |
 | #26 | Open and draft with five documentation files only. Recorded run `39643163538` fails the inherited Vite audit; its database job and Preview pass. It does not contain the dependency repair. |
 | #27 | Open and draft at `5c3886d6cb555341746f22c1da49d778eead85a5`, targeting `develop`. One lockfile updates development Vite to `8.2.4`; all production entries remain unchanged. Local checks and both CI jobs in run `39651682681` pass; the automatic Preview is Ready. |
-| #28 | Open and draft. Reviewed source `4ee4050` passed local checks and is 20 commits ahead of verified `develop` at `1b7f7f9`, with 61 changed files. Earlier `cc27f38` passed CI `40724185151`. Read final PR-head CI and Preview results after publication. |
+| #28 | Open and draft. Source `76cdc5a` passed both CI jobs in run `40735491808` and the final Windows suite; Vercel reported success. Later records-only commits can advance the head; read their exact checks externally. |
 
 PR #22's review suggestion to replace `retry()` with `unstable_retry()` conflicts with the installed Next.js 16.3.8 implementation, types, and documentation.
 Keep `retry()`; no source change was made for that comment.
@@ -503,7 +511,7 @@ Preserve all existing DNS unless the owner approves an exact change.
 
 ## Ordered next steps
 
-1. Publish reviewed changes within existing approvals. Verify the resulting exact PR #28 head CI and Preview.
+1. Check the final records-only PR head CI and Preview separately. Preserve the verified source results and browser evidence limits.
 2. Keep local and hosted evidence within its recorded limits. Additional unverified hosted proof does not require automatic repeats.
 3. Keep legal, operational, signing, and release gates open until their required evidence or owner decisions are complete.
 4. Verify scheduler attribution and status-email inbox receipt through approved reads. Do not resend the email or invoke a worker.
