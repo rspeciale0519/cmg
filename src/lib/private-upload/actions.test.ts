@@ -64,7 +64,7 @@ vi.mock("@/lib/private-upload/finalize", () => ({
 }));
 
 const { prepareClaimDocumentUpload, finalizeClaimDocumentUpload } = await import("@/lib/actions/documents");
-const { finalizePortalDocumentUpload } = await import("@/lib/actions/portal-documents");
+const { finalizePortalDocumentUpload, preparePortalDocumentUpload } = await import("@/lib/actions/portal-documents");
 
 function prepareForm(claimId = stub.claimId) {
   const form = new FormData();
@@ -171,6 +171,29 @@ describe("private document upload actions", () => {
     expect(result.status).toBe("success");
     expect(stub.finalize).toHaveBeenCalledWith(
       { marker: "admin" }, expect.anything(), stub.sessionId, stub.token, stub.userId, stub.otherClaimId,
+    );
+  });
+  it("refuses homeowner upload preparation for an inaccessible claim before admin access", async () => {
+    stub.session = { userId: stub.userId, role: "customer" };
+    const result = await preparePortalDocumentUpload({ status: "idle" }, prepareForm(stub.otherClaimId));
+    expect(result.status).toBe("error");
+    const missing = await preparePortalDocumentUpload({ status: "idle" }, prepareForm("20000000-0000-4000-a000-0000000000c3"));
+    expect(missing.status).toBe("error");
+    expect(result.message).toBe(missing.message);
+    expect(result.message).toBe("That file is not on your claim, or it is no longer there.");
+    expect(stub.createAdmin).not.toHaveBeenCalled();
+    expect(stub.prepare).not.toHaveBeenCalled();
+  });
+
+  it("reserves a homeowner upload for an accessible claim", async () => {
+    stub.session = { userId: stub.userId, role: "customer" };
+    stub.claims[stub.claimId] = { id: stub.claimId, claim_ref: "CMG-2026-0001" };
+    const result = await preparePortalDocumentUpload({ status: "idle" }, prepareForm());
+    expect(result.status).toBe("idle");
+    expect(stub.createAdmin).toHaveBeenCalledTimes(1);
+    expect(stub.prepare).toHaveBeenCalledWith(
+      { marker: "admin" }, stub.claimId, stub.userId,
+      [{ name: "roof/photo.jpg", size: 32, mime: "image/jpeg" }], "photo", "customer",
     );
   });
 });
