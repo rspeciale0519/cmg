@@ -145,3 +145,14 @@ Immediate database restoration is unverified. Forward repair cannot recover lost
 - [Test results and limits](TEST_STATUS.md)
 - [Owner decision register](BLOCKERS.md)
 - [Launch checklist](LAUNCH_CHECKLIST.md)
+
+
+## Upload retry and remaining gates — 2026-10-28
+
+PR #28 source `82b22c64c1f8bfa66aed05f4040290cf855d2bf3` stops a second signed upload after confirmation returns an error. Its regression failed before the fix. Exact-head CI `40790572483` passed audit, type, lint, build, 1,800 unit tests, 1,350 pgTAP assertions, and 253 database tests. It skipped 65 unit tests and one live PandaDoc test; four low audit findings remain. The Preview was ready. The separate PR #29 failed its inherited dependency audit; its database check and Preview passed.
+
+On a scratch candidate copy, type, lint, the full unit suite, and a fresh physical-copy build passed. Seven mocked hook tests passed in each site mode. Earlier builds failed on font access, a Turbopack worker exit, and a package junction; the worker-exit cause remains unproved. Hosted interruption, retry, and final browser proof remain open. A hosted test request is pending; the available in-app browser has no confirmed deterministic interruption control. Do not upload until an approved batch and a supported method are available.
+
+The separate PandaDoc Single and Dual synthetic drafts remain unsent. Their required fields, assignments, and saved positions passed the documented draft checks. Gmail routing and draft forwarding and delegation decisions remain pending; actual signing, delivery, and filing are untested. A CMG-domain email link appears in the customer claim view; it was not used and the customer-facing contact needs an owner decision.
+
+Vercel's dashboard showed a Hobby plan. Its fair-use rules restrict Hobby to non-commercial use, so the owner must decide commercial hosting, billing, and spending before launch. Retention, legal holds, complete exports, monitoring, legal text, and customer access remain open. No backup, hosted data change, shared-branch merge, or Production release is authorized by this record.

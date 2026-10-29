@@ -1,5 +1,7 @@
 # Full-platform launch checklist
 
+On October 28, upload retry fix `82b22c64c1f8bfa66aed05f4040290cf855d2bf3` passed exact-head CI `40790572483` and its Preview was ready. Audit, type, lint, build, 1,800 unit tests, 1,350 pgTAP assertions, and 253 database tests passed. CI skipped 65 unit tests and one live PandaDoc test. Four low audit findings remain. Hosted interruption and retry remain unverified; the exact test request is pending and no reliable browser interruption method is confirmed. The separate draft PR #29 failed its inherited dependency audit; its database check and Preview passed. No Production release was made.
+
 Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
 Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.
