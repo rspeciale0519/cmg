@@ -28,7 +28,7 @@ export const OUTBOX_BACKOFF_SECONDS: readonly number[] = [60, 300, 1500, 7500];
 
 /**
  * Spec §6: "max 5 → `dead`". Counted as deliveries *started*, which is what
- * `claim_outbox_batch` increments — see that migration for why a send that kills
+ * `claim_outbox_batch_v2` increments — see that migration for why a send that kills
  * the process still has to cost an attempt.
  */
 export const OUTBOX_MAX_ATTEMPTS = 5;
@@ -116,7 +116,7 @@ export function isStaleOutboxRow(
   return now - queuedAt > maxAgeDays * 86_400_000;
 }
 
-export type OutboxOutcome = "sent" | "failed" | "dead";
+export type OutboxOutcome = "sent" | "failed" | "dead" | "held" | "uncertain";
 
 /**
  * What happens to a row whose attempt number is `attempts` and whose send just
@@ -149,12 +149,14 @@ export type ClaimedRow = {
   template: string;
   payload: unknown;
   attempts: number;
+  lease_token: string;
   /** When the row was queued. Optional only for the pre-migration claim shape. */
   created_at?: string | null;
 };
 
 export type SettleInput = {
   id: string;
+  leaseToken: string;
   outcome: OutboxOutcome;
   error: string | null;
   retryInSeconds: number | null;
@@ -166,22 +168,27 @@ export type SettleInput = {
  * sweepers cannot send the same notification twice.
  */
 export type OutboxStore = {
-  claim: (limit: number, ids?: string[]) => Promise<ClaimedRow[]>;
+  claim: (limit: number, ids?: string[], templates?: readonly string[]) => Promise<ClaimedRow[]>;
   settle: (result: SettleInput) => Promise<void>;
 };
 
 export type SendMessage = (message: {
   idempotencyKey: string;
+  leaseToken?: string;
+  signal?: AbortSignal;
   to: string;
   subject: string;
   html: string;
   text: string;
 }) => Promise<void>;
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, controller: AbortController): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const expired = new Promise<never>((_, reject) => {
-    timeout = setTimeout(() => reject(new Error("provider send timed out")), timeoutMs);
+    timeout = setTimeout(() => {
+      controller.abort();
+      reject(Object.assign(new Error("provider send timed out"), { code: "PROVIDER_OUTCOME_UNKNOWN" }));
+    }, timeoutMs);
   });
   try {
     return await Promise.race([promise, expired]);
@@ -198,6 +205,7 @@ export type DeliveryReport = {
   /** Rows dead-lettered by the age guard. A subset of `dead`, reported so an
    *  operator can tell a stale backlog from a failing provider at a glance. */
   stale: number;
+  held: number;
 };
 
 /**
@@ -215,15 +223,16 @@ export type DeliveryReport = {
 export async function deliverClaimed(
   store: OutboxStore,
   send: SendMessage,
-  options: { limit: number; ids?: string[]; concurrency?: number },
+  options: { limit: number; ids?: string[]; concurrency?: number; templates?: readonly string[] },
 ): Promise<DeliveryReport> {
-  const rows = await store.claim(options.limit, options.ids);
+  const rows = await store.claim(options.limit, options.ids, options.templates);
   const report: DeliveryReport = {
     claimed: rows.length,
     sent: 0,
     failed: 0,
     dead: 0,
     stale: 0,
+    held: 0,
   };
 
   const maxAgeDays = outboxMaxAgeDays();
@@ -236,6 +245,7 @@ export async function deliverClaimed(
     if (isStaleOutboxRow(row.created_at, maxAgeDays)) {
       await store.settle({
         id: row.id,
+        leaseToken: row.lease_token,
         outcome: "dead",
         error: `Not sent: queued more than ${maxAgeDays} day(s) ago, past OUTBOX_MAX_AGE_DAYS. The payload is retained; re-queue it deliberately if it is still owed.`,
         retryInSeconds: null,
@@ -252,23 +262,47 @@ export async function deliverClaimed(
         payload: row.payload,
       } as NotificationMessage);
 
+      const controller = new AbortController();
       await withTimeout(send({
         idempotencyKey: row.id,
+        leaseToken: row.lease_token,
+        signal: controller.signal,
         to: row.recipient_email,
         subject: rendered.subject,
         html: rendered.html,
         text: rendered.text,
-      }), OUTBOX_SEND_TIMEOUT_MS);
+      }), OUTBOX_SEND_TIMEOUT_MS, controller);
 
     } catch (cause) {
       sendFailure = cause;
     }
 
     if (sendFailure !== null) {
+      if (sendFailure instanceof Error && "code" in sendFailure && sendFailure.code === "PROVIDER_OUTCOME_UNKNOWN") {
+        await store.settle({ id: row.id, leaseToken: row.lease_token, outcome: "uncertain", error: sendFailure.message.slice(0, 500), retryInSeconds: null });
+        report.held += 1;
+        return;
+      }
+      if (
+        sendFailure instanceof Error &&
+        "code" in sendFailure &&
+        sendFailure.code === "RECIPIENT_POLICY_HOLD"
+      ) {
+        await store.settle({
+          id: row.id,
+          leaseToken: row.lease_token,
+          outcome: "held",
+          error: "Recipient policy check refused or could not be completed.",
+          retryInSeconds: null,
+        });
+        report.held += 1;
+        return;
+      }
       const { outcome, retryInSeconds } = outcomeAfterFailure(row.attempts);
 
       await store.settle({
         id: row.id,
+        leaseToken: row.lease_token,
         outcome,
         /* Truncated because `last_error` is read in the workspace and a provider
            can return a whole HTML error page. The first 500 characters carry the
@@ -290,6 +324,7 @@ export async function deliverClaimed(
        later retry safe. Never attempt a second, false `failed` settlement. */
     await store.settle({
       id: row.id,
+      leaseToken: row.lease_token,
       outcome: "sent",
       error: null,
       retryInSeconds: null,

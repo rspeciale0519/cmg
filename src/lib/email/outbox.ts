@@ -1,5 +1,6 @@
 import "server-only";
 
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database-app";
 import {
@@ -22,8 +23,30 @@ export type OutboxEntry = {
   dedupeKey?: string;
 };
 
-export const staffInbox = () =>
-  process.env.EMAIL_STAFF_INBOX ?? "Austin@CMGPropertySolutions.net";
+// Reserved marker only: the database claim function must hold these rows.
+export const UNRESOLVED_STAFF_RECIPIENT = "unresolved-staff@invalid";
+
+export const staffInbox = () => {
+  const address = process.env.EMAIL_STAFF_INBOX?.trim() ?? "";
+  if (address.toLowerCase() === UNRESOLVED_STAFF_RECIPIENT) {
+    return UNRESOLVED_STAFF_RECIPIENT;
+  }
+  return z.email().safeParse(address).success
+    ? address
+    : UNRESOLVED_STAFF_RECIPIENT;
+};
+
+/** False means blocked or invalid; null means the policy could not be read. */
+export async function staffRecipientAllowed(admin: Admin): Promise<boolean | null> {
+  const recipient = staffInbox();
+  if (recipient === UNRESOLVED_STAFF_RECIPIENT) return false;
+  try {
+    const { data, error } = await admin.rpc("email_recipient_allowed", { p_recipient: recipient });
+    return error || typeof data !== "boolean" ? null : data;
+  } catch {
+    return null;
+  }
+}
 
 const fromAddress = () =>
   process.env.EMAIL_FROM ??
@@ -59,53 +82,27 @@ export function resendApiKey(): string | null {
  */
 export function supabaseOutboxStore(admin: Admin): OutboxStore {
   return {
-    async claim(limit, ids) {
-      const { data, error } = await admin.rpc("claim_outbox_batch", {
+    async claim(limit, ids, templates) {
+      const { data, error } = await admin.rpc("claim_outbox_batch_v2", {
         p_limit: limit,
         p_lease_seconds: OUTBOX_LEASE_SECONDS,
         p_ids: ids ?? undefined,
+        p_templates: templates ? [...templates] : undefined,
       });
-
-      if (error) {
-        console.error("[outbox] claim failed", error.message);
-        throw new Error(`outbox claim failed: ${error.message}`);
-      }
-
-      return (data ?? []) as ClaimedRow[];
+      if (error) throw new Error("Outbox claim failed.");
+      const rows = data ?? [];
+      if (rows.some((row) => !row.lease_token)) throw new Error("Outbox claim has no lease token.");
+      return rows as ClaimedRow[];
     },
-
     async settle(result: SettleInput) {
-      /* `next_attempt_at` is left alone for `sent` and `dead`. Neither is ever
-         due again, the claim already pushed it past the lease, and writing a
-         retry time onto a row that will never be retried would make the column
-         lie to whoever reads the table looking for the backlog. */
-      const patch: Database["public"]["Tables"]["notifications_outbox"]["Update"] = {
-        status: result.outcome,
-        last_error: result.error,
-      };
-
-      if (result.outcome === "sent") {
-        patch.sent_at = new Date().toISOString();
-      }
-
-      if (result.retryInSeconds !== null) {
-        patch.next_attempt_at = new Date(
-          Date.now() + result.retryInSeconds * 1000,
-        ).toISOString();
-      }
-
-      const { error } = await admin
-        .from("notifications_outbox")
-        .update(patch)
-        .eq("id", result.id);
-
-      if (error) {
-        /* The row keeps its lease and comes back on a later sweep. At-least-once
-           is the contract, so a lost settle costs a duplicate rather than a lost
-           notification — the right way round for this queue. */
-        console.error("[outbox] settle failed", { id: result.id, error: error.message });
-        throw new Error(`outbox settle failed: ${error.message}`);
-      }
+      const { data, error } = await admin.rpc("settle_outbox_claim_v2", {
+        p_id: result.id,
+        p_token: result.leaseToken,
+        p_outcome: result.outcome,
+        p_error: result.error,
+        p_retry_seconds: result.retryInSeconds,
+      });
+      if (error || data !== true) throw new Error("Outbox settlement failed or the claim is no longer owned.");
     },
   };
 }
@@ -118,7 +115,7 @@ export function supabaseOutboxStore(admin: Admin): OutboxStore {
  * which is the one outcome this system must never produce. Callers check for
  * null and decline to claim anything.
  */
-export async function resendSender(): Promise<SendMessage | null> {
+export async function resendSender(admin: Admin): Promise<SendMessage | null> {
   const apiKey = resendApiKey();
   if (!apiKey) return null;
 
@@ -127,16 +124,36 @@ export async function resendSender(): Promise<SendMessage | null> {
     const resend = new Resend(apiKey);
 
     return async (message) => {
-      const result = await resend.emails.send({
-        from: fromAddress(),
-        to: message.to,
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-      }, { idempotencyKey: message.idempotencyKey });
-
+      let allowed = false;
+      try {
+        const result = message.leaseToken
+          ? await admin.rpc("outbox_claim_ready_v2", { p_id: message.idempotencyKey, p_token: message.leaseToken, p_recipient: message.to })
+          : await admin.rpc("email_recipient_allowed", { p_recipient: message.to });
+        allowed = !result.error && result.data === true;
+      } catch {
+        allowed = false;
+      }
+      if (!allowed) {
+        throw Object.assign(new Error("Recipient policy unavailable or refused."), { code: "RECIPIENT_POLICY_HOLD" });
+      }
+      if (message.signal?.aborted) {
+        throw Object.assign(new Error("Provider outcome is unknown."), { code: "PROVIDER_OUTCOME_UNKNOWN" });
+      }
+      let result;
+      try {
+        result = await resend.emails.send({
+          from: fromAddress(), to: message.to, subject: message.subject,
+          html: message.html, text: message.text,
+        }, { idempotencyKey: message.idempotencyKey });
+      } catch {
+        throw Object.assign(new Error("Provider outcome is unknown."), { code: "PROVIDER_OUTCOME_UNKNOWN" });
+      }
       if (result.error) {
-        throw new Error(result.error.message);
+        const status = result.error.statusCode;
+        if (typeof status !== "number" || status < 400 || status >= 500 || status === 408 || status === 409) {
+          throw Object.assign(new Error("Provider outcome is unknown."), { code: "PROVIDER_OUTCOME_UNKNOWN" });
+        }
+        throw new Error("Provider refused the message.");
       }
     };
   } catch (cause) {
@@ -184,7 +201,7 @@ export async function dispatchOutbox(admin: Admin, ids: string[]): Promise<void>
 
   if (allowedIds.length === 0) return;
 
-  const send = await resendSender();
+  const send = await resendSender(admin);
   if (!send) {
     console.info(
       `[outbox] RESEND_API_KEY not set — ${allowedIds.length} notification(s) queued, not sent`,
@@ -196,6 +213,7 @@ export async function dispatchOutbox(admin: Admin, ids: string[]): Promise<void>
     await deliverClaimed(supabaseOutboxStore(admin), send, {
       limit: allowedIds.length,
       ids: allowedIds,
+      templates,
     });
   } catch (cause) {
     console.error("[outbox] immediate dispatch failed", cause);
@@ -212,28 +230,8 @@ export async function sweepOutbox(
   concurrency = 1,
   templates?: readonly string[],
 ): Promise<DeliveryReport> {
-  let ids: string[] | undefined;
-  if (templates) {
-    const { data, error } = await admin
-      .from("notifications_outbox")
-      .select("id")
-      .in("status", ["pending", "failed"])
-      .in("template", [...templates])
-      .lte("next_attempt_at", new Date().toISOString())
-      .order("next_attempt_at", { ascending: true })
-      .limit(Math.max(limit, 0));
-
-    if (error) {
-      throw new Error(`outbox template filter failed: ${error.message}`);
-    }
-
-    ids = (data ?? []).map((row) => row.id);
-  }
-
   return deliverClaimed(supabaseOutboxStore(admin), send, {
-    limit,
-    concurrency,
-    ids,
+    limit, concurrency, templates,
   });
 }
 
@@ -266,4 +264,11 @@ export async function countOutboxOwed(
   }
 
   return count ?? 0;
+}
+
+/** Count only the unresolved recipients that still need a reviewed correction. */
+export async function countOutboxHeld(admin: Admin): Promise<number | null> {
+  const { data, error } = await admin.rpc("count_outbox_held");
+  if (error) return null;
+  return data ?? 0;
 }

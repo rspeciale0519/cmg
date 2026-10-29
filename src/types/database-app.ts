@@ -25,6 +25,8 @@ type NullableArgs<
 // Generation does not retain these SQL null contracts. Keep database.ts as the
 // untouched CLI output; preserve every other field and optional argument here.
 type FunctionOverrides = {
+  // Error and retry fields are nullable for successful, held, and dead claims.
+  settle_outbox_claim_v2: NullableArgs<"settle_outbox_claim_v2", "p_error" | "p_retry_seconds">;
   // 20260815240000: optional intake facts use COALESCE; partner fields depend on
   // p_partner_choice, and status notes can be null.
   accept_intake_transaction: NullableArgs<

@@ -1,6 +1,11 @@
 import "server-only";
 
-import { countOutboxOwed, resendApiKey } from "@/lib/email/outbox";
+import {
+  countOutboxHeld,
+  countOutboxOwed,
+  resendApiKey,
+  staffRecipientAllowed,
+} from "@/lib/email/outbox";
 import { esignCapabilities } from "@/lib/esign";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +25,7 @@ import {
  * process environment.
  */
 export async function loadIntegrations(): Promise<Integration[]> {
-  const [supabase, esign, outboxDue] = await Promise.all([
+  const [supabase, esign, outboxDue, outboxHeld, staffRecipientConfigured] = await Promise.all([
     probeSupabase(),
     Promise.resolve(esignCapabilities()),
     /* Through the service-role client, because `notifications_outbox` grants
@@ -28,6 +33,8 @@ export async function loadIntegrations(): Promise<Integration[]> {
        count is a number, never a row, so no recipient address crosses into the
        render. */
     countOutboxOwed(createAdminClient()),
+    countOutboxHeld(createAdminClient()),
+    staffRecipientAllowed(createAdminClient()),
   ]);
 
   return buildIntegrations({
@@ -35,6 +42,8 @@ export async function loadIntegrations(): Promise<Integration[]> {
     resendApiKey: resendApiKey(),
     emailFrom: nonEmpty(process.env.EMAIL_FROM),
     outboxDue,
+    outboxHeld,
+    staffRecipientConfigured,
     turnstileSiteKey: nonEmpty(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
     turnstileSecretKey: nonEmpty(process.env.TURNSTILE_SECRET_KEY),
     esign,

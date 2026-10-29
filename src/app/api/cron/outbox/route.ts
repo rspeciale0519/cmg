@@ -17,7 +17,7 @@ import { deliverableTemplates } from "@/lib/site-mode";
  *
  * SAFE TO RUN CONCURRENTLY WITH ITSELF
  *
- * `claim_outbox_batch` uses `for update skip locked` to partition due rows
+ * `claim_outbox_batch_v2` uses `for update skip locked` to partition due rows
  * between workers. Its lease excludes a claimed row until that lease expires.
  * The same claim covers `dispatchOutbox` after commit racing a sweep.
  */
@@ -47,7 +47,7 @@ export async function GET(request: Request): Promise<Response> {
      found rather than the backlog it left behind. */
   const owed = await countOutboxOwed(admin, templates);
 
-  const send = await resendSender();
+  const send = await resendSender(admin);
 
   /**
    * NO RESEND KEY: report, claim nothing, send nothing.

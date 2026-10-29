@@ -2,7 +2,7 @@
 begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(29);
 
 insert into public.notifications_outbox
   (id, recipient_email, template, payload, status, attempts, next_attempt_at, sent_at)
@@ -21,7 +21,7 @@ values
 set local role service_role;
 
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(10, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(10, 300, array[
     '32000000-0000-4000-a000-000000000002',
     '32000000-0000-4000-a000-000000000003',
     '32000000-0000-4000-a000-000000000004'
@@ -62,7 +62,7 @@ select is(
 );
 
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(10, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(10, 300, array[
     '32000000-0000-4000-a000-000000000005',
     '32000000-0000-4000-a000-000000000006'
   ]::uuid[])),
@@ -78,7 +78,7 @@ select is(
 );
 
 select is(
-  (select attempts from public.claim_outbox_batch(1, 300,
+  (select attempts from public.claim_outbox_batch_v2(1, 300,
     array['32000000-0000-4000-a000-000000000001']::uuid[])),
   5,
   'attempt four can still claim the fifth and final delivery'
@@ -89,7 +89,7 @@ select ok(
   'the final attempt installs the normal lease without changing delivery status'
 );
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(1, 300,
+  (select count(*)::integer from public.claim_outbox_batch_v2(1, 300,
     array['32000000-0000-4000-a000-000000000001']::uuid[])),
   0,
   'another worker cannot take the final attempt during its lease'
@@ -97,19 +97,19 @@ select is(
 update public.notifications_outbox set next_attempt_at = now() - interval '1 second'
 where id = '32000000-0000-4000-a000-000000000001';
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(1, 300,
+  (select count(*)::integer from public.claim_outbox_batch_v2(1, 300,
     array['32000000-0000-4000-a000-000000000001']::uuid[])),
   0,
   'the expired final attempt is not returned for a sixth send'
 );
 select ok(
-  (select status = 'dead' and attempts = 5 from public.notifications_outbox
+  (select status = 'pending' and hold_reason = 'expired-lease-uncertain' and attempts = 5 from public.notifications_outbox
    where id = '32000000-0000-4000-a000-000000000001'),
   'the crashed final attempt remains recorded at exactly five attempts'
 );
 
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(10, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(10, 300, array[
     '32000000-0000-4000-a000-000000000007',
     '32000000-0000-4000-a000-000000000008'
   ]::uuid[])),
@@ -124,7 +124,7 @@ select is(
   'terminal recovery never changes a completed delivery outcome'
 );
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(10, 300, array[]::uuid[])),
+  (select count(*)::integer from public.claim_outbox_batch_v2(10, 300, array[]::uuid[])),
   0,
   'an empty p_ids array performs no delivery work'
 );
@@ -137,7 +137,7 @@ select is(
 );
 
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(0, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(0, 300, array[
     '32000000-0000-4000-a000-000000000009',
     '32000000-0000-4000-a000-000000000010'
   ]::uuid[])),
@@ -161,12 +161,12 @@ values
   ('32000000-0000-4000-a000-000000000016', 'budget-fresh@example.test', 'lead_auto_reply', '{}', 'pending', 0, now() - interval '1 minute');
 
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(2, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(2, 300, array[
     '32000000-0000-4000-a000-000000000013', '32000000-0000-4000-a000-000000000014',
     '32000000-0000-4000-a000-000000000015', '32000000-0000-4000-a000-000000000016'
   ]::uuid[])),
-  0,
-  'terminal recovery consumes the same two-row batch budget as delivery claims'
+  1,
+  'fresh delivery proceeds even when terminal recovery fills its own budget'
 );
 select is(
   (select count(*)::integer from public.notifications_outbox where id in (
@@ -178,16 +178,16 @@ select is(
 select is(
   (select attempts from public.notifications_outbox
    where id = '32000000-0000-4000-a000-000000000016'),
-  0,
-  'a full recovery batch leaves fresh mail for the next worker'
+  1,
+  'fresh mail spends one attempt despite a full recovery batch'
 );
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(2, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(2, 300, array[
     '32000000-0000-4000-a000-000000000013', '32000000-0000-4000-a000-000000000014',
     '32000000-0000-4000-a000-000000000015', '32000000-0000-4000-a000-000000000016'
   ]::uuid[])),
-  1,
-  'unused recovery capacity claims fresh mail in the same call'
+  0,
+  'the next call recovers the remaining row without repeating an active delivery'
 );
 select is(
   (select string_agg(status::text || ':' || attempts::text, ',' order by id)
@@ -197,13 +197,42 @@ select is(
   'only fresh mail spends a delivery attempt in the mixed batch'
 );
 select is(
-  (select count(*)::integer from public.claim_outbox_batch(2, 300, array[
+  (select count(*)::integer from public.claim_outbox_batch_v2(2, 300, array[
     '32000000-0000-4000-a000-000000000013', '32000000-0000-4000-a000-000000000014',
     '32000000-0000-4000-a000-000000000015', '32000000-0000-4000-a000-000000000016'
   ]::uuid[])),
   0,
   'a following worker cannot repeat terminal recovery or take an active delivery lease'
 );
+
+-- Each phase gets its own limit. The aggregate change is at most three
+-- times that limit, and expired claims do not starve valid delivery.
+insert into public.notifications_outbox
+  (id, recipient_email, template, payload, status, attempts, next_attempt_at, lease_token)
+select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid,
+  'phase-' || n || '@example.test', 'lead_auto_reply', '{}', 'pending',
+  case when n between 23 and 25 then 5 when n between 20 and 22 then 1 else 0 end,
+  now() - interval '1 minute',
+  case when n between 20 and 22 then gen_random_uuid() else null end
+from generate_series(20, 28) n;
+
+select is((select count(*)::integer from public.claim_outbox_batch_v2(2, 300,
+  array(select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid from generate_series(20, 28) n))),
+  2, 'delivery gets its full limit alongside expired and terminal phases');
+select is((select count(*)::integer from public.notifications_outbox where id in
+  (select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid from generate_series(20, 22) n)
+  and hold_reason = 'expired-lease-uncertain' and lease_token is null),
+  2, 'expired phase holds at most its own limit');
+select is((select count(*)::integer from public.notifications_outbox where id in
+  (select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid from generate_series(23, 25) n)
+  and status = 'dead'), 2, 'terminal phase changes at most its own limit');
+select is((select count(*)::integer from public.notifications_outbox where id in
+  (select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid from generate_series(26, 28) n)
+  and attempts = 1 and lease_token is not null), 2, 'delivery phase changes at most its own limit');
+select is((select count(*)::integer from public.notifications_outbox where id in
+  (select ('32000000-0000-4000-a000-' || lpad(n::text, 12, '0'))::uuid from generate_series(20, 28) n)
+  and (hold_reason is not null or status = 'dead' or (id >= '32000000-0000-4000-a000-000000000026'::uuid and lease_token is not null))),
+  6, 'all three phases together change no more than three times the limit');
 
 reset role;
 select * from finish();

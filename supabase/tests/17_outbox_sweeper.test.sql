@@ -1,7 +1,7 @@
 -- CMG Property Solutions — the outbox holds people's email addresses
 --
 -- Phase 7 wired every event in spec §6 to `notifications_outbox` and added
--- `public.claim_outbox_batch()` so two sweepers cannot send the same notification twice.
+-- `public.claim_outbox_batch_v2()` so two sweepers cannot send the same notification twice.
 -- Both halves are asserted here, and the security half first, because it is the one with
 -- something to lose.
 --
@@ -69,22 +69,22 @@ select is(
 
 select ok(
   not (select prosecdef from pg_proc
-        where oid = 'public.claim_outbox_batch(integer,integer,uuid[])'::regprocedure),
+        where oid = 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])'::regprocedure),
   'claim_outbox_batch is SECURITY INVOKER, so it carries no elevation of its own and the table''s zero-policy state still applies to whoever calls it'
 );
 
 select ok(
-  not has_function_privilege('anon', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  not has_function_privilege('anon', 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])', 'execute'),
   'anon cannot execute the claim function'
 );
 
 select ok(
-  not has_function_privilege('authenticated', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  not has_function_privilege('authenticated', 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])', 'execute'),
   'and neither can authenticated — the function returns recipient_email, so an EXECUTE grant here would hand out exactly what the table exists to withhold'
 );
 
 select ok(
-  has_function_privilege('service_role', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  has_function_privilege('service_role', 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])', 'execute'),
   'the service role, which is what the sweeper holds, can'
 );
 
@@ -101,7 +101,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select * from public.claim_outbox_batch(10) $$,
+  $$ select * from public.claim_outbox_batch_v2(10) $$,
   '42501'::char(5), null::text,
   'nor call the function that would hand it rows'
 );
@@ -130,7 +130,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select * from public.claim_outbox_batch(10) $$,
+  $$ select * from public.claim_outbox_batch_v2(10) $$,
   '42501'::char(5), null::text,
   'and cannot claim delivery work, which would return other people''s addresses'
 );
@@ -152,7 +152,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select * from public.claim_outbox_batch(10) $$,
+  $$ select * from public.claim_outbox_batch_v2(10) $$,
   '42501'::char(5), null::text,
   'and cannot claim delivery work'
 );
@@ -165,7 +165,7 @@ reset role;
 -- ---------------------------------------------------------------------------
 
 create temp table claimed as
-  select * from public.claim_outbox_batch(
+  select * from public.claim_outbox_batch_v2(
     10, 300,
     array['31000000-0000-4000-a000-000000000001',
           '31000000-0000-4000-a000-000000000002',
@@ -191,7 +191,7 @@ select ok(
 
 -- The property the whole sweeper rests on: a claimed row is no longer due.
 select is(
-  (select count(*)::int from public.claim_outbox_batch(
+  (select count(*)::int from public.claim_outbox_batch_v2(
     10, 300,
     array['31000000-0000-4000-a000-000000000001',
           '31000000-0000-4000-a000-000000000002']::uuid[]
@@ -205,7 +205,7 @@ select ok(
      from public.notifications_outbox
     where id in ('31000000-0000-4000-a000-000000000001',
                  '31000000-0000-4000-a000-000000000002')),
-  'the lease is on the same column the due predicate already reads, so a sweeper that dies holding a row costs one lease interval and needs no reaper'
+  'the lease is on the same column the due predicate already reads, so a sweeper that dies holding a row is held for review if its lease expires'
 );
 
 select is(
@@ -220,14 +220,14 @@ select is(
 -- ---------------------------------------------------------------------------
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(10, 300,
+  (select count(*)::int from public.claim_outbox_batch_v2(10, 300,
     array['31000000-0000-4000-a000-000000000003']::uuid[])),
   0,
   'a row whose next_attempt_at is in the future is not claimable, however narrowly it is asked for'
 );
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(0)),
+  (select count(*)::int from public.claim_outbox_batch_v2(0)),
   0,
   'a zero limit claims nothing rather than everything'
 );
@@ -237,7 +237,7 @@ update public.notifications_outbox
  where id = '31000000-0000-4000-a000-000000000003';
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(10, 300,
+  (select count(*)::int from public.claim_outbox_batch_v2(10, 300,
     array['31000000-0000-4000-a000-000000000003']::uuid[])),
   0,
   'a dead row is never claimed again, however long it has been due — five attempts is the end of the ladder, not a pause on it'
@@ -248,7 +248,7 @@ update public.notifications_outbox
  where id = '31000000-0000-4000-a000-000000000003';
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(10, 300,
+  (select count(*)::int from public.claim_outbox_batch_v2(10, 300,
     array['31000000-0000-4000-a000-000000000003']::uuid[])),
   0,
   'and neither is a sent one, so a delivered notification cannot be resent by a stale timestamp'
@@ -259,7 +259,7 @@ update public.notifications_outbox
  where id = '31000000-0000-4000-a000-000000000003';
 
 select is(
-  (select attempts from public.claim_outbox_batch(10, 300,
+  (select attempts from public.claim_outbox_batch_v2(10, 300,
     array['31000000-0000-4000-a000-000000000003']::uuid[])),
   4,
   'a failed row that has come due is claimed and continues its count, so the ladder is walked once rather than restarted'

@@ -39,7 +39,7 @@ begin
     case
       when f.n in (24, 25) then now() + interval '1 hour'
       -- Mixed fresh rows are older than exhausted rows. Recovery still takes
-      -- priority and spends from the same batch budget.
+      -- its own bounded phase, without starving delivery.
       when f.n in (17, 18) then now() - interval '1 minute'
       else now() - make_interval(mins => (40 - f.n)::integer)
     end,
@@ -52,7 +52,7 @@ begin
   from public.notifications_outbox o where o.id = any(v_ids[24:27]);
 
   v_scope := v_ids[1:8] || v_ids[24:25];
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, array[]::uuid[],
     p_label || ': exhausted rows are never returned for delivery');
   return next extensions.is(
@@ -63,7 +63,7 @@ begin
     (select bool_and(o.attempts = 5) from public.notifications_outbox o where o.id = any(v_ids[1:8])),
     p_label || ': recovery never spends another delivery attempt');
 
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, array[]::uuid[],
     p_label || ': a following recovery call also returns no deliveries');
   return next extensions.is(
@@ -71,7 +71,7 @@ begin
       where o.id = any(v_ids[1:8]) and o.status = 'dead' order by o.id),
     v_ids[1:6], p_label || ': the following recovery call spends only its own three-row budget');
 
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, array[]::uuid[],
     p_label || ': the exhausted remainder does not become delivery work');
   return next extensions.is(
@@ -80,7 +80,7 @@ begin
     v_ids[1:8], p_label || ': a final call processes the two-row exhausted remainder');
 
   v_scope := v_ids[9:16] || v_ids[24:25];
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, v_ids[9:11],
     p_label || ': fresh delivery claims stop at the three oldest due rows');
   return next extensions.is(
@@ -93,13 +93,13 @@ begin
       from public.notifications_outbox o where o.id = any(v_ids[9:11])),
     p_label || ': each claimed row spends one attempt and receives an active lease');
 
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, v_ids[12:14],
     p_label || ': the following fresh batch claims only the next three unleased rows');
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, v_ids[15:16],
     p_label || ': the next fresh batch returns the two remaining rows');
-  v_returned := array(select c.id from public.claim_outbox_batch(3, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(3, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, array[]::uuid[],
     p_label || ': another call cannot replay active fresh leases');
   return next extensions.ok(
@@ -108,9 +108,9 @@ begin
     p_label || ': all fresh rows retain exactly one attempt and their original lease');
 
   v_scope := v_ids[17:23] || v_ids[24:25];
-  v_returned := array(select c.id from public.claim_outbox_batch(4, 300, v_scope) c order by c.id);
-  return next extensions.is(v_returned, v_ids[19:20],
-    p_label || ': two recoveries leave capacity for only two fresh deliveries');
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(4, 300, v_scope) c order by c.id);
+  return next extensions.is(v_returned, v_ids[19:22],
+    p_label || ': recovery does not reduce the four-row delivery limit');
   return next extensions.is(
     array(select o.id from public.notifications_outbox o
       where o.id = any(v_ids[17:23]) and o.status = 'dead' order by o.id),
@@ -118,12 +118,12 @@ begin
   return next extensions.is(
     array(select o.id from public.notifications_outbox o
       where o.id = any(v_ids[19:23]) and o.attempts > 0 order by o.id),
-    v_ids[19:20], p_label || ': mixed recovery and delivery share the four-row change budget');
+    v_ids[19:22], p_label || ': delivery claims remain bounded by their own four-row limit');
 
-  v_returned := array(select c.id from public.claim_outbox_batch(4, 300, v_scope) c order by c.id);
-  return next extensions.is(v_returned, v_ids[21:23],
-    p_label || ': the following mixed batch claims only the three remaining deliveries');
-  v_returned := array(select c.id from public.claim_outbox_batch(4, 300, v_scope) c order by c.id);
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(4, 300, v_scope) c order by c.id);
+  return next extensions.is(v_returned, v_ids[23:23],
+    p_label || ': the following mixed batch claims the remaining delivery');
+  v_returned := array(select c.id from public.claim_outbox_batch_v2(4, 300, v_scope) c order by c.id);
   return next extensions.is(v_returned, array[]::uuid[],
     p_label || ': a later mixed batch cannot replay terminal work or active leases');
   return next extensions.is(

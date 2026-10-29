@@ -610,6 +610,21 @@ export type Database = {
           },
         ]
       }
+      email_recipient_policy: {
+        Row: {
+          blocked_domains: string[]
+          singleton: boolean
+        }
+        Insert: {
+          blocked_domains: string[]
+          singleton?: boolean
+        }
+        Update: {
+          blocked_domains?: string[]
+          singleton?: boolean
+        }
+        Relationships: []
+      }
       esign_dispatch_attempts: {
         Row: {
           actor_id: string | null
@@ -896,8 +911,10 @@ export type Database = {
           attempts: number
           created_at: string
           dedupe_key: string | null
+          hold_reason: string | null
           id: string
           last_error: string | null
+          lease_token: string | null
           next_attempt_at: string
           payload: Json
           recipient_email: string
@@ -910,8 +927,10 @@ export type Database = {
           attempts?: number
           created_at?: string
           dedupe_key?: string | null
+          hold_reason?: string | null
           id?: string
           last_error?: string | null
+          lease_token?: string | null
           next_attempt_at?: string
           payload?: Json
           recipient_email: string
@@ -924,8 +943,10 @@ export type Database = {
           attempts?: number
           created_at?: string
           dedupe_key?: string | null
+          hold_reason?: string | null
           id?: string
           last_error?: string | null
+          lease_token?: string | null
           next_attempt_at?: string
           payload?: Json
           recipient_email?: string
@@ -1340,6 +1361,23 @@ export type Database = {
           template: string
         }[]
       }
+      claim_outbox_batch_v2: {
+        Args: {
+          p_ids?: string[]
+          p_lease_seconds?: number
+          p_limit?: number
+          p_templates?: string[]
+        }
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          lease_token: string
+          payload: Json
+          recipient_email: string
+          template: string
+        }[]
+      }
       claim_pandadoc_webhook_event: {
         Args: {
           p_claim_token: string
@@ -1379,6 +1417,11 @@ export type Database = {
           p_event_id: string
           p_payload_summary: Json
         }
+        Returns: boolean
+      }
+      count_outbox_held: { Args: never; Returns: number }
+      email_recipient_allowed: {
+        Args: { p_recipient: string }
         Returns: boolean
       }
       enqueue_storage_cleanup_exact: {
@@ -1455,6 +1498,10 @@ export type Database = {
         Returns: boolean
       }
       next_claim_ref: { Args: never; Returns: string }
+      outbox_claim_ready_v2: {
+        Args: { p_id: string; p_recipient: string; p_token: string }
+        Returns: boolean
+      }
       partner_company_profile: {
         Args: never
         Returns: {
@@ -1523,6 +1570,16 @@ export type Database = {
           p_request_id: string
           p_result?: Json
           p_state: string
+        }
+        Returns: boolean
+      }
+      settle_outbox_claim_v2: {
+        Args: {
+          p_error: string
+          p_id: string
+          p_outcome: string
+          p_retry_seconds: number
+          p_token: string
         }
         Returns: boolean
       }

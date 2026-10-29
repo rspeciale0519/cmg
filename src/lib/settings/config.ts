@@ -140,6 +140,9 @@ export type IntegrationEnvironment = {
   emailFrom: string | null;
   /** Outbox rows still owed a send. Null when the count could not be read. */
   outboxDue: number | null;
+  /** Held rows need review before any delivery. Null means count unavailable. */
+  outboxHeld: number | null;
+  staffRecipientConfigured: boolean | null;
   turnstileSiteKey: string | null;
   turnstileSecretKey: string | null;
   esign: ESignCapabilities;
@@ -154,7 +157,10 @@ export type IntegrationEnvironment = {
 export function buildIntegrations(env: IntegrationEnvironment): Integration[] {
   return [
     supabaseIntegration(env.supabase),
-    resendIntegration(env.resendApiKey, env.emailFrom, env.outboxDue),
+    resendIntegration(
+      env.resendApiKey, env.emailFrom, env.outboxDue,
+      env.outboxHeld, env.staffRecipientConfigured,
+    ),
     turnstileIntegration(env.turnstileSiteKey, env.turnstileSecretKey),
     esignIntegration(env.esign),
   ];
@@ -211,6 +217,8 @@ function resendIntegration(
   apiKey: string | null,
   from: string | null,
   due: number | null,
+  held: number | null,
+  staffRecipientConfigured: boolean | null,
 ): Integration {
   const facts: IntegrationFact[] = [
     { label: "From address", value: from ?? "not set", quiet: from === null },
@@ -223,6 +231,13 @@ function resendIntegration(
             ? "1 notification"
             : `${due} notifications`,
       quiet: due === 0,
+    },
+    {
+      label: "Notifications held for review",
+      value: held === null
+        ? "could not be read"
+        : held === 1 ? "1 notification" : `${held} notifications`,
+      quiet: held === 0,
     },
   ];
 
@@ -238,7 +253,20 @@ function resendIntegration(
          whole backlog to `dead` in five sweeps — destroying the record of what
          was owed, which is the only reason the table exists. */
       detail:
-        "Notifications are still written to the outbox and held there, so nothing is lost. The cron sweep leaves them alone rather than spending retries it cannot make, so none of them will expire while the key is missing — they send once one is set. Invitations fall back to a link the screen hands you to pass on yourself.",
+        "Notifications are still written to the outbox and held there, so nothing is lost. The cron sweep leaves them alone rather than spending retries it cannot make, so none of them will expire while the key is missing — they send once one is set. Invitations fall back to a link the screen hands you to pass on yourself. Alerts without a staff recipient need a reviewed correction before delivery.",
+      facts,
+    };
+  }
+
+  if (!staffRecipientConfigured || held === null || held > 0) {
+    return {
+      key: "resend",
+      name: "Resend",
+      state: "attention",
+      headline: "Notifications need review.",
+      detail: staffRecipientConfigured === null
+        ? "The staff recipient policy could not be checked. Review held notifications before any delivery."
+        : "Check the staff email setting and review held notifications before any delivery. Changing the setting does not update queued recipients.",
       facts,
     };
   }
