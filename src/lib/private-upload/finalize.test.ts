@@ -159,3 +159,34 @@ describe("private upload uncertain insert recovery", () => {
     }
   });
 });
+
+describe("thrown insert response recovery", () => {
+  it.each([
+    ["matching row", row, "success", 1],
+    ["mismatched uploader", { ...row, uploaded_by: "00000000-0000-4000-a000-000000000008" }, "error", 0],
+  ])("reconciles only a %s after an insert throws", async (_label, committedRow, expectedStatus, finalizations) => {
+    const finalizeCalls: Array<[string, unknown]> = [];
+    const read = vi.fn().mockResolvedValueOnce({ data: [], error: null })
+      .mockResolvedValueOnce({ data: [committedRow], error: null });
+    const select = vi.fn(() => ({ eq: () => ({ in: read }) }));
+    const insertResponse = vi.fn().mockRejectedValueOnce(new Error("synthetic lost response"));
+    const insert = vi.fn(() => ({ select: insertResponse }));
+    const caller = { from: vi.fn(() => ({ select, insert })) } as unknown as SupabaseClient<Database>;
+    const admin = adminClient(finalizeCalls, false);
+    const rpc = vi.spyOn(admin, "rpc");
+    await expect(finalizePrivateUploadSession(admin, caller, id, token, userId, claimId))
+      .rejects.toThrow("synthetic lost response");
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(finalizeCalls).toHaveLength(0);
+    const result = await finalizePrivateUploadSession(admin, caller, id, token, userId, claimId);
+    expect(result.status).toBe(expectedStatus);
+    expect(result.restartAllowed).not.toBe(true);
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(finalizeCalls).toHaveLength(finalizations);
+    expect(rpc.mock.calls.map(([name]) => name)).not.toContain("cancel_private_upload_session");
+    if (finalizations) expect(finalizeCalls[0]).toEqual(["finalize_private_upload_session", {
+      p_id: id, p_token_hash: privateUploadTokenHash(token), p_document_ids: [documentId],
+    }]);
+  });
+});
