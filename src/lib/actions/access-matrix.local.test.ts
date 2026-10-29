@@ -331,6 +331,54 @@ describeLocal("direct actions against disposable Auth and user-scoped RLS", () =
     expect(await snapshot()).toEqual(existingBefore);
   });
 
+  it("saves an assigned adjuster's financials and refuses foreign or missing claims", async () => {
+    const assignments = await admin.from("claims").select("id,assigned_adjuster_id")
+      .in("id", [ids.ownClaim, ids.foreignClaim]);
+    check(assignments.error, "financial fixture assignment readback");
+    expect(assignments.data).toHaveLength(2);
+    expect(assignments.data).toEqual(expect.arrayContaining([
+      { id: ids.ownClaim, assigned_adjuster_id: adjuster.id },
+    ]));
+    const foreignClaim = assignments.data?.find((row) => row.id === ids.foreignClaim);
+    expect(foreignClaim?.assigned_adjuster_id).toBeTruthy();
+    expect(foreignClaim?.assigned_adjuster_id).not.toBe(adjuster.id);
+
+    const scopedReadback = async () => {
+      const results = await Promise.all([
+        admin.from("claims").select("id,status,assigned_adjuster_id,updated_at")
+          .in("id", [ids.ownClaim, ids.foreignClaim]).order("id"),
+        admin.from("claim_financials").select("claim_id,settlement_amount,fee_percent,notes,updated_by,updated_at")
+          .in("claim_id", [ids.ownClaim, ids.foreignClaim]).order("claim_id"),
+        admin.from("audit_log").select("id,entity,action,entity_id,actor_id")
+          .in("entity_id", [ids.ownClaim, ids.foreignClaim]).order("id"),
+      ]);
+      results.forEach((result) => check(result.error, "financial fixture readback"));
+      return results.map((result) => result.data);
+    };
+    const before = await scopedReadback();
+    await asCaller(adjuster, "adjuster");
+    expect(await guards.requireStaff()).toMatchObject({ userId: adjuster.id, aal: "aal2" });
+    const fields = { settlementAmount: "12345.67", feePercent: "20", notes: "Synthetic financial access test" };
+    const own = await claims.saveClaimFinancials(idle, form({ claimId: ids.ownClaim, ...fields }));
+    expect(own.status).toBe("success");
+    const afterOwn = await scopedReadback();
+    expect(afterOwn[0]).toEqual(before[0]);
+    expect(afterOwn[1]).toEqual(expect.arrayContaining([expect.objectContaining({
+      claim_id: ids.ownClaim, settlement_amount: 12345.67, fee_percent: 20,
+      notes: fields.notes, updated_by: adjuster.id,
+    })]));
+    const financialAudit = await admin.from("audit_log").select("id,entity,entity_id,actor_id")
+      .eq("entity", "claim_financials").eq("entity_id", ids.ownClaim).eq("actor_id", adjuster.id);
+    check(financialAudit.error, "financial audit readback");
+    expect(financialAudit.data).toHaveLength(1);
+
+    const foreign = await claims.saveClaimFinancials(idle, form({ claimId: ids.foreignClaim, ...fields }));
+    const missing = await claims.saveClaimFinancials(idle, form({ claimId: randomUUID(), ...fields }));
+    expect(foreign.status).toBe("error");
+    expect(foreign).toEqual(missing);
+    expect(await scopedReadback()).toEqual(afterOwn);
+  });
+
   it("refuses a vendor calling staff and homeowner actions", async () => {
     await asCaller(vendor, "partner");
     const before = await snapshot();
