@@ -149,7 +149,7 @@ async function account(role: "adjuster" | "customer" | "partner", tag: string): 
   return { id, email, client };
 }
 
-async function claim(id: string, assignedTo: string) {
+async function claim(id: string, assignedTo: string, companyId = ids.company) {
   let claimRef = "";
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const candidate = `CMG-2098-${randomInt(1000, 10000)}`;
@@ -159,7 +159,7 @@ async function claim(id: string, assignedTo: string) {
   }
   if (!claimRef) throw new Error("An unused synthetic claim reference was not found.");
   const result = await admin.from("claims").insert({ id, claim_ref: claimRef, status: "under_review",
-    assigned_adjuster_id: assignedTo, partner_company_id: ids.company,
+    assigned_adjuster_id: assignedTo, partner_company_id: companyId,
     property_street: "1 Disposable Access Way", property_city: "Orlando", property_state: "Florida",
     property_zip: "32801", carrier: "Fixture Carrier", policy_number: `ACCESS-${id}`,
     carrier_tenure: "three_plus_years", loss_date: "2026-07-01", cause: "hurricane",
@@ -293,6 +293,42 @@ describeLocal("direct actions against disposable Auth and user-scoped RLS", () =
     expect(answers[1]).toEqual(answers[2]);
     expect(await snapshot()).toEqual(before);
     expect(requests.some(({ path }) => path.startsWith("/storage/"))).toBe(false);
+  });
+
+  it("keeps another company's claim indistinguishable from a missing claim in the partner query", async () => {
+    const companyId = randomUUID();
+    const claimId = randomUUID();
+    retained.partnerBoundary = { companyId, claimId };
+    check((await admin.from("partner_companies").insert({
+      id: companyId, name: `Access boundary ${companyId}`, status: "active",
+    })).error, "second synthetic company creation");
+    await claim(claimId, adjuster.id, companyId);
+    const readBoundary = async () => {
+      const results = await Promise.all([
+        admin.from("claims").select("id,partner_company_id,updated_at").eq("id", claimId),
+        admin.from("claim_partner_summaries").select("*").eq("claim_id", claimId),
+        admin.from("audit_log").select("id,action,entity_id,actor_id").in("entity_id", [companyId, claimId]).order("id"),
+      ]);
+      results.forEach((result) => check(result.error, "partner boundary readback"));
+      return results.map((result) => result.data);
+    };
+    const before = await readBoundary();
+    expect(before[0]).toHaveLength(1);
+    expect(before[0]).toMatchObject([{ id: claimId, partner_company_id: companyId }]);
+    expect(before[1]).toHaveLength(1);
+    expect(before[1]).toMatchObject([{ claim_id: claimId, partner_company_id: companyId }]);
+    const existingBefore = await snapshot();
+    await asCaller(vendor, "partner");
+    const queries = await import("@/lib/partner/queries");
+    const own = await queries.requirePartnerClaim(ids.ownClaim);
+    expect(own.claim_id).toBe(ids.ownClaim);
+    expect(own).not.toHaveProperty("carrier");
+    expect(own).not.toHaveProperty("policy_number");
+    expect(own).not.toHaveProperty("description");
+    await expect(queries.requirePartnerClaim(claimId)).rejects.toThrow("framework:not-found");
+    await expect(queries.requirePartnerClaim(randomUUID())).rejects.toThrow("framework:not-found");
+    expect(await readBoundary()).toEqual(before);
+    expect(await snapshot()).toEqual(existingBefore);
   });
 
   it("refuses a vendor calling staff and homeowner actions", async () => {
