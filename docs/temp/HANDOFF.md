@@ -1,10 +1,58 @@
 # CMG release handoff — engineering evidence
 
-Reconciled 2026-10-07. This file holds engineering evidence and acceptance checklists.
-[RELEASE_STATE.md](../RELEASE_STATE.md) holds the short current snapshot. Narrative evidence belongs here.
-Most sections below are dated evidence. Add new evidence as dated entries in the [dated evidence log](#dated-evidence-log) at the end.
-Do not rewrite an earlier dated entry except to correct an error; mark superseded statements instead.
-The full dated record before 2026-09-17 is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
+Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
+
+Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.
+
+All three new scope failures observed an attempted `/` read. The filesystem-root fallback restored ancestor traversal on Linux. Signed and pushed repair `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714` changes one condition, adds a virtual-working-directory regression, and corrects one README statement. Before repair, the new regression failed by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds; type, lint, diff, and review checks passed. Both Linux CI and the default Windows suite passed.
+
+Database job `122982775171` passed 1,350 pgTAP assertions across 44 files, plus 253 database tests with one live PandaDoc test skipped. Database Vitest passed 35 files and skipped one in 27.84 seconds. Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. The browser control API was unavailable; final browser proof remains unverified.
+
+Published application source `4ee40506c50001f29ba0bd1e7822416175ea7873` includes email repair `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4` and the first lint-glob repair. Email tests passed 28 focused cases and 28 cases in each site mode. Local type check and lint passed after that repair. The application build passed after email changes and before the tooling-only glob repair. Browser checks passed for four real rendered email outputs. These local results do not override the Linux CI failure.
+
+Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds. A focused rerun passed three tests and failed one in 8.59 seconds. Both failures were a 5,000 ms glob-test timeout. Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
+
+The first adapter repair passed 20 focused tests in 1.51 seconds and nine independent compatibility checks. Its default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0. Of 150 files, 133 passed and 17 skipped. This resolved the earlier Windows timeout for that source. The later Linux failure required the separate root repair recorded above.
+
+Earlier source `cc27f38` passed CI `40724185151`: 1,773 unit tests passed, 65 skipped. Its database checks passed 1,350 pgTAP assertions and 253 tests; one live PandaDoc test skipped. Type, lint, build, and audit passed; four low findings remained. Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR` was Ready for that exact revision.
+
+Published UI tests and real local signout, access, and upload-recovery results retain their recorded scope. Synthetic fixtures remain retained. Earlier worker-start failures remain separate historical evidence; their cause is unconfirmed.
+
+No authentication implementation, schema, or dependency changes are part of these new repairs. The new audit passed the high-severity threshold with four low deepmerge-chain findings; no fix is available. Earlier database evidence remains relevant. Verify the resulting PR #28 head and Preview after the repairs. Additional hosted replay, expiry, interruption, recovery, and non-overwrite proof remains unverified. Existing evidence does not require an automatic repeat.
+
+Production remains on `develop` at `1b7f7f9`; no merge or Production release is approved.
+
+See [TEST_STATUS.md](TEST_STATUS.md) for the October 28 evidence and limits.
+
+Resend confirmed claim `CMG-2026-0007` status-email delivery to `rob@miodiollc.com` on October 28 at 10:34 AM. Provider ID `01a182ef-3fc8-7258-b332-be9ff214b502` returned SMTP `250 OK`. This proves recipient-server acceptance, not inbox placement. Roundcube receipt and scheduler attribution remain unverified. No email was resent.
+
+Use the [release approval packet](RELEASE_APPROVAL.md) for exact preflight steps, owner decisions, and recovery limits.
+
+On October 27, the owner approved accepting synthetic claim `CMG-2026-0007` once on Preview. The claim is `under_review`, assigned to `Staff1 Tester`, and visible in that test adjuster’s claims list. One customer invitation to `rob@miodiollc.com` was sent on attempt one and reached the inbox. The owner approved its acceptance; the invitation was accepted and linked to the existing active customer account.
+
+The existing homeowner account then signed in and opened claim CMG-2026-0007; its synthetic details and assigned test adjuster were visible. At the October 27 stop, the separate status email to Rob was queued with zero attempts. The October 28 read records it as sent. Inbox receipt and scheduler attribution remain unverified.
+
+No PandaDoc document was created. Do not repeat acceptance, resend the invitation, run the worker manually, or delete records without separate approval.
+
+On October 27, the owner approved one synthetic Preview intake without files. It was submitted once and returned `CMG-2026-0007`. At submission, the hosted database saved claim `127cdecf-564f-4d70-8f32-138b93bc8bd8` in `new_intake`, one claimant, and email and SMS consent records. The upload session completed with zero files. At submission, no adjuster was assigned and no PandaDoc document existed. Two emails to `rob@miodiollc.com` were sent on attempt one; Resend shows Delivered and both messages reached the inbox. The staff alert and confirmation contain the synthetic reference and details. The adjuster account could not see this unassigned intake. The owner queue shows CMG-2026-0007 and the synthetic details. Keep all test records. Do not resubmit, resend, assign, sign, or delete without separate approval.
+
+On October 27, the owner approved one Preview email-consent test. The form was submitted once. One synthetic lead `2f318635-431a-44ee-b7df-36ce72df34e0` and one email-consent record were saved. The staff menu count changed from three to four after client navigation without a page reload. Two outbox rows addressed to `rob@miodiollc.com` were sent on attempt one; Resend reports both Delivered. Both messages reached the Roundcube inbox. The staff alert matched the synthetic name, phone, email and message; the automatic reply rendered successfully. Keep the test records; do not submit or send again.
+
+On October 27, staff menu count fix `4c974eacbe6be09a874c9e5fc73f797c83cad41c` was pushed to draft PR #28. In the disposable local database, a synthetic lead changed the count from one to two after staff navigation without a page reload. The staff menu passed desktop and 390px checks; the active phone link remained visible. Simple mode kept the admin page closed; staff and platform modes opened the staff menu. Type, lint, build, and focused tests passed; the full suite passed 1,764 tests and skipped 57. No browser warnings or errors were captured; full network traces were unavailable. The Preview deployment for this commit is Ready. Read-only hosted staff navigation passed at desktop and 390px with the existing lead count; the active phone link stayed visible and no browser warnings or errors were captured. No new hosted lead was created. GitHub verify and database checks passed for this commit. The approved hosted count-change proof passed. One synthetic lead and its synthetic staff MFA setup remain in the disposable database. No hosted data or Production setting changed.
+
+On October 27, the approved Preview contact form was submitted once. One synthetic lead was saved and appeared in the staff list. One alert to `rob@miodiollc.com` was sent on attempt one; Resend reports Delivered. Inbox receipt and the synthetic message contents were verified in Roundcube. The existing staff menu count updated after page refresh. Keep the test records and do not resubmit. Evidence: `contact-preview-result-2026-10-27.json` in session scratch.
+
+Owner menu acceptance on Preview `71bd6ea` passed 46 checks at 1280px and 390px. These include 36 forward/reverse focus cases, six keyboard navigation cases, and four scrolled-page cases. No browser warnings or errors were captured. Staff menu acceptance passed 34 checks: 20 keyboard focus cases, 10 link checks, and four scrolled-page cases. Evidence: `t63-staff-hosted-menu-2026-10-27.json` in session scratch. Evidence: `t63-owner-hosted-menu-2026-10-27.json` and `t63-owner-hosted-phone-settings-2026-10-27.png` in session scratch.
+
+Earlier application source is signed `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` in draft PR #28. Its CI and local checks pass, including audit. Vendor checks pass on its Ready Preview. Hosted owner and staff menu checks passed. A later records-only commit may advance the PR head.
+
+Earlier source checks passed: 1,763 tests passed and 57 skipped; type, lint, build, audit, and 39/39 site-mode checks pass. The approved Undici repair changed only the lockfile leaf to 8.12.3. `package.json` and 115 production package entries were unchanged by this repair. Earlier approved runtime updates remain included.
+
+Portable Node 22 was verified by SHA-256. The current local checks used that runtime. No dependency setup scripts ran during the approved scripts-disabled install.
+
+Current release-candidate and staff-alert evidence is recorded below. Other dated checks retain their recorded scope. Current candidate results supersede earlier local candidate results only.
+Rewrite it in place. Do not append dated sections.
+The full dated record is in [the 2026-09-17 archive](../../archive/docs/temp/2026-09-17-consolidation/HANDOFF.md).
 
 Use [RELEASE_STATE.md](../RELEASE_STATE.md) for production facts, open PRs, migration heads, and the ordered next steps.
 Use [BLOCKERS.md](BLOCKERS.md) for owner decisions.
@@ -13,21 +61,1752 @@ Use [INTAKE_VENDOR_ACCEPTANCE.md](INTAKE_VENDOR_ACCEPTANCE.md) for the contracto
 
 <a id="current-release-evidence"></a>
 
-## Current release evidence
+## October 28 evidence
 
-Production runs `SITE_MODE=platform` from `develop` since 2026-10-07. PRs #1 through #17 and #21 are merged.
-Hosted invitation and role acceptance passed on Production on 2026-10-07; see the [dated evidence log](#dated-evidence-log).
-The combined launch fix is rebuilt as `bugfix/launch-integration-v2`; its checks are in the same log.
-The sections that follow keep earlier evidence. Statements in them about staff mode or open PRs #18 and #19 describe their own dates.
+### Email wording and lint-glob evidence
 
-## Release evidence as of 2026-10-05
+Signed and pushed root repair: `76cdc5aea68cd5733ba93b00eff61a3b2ecb7714`.
+It is 22 commits ahead and zero behind verified GitHub base `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 62 changed files.
+No schema or generated database-type diff exists.
 
-PRs #1 through #17 are merged. PR #18 is open against `develop` at `284d155`; PR #19 is open at `3922e5a`.
-The remote `develop` head is `2fdf6bd`. GitHub run `36003466471` passed its `verify` and `database` jobs for that head.
-Vercel maps `app.cmgpropertysolutions.net` to the ready Production deployment for that commit.
-PR #18 run `36351680879` and PR #19 run `37314652490` passed `verify` and `database`; their separate branch Previews are ready.
-The current private-upload platform Preview uses deployment `dpl_5dkvuwLMDURbm1qEe2dQM8r8g1T2` at `3922e5a`.
-The owner restored Chrome access to this Preview and Resend on 2026-10-05.
+The repair changes one condition, adds a virtual-working-directory regression, and corrects one README statement.
+The regression failed before repair by blocking an attempted `C:/` read. After repair, 21 focused tests passed in 2.13 seconds.
+
+Final type, lint, diff, and review checks passed.
+The final Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0; 133 files passed and 17 skipped.
+It used Node 22.22.2 and unchanged default one-worker settings.
+Scratch log: `glob-root-final-full-suite-2026-10-28.log`. Later records-only head checks remain separate.
+
+Exact-head CI `40735491808` passed verify job `122982775518` and database job `122982775171`.
+Unit tests passed 1,796 and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped.
+All 17 scope tests passed in 48 ms; four existing compatibility tests passed in 113 ms.
+Audit, type check, lint, and build passed; audit retained four low findings.
+Build compilation took 13.8 seconds, TypeScript took 15.7 seconds, and static generation completed all five pages.
+
+Database CI passed 1,350 pgTAP assertions across 44 files.
+Database Vitest passed 253 tests and skipped one live PandaDoc test in 27.84 seconds; 35 files passed and one skipped.
+Vercel reported success for deployment `5SBC1nMrrWGhBHXXWfgDrgwvpPZL`. Final browser proof remains unavailable.
+
+Signed email commit: `27cfd6b221060c0b2faf1b406f8b2494ec3c7ce4`.
+Signed first adapter commit: `4ee40506c50001f29ba0bd1e7822416175ea7873`.
+At `4ee4050`, the source was 20 commits ahead and zero behind verified `origin/develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`, with 61 changed files.
+No Supabase or generated database-type diff exists. The local `develop` ref differs and was not used for this comparison.
+Later records-only commits can advance the head. Read final PR-head checks externally.
+
+The delivered `under_review` status-email preview used wording that implied representation before representation was established.
+Local fixes use neutral wording in status, customer invitation, customer-visible reply, and settled notices.
+The four changed email files are `claim-status.tsx`, `invite.tsx`, `thread.tsx`, and `render.test.tsx` under `src/lib/email/`.
+The first three are in its `templates/` folder.
+Email tests passed 28 focused cases and 28 cases in each site mode: simple, staff, and platform.
+Final type check and lint passed under Node 22.22.2 after the lint-glob repair.
+The application build passed after email changes and before the tooling-only glob repair. Application source did not change afterward.
+The new `npm audit --audit-level=high` returned exit 0 with four low deepmerge-chain findings and no available fix.
+No package changed. Scratch log: `email-glob-audit-2026-10-28.log`.
+
+Before the glob repair, the full unit run passed 1,778 tests, failed one, and skipped 65 in 354.28 seconds.
+A focused rerun passed three tests and failed one in 8.59 seconds.
+Both failures were a 5,000 ms timeout in `src/lib/tooling/eslint-config.test.ts`.
+Guarded diagnosis confirmed broad ancestor traversal outside the working directory.
+The repaired adapter passed 20 focused tests in 1.51 seconds: 16 new scope cases and four unchanged configuration cases.
+Nine independent virtual-filesystem compatibility checks passed under Node 22 without ancestor or network enumeration.
+The final default Windows one-worker suite passed 1,795 tests and skipped 65 in 538.00 seconds, with exit 0.
+Of 150 files, 133 passed and 17 skipped. Scratch log: `email-glob-final-full-suite-2026-10-28.log`.
+This passing Windows run superseded the earlier Windows timeout for that source. It does not override the later Linux CI failure.
+This diagnosed failure does not establish the cause of the earlier worker-start failures.
+
+Exact head `8b1aecb` then failed CI run `40734242301`, verify job `122978378239`.
+It passed 1,792 tests, failed three, and skipped 65 in 97.17 seconds; 132 files passed, one failed, and 17 skipped.
+The three new scope tests observed an attempted `/` read on Linux because the filesystem-root fallback restored ancestor traversal.
+Audit, type check, and lint passed; four low audit findings remained. The build step skipped after the failed tests.
+Repair `76cdc5a` addresses the root condition and adds the regression. Its exact-head Linux CI now passes.
+
+Database job `122978378566` passed 1,350 pgTAP assertions across 44 files and 253 database tests, with one live PandaDoc test skipped.
+Database Vitest passed 35 files and skipped one.
+Vercel reported success for deployment `CFZf6BF6p8awJzrEZhmmZ5ejAoMx`.
+Browser control was unavailable, so final browser proof remains unverified. The final Windows suite and exact-head Linux CI later passed.
+
+The adapter supports `globSync(string, { onlyDirectories: true })`; other options and non-string patterns still throw.
+Absolute paths and leading-parent paths with a literal prefix use the narrower search. Other leading-parent patterns retain tinyglobby behavior.
+UNC traversal remains unsupported. These checks do not cover every matcher combination.
+
+Scratch `cmg-email-copy-preview-2026-10-28` retains the actual rendered HTML, text, source/HTML hashes, and browser evidence.
+The renderer used installed dependencies, synthetic values, and `example.invalid` links. It called no email provider or application API.
+All four outputs passed at 1280px and 390px: neutral wording, visible body/footer, no horizontal overflow, and zero console warnings/errors.
+CTA and phone links were not activated. The viewport was reset.
+Normal viewport captures support layout checks. Full-page captures temporarily changed sizing and were excluded from layout proof.
+This is not mailbox, email-client, delivery, or full network proof.
+The fixture server was stopped after its command line and ownership of `127.0.0.1:3053` were verified.
+Process and listener absence were confirmed. Fixture files and browser tabs remain retained.
+
+### Published eight-file UI/test batch
+
+The batch changes portal and partner retry controls to use Next.js `retry()`.
+It moves profile loading text outside `aria-hidden`. Three regression files and two local integration files were added.
+Six focused UI tests passed, including the existing admin test. Three expected failures occurred before repair.
+
+Full unit result: 1,773 passed, 65 skipped; 132 files passed, 17 skipped; 288.06 seconds; exit 0.
+Full type check, lint, and production build passed. Versions: Node 22.22.2, TypeScript 6.0.3, ESLint 9.39.5.
+No authentication implementation, schema, or dependency changed. Earlier database and audit evidence remains relevant.
+
+Baseline `72bd57c` passed CI run `40718012838`: 1,768 unit tests passed, 58 skipped; 1,350 pgTAP assertions and 253 database tests passed.
+One live database-selection test skipped. Preview `A7bzAYRkUfogAW5FE36wLUjf8ze1` was Ready.
+Those checks predate this batch. Application `cc27f38` later passed CI `40724185151` and has Ready Preview `3ucqe9EgAwCfRk7Mq5BafwXdaiiR`.
+Those results do not cover the new email or lint-glob repairs.
+
+Simple, staff, and platform each passed seven files and 285 tests under Node 22.22.2, with exit 0. Durations were 25.74, 41.72, and 28.05 seconds. Components, mode rules, and mocked Auth/proxy behavior were tested. Earlier actual 39-GET mode evidence remains separate.
+
+Homeowner Preview checks covered the header, cards, switcher, and claim 0007 tabs at 1280px and 390px.
+Keyboard destinations, focus, and scrolled-page behavior passed. No horizontal overflow or console errors were captured.
+No hosted action was submitted. Full request traces remain unavailable.
+
+Three local error components and profile loading passed desktop/mobile checks. Generic text and digests rendered; each retry callback ran exactly once.
+Next.js, authentication, and router context were replaced. Actual server refresh and screen-reader announcement were not proved.
+Five synthetic error logs were expected from component mounts.
+Browser and Cron evidence: `cmg-final-ui-and-cron-evidence-2026-10-28.json` in session scratch.
+
+`src/lib/actions/auth-signout.local.test.ts` passed 1/1 in 9.49 seconds, with exit 0.
+The real action requested global logout, cleared the caller, refused the second refresh, redirected to `/login`, and saved one audit.
+Existing access tokens can remain valid until expiry.
+
+`src/lib/actions/access-matrix.local.test.ts` passed 6/6 in 16.99 seconds, with exit 0.
+Real Auth, AAL2, application guards, rate limits, RLS, and audit triggers remained active.
+Named staff, homeowner, and vendor refusals passed. Only the caller's consent was withdrawn, once, with one audit.
+Positive controls proved own-claim access, staff AAL2, and own-consent withdrawal. The final blocked-request count was zero.
+
+The tests replace framework context. They do not exercise Next.js action HTTP requests or browser cookies.
+The access test has no successful allowed-download action. A general document-read failure could also satisfy its refusal cases.
+
+Earlier hosted allowed downloads, hashes, and audits provide separate positive evidence.
+`portal-documents.ts`, `authz.ts`, Supabase server/admin clients, `audit.ts`, `storage-path.ts`, and `files.ts` match tested `d523469`.
+No migration differs. Dependencies differ, so an identical hosted runtime is not proved. This evidence combination does not require another hosted download.
+
+Both tests require explicit opt-in, stack `CMGPA_private_upload_disposable`, and exact origin `http://127.0.0.1:15521`.
+They check DB/Kong identity, ports, and shared Docker network before client creation. They read no environment file.
+Fixtures remain retained. No hosted session, email, reset, or deletion was used.
+
+| Retained local item | Verified value |
+|---|---|
+| Signout user and audit | `aa547e49-8c9e-42bb-924e-a4c886daee86`; audit `2071`; one record. |
+| Access company | `76ec448c-81cb-4dce-8a20-9b1ab00c17ab` |
+| Own and foreign claims | `5efacde2-675c-4d4c-9792-2edf83b447e5`; `9da3ca9e-37eb-41e8-b458-f2ca3aff67c1` |
+| Own and other adjusters | `68c05f24-5350-4fab-a60a-5f135fdd50d4`; `fb6fc204-c9b3-4f20-a921-54529cd41727` |
+| Homeowner and other claimant | `a8969bdd-416d-4e4d-9037-632b937a7fdf`; `2aae8ebe-d6df-45a2-9c37-c2f80827bcc4` |
+| Vendor user | `d9b112c9-7d20-4a7b-97f8-7b828b0667d9` |
+| Withdrawn and preserved consents | `66c46e30-4d19-4995-be65-9cc5ff01033d`; `55430410-0ff7-4be6-80b4-6b54d52df220` |
+| Withdrawal audit | `2081`, with the homeowner as actor. |
+| Access fixture counts | Five users, two claims, three claimants, two consents, and two document records. |
+
+Vercel has a Cron filter. At noon, the October 28 10:25–10:40 local query returned `Outside of allowed range`.
+The bounded CLI query returned HTTP 400. Neither result identifies the scheduler caller.
+Roundcube remains at login. Automatic approval review rejected Outlook access because it was outside the approved scope.
+Status-email inbox receipt remains pending. No other mailbox was used.
+
+### Earlier October 28 checks
+
+The full serial suite returned exit 0 after 701.35 seconds: 128 files passed and 14 skipped; 1,767 tests passed and 57 skipped.
+The earlier default-worker run passed 1,697 tests, failed four, and skipped 57. It also reported ten worker-start errors.
+The Turnstile and ESLint configuration files then passed seven tests during a serial rerun. The worker-start cause remains unconfirmed.
+The later full serial pass supersedes the earlier failure for its tested source. Later finalization assertions passed six focused tests and full `eslint .` under Node 22. The real local upload test passed once in 31.53 seconds.
+Type check, lint, and build passed before those later changes. Audit passed the high-severity threshold with four low findings.
+
+### Browser and local boundaries
+
+The PR #28 homeowner claim 0007 activity and document controls passed forward and reverse keyboard-focus checks. No form was submitted.
+The profile page passed at 390px and 1280px, with one main heading, no horizontal overflow, and labels for all six visible inputs.
+Profile, password, and consent controls had visible keyboard focus. The disclosure opened and closed with Enter; withdrawal was not activated.
+No profile, password, or consent data was submitted. Captured console warnings and errors were empty; full request traces were unavailable.
+
+| Check | Result | Limit and evidence |
+|---|---|---|
+| Intake consent | Eight local boundary cases passed under Node 22.22.2. | Persistence and browser submission were not tested. Scratch: `intake-consent-boundary.test.ts`, `intake-consent-config.mjs`. |
+| Invitation reservation | Three mocked refusal cases passed before account creation. | Hosted Auth and database behavior remain unverified. Scratch: `invite-reservation-boundary.test.ts`, `invite-reservation-config.mjs`. |
+| Outbox retry | A mocked failure scheduled 60 seconds; success reused the idempotency key. | Provider and store were mocked. Scratch: `outbox-retry-boundary.test.ts`, `outbox-retry-config.mjs`. |
+| Question action | Two mocked cases passed. A foreign claim caused no event insertion or notification call. | Real outbox and hosted behavior remain unverified. Scratch: `foreign-question.test.ts`, `foreign-question-config.mjs`. |
+| Homeowner download refusal | Missing or inaccessible rows and lookup errors returned the same refusal before privileged client creation or audit. | Real RLS and hosted behavior remain unverified. Scratch: `foreign-download.test.ts`, `foreign-download-config.mjs`. |
+| Owner-only partner status | Five mocked cases passed. Four non-owner roles were refused; an AAL2 owner reached the operation. | Hosted behavior remains unverified. Scratch: `owner-action-boundary.test.ts`, `owner-action-config.mjs`. |
+| Upload retry | Three component cases and six server finalization cases passed with mocks. | Published CI and Preview evidence is recorded above. Later assertions passed six focused tests and full lint. Hosted interruption, recovery, and non-overwrite remain unverified. |
+| Invitation refusal in candidate | The unchanged test passed one focused test, full type check, and file lint under Node 22. Its file SHA matches the original. | Existing candidate dependencies were used; no install is needed. Hosted replay and actual expiry remain unverified. The original isolated checkout remains retained and uncommitted, with its broader checks unverified. |
+
+On `CMGPA_private_upload_disposable`, customer 0004 could insert a question on own claim 0001 but not foreign claim 0002.
+The database also refused a vendor activity insertion on its linked claim. Both transactions rolled back; the test events were absent afterward.
+These database results do not prove hosted application actions.
+
+### Real local private-upload recovery
+
+The opt-in test `src/lib/private-upload/private-upload-recovery.local.test.ts` passed one test under Node 22 in 31.53 seconds, with exit 0.
+It used only `CMGPA_private_upload_disposable`. It interrupted a 25 MiB signed PUT, retried the same session, and created one document.
+Changed-byte signed-token replay and duplicate copy were refused. The saved hashes, object IDs, and versions stayed unchanged.
+Repeated finalization returned the same document. This proves the tested local path; hosted interruption, recovery, and non-overwrite remain unverified.
+The test also passed Node 22 type check and focused lint. Disabled mode skipped one test successfully.
+Read-only retrieval confirmed exactly one completed session and one document. Keep the synthetic fixture and both objects; no cleanup is approved.
+
+| Retained local item | Verified value |
+|---|---|
+| Claim | `CMG-2099-8703`; `12044d85-d2ab-492e-bca4-6e0a0a69a141` |
+| Session | `311e179b-9621-4ab7-8cca-81a06244e316` |
+| Document | `622af082-4d86-4ea0-9e8f-a9bcd6c78b82` |
+| Synthetic user | `6e99ce10-3e4a-47b9-9b08-570bf31788ce` |
+| Object size | Both objects contain 26,214,400 bytes. |
+| Recorded hash | `9a494967ca57195442acb67325b4462006a208633001113a39c63aa73a653ced` |
+| Staging path | `private-upload/311e179b-9621-4ab7-8cca-81a06244e316/32348e41-ca79-4916-aca0-eeff9f63d95a.pdf` |
+| Permanent path | `claims/12044d85-d2ab-492e-bca4-6e0a0a69a141/138b7c64-9b9d-47b0-8505-ebb351f77eaf.pdf` |
+
+### Hosted email and cleanup reads
+
+The hosted outbox records claim `CMG-2026-0007` status mail as sent on attempt one at `2026-10-28 14:34:40 UTC`.
+It was pending with zero attempts at 14:24 UTC. Inbox receipt and scheduler attribution remain unverified. No manual resend or job invocation occurred.
+Production deployment `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` logged HTTP 200 for cleanup at 14:27:36 UTC and outbox at 14:34:37 UTC.
+These responses do not identify the requester or processed records. The nearby outbox timestamp does not establish scheduler attribution.
+A read-only query found no pending cleanup rows. No row completed or became dead during `2026-10-28 14:27:30–14:28:30 UTC`.
+The two retained synthetic rows completed on October 20 at 14:27:40 UTC, once each. Their records do not identify the requester.
+
+### Remaining approval limits
+
+Manual signing remains blocked while sender or recipient notifications can reach a CMG-domain address. The owner has no separate non-CMG workspace.
+Existing drafts remain unsent. API silent-send documentation does not prove that the manual flow is safe.
+Hosted writes, messages, uploads, signatures, merges, and Production releases need their separate approvals. Standing feature commit, push, and draft PR approvals remain valid. Do not repeat consumed one-time actions.
+See [BLOCKERS.md](BLOCKERS.md#remaining-actions--october-28) for the ordered remaining actions.
+
+## Earlier release evidence
+
+GitHub currently reports `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
+PRs #20, #21, and #22 are merged. PRs #18 and #19 are closed without merge; #22 includes their fixes.
+The earlier v2 tree matched `develop`. Application source `8ae5c70` was published in draft PR #28, targeting `develop`.
+The old `9a80e09` branch and the dirty main checkout were not switched, merged, or reset.
+GitHub run `37713120551` passed `verify` and `database` for the current integration commit.
+PR #22 run `37712410380` also passed both jobs.
+Production alias inspection now resolves to Ready `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` at `cmgps-eyxviozc7-robs-projects-c72886ba.vercel.app`.
+Its source remains `develop` commit `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
+Current unauthenticated Production `/portal` and `/partner` return 307 to `/login`; this matches the owner-recorded October 7 platform activation.
+The owner approved `EMAIL_STAFF_INBOX=rob@miodiollc.com` for Production, Preview, and Development, followed by two same-source rebuilds.
+The authenticated CLI accepted the exact value and reported all three scopes as Config. The dashboard shows one updated All Environments entry.
+Dashboard value reveal required another verification check. No secret was read, and decrypted readback was not obtained.
+One Production rebuild and one PR #24 Preview rebuild completed. Both approvals are consumed; do not repeat either rebuild.
+PR #24 is Ready as `dpl_Zz8hWeU9yJ8Fm4hdAjKyWRHcbkfE` at `cmgps-anb859aju-robs-projects-c72886ba.vercel.app`.
+Its source remains `d523469e88149c76b8181ed4f277d757f608f47c` on `codex/security-upload-session-checks`. Existing aliases resolve to the new deployments.
+Both hosts returned 200 for `/`, `/contact`, and `/file-a-claim`. Both returned 307 to login for `/admin`, `/portal`, and `/partner`.
+All six public page loads also rendered in Codex. No form was submitted. Captured application-origin console errors were zero.
+Each tab captured two opaque Cloudflare-frame errors. Full browser request traces were unavailable. No test email was sent.
+Delivery through the updated setting was untested at the October 23 stop. The approved October 27 delivery and inbox checks passed.
+No source code, DNS, database, account, session, access grant, or backup changed. Local evidence records were updated without another build.
+The owner prohibits further agent emails, invitations, or access grants to the CMG domain or its subdomains. Public pages must remain public.
+Older deployments retain their original recipient settings. Other email types retain their own recipients. This is not a global provider-level domain block.
+Public contact links still show Austin's address. This batch did not authorize code changes to those links.
+Evidence: `staff-alert-redirect-execution-2026-10-23.json`, both `staff-redirect-*-after-2026-10-23.json` files, and `staff-alert-read-only-routes-2026-10-23.json`.
+Proof images: `staff-alert-setting-scopes-2026-10-23.png` and `staff-alert-rebuilds-ready-2026-10-23.png` in the session scratch folder.
+The later combined Preview empty-file check spent a hosted rate-limit attempt, as recorded below.
+
+### Earlier combined candidate verification — October 25–26
+
+Verified application source `8ae5c70e0be55fb9b9df1f80c76a62d0fecabbb0` is published in draft PR #28.
+It combines exact PR #24 `d523469`, PR #25 `56cff18`, and PR #27 `5c3886d` on `codex/launch-release-candidate`.
+Tested application source `8ae5c70` changes 36 paths. A later records-only commit can add four documentation paths.
+
+Signed `d72dc4d` contains the admin focus repair and Undici update. Signed `8ae5c70` contains the partner metadata repair and regression tests.
+
+For source `8ae5c70`, 1,763 tests passed and 57 skipped; 128 files passed and 14 skipped in 368.37 seconds.
+That source passed type check, lint, and the safe-placeholder production build. Its audit reported zero vulnerabilities. October 28 audit results appear above.
+All 39 local GET checks pass across simple, staff, and platform modes. Their owned server ports closed after testing.
+
+The 57 skips use database or live-service gates. Docker is stopped; no local stack reset ran during these repairs.
+CI run `40267147255` passed both jobs for that earlier source, including 1,350 pgTAP assertions and 253 database-backed Vitest tests.
+One live PandaDoc test skips in the database job. Earlier local password-session proof remains separate evidence.
+
+The official portable Node 22.22.2 archive matched its published SHA-256 before use. No application check used the system Node 24 default.
+The locked install disabled setup scripts. The latest repair changed only Undici to 8.12.3; all 115 production entries stayed unchanged.
+Existing React Email deprecation warnings remain. No production package was updated to remove those warnings.
+
+On exact Ready Preview `dpl_9ZKM7haagBLj7gdXrvoZXZT8qBsT`, 12 vendor refusal cases and four authorized navigation checks pass.
+Checks cover desktop and 390px widths. Foreign, missing, and malformed IDs have identical refusal text within each route.
+Summary titles are `Page not found — CMG Property Solutions`. Activity uses its static generic title, `Partner activity`.
+The first expanded test incorrectly required the summary title on activity pages. Preserve its six assertion failures as harness evidence.
+The earlier four empty-title failures at `5bcc62a` were application defects. The new summary title tests confirm their repair.
+
+Foreign-ID client navigation was not tested because the interface supplies no such link. Direct route checks cover those refusals.
+Four opaque Cloudflare console entries remain: two errors and two warnings. No CMG-origin entry was captured; the cause is unproved.
+Full network traces remain unavailable. No new sign-in, form, upload, download, or email occurred in this follow-up.
+
+Evidence is in session scratch: `t65-full-checks-2026-10-25`, `cmgps-undici-audit-2026-10-24`, and `t65-vendor-title-hosted-2026-10-26.json`.
+Mode evidence: `launch-candidate-mode-checks-2026-10-26T04-00-24-349Z-08162a93.json`. CI summary: `candidate-ci-40267147255-summary.txt`.
+
+The first combined audit found four new dependency issues: one critical, one high, and two moderate. The approved updates resolved them. The October 24 audit then found one high and two moderate advisories in development-only Undici 8.11.2 through jsdom 30.0.1. The approved lock-only update to 8.12.3 fixed that report; the current audit passes.
+The approved installation used existing npm 12.0.2 with Node 22.22.2. Package setup scripts were disabled.
+React, React DOM, Node requirements, and other direct package versions remain unchanged.
+
+Next.js and its ESLint packages use 16.4.3. Zod uses 4.6.6, Vitest uses 4.1.12, and Vite uses 8.2.4. These approved versions passed the final checks.
+PR #27 and the latest Undici repair left production package entries unchanged. Earlier approved runtime updates remain in the combined candidate.
+No existing PR was closed or merged by this integration.
+
+The final T63 source passes nine focused tests, 56 geometry cases, and eight client-route checks. The harness excludes the full shell, auth, and already-scrolled behavior.
+
+Unit run 58689 was interrupted after a tool reset without a result; no process remained. Replacement run 31569 passed 1,752 tests with 57 skipped; 126 files passed and 14 skipped. This October 24 result is historical. Source `8ae5c70` passed 1,763 tests with 57 skipped. October 28 results appear above.
+
+The production build and audit for that earlier source both passed with exit 0.
+The earlier 1,750-test result is historical; the later pre-style run passed 1,752 tests.
+Database-backed Vitest passes 254 tests across 37 files; one live PandaDoc test skips.
+This local selection includes the real portal password-session check, which is outside the 253-test CI selection.
+
+The earlier approved reset used only the exact disposable database.
+All 39 local GET checks pass across simple, staff, and platform modes.
+Local built-in browser checks pass at 1280px, 390px, and 320px for the tested controls, notices, and generic refusals.
+No console error was observed in those checks. Full browser network traces remain unavailable.
+
+Local server diagnostics recorded four `refresh_token_not_found` errors during browser checks. The pages still showed signed-out states.
+Earlier local cookies after the disposable reset are a possible cause; this was not confirmed. Hosted sign-in acceptance later passed, as recorded in the dated role evidence.
+
+All six PDF repair files exactly match tested `56cff18`; earlier rendering and provider-recognition evidence remains applicable.
+
+An earlier candidate focused run passed 419 tests and failed one 5,000 ms tooling timeout.
+The unchanged tooling file then passed all four tests. The final full suite also passes.
+The first mode check failed because the harness did not accept loopback-to-localhost normalization.
+Only the scratch harness changed. Thirteen simple-mode checks passed, followed by all 26 affected rerun checks.
+No test assertion or timeout changed to hide a failure.
+
+Earlier dependency-repair failures remain part of the evidence.
+Records CI `39643163538` at `c032ee3` failed the Vite audit. Its database job and Preview passed; other verification steps skipped.
+Two npm 10 update attempts failed with `edgesOut` before producing a patch.
+The existing npm 11 CLI generated the Vite repair. A clean npm 10 install with setup scripts disabled then passed.
+
+The first PR #27 full run stopped after 455.768 seconds without results.
+A rerun passed 1,675 tests, failed one 5,000 ms tooling timeout, and skipped 56 tests.
+The unchanged tooling file passed in isolation. The final PR #27 rerun passed 1,676 tests, with 56 skips, in 437.449 seconds.
+Its previously timed-out case passed in 2,310 ms. The delay had no confirmed cause. No test rule or timeout changed.
+
+PR #27 CI `39651682681` passed both jobs at exact `5c3886d`; its Preview was Ready.
+That repair changed only eighteen development lock records. Its unchanged-production-dependencies statement does not describe the combined candidate.
+The [Vite advisory](https://github.com/advisories/GHSA-587h-7wmj-h5pm) identifies 8.2.4 as patched for that release line.
+
+Both jobs in exact-head CI run `40267147255` pass.
+CI database checks pass 1,350 pgTAP assertions and 253 Vitest tests. One live PandaDoc test skips.
+
+The earlier simple-mode Preview `dpl_2NCKXqNNGkywFFJm4hUp8Qzg9c25` was Ready at `cmgps-eqilllzi6-robs-projects-c72886ba.vercel.app`. Its checks are historical. The stable branch alias now resolves to Ready deployment `dpl_9ZKM7haagBLj7gdXrvoZXZT8qBsT` for verified application source `8ae5c70`.
+Its [stable branch URL](https://cmgps-git-codex-launch-release-candidate-robs-projects-c72886ba.vercel.app) resolves to the candidate Preview.
+Its initial effective mode is simple. All thirteen anonymous GET checks pass: three public 200 responses and ten private 307 redirects to `/platform-disabled`.
+Two identical build warnings state that the Node 22 engine overrides the project Node 24 setting. Vercel reports the intended Node 22 version.
+
+The three approved setup batches are complete. The four branch-only overrides, one Preview rebuild, and one Turnstile hostname addition are complete. All four role sign-ins and both MFA checks are verified.
+The approved branch-only overrides are `SITE_MODE=platform`, the stable branch `NEXT_PUBLIC_SITE_URL`, and blank PandaDoc API and webhook keys. They apply only to the candidate branch.
+The earlier `5bcc62a` Preview was Ready as `dpl_x11Nh3Ko6PfCndh9sEmYeK76SyLb` at immutable host `https://cmgps-66ig8cv25-robs-projects-c72886ba.vercel.app`. The current `8ae5c70` deployment details are listed in RELEASE_STATE.
+On the earlier `5bcc62a` Preview, nine cookie-free GET checks passed with CSP, HSTS, and `nosniff`. Evidence: `launch-candidate-platform-readonly-5bcc62a.json` and `cmgps-pr28-preview-redeploy-ledger.md` in session scratch.
+The approved hostname is saved and verified after reopening. The widget has nine hosts and retains prior hosts, Managed mode, no pre-clearance, and existing keys. Evidence: `pr28-turnstile-hostname-execution-2026-10-24.json` and `pr28-turnstile-saved-nine-hosts-2026-10-24.png`.
+
+Owner sign-in/MFA passed 30 route and layout checks at 1280px and 390px. Homeowner sign-in passed 20 read-only checks at both widths. Claims 0003/0004 were readable; foreign 0005/0006 returned the same refusal. Four customer documents were visible. The owner-side 25 MiB fixture was absent from the customer view and present in the owner check. Evidence: `pr28-owner-readonly-acceptance-2026-10-24.json` and `pr28-customer-readonly-acceptance-2026-10-24.json`.
+
+No form, download, upload, or email was used. Four account sign-ins and both MFA checks are independently verified. The owner IAB session recovered after a tool reset without another login. Debugger attachment was briefly unavailable after a tool update; this was not an app failure.
+
+The recovery widget showed Success; evidence: `pr28-recovery-widget-success-2026-10-24.png`. No reset email was sent.
+
+On the earlier `5bcc62a` Preview, Staff1 Tester ADJUSTER passed 26 read-only checks.
+
+The earlier page reported as staff showed the owner header and did not consume a staff sign-in or MFA check. All four role sign-ins and both MFA checks are now verified. Vendor title/access checks pass on the current Preview; hosted T63 owner/staff focus checks remain open.
+Owner Settings confirms Manual signing, bundled PDF, an unset webhook, Supabase project `vdtqxglhlgatpbgehsjk`, and zero pending or failed outbox entries. This closes only provider configuration. Real manual signing and legal approval remain open.
+Initial keyboard review passed seven of nine checks. Hidden Claims and Settings focus stayed in the stable menu. T63 now focuses the nearest item and sets scroll-mx-1, which applies a 4px inline scroll margin. The resulting scroll distance varies. The component uses focus-visible outline-offset -2px and retains the full 2px ring. The horizontal-only first variant failed vertical geometry 9/9.
+
+The corrected local T63 harness passes 56 owner and adjuster keyboard geometry cases at 390px and 1280px, in forward and reverse order. It also passes eight client-route checks with zero local console errors. The harness excludes the full shell, authentication, and already-scrolled behavior; sampled pageY values were zero. T63 is included in signed PR #28. Hosted owner and staff menu checks passed.
+Historical evidence: `t63-menu-browser-acceptance-2026-10-24.json` and `t63-owner-phone-focus-fixed-2026-10-24.png`. The earlier local changes are now part of signed PR #28; they are not uncommitted.
+
+The three public candidate pages rendered at 1280px and 390px without global horizontal overflow. Mobile menu navigation passed.
+No CMG-origin console error was observed in these checks. Earlier Vercel-dashboard route-parameter errors came from the provider page.
+Form verification previously displayed its generic refusal before the new hostname was approved. No form was entered or submitted during that earlier check.
+
+Read-only inspection on October 24 confirms current Production `dpl_GoXHV8n8KfTVt5BDyZosJF3jvXPk` from `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`; both daily schedules are enabled.
+Outbox uses `0 14 * * *`; Storage cleanup uses `17 14 * * *`, in UTC. Both windows passed before the October 24 bounded runtime-log searches returned zero rows. No job was invoked during that review. October 28 HTTP responses are recorded above; scheduler attribution remains unverified. Evidence: `cmgps-cron-evidence-2026-10-24.md`.
+The October 23 zero-row query is dated history. It does not show what happened during the October 24 windows.
+
+
+
+Preview setup, rebuild, and hostname addition are complete. All four role sign-ins and both MFA checks are verified. Vendor title/access checks pass. Hosted T63 owner and staff menu checks passed. The earlier owner-header page did not consume a staff sign-in or MFA check.
+
+
+Independent review found no Critical or Important candidate defect.
+The security report now separates historical findings from current candidate evidence.
+The prior PDF upload and contact approvals remain consumed; no repeat provider upload occurred.
+
+Production remains on `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
+No business-data write occurred in this acceptance. Approved sign-ins caused normal Auth session, audit, rate-limit, and refresh records. Production code and settings, DNS, backups, email, claims, profiles, consent, documents, and outbox rows stayed unchanged.
+Hosted acceptance, operations, legal review, and real signing remain open. Shared merge and Production deployment require separate exact approvals.
+The current release-record evidence is not yet published in remote PR #26.
+
+### Current homeowner profile acceptance
+
+The October 21 batch used PR #24 at `d523469` and existing test homeowner `rob@miodiollc.com`.
+The saved CMG connection resolves to project `vdtqxglhlgatpbgehsjk` in organization `hzvstnfnlwohkessbnxg`. The project ID was verified before read-only SQL. No Supabase CLI setup was assumed.
+
+Exactly four submissions ran once each. Empty first name returned `First name is required.` Phone `123` returned `Enter a phone number we can reach you on, or leave it empty.`
+Each refusal showed the one-field feedback banner. After both refusals, SQL confirms the original values and `updated_at=2026-09-27 21:46:31.535635+00` remained unchanged.
+
+One save changed `first_name` from `CMG` to `CMG Synthetic Profile Test`. The next save restored `CMG`.
+Both returned `Saved.` and persisted after reload. The original last name `Upload Acceptance Test` and null phone are restored.
+
+The temporary and final snapshots show role `customer`, null company, and active status unchanged.
+The successful saves advanced `updated_at` to `2026-10-21 17:14:09.852622+00`, then `2026-10-21 17:14:56.558493+00`. The timestamp remains new.
+
+The final outbox count since `2026-10-21T16:26:22.741Z` is zero. Captured console warnings and errors are empty.
+Normal sign-in audit and rate records are within approval. No email, upload, password, consent, claim, permission, Production-code, setting, DNS, or backup change was submitted.
+
+The exact batch is complete. Do not repeat it. Other hosted tests still need their exact approvals.
+
+Evidence: `pr24-profile-test-2026-10-21.json`, `pr24-profile-empty-name-refused-2026-10-21.png`, `pr24-profile-invalid-phone-refused-2026-10-21.png`, `pr24-profile-temporary-name-saved-2026-10-21.png`, and `pr24-profile-original-name-reloaded-2026-10-21.png`.
+The browser showed Saving states, both refusals, and both success states. There is no complete raw network trace or independent per-update database log.
+
+### Current private-file expiry and cleanup evidence
+
+On October 20, one owner Download click issued a 300-second link for the existing 68-byte `synthetic-upload.png` on synthetic claim `CMG-2026-0003`. Audit row 195 records one issuance. The same in-memory link was replayed once, 379.358 seconds after issuance. Storage returned rendered JSON status 400, `InvalidJWT`, with an expired `exp` claim. No file bytes rendered.
+
+The audit still has one issuance row, and no new outbox rows were found. The raw link was not retained and no second link was issued.
+
+The first browser event did not report a save path. The owner confirmed the saved file in Chrome. The file is 68 bytes, and its MD5 matches the recorded Storage ETag. No additional download or link was issued.
+
+The local SHA-256 is `01dd7f08f84eca35384fd4e7d49f70e2cc33c2dd99a45b199bdd2297be5b0462`. Local MD5 and recorded Storage ETag are `f0c94e82190ea356f04404f0b8a51882`. The recorded object size is 68 bytes. The saved file contains a 1x1 PNG. Its IDAT checksum is `efa33f5b`; the calculated checksum is `efa2a75b`.
+
+The PNG has an invalid IDAT chunk checksum. Its chunk boundaries and decompressed pixel bytes are present. This is a failed fixture image-validity check. The size and recorded-fingerprint comparison does not establish remote SHA-256 equality or image-decoder validity. Do not replace the hosted fixture under this approval.
+
+No raw network status trace is available. Do not click Download again or reissue this link. Evidence: `pr24-expiry-initial-file-check-2026-10-20.json`, `pr24-expiry-test-2026-10-20.json`, and `pr24-expired-link-refused-2026-10-20.png`.
+
+The read-only check found zero matching staging objects, unaccepted copies, and document rows for invalid-file session `c68baab2-61f4-4864-bd22-8049f9ecaf94`. Cleanup queue rows 12 and 13 completed at `2026-10-20T14:27:40.125Z` and `.473Z`, each after one attempt with null error and dead timestamps. The table has thirteen rows. This proves cleanup state, not scheduler attribution. No worker or manual cleanup ran during the read. Evidence: `pr24-invalid-cleanup-read-2026-10-20.json`, `pr24-cleanup-rows-12-13-paths-2026-10-20.png`, and `pr24-cleanup-rows-12-13-times-2026-10-20.png`.
+
+### Earlier baseline verification limits and results
+
+These baseline checks used the earlier clean v2 tree and installed lock-matching dependencies.
+The combined candidate results above supersede this baseline for the current candidate.
+Node 22.22.2 and its npm CLI are invoked by absolute path for the final type, lint, unit, and build checks.
+Both Supabase variables are explicit dummy values targeting loopback port 1, so database suites cannot load real credentials from `.env.local`.
+Resend, PandaDoc, webhook, and live-test opt-ins remain disabled.
+
+| Check | Result |
+|---|---|
+| Type check and lint | Passed through explicit Node 22 |
+| Build | Passed through explicit Node 22; default Turbopack, no configuration change |
+| Dependency audit | Zero vulnerabilities |
+| Focused password, invite, partner query, and admin error tests | Four files, 19 tests passed |
+| Full pure unit rerun | 120 files and 1,676 tests passed; 13 files and 56 tests skipped; exit 0; 476.79 seconds |
+| Local mode checks | All 18 unauthenticated HTTP checks passed across simple, staff, and platform |
+| Baseline database and live-provider checks | Not run in this baseline. The later approved disposable security checks are recorded below. |
+
+The mode-check servers bound only to `127.0.0.1:3040` and used dummy database credentials.
+The harness stopped only its own child processes. No existing server was stopped.
+The initial sandbox test run failed all 133 suites during transformation, before tests, with temporary-file rename `EPERM` errors.
+The focused run passed after the required tool access was provided; the full rerun is tracked separately.
+The first build failed to fetch Google Fonts. A later launcher run reported a compiler child-process panic.
+The unchanged build then passed through the exact Node 22 executable. The panic cause was not independently isolated.
+
+Existing PR #22 Preview `dpl_37xcCfwAAk4SyCFyHDpVVLtcwmzi` is Ready at `cmgps-git-bugfix-launch-integration-v2-robs-projects-c72886ba.vercel.app`.
+Six public routes return 200. All six private prefixes return 307 to `/platform-disabled`.
+Every checked response carries CSP and HSTS. These are HTTP checks, not rendered-browser acceptance.
+The first built-in browser request queued, and native Chrome approval timed out.
+The browser tool later became available. The PR #23 results below supersede that access limitation.
+
+### Current security PR review
+
+PR #23 is open at `15ea5f6a5d21a9b66bef84e8f61d24d3a1a5e26c`, based on current `develop`.
+GitHub run `39044579758` passed both jobs. The original Ready Preview was `dpl_BEG9j1PgK3hrbExsjxw5mYSpqgs6`.
+Its stable host is `cmgps-git-cursor-security-scan-20-059089-robs-projects-c72886ba.vercel.app`.
+A bounded Luna review found no confirmed blocking defect in the redirect, filename, recovery, and action-cap changes.
+An isolated comparison transpiled the actual redirect functions in memory, without network or database access.
+Current `develop` accepted three control-character paths that resolve off-origin.
+PR #23 refused all six unsafe inputs and preserved all three ordinary inputs.
+The recovery route tests mock the limiter; they do not independently prove exact ten-per-fifteen-minute database accounting.
+Active upload forms send metadata through actions and bytes directly to Storage, so the 2 MB action cap does not lower the 25 MiB upload limit.
+No source, commit, push, PR change, merge, credential rotation, or database write was performed.
+
+PR #22's `unstable_retry` review suggestion is contradicted by installed Next.js 16.3.8 documentation, types, and `error-boundary.js` lines 110–114.
+The installed boundary supplies `retry`, and its type defines it. The application already uses that callback.
+No code change is needed for that suggestion.
+
+### Approved PR #23 Preview setup
+
+The owner approved only branch `cursor/security-scan-2026-10-17-4764` on 2026-10-17.
+Four new Preview-only overrides were created: `SITE_MODE=platform`, the stable Preview `NEXT_PUBLIC_SITE_URL`, and empty `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY`.
+Individual scoped reads verified all four exact values and their single Preview target. No shared or Production variable was edited.
+The final metadata read found twenty pre-existing environment records; none had an update timestamp during this setup. The four new branch records were separate.
+Two API requests returned `Invalid JSON (400)` before the CLI environment commands succeeded; reads after each rejection confirmed zero branch overrides.
+Turnstile widget `CMG Property Solutions` now has seven hostnames, including the exact PR #23 stable hostname.
+All six prior hostnames, Managed mode, and no pre-clearance were retained. No key was revealed or rotated.
+One approved redeploy completed as `dpl_9ZNj3TUEkd4ci63mjn19gWj2feqJ` at `15ea5f6a5d21a9b66bef84e8f61d24d3a1a5e26c`.
+Its unique host is `cmgps-k7ul75d60-robs-projects-c72886ba.vercel.app`; its alias is the stable PR #23 host above.
+Production still resolves to unchanged Ready `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF`.
+No DNS, database data, email, submission, upload, or audit-creating download changed.
+
+| Read-only Preview check | Result |
+|---|---|
+| `/login`, `/forgot-password` | HTTP 200 with CSP and HSTS |
+| `/mfa`, `/admin`, `/portal`, `/partner` | HTTP 307 to login with the matching `next`; CSP and HSTS present |
+| Login password visibility | Empty field changes password to text and back; no credentials entered |
+| Recovery at 1280px and 390px | Heading and controls render; no horizontal overflow; nonempty Turnstile response at both widths; no submission |
+| Six public routes at both widths | `/`, `/services`, `/contractors`, `/about`, `/contact`, and `/file-a-claim` each have one main heading, no horizontal overflow, and zero broken completed images; twelve checks passed |
+| Contact and intake widgets | Contact completed at both widths. Intake completed at desktop and mobile width. No form was submitted. |
+| Intake controls | All four contractor fields are optional; Yes reveals four second-person fields, and No removes them. The file control is enabled after hydration and allows multiple selection. The hint states ten files and 25 MiB each. No file was selected or uploaded. |
+| Empty forms | Contact has two invalid required controls; intake has twenty-three. These are validity-state reads, not submitted error-path tests. |
+| Mobile controls | Contact menu opens and focuses Home; Escape closes it and restores focus to Open menu. The first FAQ opens and displays its answer. |
+| Browser console | Login captured no warnings or errors. Recovery captured opaque `NaN` entries from `challenges.cloudflare.com`; no application-origin error was captured. This does not prove a clean third-party console. |
+| Private acceptance and full request traces | Still open; owner sign-in required. No data-changing test is approved. |
+
+Proof images are in the session visualization folder: `pr23-turnstile-seven-hosts-2026-10-17.jpg`, `pr23-login-desktop-2026-10-17.jpg`, and `pr23-recovery-mobile-2026-10-17.jpg`.
+Additional form images are `pr23-intake-mobile-2026-10-17.jpg`, `pr23-contact-mobile-2026-10-17.jpg`, and `pr23-contact-desktop-2026-10-17.jpg`.
+All temporary viewport overrides were cleared. Browser tabs remain open. The owner sign-in tab uses `/login?next=%2Fadmin`.
+The owner was asked to enter credentials and complete MFA only on that page. No password, code, or session token was read.
+At this earlier checkpoint, T20 still required separately approved validation, rate-limit, persistence, referral, and email tests.
+The later PR #24 referral result is recorded under [Current vendor acceptance](#current-vendor-acceptance); public intake acceptance remains open.
+The authenticated Settings panel now confirms Manual, bundled PDF, and webhook key not set.
+Rollback would remove only the four new branch overrides and the added hostname, then rebuild Preview. That external change needs separate approval.
+
+### PR #23 owner acceptance and remaining security work
+
+The owner confirmed sign-in and MFA on the PR #23 Preview. The page identifies the account as Owner.
+The agent did not enter credentials, read session tokens, change roles, or sign out that session.
+
+| Check | Current result |
+|---|---|
+| Partner directory | Two active companies load. `CMG Synthetic Vendor Test` has one rep and zero claims; `CMG Test Vendor` has one rep and one claim. Both company detail pages agree. The zero uses the intended dash. |
+| Partner filters | Active shows both companies. Inactive shows the generic empty state. `?page=99` clamps to the available page and still shows both companies. |
+| Partner layouts | Directory and both company details pass at measured 1280px and 390px; six checks, no global horizontal overflow. Large table windows beyond the existing two companies remain covered by local tests, not hosted fixtures. |
+| Owner route layouts | Dashboard, intake, leads, questions, claims, staff, audit, and settings each pass at 1280px and 390px; sixteen checks, one main heading, no global overflow, no retained Loading state. |
+| Synthetic claim layouts | `CMG-2026-0003` overview, claimants, documents, activity, financials, and history pass at both widths; twelve checks, matching claim heading, no global overflow. No file is selected. |
+| Claim filters | A synthetic no-match search shows the empty state at 390px. Clear restores rows. Under review returns the three matching claims. These actions only change URL filters. |
+| Generic missing claims | Malformed and valid missing IDs produce identical main text and `Page not found · CMG claims desk` titles at 390px, without global overflow. |
+| Owner cross-role routes | `/portal` and `/partner` both return the owner to `/admin`; no customer or vendor page is exposed to this role. |
+| Provider display | Settings shows Manual, bundled PDF, and webhook key not set. Synthetic claim `CMG-2026-0005` shows manual download and send-record controls. Neither was used because downloads create audit rows. |
+| Pending mail | Settings reports zero notifications. Source confirms this counts both `pending` and `failed`, excluding `dead`. This is not a delivery or inbox check. |
+| Console | No application-origin warning or error was captured in the owner checks. Earlier Cloudflare-frame entries remain recorded. Full browser request traces remain unavailable. |
+
+The default Codex viewport was 688px. The browser viewport override applied to the responsive test tab only.
+All recorded 1280px and 390px checks above measured `innerWidth` in that tab. Temporary overrides were cleared.
+Proof files include `pr23-partners-desktop-2026-10-17.jpg`, `pr23-partners-mobile-2026-10-17.jpg`, `pr23-manual-provider-desktop-2026-10-17.jpg`, and `pr23-owner-documents-mobile-2026-10-17.jpg` in the session visualization folder.
+
+The existing staff account `4miodio+cmgstaff@gmail.com` has an authenticator and is assigned synthetic claim `CMG-2026-0005`.
+It is not assigned `CMG-2026-0003`, which supplies a separate negative case without reassigning data.
+The owner completed sign-in and MFA in that Chrome tab. The page identifies Staff1 Tester as ADJUSTER.
+Assigned claim `CMG-2026-0005` opens. The claim list shows only that reference.
+Unassigned `CMG-2026-0003`, a missing valid ID, and owner-only `/admin/staff`, `/admin/settings`, `/admin/audit`, and `/admin/partners` return identical generic main text and titles.
+Dashboard, claims, intake, leads, questions, documents, activity, and financials passed sixteen layout checks at measured 1280px and 390px without global overflow.
+Claimants also rendered at both widths; history rendered at 390px. The unassigned claim refusal has no global overflow at 390px.
+Chrome detached during later checks, then screenshot capture timed out. Checks resumed in a working Chrome tab with the same staff session.
+Overview, claimants, and history now pass at both widths, bringing the positive staff-route layout total to twenty-two.
+At 390px, all four owner-only routes and the valid missing claim have exactly the same main text as the unassigned claim, without global overflow.
+No application-origin warning or error was captured in the resumed staff checks. Full request traces remain unavailable.
+Hosted screenshot capture still timed out; do not claim a saved staff screenshot. Temporary viewport overrides were cleared.
+Direct action checks, remaining staff keyboard states, and vendor checks remain open. Current homeowner results follow below.
+
+Read-only GitHub feedback inspection found one inline finding on #19, one on #22, and none on #23.
+The [#19 hydration finding](https://github.com/rspeciale0519/cmg/pull/19#discussion_r4148525886) is fixed in #22: both forms use POST and disable controls before hydration; a regression test covers both states.
+The [#22 retry suggestion](https://github.com/rspeciale0519/cmg/pull/22#discussion_r4213680955) conflicts with installed Next.js 16.3.8 documentation and types, as recorded above.
+Current #23 is draft and has no submitted GitHub reviews. CodeRabbit skipped draft review. The earlier independent source review remains separate evidence.
+No GitHub comment, review, draft-status change, or PR closure was submitted.
+
+The exact #23 scan also leaves M4 and L2 open. Exact-head source reads confirmed:
+
+- `uploadClaimDocument` and `uploadPortalDocument` still validate MIME metadata without a file-content signature check.
+- Active UI forms use prepare/finalize, whose file-content checks remain in place. Legacy endpoint reachability was not tested against hosted data.
+- `changePassword` returns “Password changed. Your other devices stay signed in.” Global sign-out is absent there.
+
+The owner approved local branch `codex/security-upload-session-checks` and both fixes, including global sign-out after homeowner password changes.
+The branch was created at verified current `develop`, `1b7f7f98e54a358b3a95875483a63d3f882573a3`, in the clean existing v2 checkout.
+Its path is `.claude/worktrees/agent-a0f434380c0947e2d`. The dirty main checkout remains unchanged outside the release records.
+Both legacy actions now check all signatures before any cleanup, Storage, or document write. Their interfaces remain unchanged.
+The new regression tests showed six expected failures before implementation. Three focused files then passed 102 tests.
+The rollback test's fake zero-byte JPEG fixture was corrected to valid header bytes; rollback assertions were unchanged.
+Password regressions first showed three expected failures. The initial portal/reset rerun passed 57 tests.
+Independent review found that a thrown audit request could skip sign-out. A new regression reproduced it.
+Global sign-out now precedes the best-effort audit, which cannot prevent sign-out or redirect. The reviewer found no remaining concrete defect.
+Returned and thrown sign-out failures report a changed password without claiming successful revocation or returning secrets.
+The new login notice states that other devices must sign in when existing access expires, as documented by [Supabase](https://supabase.com/docs/guides/auth/signout).
+Final type check, lint, and the optimized build passed through Node 22.22.2.
+Full `npm test` passed: 121 files and 1,688 tests. Thirteen files and 56 database/live-service tests skipped. Exit status zero; duration 850.37 seconds.
+The final suite includes the repaired audit-outage regression. No later application source change followed this run.
+Nine HTTP checks passed across `simple`, `staff`, and `platform`, covering the changed login notice, `/portal/profile`, and `/admin`.
+The notice renders at measured 1280px and 390px without global overflow. An immediate resize measurement was transient; settled width and screenshot confirmed 390px.
+No application-origin warning or error was captured on the local notice. No password was entered or submitted.
+Proof: `local-password-notice-desktop-2026-10-17.jpg` and `local-password-notice-mobile-2026-10-17.jpg` in the session visualization folder.
+Active forms remain on metadata prepare/finalize and direct Storage uploads. PR #23's separate 2 MB action cap would still limit older multipart callers.
+This local branch is based on develop, whose body limit remains 256 MB. The separate PR #23 changes are not included here.
+Signature checks do not scan for malware or change existing stored files. No schema or policy migration is needed for these source fixes.
+Recovery before release is to retain the current deployed code. A later code rollback cannot restore revoked refresh tokens or a former password.
+After a sign-out failure, the person must use the changed password; the displayed warning does not promise revoked sessions.
+The owner approved rebuilding the disposable configuration and one reset/test cycle for `CMGPA_private_upload_disposable` on ports 15520–15529.
+The prepared workdir is `C:/Users/rob/AppData/Local/Temp/cmg-private-upload-6934583c11c14e98a1a35698847eab3b/preflight-project`.
+Independent preflight verified the exact project ID, API 15521, database 15522, and only approved ID/port config differences.
+All 36 migration files, 44 pgTAP files, and the seed match source hashes. Their combined SQL manifest is `047ca240674faafdd22267b3d8c3a4c20f69065e151f6c352c3d8e3e37e473b8`.
+The first reset preflight parser refused comments between section headers and ports before invoking the CLI. No reset occurred on that attempt.
+The corrected parser verified both ports. The one approved reset then applied all 36 migrations and seeded synthetic data, exiting zero.
+`supabase test db --local --workdir <prepared-workdir>` passed all 44 files and 1,350 assertions, exit zero.
+The database-backed CI Vitest selection passed 34 files and 243 tests; one explicit live PandaDoc test skipped. Exit zero; duration 78.47 seconds.
+The new opt-in `portal-password-session.integration.test.ts` passed against this exact disposable stack, including the final caller-session assertion.
+It calls the real password action with real Auth, rate-limit RPC, audit, update, and global sign-out. Only framework context and the external password-breach check are mocked.
+The caller session becomes null, the other refresh token fails, the old password fails, and the new password signs in. Exactly one audit row is observed.
+Cleanup deletes only this synthetic account and its matching audit/rate-limit rows. A count-only local query reports `0|0|0` after the final run.
+The test skips before environment-file loading unless the exact stack, loopback API, and key names are present.
+The no-database guard run passed 58 portal/reset tests and skipped this one integration test. The full 1,688-test unit run predates only the new isolated integration file; application code did not change afterward.
+Type check and focused lint were repeated for the new test. The earlier full lint and build remain valid for unchanged application code.
+No second reset is approved or needed. Retained and disposable databases remain separately bound to 15422 and 15522.
+CLI startup printed disposable local keys automatically; later CLI output is filtered. No hosted credential was read or printed.
+Retained `CMGPA` remains separately identified on port 15422. No hosted database or retained local data was reset.
+The loopback review server on `127.0.0.1:3040` was stopped before rebuilding the changed candidate.
+It used disabled hosted, email, and PandaDoc credentials. No other server was stopped.
+The owner separately approved the eight-file local commit with message `fix: validate legacy uploads and revoke password sessions`.
+Commit `abc44990eebf3a309ac4bf3eeefc859c601a2604` contains the login notice, three action files, portal regressions, signature tests, rollback fixture, and session integration test.
+The staged file list matched the exact eight approved paths. The staged and committed diff checks passed at `abc4499`.
+Main-checkout edits and release records are excluded. The owner then separately approved the exact push and draft PR creation.
+The initial approved push put `origin/codex/security-upload-session-checks` at `abc44990eebf3a309ac4bf3eeefc859c601a2604`.
+Draft [PR #24](https://github.com/rspeciale0519/cmg/pull/24) targets `develop` and initially contained those eight files.
+CI run `39070764804` passed both required jobs at `abc4499`. No check was bypassed or restarted.
+Verify passed type check, lint, build, and the dependency audit with zero vulnerabilities.
+Its unit run passed 121 files and 1,688 tests; 14 files and 57 database/live tests skipped. Duration: 74.54 seconds.
+Database CI passed 44 pgTAP files and 1,350 assertions. Its selected Vitest run passed 34 files and 243 tests.
+One live PandaDoc file/test skipped in that selection. Duration: 35.49 seconds.
+The branch-only push did not trigger CI because push filters cover only `develop` and `main`. Draft PR creation started the required jobs.
+The automatic Preview is Ready as `dpl_3hYgFtpsYNxV6FhxoCy6jCQmfcu5` at the exact approved commit.
+Its stable host is `cmgps-git-codex-security-upload-s-a76c10-robs-projects-c72886ba.vercel.app`.
+Its unique host is `cmgps-ej9c70a55-robs-projects-c72886ba.vercel.app`.
+Vercel CLI and the signed-in deployment page confirm Ready, Preview, branch, and commit.
+The connector returned team-scope 403. The CLI fallback used the same team and target; no authentication or permission change occurred.
+The root returns 200. Login with the changed notice and `/portal` each return 307 to `/platform-disabled`.
+All three responses include CSP and HSTS. No Preview override, Turnstile hostname, or Production setting changed.
+Proof: `security-pr24-preview-ready-2026-10-17.jpg` in the session visualization folder.
+
+The first SSH push stopped because the port-443 host was unknown. It did not modify a remote branch.
+The successful push used GitHub's published Ed25519 key in a temporary scratch known-hosts file, with strict checks retained.
+The key fingerprint matched `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU` from [GitHub's official list](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
+The transport used [GitHub's documented SSH port 443](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port).
+No personal SSH configuration, credential, host-trust store, or Git remote changed. The crashing HTTPS helper was not used.
+
+Read-only `git merge-tree --trivial-merge` inspection found no conflict markers between exact #23 `15ea5f6` and #24 `abc4499`.
+No branch, working file, commit, or remote state changed during that inspection. It does not prove combined tests.
+The owner then approved local integration of exact `15ea5f6` without creating a commit.
+`git merge --no-commit --no-ff` completed without conflicts. Before commit, HEAD was `abc4499` and MERGE_HEAD was exact `15ea5f6`.
+The merge initially staged nine incoming files. The final approved index contained thirteen reviewed files, including both follow-up repairs.
+The later separately approved merge commit and push are recorded below. Main-checkout records remain excluded.
+Independent combined review found old stored names passed unchanged to both private download signers and returned filenames.
+The installed SDK URL-encodes its download parameter. No header exploit was proved.
+Four new regression cases failed before repair, with six existing tests passing.
+Both actions now reuse `safeOriginalName` after user-scoped row and path checks. They preserve original audit metadata.
+The repair changes only `documents.ts`, `portal-documents.ts`, and `signed-download-audit.test.ts`.
+Final focused verification passed four files and 55 tests. Type check, full lint, and independent repair review passed.
+The earlier 107-test combined run and build passed before this repair. The earlier full unit run was cancelled for the repair.
+The combined full unit run passed 122 files and 1,710 tests; 14 files and 57 database/live tests skipped.
+Exit zero; duration 526.46 seconds. It used the repository's single-worker Windows setting, without changing test limits.
+The first final database selection passed 243 tests but failed one fixture setup request; one live PandaDoc test skipped.
+The failure was `seed claimants failed: TypeError: fetch failed`, before the event-conflict assertion.
+It left one incomplete synthetic claim because setup failed before the suite registered its ID.
+The existing cleanup helper removed exact fixture `97a4f45a-4c92-40e2-9049-f533ac54dc67`, after checking its ID, reference, and description.
+The target guard checked the disposable Docker label, database port 15522, and API URL 15521. No other data was removed.
+The complete database selection rerun passed 35 files and 244 tests; one opt-in live PandaDoc file/test skipped.
+Exit zero; duration 123.12 seconds. This includes the real-action password-session test.
+Post-run counts returned zero for synthetic claims, password users, password-change audits, and password-rate rows.
+All disposable migration, database-test, and seed file hashes still match source. No second database reset occurred.
+Default Turbopack builds stopped while starting the unchanged CSS loader child process, with exit zero and no child output.
+This occurred with restricted access and with explicit Node 22 plus broader tool access. Root cause remains unproved.
+A Webpack diagnostic build passed. Checked removal of only this worktree's generated `.next` directory preceded a passing default build.
+The precise cache fault remains unproved. No dependency, compiler option, or source CSS changed.
+The local HTTP run then found recovery's response used `strict-origin-when-cross-origin`, despite the handler requesting `no-referrer`.
+The global `next.config.ts` header rule caused this mismatch. The installed Next header guide confirms the last matching configured rule wins.
+The new `headers.test.ts` uses Next's installed `unstable_getResponseFromNextConfig`, with the real configuration matcher.
+Before repair, two recovery cases failed and five ordinary-route cases passed.
+The final specific `/auth/confirm` rule preserves `no-referrer`, without changing ordinary-page policies or other security headers.
+Header, recovery-route, and CSP verification then passed three files and 45 tests. Independent review found no defect.
+The 1,710-test run predates only this header rule and its seven new tests. No other unit test imports `next.config.ts`.
+The unchanged action tests remain valid. Final type check, full lint, and the default Turbopack build passed after the header repair.
+All eighteen final HTTP checks passed across simple, staff, and platform modes, with CSP and HSTS.
+Invalid recovery in staff/platform returns the same-origin 303 expired-link path with `no-store` and `no-referrer`.
+The harness uses `localhost` consistently. Installed NextURL normalizes loopback hostnames to `localhost`; the earlier origin assertion used `127.0.0.1`.
+The first HTTP run therefore had both an actual header defect and an incorrect local-origin expectation. Neither is hidden as a passing run.
+Temporary simple/staff servers stopped through their exact child handles. The dummy-provider platform review server remains on loopback port 3040.
+The built notice passed 1280px and 390px without overflow. Native checkbox input shows and hides the empty password field.
+Captured browser warnings/errors are empty. Initial browser navigation timed out, and the dummy-provider server logged refused Auth requests.
+Stale local cookies are a possible cause. That cause was not independently proved.
+No cookie, credential, or session store was cleared. No password or form was submitted.
+Proof: `combined-password-notice-mobile-2026-10-17.jpg` in the session visualization folder.
+The filename and privacy-header repairs preserve schema and stored data. Recovery uses a reviewed code correction, not a database restore.
+No remote merge, Production deployment, hosted data write, real password change, or live session revocation is approved.
+
+The owner separately approved the exact thirteen-file local merge commit and then its push.
+Commit `e142f5f875650f8d9ffa06c6d7fdc6fea9934161` is `fix: combine security hardening and recovery privacy`.
+Its parents are exact `abc44990eebf3a309ac4bf3eeefc859c601a2604` and `15ea5f6a5d21a9b66bef84e8f61d24d3a1a5e26c`.
+The committed diff over its first parent has thirteen files, 399 insertions, and 25 deletions. Diff checks pass; the worktree is clean.
+The guarded SSH push used the same pinned GitHub host and strict checks. No HTTPS helper or personal SSH configuration was used.
+Remote hash verification and GitHub PR inspection confirm exact `e142f5f`. PR #24 remains draft against `develop`, with nineteen changed files.
+CI run [39075681448](https://github.com/rspeciale0519/cmg/actions/runs/39075681448) passed both jobs for that exact commit, without restart or bypass.
+Verify passed in 2m48s, including type check, lint, build, and a zero-vulnerability dependency audit.
+Its unit run passed 123 files and 1,717 tests; 14 files and 57 database/live tests skipped. Duration: 90.70 seconds.
+The database job passed in 3m38s. It passed 44 pgTAP files and 1,350 assertions.
+Its selected Vitest run passed 34 files and 243 tests; one opt-in live PandaDoc file/test skipped. Duration: 35.65 seconds.
+CI does not select the real password-session test. Its earlier approved disposable result remains one passing test, with exact cleanup verified.
+GitHub annotations warn about Node 20 action runtimes being forced to Node 24 and an upcoming Ubuntu runner-label change.
+These are maintenance warnings, not failed checks. No workflow or runtime setting changed.
+The automatic Preview is Ready as `dpl_rR3wMH8skJdjiaXcNe6btRM642Ka`, in 38 seconds.
+Its unique URL is `https://cmgps-87anq7c0s-robs-projects-c72886ba.vercel.app`.
+Its stable alias remains `https://cmgps-git-codex-security-upload-s-a76c10-robs-projects-c72886ba.vercel.app`.
+The Vercel page shows Ready, Preview, the approved branch, and exact `e142f5f`.
+Build logs show Next.js 16.3.8, Turbopack, successful compilation and TypeScript, and completed deployment.
+The runtime warning says package Node 22 overrides project Node 24. The build uses the required Node 22; no setting was changed.
+Seven unauthenticated HTTP checks pass. Root returns 200; login notice, recovery, admin, portal, partner, and `/auth/confirm` return 307 to `/platform-disabled`.
+All seven responses include CSP and HSTS. The token-free confirm request also returns `Referrer-Policy: no-referrer`.
+No Auth verification was requested. The enabled hosted recovery flow remains untested on this branch.
+The root renders at measured 1280px with no overflow or broken completed images.
+Captured browser warnings/errors are empty. Browser navigation confirms the login closure.
+Proof: `security-pr24-merge-preview-ready-2026-10-17.png` in the session visualization folder.
+No new Preview override, Turnstile hostname, Production setting, DNS record, hosted data, or message changed.
+
+### Approved combined Preview setup
+
+The owner later approved four overrides for `codex/security-upload-session-checks`, one missing hostname, and one Preview redeploy.
+The source remains exact `e142f5f875650f8d9ffa06c6d7fdc6fea9934161`; no source, commit, push, or PR body changed during setup.
+The unlinked worktree inspection returned `link_required`. No link was created.
+Explicit inspection of `cmgps` confirmed project `prj_kn2TbLFlGanRks9ZHRnmJFQ3ThMz` in `robs-projects-c72886ba`.
+Supported first-class CLI commands created the four branch-scoped Config overrides.
+
+| Key | Exact approved branch value |
+|---|---|
+| `SITE_MODE` | `platform` |
+| `NEXT_PUBLIC_SITE_URL` | `https://cmgps-git-codex-security-upload-s-a76c10-robs-projects-c72886ba.vercel.app` |
+| `PANDADOC_API_KEY` | Empty |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | Empty |
+
+Each new record has only target `preview` and the exact approved Git branch.
+The API's individual-record reads verified only these four new non-secret values; existing credentials were not decrypted.
+Before and after deployment, all 24 pre-existing environment records match their metadata hashes. Exactly four new records were added.
+The existing Cloudflare CMG widget retains Managed mode, no pre-clearance, its site key, and all seven prior hostnames.
+Only `cmgps-git-codex-security-upload-s-a76c10-robs-projects-c72886ba.vercel.app` was added; the saved widget now has eight hosts.
+The first native input/Enter action saved the unchanged seven-host widget. Explicit custom-host selection then added the intended host.
+The saved edit page was reopened; all eight names and preservation of the original seven were verified.
+No key was shown, rotated, or changed. No DNS setting was opened or edited.
+
+Exactly one `vercel redeploy` targeted the original Preview `dpl_rR3wMH8skJdjiaXcNe6btRM642Ka`, with explicit target `preview`.
+The source project, branch, and exact commit were verified before the action. No local-source deployment or Production promotion occurred.
+The new deployment is Ready as `dpl_8ykWz4ujjgeq1s3ojzBP1ADjSQJY`, in 51 seconds.
+Its unique URL is `https://cmgps-4ldox31ib-robs-projects-c72886ba.vercel.app`.
+The stable branch alias is unchanged. The API and signed-in page confirm the new deployment's exact source and Preview target.
+Build logs show Next.js 16.3.8, successful Turbopack compilation, successful TypeScript, and completed deployment.
+Production resolves to the same Ready `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF` before and after this action.
+
+Eight unauthenticated HTTP checks pass on the stable branch host.
+Root, login, the password-changed notice, and recovery return 200 with CSP and HSTS.
+Admin, homeowner, and vendor entry routes return 307 to same-origin login with the expected next path.
+Token-free `/auth/confirm` returns the same-origin 303 expired-link notice, `Cache-Control: no-store`, and `Referrer-Policy: no-referrer`.
+Source inspection confirms this malformed request returns before any rate-limit or Auth call. No valid token was sent or consumed.
+Recovery and the changed login notice render without overflow at measured 1280px and 390px.
+The recovery widget completes automatically at both widths. The initial check after resize was not ready; the settled mobile check passed.
+The empty password control changes `password` to `text` and back, without a value or submission.
+Captured application-origin warning/error logs are empty. Eight opaque NaN warning/error entries come from Cloudflare frames.
+Full browser request traces remain unavailable; automatic client verification does not prove reset-email delivery.
+Viewport overrides were reset. The new Preview owner login page is open; no password, MFA code, or form value was entered.
+Proofs: `pr24-turnstile-host-preserved-2026-10-17.png`, `pr24-platform-preview-ready-2026-10-17.png`, `pr24-platform-recovery-mobile-2026-10-17.png`, and `pr24-platform-login-notice-mobile-2026-10-17.png`.
+All proofs are in the session visualization folder. Release records remain local and uncommitted.
+No Production, shared environment record, DNS record, database data, email, upload, or audit-creating download changed.
+The risk is that enabled Preview pages connect to the shared hosted database. No data-changing test is included in setup approval.
+Recovery is a reviewed reversal of these four branch overrides and the one added hostname; any further hosted change remains separately controlled.
+
+### Combined Preview owner acceptance and final source review
+
+The owner completed sign-in and MFA on the new combined Preview. Its dashboard identifies Rob Speciale as Owner.
+The source remains deployed `e142f5f`; a fresh GitHub read confirms unchanged `develop` at `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
+PR #24 remains draft at that exact head, with successful checks and no submitted GitHub review or line comments.
+CodeRabbit explicitly skipped review because the PR is draft. Its green check does not prove a review occurred.
+
+| Owner check | Result |
+|---|---|
+| Settings | Supabase answers through the caller-scoped probe. Resend is configured; zero notifications wait. This is not inbox or scheduled-run proof. |
+| Manual signing | Manual provider, bundled PDF, unset webhook key, and standard fee 20 percent. No provider secret was read. |
+| Recheck | Source confirms owner authorization, read-only probes, and cache invalidation. Enter showed disabled Checking, then a fresh successful probe. No data-changing action ran. |
+| Settings layouts | Measured 1280px and 390px; no horizontal overflow or alert. |
+| Synthetic claim documents | `CMG-2026-0003` shows three visible 68-byte PNG rows and one internal 2.2 MB signed LOR. Four download buttons appear. No signed Storage URL is rendered before issue. |
+| Upload controls | File input is present and enabled after hydration. Kind and visibility selections work and return to Other / CMG only without submission. Both widths fit. |
+| Owner cross-role routes | `/portal` and `/partner` settle at `/admin` with the dashboard heading. |
+| Current console | Zero captured warning/error entries during these owner checks. Earlier opaque Cloudflare entries remain part of recovery evidence. Full request traces remain unavailable. |
+
+No file was selected, uploaded, or downloaded. No save, invitation, sign-out, email, password, consent, or claim mutation ran.
+The browser's read-only DOM scope omitted FileList properties. This is not evidence of an empty selection or an application defect.
+Proof: `pr24-owner-settings-mobile-2026-10-17.png` in the session visualization folder.
+
+One later empty-file submission was expected to stop in the client. Instead, the UI showed Preparing upload, then its file error.
+`validateUploads([])` accepts an optional empty list. The private client therefore called `prepareClaimDocumentUpload` with an empty manifest.
+The server spends `staff-upload-prepare:user` before rejecting that manifest. Its ordinary one-hour counter window expires without intervention.
+No upload session, document, Storage object, or outbox write is reachable after that rejection; the list remains four documents.
+This spent attempt exceeded the intended read-only test scope. No compensating write or counter reset was attempted.
+Do not claim database data stayed unchanged for the complete owner-check sequence. Further submissions need exact approval.
+The field marks `aria-invalid=true` and gives both the field error and generic form error. No file bytes were sent.
+The final captured warning/error log remains empty. Proof: `pr24-empty-upload-refusal-2026-10-17.png` in the session visualization folder.
+
+A separate bounded Luna review inspected the nineteen-file combined source and its consumers. It found no Critical or Important code issue.
+Its minor finding was that `SECURITY_SCAN_2026-10-17.md` still marked legacy signatures and the password policy as unfinished.
+That local report now records both completed fixes, the stored-name defenses, the recovery header repair, and exact historical/current test limits.
+The same reviewer checked the corrected report and found no remaining correction. The report diff passes `git diff --check`.
+At that review, the report was the only uncommitted security-worktree file. The later local verifier test is recorded below.
+No commit, push, PR body change, merge, or deployment is approved for either local change.
+Application source is unchanged, so the passing exact-commit CI and prior disposable checks remain applicable.
+
+The next proposed batch uses valid synthetic 25 MiB files for owner and homeowner upload paths, plus one-byte-over client refusals.
+The size validator runs on submit, not selection. Accepted files create sessions, document/cleanup/audit records, and private Storage objects.
+Signed downloads create audit entries. These tests require exact separate approval because Preview shares the Production database.
+Do not promise a direct internal-file action refusal through the browser when that file has no homeowner button.
+List exclusion and backend authorization tests are different evidence. A direct hosted action check remains open until a supported test path exists.
+At this earlier checkpoint, positive company acceptance remained open.
+The later approved referral and staff alert are recorded under [Current vendor acceptance](#current-vendor-acceptance).
+Three valid synthetic PNG fixtures are ready in session scratch folder `cmg-pr24-file-tests-e142f5f` under the visualization folder.
+The owner and homeowner fixtures each have 26,214,400 bytes; the over-limit fixture has 26,214,401 bytes.
+All three reopen, verify, and decode as 160 by 90 RGB PNGs. Their manifest records exact SHA-256 values.
+An initial process-private TEMP location could not be read by another runtime. The verified shared scratch copies supersede it; none was uploaded.
+
+### Approved combined Preview file batch
+
+The owner separately approved two synthetic 25 MiB PNG uploads, one-byte-over refusal per form, and one download of each accepted file.
+The approved destination was synthetic claim `CMG-2026-0003` on PR #24 Preview, using the shared CMG Production database.
+No email, deletion, Production code, setting, DNS change, or job invocation was included.
+
+| Result | Owner through the staff form | Homeowner |
+|---|---|---|
+| Filename | `CMG-SYNTHETIC-owner-25MiB.png` | `CMG-SYNTHETIC-homeowner-25MiB.png` |
+| Hosted size and MIME | 26,214,400 bytes; `image/png` | 26,214,400 bytes; `image/png` |
+| Kind and visibility | `other`, `internal` | `photo`, `customer` |
+| Document | `8acc99b3-74bf-4139-935f-2fd3ffdea7eb` | `b88aaf19-b877-40c5-8115-879d6dcd0202` |
+| Session | `ea0bec8c-583b-40e1-b5e8-a49ed8e38bad` | `504fb524-7000-48fb-87b6-89053d489289` |
+| Session result | Completed; one file and one document | Completed; one file and one document |
+| Permanent object suffix | `23660ff8-c06c-4d31-b2cc-f64bce2102d2.png` | `a13cd510-8ec9-4195-b614-7eff85c09503.png` |
+| Saved download SHA-256 | `6ab97f7e51e37c688f7fc35ec73ecac93903a0a3db10463e44eb57f9c87ce81e` | `52337a6e3a0a6ac27a9275741b841b5c565cbb3c72cd0dd3c299b37a0edacf1e` |
+
+Both saved files are exactly 26,214,400 bytes and match their prepared hashes.
+The owner download is in `C:/Users/rob/Downloads/CMG-SYNTHETIC-owner-25MiB.png`.
+The homeowner download is in the main checkout's `temp/CMG-SYNTHETIC-homeowner-25MiB.png`. Preserve it; do not stage it.
+The Chrome download event timed out after 30 seconds. The user confirmed completion and supplied the actual save folder.
+The exact file/hash check then passed. No second Download click or new signed link was issued.
+Browser policy blocked access to `chrome://downloads`; no alternate browser surface or raw protocol was used.
+
+The owner form showed Preparing, then success and five documents. After the homeowner upload, an owner reload shows six documents.
+The homeowner form showed Preparing, then success and four visible documents. The owner's internal image and signed LOR are absent from that list.
+This proves list exclusion, not a direct hosted internal-file action refusal.
+Each form then refused the verified 26,214,401-byte file with its file-field error. No third upload session or file row exists.
+The client validator rejects that boundary before prepare. An empty selection behaves differently, as recorded above.
+
+The first in-app file transfer took about 232 seconds, although its timeout option was shorter. Its native filename and screenshot confirmed selection.
+Automatic review initially blocked submit because the old empty-file error still marked the control invalid.
+A fresh DOM read showed the selected filename and native `validity.valid=true`.
+Source confirms selection retains the old server error until submit. With this evidence, the same direct button action was accepted.
+No alternate submission method, DOM mutation, or permission change was used.
+
+The owner audit viewer filtered to today's document issuances shows exactly two matching entries, one for each new file.
+Both record attachment disposition and `ttl_seconds=300`, with the correct internal/customer visibility.
+Automatic review blocked direct signed-token inspection. No workaround or token decoding ran.
+The owner download's automatic AX result included its temporary URL; do not copy it into retained evidence or logs.
+At the time of this earlier check, the URL was limited to the synthetic image and a live expired-link refusal remained unverified. The current section above records the later one-time refusal result; the later saved-file check passes by size and recorded Storage fingerprint.
+
+Read-only Supabase Table Editor checks confirm two upload sessions, both completed; two file rows have verified object versions and exact size/MIME.
+At file-batch completion, cleanup had eleven rows: nine processed and two pending staging paths, IDs 9 and 11.
+Permanent-path intents 8 and 10 are processed. Both pending staging rows have zero attempts, no error, and no dead timestamp.
+The private-upload guard prevents processing until 2 hours 15 minutes after creation, despite the earlier general next-attempt timestamps.
+The accepted objects and cleanup records remain for review. No worker, retry, cancellation, manual cleanup, SQL write, or deletion ran.
+These two pending paths are expected staging cleanup, not evidence of a failed cleanup worker.
+
+Both refreshed document lists fit measured 390px and 1280px widths; client and scroll widths agree at each size.
+The fresh homeowner form initially disabled upload controls, then enabled them after hydration. No source repair was needed.
+The Chrome full-page mobile screenshot timed out once. The documented tab screenshot succeeded afterward.
+All viewport overrides were reset. Captured owner and homeowner warning/error logs are empty; full request traces remain unavailable.
+No source, commit, push, PR, deployment, Production setting, DNS record, or email changed during this approved batch.
+The batch changed only the approved shared hosted test data and its associated Storage, audit, cleanup, and rate records.
+
+Proofs in the session visualization folder: `pr24-owner-25MiB-upload-success-2026-10-17.png`, `pr24-owner-over-limit-refusal-2026-10-17.png`,
+`pr24-homeowner-25MiB-upload-success-2026-10-17.png`, `pr24-homeowner-over-limit-refusal-2026-10-17.png`,
+`pr24-owner-files-mobile-2026-10-17.png`, and `pr24-homeowner-files-mobile-2026-10-17.png`.
+Negative signatures, actual expiry refusal, interruption/retry, and remaining account/referral/signing writes still need their supported tests and exact approvals.
+
+### October 19 queue and retained-object read
+
+The existing CMG Supabase browser session opened the intended Production project `vdtqxglhlgatpbgehsjk`, shown Healthy.
+Only Table Editor views and Storage folder listings were used. No SQL editor, new query, saved snippet, RPC, worker, or hosted mutation ran.
+The cleanup table contains eleven rows. All eleven have completion timestamps; all last-error and dead timestamps are null.
+The two formerly pending staging rows now show:
+
+| Queue ID | Processed at, UTC | Attempts |
+|---|---|---:|
+| 9 | `2026-10-18 14:27:39.463+00` | 1 |
+| 11 | `2026-10-18 14:27:39.767+00` | 1 |
+
+The loaded `claim-docs` root lists only claims and intake folders. No private-upload staging prefix is listed.
+The synthetic claim folder lists five permanent files, including both approved 25 MiB test filenames.
+No preview or download was opened. This verifies retained paths, not a repeat of their earlier saved-byte hashes.
+All thirty-five outbox statuses were read by unique row identity across the virtual table: twenty-four sent and eleven dead.
+No row is pending or failed. No payload or invite URL was copied into retained evidence, and no message was retried.
+The first viewport showed only nineteen rows; it was not used as the full queue count.
+One search entry was dismissed without submission when the new UI offered Ask AI instead of a table filter.
+No AI query, row edit, or save followed. A covered header click made no table change; ordinary scrolling supplied the complete status count.
+
+The Vercel CLI project read confirms `prj_kn2TbLFlGanRks9ZHRnmJFQ3ThMz` in `robs-projects-c72886ba`.
+Default restricted CLI access failed with package-info/network errors. The same read with required network access succeeded.
+The bounded historical cron request for October 18 14:00–15:00 UTC returned HTTP 400, not invocation evidence.
+The signed-in project browser permits Last hour; Last 12 hours and Last day require Pro.
+Last hour with Production and Cron Job filters returns zero records. That window does not include the recorded cleanup completion time.
+Do not infer a failed or absent scheduled run from this result. No cron endpoint, Run button, retry, redeployment, or setting change was used.
+
+Current [Vercel timing rules](https://vercel.com/docs/cron-jobs/usage-and-pricing) permit Hobby jobs anywhere within the configured hour.
+Both configured jobs fall in the 14:00–14:59 UTC window. Their order and a seventeen-minute gap are not guaranteed.
+Source review found no dependency on that order. Both routes authorize before creating the privileged client or touching a queue.
+Outbox is bounded to twelve with concurrency three; cleanup is bounded to twenty-five. Both routes have a sixty-second maximum.
+The [cron management guide](https://vercel.com/docs/cron-jobs/manage-cron-jobs) says failed invocations are not retried automatically.
+The outbox route can also return 200 with `delivery: unconfigured` when the sender key is absent, without claiming rows.
+An operator must check response details, queue state, and provider evidence; HTTP 200 alone does not prove delivery.
+No new route test or source change was added during this read-only review. Real scheduled invocation and accepted delay remain open.
+
+Evidence: `cmg-queue-read-summary-2026-10-19.json`, `cmg-cleanup-complete-2026-10-19.png`,
+`cmg-storage-staging-prefix-absent-2026-10-19.png`, `cmg-permanent-test-files-retained-2026-10-19.png`, and `cmg-cron-hour-limit-2026-10-19.png`.
+Cleanup success is new authoritative progress. It does not prove interruption handling, live URL expiry, or scheduler attribution.
+Production code, settings, DNS, database rows, mail, and all retained files were unchanged by this review.
+
+### Current commercial hosting and protection decision evidence
+
+Read-only API checks on 2026-10-17 confirm Vercel team `robs-projects-c72886ba` uses Hobby.
+GitHub reports a private personal repository, default branch `develop`, current commit `1b7f7f9`, and `protected=false`.
+The user API has no plan value. That means unavailable; it does not prove a Free subscription.
+Current [Vercel commercial-use rules](https://vercel.com/docs/limits/fair-use-guidelines) still require Pro or Enterprise for commercial use.
+The [Pro plan](https://vercel.com/docs/plans/pro-plan) lists a USD20 monthly base, one deploying seat, and USD20 usage credit, before tax.
+Usage beyond credit and additional deploying seats cost extra. The base is not a total spending cap.
+An upgrade affects the whole team, including its other projects; billing responsibility and a spending limit need owner decisions.
+[GitHub's protected-branch documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) confirms eligible paid plans support private protection.
+The existing subscription must be checked before purchase. No plan, member, permission, protection rule, or spending setting changed.
+The proposed controls are PRs, current-base `verify`/`database` checks, resolved conversations, blocked force pushes/deletion, and administrator enforcement.
+Do not require an approval count that a sole author cannot satisfy without naming another eligible reviewer.
+CLI help printed successfully but exited 1 after its process ended; the later read-only team API request succeeded with exit 0.
+
+### Current recovery-budget runtime proof
+
+The harness loads exact PR #23 TypeScript from `15ea5f6a5d21a9b66bef84e8f61d24d3a1a5e26c` in memory under Node 22.
+It calls the real confirm handler, token parser, IP resolver, rate-limit wrapper, and site-mode functions.
+Actual NextRequest and NextResponse objects are used. Auth verification and unused account clients are stubbed; no Auth service is contacted.
+The admin RPC transport maps only the expected function and parameters to real SQL in the disposable container.
+This checks the SQL function through a transaction bridge. It does not test the PostgREST transport or hosted rate counters.
+Docker identity, project label, and port exactly match `CMGPA_private_upload_disposable` at 15522.
+
+| Boundary | Result |
+|---|---|
+| Budget | Attempts one through ten reach stubbed Auth. Attempts eleven and twelve do not. Every invalid-token result uses the same 303 expired-link response. |
+| Caller separation | A second synthetic IP gets its own first allowed attempt. |
+| Invalid shape | Five missing, malformed, wrong-type, or repeated-parameter cases spend no limiter budget and make no Auth call. |
+| RPC outage | The injected RPC error fails closed before Auth. Exactly one expected internal error is captured. |
+| Site modes | Simple closes the route before rate or Auth calls. Staff and platform apply the normal limit. |
+| Stored counters | Counts are 12, 1, and 1. Each window start aligns to the 900-second boundary. |
+| Recovery | The transaction rolls back. The entire rate-table count and fingerprint equal the pre-test values. No reset occurred. |
+
+The harness exited zero. Its scratch file is `C:/Users/rob/AppData/Local/Temp/cmg-recovery-boundary-15ea5f6.cjs`.
+No source file, dependency, hosted database, retained local stack, account, message, or provider document changed.
+
+### Current main-checkout and listener review
+
+The dirty main checkout remains preserved. Its uncommitted site-mode comment already matches current `origin/develop`; it is not a unique runtime change.
+The `.project-board/` ignore rule and shared-board instructions remain unique local changes.
+Main README describes older staff-mode operation. Current `develop` README and verified release evidence describe platform mode.
+Uncommitted authorship is unknown. Do not use the old main README as current Production evidence or stage these unrelated files.
+Reconciliation and any later Git actions remain separate from the security PR.
+
+Fresh owner IAB and staff Chrome navigation to claim 0005 captured no warning or error after `2026-10-17T21:16:26.641Z`.
+Both pages completed their loading state. Tab reached the next policy selector; Enter opened the staff Documents page.
+No form value or hosted record was changed. Source search found no extension runtime messaging calls in `src`, `public`, or `tools`.
+[Chrome's messaging guide](https://developer.chrome.com/docs/extensions/develop/concepts/messaging) explains asynchronous extension message channels.
+That is context, not attribution. The old listener-error stack and source remain unavailable; no specific extension or application defect is proved.
+
+### Current homeowner read-only acceptance
+
+The owner opened a separate Chrome Incognito session on the PR #23 Preview at `15ea5f6`.
+Profile identifies `rob@miodiollc.com` as CMG Upload Acceptance Test. Only synthetic claims `CMG-2026-0003` and `CMG-2026-0004` appear.
+No credential, code, session token, or private link was read.
+
+| Check | Result |
+|---|---|
+| Positive routes | Claim list, profile, and both claims' overview, activity, and documents pages pass at 1280px and 390px: sixteen layouts. Each has one main heading, no global overflow, and no retained loading state. |
+| Owned documents | Claim 0003 shows three existing 68-byte PNG files. Claim 0004 shows its empty document message. No Download or Send control was used. |
+| Activity and loading | Both activity feeds finish loading. Account and claim loading placeholders were observed before their completed content. No question was sent. |
+| Claim isolation | Foreign claim 0005, a missing valid UUID, and an invalid UUID have the same settled main text and title within overview, activity, and documents routes at both widths. No global overflow. |
+| Metadata timing | One immediate mobile invalid-ID document title retained the parent suffix before load completed. A load-complete comparison of all three document refusals matched. Do not compare the overview title format with section titles. |
+| Cross-role requests | `/admin` and `/partner` redirect this homeowner to `/portal`, which shows its two claims. |
+| Keyboard | Tab reaches the current-password visibility control. Enter shows and hides its empty field. Enter opens and closes consent details. Enter on the refusal return link opens the claim list. |
+| Consent and profile | Four existing consent records render. The first disclosure exposes the existing consent text and withdrawal control. No value, consent, password, or session was changed. |
+| Diagnostics | Captured warning and error logs are empty. Full network request traces remain unavailable. |
+
+Proof images: `pr23-homeowner-documents-mobile-2026-10-17.jpg` and `pr23-homeowner-list-mobile-2026-10-17.jpg` in the session visualization folder.
+The screenshot API included a wider backing surface; a 390-by-844 clip captures the measured document viewport.
+All temporary viewport overrides were reset. The owner later closed the homeowner tab; earlier acceptance evidence remains valid.
+At this earlier PR #23 checkpoint, hosted uploads, audited downloads, and profile writes were untested. The later PR #24 file and profile batches above supersede those limits. That checkpoint did not test hosted questions, password changes, consent withdrawal, or sign-out. Later local evidence appears above and retains its stated limits.
+
+### Current vendor acceptance
+
+The owner approved one referral submission on PR #24 at `d523469` on October 21.
+The saved CMG connection was verified against project `vdtqxglhlgatpbgehsjk` before read-only SQL.
+Vendor1 Tester used the existing account `4miodio+cmgvendor@gmail.com` and active company `CMG Test Vendor`.
+Its profile is `377a70f3-b200-4221-aff4-6cbf274ed25c`; its company is `9c0aa48d-76da-4b07-873e-7273aee3ed97`.
+The initial company claim count was one. The exact synthetic email had no claimant or outbox match.
+
+One click created `CMG-2026-0006`, UUID `76824e46-c8de-4ad9-89b2-6225032ceaee`, at `2026-10-21T19:12:10.685417Z`.
+The page showed Referral sent and the new reference. The vendor list then showed exactly claims 0005 and 0006.
+The new summary opens with the approved name, address, and New intake status. Milestones and settlement remain private.
+Readback confirms exact input, one primary claimant, one partner summary, and zero consent, document, or claim-event rows.
+
+Three audit entries were created: `claims.insert` 197, `claimants.insert` 198, and `claim.partner_referral` 199.
+The first two are normal insert-trigger entries with null actors. Entry 199 identifies the approved vendor actor and company.
+The approval description counted only one audit entry. It understated the two automatic entries; this discrepancy was disclosed to the owner.
+All three remain retained. No record correction or deletion was attempted.
+
+Outbox `edf69c04-a420-485a-a1b5-e7d554fe8162` uses `referral_staff_alert` and the verified CMG staff inbox.
+Its status is `sent`, attempts is one, and last error is null. The sent timestamp is `2026-10-21T19:12:11.144Z`.
+
+After sign-in, Resend reports Delivered to `Austin@CMGPropertySolutions.net` for the matching subject.
+Subject: "New referral CMG-2026-0006 — CMG Test Vendor". Provider record: `01a15fe0-cf49-7eec-ac11-1ac3d5a4e957`.
+This confirms provider delivery. Independent recipient-inbox receipt was not checked.
+Provider proof is `pr24-vendor-referral-resend-delivered-2026-10-21.png` in the session visualization folder.
+
+No second submission, manual resend, claim acceptance, customer email, access grant, upload, or worker invocation occurred.
+
+The prior opaque Cloudflare-frame warnings and errors did not prevent this successful submission. Full request traces remain unavailable.
+The exact input is retained in `pr24-vendor-referral-proposal-2026-10-21.json`.
+Result evidence is `pr24-vendor-referral-acceptance-2026-10-21.json` in the session visualization folder.
+Prepared-form, success, and vendor-list images use the matching `pr24-vendor-referral-` prefix and `2026-10-21.png` date suffix.
+
+This approval is consumed. Do not submit again. Production code, settings, DNS, and unrelated retained work remain unchanged.
+
+The following earlier read checks retain their original dates and scope.
+
+The owner signed in as `robspeciale@gmail.com` on PR #23 at `15ea5f6`. Its portal identifies RS Gmail and CMG Synthetic Vendor Test.
+This company has no linked claims. The account is sufficient for empty pages and refusal tests; no new invitation is needed.
+
+| Check | Result |
+|---|---|
+| Positive pages | List, profile, and referral form pass six layouts at 1280px and 390px. Each has one main heading and no global overflow. |
+| Empty state | The list shows no referrals. Profile shows read-only company data and three contact fields marked Not on file. |
+| Referral form | Eleven required controls render; ten are invalid while empty. State defaults to Florida. No input was filled or submitted. |
+| Claim refusal | Foreign claim 0005, a missing UUID, and an invalid UUID have identical settled main text and document title on summary/activity at both widths. Twelve cases pass. |
+| Cross-role requests | Admin and homeowner routes redirect to this vendor's partner list at both widths. Four cases pass. |
+| Keyboard | Tab from first name reaches last name. At 390px, Right Arrow scrolls the menu 40px and fully reveals Company profile. Enter opens the profile. |
+| Diagnostics | No application-origin warning/error was captured. Four opaque Cloudflare-frame NaN entries appeared during referral navigation. Full request traces remain unavailable. |
+
+Proof: `pr23-vendor-empty-mobile-2026-10-17.jpg` in the session visualization folder. The saved image was inspected.
+Viewport overrides were reset. No hosted claim, company, profile, message, session, or permission changed during these checks.
+Positive company-scoped claim/activity proof requires an existing linked account or separately approved synthetic fixture work.
+The October 19 source review found a safer next check before any fixture write.
+After owner sign-in, a SELECT-only query confirmed the existing synthetic vendor mapping in CMG Production.
+`4miodio+cmgvendor@gmail.com` has an active partner profile at active `CMG Test Vendor`, with one linked claim and one summary.
+That claim is `CMG-2026-0005`, UUID `153a2250-297d-4b81-ab20-65da3b590852`, with status `under_review`.
+The profile, claim, and summary use company UUID `9c0aa48d-76da-4b07-873e-7273aee3ed97`.
+`robspeciale@gmail.com` remains an active partner at active `CMG Synthetic Vendor Test`, with zero claims and summaries.
+Its company UUID is `8d770678-ed0d-4cbc-b6c9-bd55eeb114b5`.
+Claim 0003 has no partner attribution or partner summary. No claim was reassigned.
+Use the existing linked vendor account for the next positive list and summary checks.
+The mapping depends on `profiles.partner_company_id`, an active partner profile, and an active company.
+The separate `intake_referral_partner_id` does not grant portal access.
+Partner activity exposes only `partner` and `shared` entries for that company's claim.
+These reads need no claim reassignment, invitation, referral submission, event insertion, or audit-creating download.
+They do not prove positive claim access for the separate `CMG Synthetic Vendor Test` company.
+No supported application action reassigns an accepted claim's company. Do not repoint claim 0003 to create this fixture.
+Such a change would disclose its projected claim data to another company and needs exact approval.
+A new vendor referral creates claim and claimant records, audit data, and a staff alert. It also needs separate approval.
+The Supabase session first required owner CAPTCHA completion. The owner restored access, and the exact CMG project was verified.
+Both query transactions used `BEGIN READ ONLY` and ended with `ROLLBACK`. Neither was saved as a cloud snippet.
+The second query counted existing claim 0005 activity: one `customer` entry, with no `partner`, `shared`, or `internal` entry.
+The owner then signed in as `4miodio+cmgvendor@gmail.com`. The portal identifies Vendor1 Tester and `CMG Test Vendor`.
+The user opened the earlier tab. Checks moved to the selected test tab, which shares that signed-in session.
+No password, code, or session token was read.
+
+| PR #24 linked-vendor check | Result |
+|---|---|
+| Positive pages | List, claim 0005 summary, activity, and company profile pass eight layouts at measured 1280px and 390px. Each has one main heading and no global overflow. |
+| Company and claim | At this earlier read, the profile shows CMG Test Vendor and the list contains only claim 0005. Its summary matches the expected fields. The later approved referral adds claim 0006, as recorded above. |
+| Data limits | No policy, contact, document, or download control appears on the claim summary. Settlement remains private while the claim is under review. These are rendered-page checks, not direct data-action tests. |
+| Activity exclusion before the approved write | Both widths show the empty partner feed. The existing customer-only event does not appear. No partner/shared event exists at this point. The later approved note test is recorded below. |
+| Claim refusal | Unattributed claim 0003 and an invalid UUID return identical main text and document titles on summary/activity at both widths. Eight cases pass. No claim data appears. |
+| Role isolation | `/admin`, `/portal`, and claim 0005's homeowner-document route return to `/partner` at both widths. Six cases pass. No download occurs. |
+| Keyboard and loading | Enter on the refusal return link opens the referred-claim list. Claim, profile, and return navigation show loading states before settled content. |
+| Diagnostics | Captured warning/error logs are empty. Full network request traces remain unavailable. |
+
+All twenty-two measured checks pass. The initial background-tab viewport attempt measured 814px and is excluded.
+The correction uses the selected test tab. No CSS, source, permission, claim, event, invitation, or file record changed.
+The temporary viewport override was cleared. The final measured size is the normal 1280 by 720 pixels.
+The owner approved one partner-only entry for claim 0005, using the owner account and audience `Partner`.
+Approved text: "CMG SYNTHETIC TEST — Partner-only activity acceptance. No action is required."
+Normal UI Sign out uses global scope and writes an audit record. It was not used to switch the current test sessions.
+The owner completed sign-in and MFA in Chrome Incognito as `rob@thespeciales.com`.
+The page confirms Rob Speciale, role OWNER, claim 0005, and one existing Homeowner event before submission.
+No matching synthetic note exists in that initial feed. The composer initially selects CMG only.
+Codex selected Partner, entered the exact approved body, and checked the visible audience and claim before clicking Post entry once.
+The page showed Posted, two entries, and one matching note by Rob Speciale labeled Partner at October 19, 8:37 PM EDT.
+An owner reload preserved exactly one matching note and the earlier Homeowner event. No retry was needed.
+The event insert has no duplicate guard. Do not repeat this completed write.
+
+The signed-in Vendor1 Tester then opened claim 0005 activity. It shows exactly one matching note at measured 1280px and 390px.
+The earlier customer-only text, "Claim moved to Under review.", remains absent from the vendor page.
+Both layouts have one main heading and no global overflow. The temporary viewport override was cleared.
+Captured owner and vendor warning/error logs are empty. Full network request traces remain unavailable.
+Independent source review confirms that `postClaimEvent` calls `notifyCustomerOfReply` only for customer/shared visibility, excluding Partner.
+The owner later restored CMG Supabase access. Read-only table filters confirm note `ba8600a1-730f-44a8-ad8d-cafb4285c375` with visibility `partner`.
+Exactly two events exist for claim 0005: this note and the earlier `customer` status event.
+The outbox has zero rows created since October 20, 00:37 UTC. No provider inbox or receipt was inspected in this batch.
+The one retained synthetic event is the only hosted write in this batch. No email, file, invitation, access, Production setting, or DNS change was made.
+Evidence is `pr24-partner-note-acceptance-2026-10-19.json` in the session visualization folder.
+Preflight proof uses `pr24-partner-note-preflight-2026-10-19.json` and its matching PNG.
+Saved-result images are `pr24-partner-note-owner-saved-2026-10-19.png`, `pr24-partner-note-vendor-1280-2026-10-19.png`, and `pr24-partner-note-vendor-390-2026-10-19.png`.
+Independent readback uses `pr24-partner-note-db-read-2026-10-19.json` and `pr24-note-invalid-file-outbox-read-2026-10-19.json`.
+The owner company page also displays the expected active company and a branch Preview `/file-a-claim?ref=...` link.
+Opening that displayed URL as a GET loads Letter of Representation and preserves the referral code in the URL.
+No form was submitted. GET does not establish active-company resolution or persistence. Proof is `pr24-vendor-referral-link-read-2026-10-19.json`.
+The owner then requested Codex tab cleanup before further login help.
+Eight unused Codex tabs were closed: the duplicate CMG page, five PandaDoc pages, Supabase sign-in, and Vercel logs.
+All five PandaDoc pages showed Draft, with no visible unsaved-change warning, before closing.
+No provider document was deleted, discarded, sent, or signed. Their IDs remain recorded below.
+Only Codex tab 10 remains open, with the signed-in vendor and claim 0005 activity.
+Chrome's normal homeowner session remains unchanged. The separate Incognito owner session is now signed in on claim 0005 activity.
+Closed tab handles 1, 2, 3, 4, 6, 7, 8, and 9 must not be reused.
+Acceptance proof is `pr24-vendor-read-acceptance-2026-10-19.json` in the session visualization folder.
+Mobile proof files are `pr24-vendor-summary-mobile-2026-10-19.png`, `pr24-vendor-activity-mobile-2026-10-19.png`, and `pr24-vendor-list-mobile-2026-10-19.png`.
+Proof files in the session visualization folder are `cmg-vendor-mapping-read-2026-10-19.json` and `cmg-vendor-mapping-read-2026-10-19.png`.
+Activity proof is `cmg-vendor-activity-count-read-2026-10-19.json` with its matching PNG.
+Independent source/proof review confirms the active company match and the limits of the database evidence.
+Source review used `src/lib/partner/queries.ts`, the partner RLS policies, intake/referral actions, and `supabase/tests/22_partner_portal.test.sql`.
+The current staff session was not rechecked after vendor sign-in. Do not infer separate profile isolation from the older open staff page.
+The initial partly clipped link was not proof of a keyboard access defect. The existing menu is deliberately scrollable.
+No CSS, component, source test, or prepared security file changed during this diagnosis.
+Proof: `pr23-vendor-keyboard-profile-mobile-2026-10-17.jpg` in the session visualization folder.
+
+### Current additional owner keyboard checks
+
+On PR #23 at `15ea5f6`, the owner opened the staff invitation disclosure with Enter, then reached its email field with Tab.
+Enter or Space closes it. Both measured 390px and 1280px checks pass without global overflow.
+The three invitation fields render. No value was entered, and Send invitation was not used.
+The last active owner's role and deactivation controls remain disabled, with their explanations visible. No account was changed.
+The first background-tab viewport attempt measured 688px. It was not counted as a mobile or desktop result.
+The completed checks used the selected review tab and measured the requested width directly.
+
+At 390px, an audit row opens and closes with Enter. Its seven stored fields render without global overflow.
+Subject selection updates the query to Documents. A real ArrowUp date change updates the URL and returns the expected empty result.
+An automated date fill alone did not commit a change. That observation is not a proved application defect.
+Clear filters restores All activity. Enter on Older opens the next page, and Enter on Back to newest restores the first page.
+No audit entry, claim, user, invitation, or message changed. Captured warning/error logs are empty; full request traces remain unavailable.
+The prior local review tab now displays hosted owner Audit. The dummy-provider local server remains separate on loopback port 3040.
+
+### Combined Preview profile keyboard check and safe stop
+
+At exact PR #24 `e142f5f`, the signed-in synthetic homeowner profile passed three empty password-toggle keyboard checks.
+Tab reached each Show password control. Space changed only its paired input to text; a second Space restored password masking.
+All fields stayed empty. No save, password change, sign-out, or consent withdrawal was submitted.
+The profile fits measured 1280px and 390px widths without horizontal overflow.
+At 390px, Space opened the first consent record. Tab reached its withdrawal button without activating it.
+Shift+Tab and Space closed the record. All details are closed, all three passwords are hidden, and the viewport override is reset.
+Captured warnings/errors are empty. Full browser request traces remain unavailable.
+The profile has no advance all-device sign-out notice; the implemented success message remains on the login return path.
+The initial screenshot preceded focus scrolling. The settled replacement shows the expanded record and focused withdrawal control.
+Proof: `pr24-homeowner-profile-desktop-2026-10-17.png` and `pr24-homeowner-profile-mobile-2026-10-17.png` in the session visualization folder.
+
+The owner then signed in to PandaDoc and approved both prepared synthetic uploads as unsent drafts.
+The account menu confirms the CMG business account. The dashboard shows zero own drafts before any upload.
+The workspace's display name has not yet been inspected. No document, draft recipient, contact, email, or signature was created.
+The owner requested a safe stop on October 17 before selecting or uploading either PDF.
+The owner resumed the approved test on October 19. The next subsection records the one created draft and its failed visual check.
+The unchanged Dual-file approval remains unused. Revised files require a new exact upload approval.
+No commit, push, deployment, Production setting, DNS, hosted database write, or backup occurred in this continuation.
+
+### Current bounded inbox check
+
+The existing `rob@thespeciales.com` inbox session is available. A search used the exact current subject, `Reset your CMG password`.
+The Inbox search returned No messages. This does not prove non-delivery, deletion, or absence from other folders.
+No message body, reset link, attachment, or unrelated message was opened. The search was cleared afterward.
+The `rob@miodiollc.com` browser tab is at the mail login page. No password was entered or requested again.
+Current inbox receipt and monitored reply handling remain unverified. No mail was sent, retried, moved, or marked read.
+
+### Current offline PDF review
+
+The review used the unchanged source assets on `codex/security-upload-session-checks` at `abc4499`.
+Both variants contain nine US Letter pages, each 612 by 792 points.
+Both have zero canonical AcroForm fields and zero page widgets. They use text tags that PandaDoc must convert into fields.
+Single has exactly 34 manifest tags. Dual has exactly 43. Each tag appears on its expected page, with no extras.
+Tag x coordinates match the manifest. The extracted y difference is 1.4 points from its baseline convention; no tag box leaves a page.
+All eighteen pages were rendered. Contact sheets and detail pages 1, 5, 7, and 9 show no clipping or unintended overlap.
+Page 9's raw `em`, `ne`, and `su` tags are expected source placeholders. The existing prefill regression covers their replacement.
+This checks layout and manifest agreement only. It does not prove PandaDoc field recognition, signer assignment, legal accuracy, or completed signing.
+
+| Source | SHA-256 |
+|---|---|
+| Single PDF | `50760ff01bf35a57a58e6825c74211e29ffbc188df0964ef0ba9aa488954d92e` |
+| Dual PDF | `4d68e2e073b112b05e038dc821f079ed61cfa15d0b4a6235acb4caa22cd91941` |
+| Manifest | `5d25d3737e60f391d920c9728bcce3e0dd2fb3fed4abc21433aaa5cb40056093` |
+
+Read-only renders are in `cmg-lor-review` under the session visualization folder. No source PDF, wording, or manifest changed.
+The [manual field-recognition guide](https://support.pandadoc.com/en/articles/9714598-field-tags-recognition) and [API field-tag guide](https://developers.pandadoc.com/docs/field-tags) describe different tag examples.
+Neither proves that these exact role-qualified tags produce correct fields through manual web upload. That controlled draft test remains open.
+No hosted PDF download, PandaDoc upload, draft, message, signature, or legal approval occurred.
+
+### Local prefilled examples for manual web recognition
+
+The next preparation used the actual `buildPrefilledLorPdf` function at combined commit `e142f5f`.
+Only the `server-only` import guard was stubbed for the local harness. The real PDF loader, field mapper, manifest, and PDF library ran.
+No Auth, database, browser, or provider request ran during generation. No application source or bundled asset changed.
+Both examples use synthetic names, policy, property, carrier, phone, and `example.invalid` email values.
+The fixed dispatch date is 2026-10-17. It does not represent a completed signature.
+
+| Prepared fixture | Bytes | SHA-256 | Remaining signing tags |
+|---|---:|---|---:|
+| `CMG-SYNTHETIC-single-prefilled.pdf` | 2,303,878 | `9eba3d2c4b1ae288e9f00de75e9db06625fbefb5f04bdea43da6ee342aeabe47` | 9 |
+| `CMG-SYNTHETIC-dual-prefilled.pdf` | 2,303,988 | `fb67a9e066456ddf0846d1afcbeefdbf217037caf2b917f6b80bda22cdfb59e2` | 18 |
+
+Both files have nine pages. All twenty-five data tags are replaced; the intended role-qualified signing tags remain literal text.
+Text checks retain the full synthetic policyholder names, policy number, fee, and email.
+All eighteen pages were rendered at 72 dpi and visually inspected, including the agreement category and signature pages.
+Poppler exited zero but reported `No display font for 'Symbol'` and `No display font for 'ArialUnicode'` for both files.
+Visible text and checkbox marks remain present in those renders. The warnings remain a rendering limit, not an application test failure.
+Values retain the existing seven-point tag font and positions. Some values lie on or below printed underlines.
+Final provider appearance, field placement, readability, and legal sufficiency remain unapproved.
+
+Fixtures, hashes, and page images are in `cmg-manual-signing-draft-fixtures` under the session visualization folder.
+These are recognition-test inputs, not completed or approved letters for customers.
+No PandaDoc tab was initially available. The owner has now signed in to the new built-in browser tab.
+The owner approved these two synthetic files as unsent drafts in the CMG workspace.
+The Single-file approval is now consumed by the one draft recorded below. Dual remains unuploaded.
+If needed, draft recipients may use `cmg-test-1@example.invalid` and `cmg-test-2@example.invalid`.
+No email, saved contact, purchase, hosted claim download, claim change, signature, or deletion is included.
+Stop if the web upload leaves the tags visible. Do not hide tag text or place fields over it as an unreviewed workaround.
+This isolated recognition check will not replace the later approved claim download, send, signing, storage, and status tests.
+
+### Current manual PandaDoc draft result
+
+On 2026-10-19, the browser session still used the approved CMG business account.
+Workspace settings show the active workspace name `PandaDoc`, with one member. No setting or subscription changed.
+Both local PDF hashes still match the approved preparation table. The dashboard showed zero own drafts before the upload.
+The Single file was uploaded once. The file-chooser call took 991 seconds despite its requested 30-second timeout.
+Its first observation showed Uploading. A later read of that same tab confirmed a created document; no retry or duplicate upload ran.
+
+| Item | Observed result |
+|---|---|
+| Document | `GDdiBGFUY6r7ykB2xREmah`, title `CMG-SYNTHETIC-single-prefilled` |
+| Status | Draft, editing step 2 of 3. Neither Review and send nor Finalize document was selected. |
+| Recognition | The uploader reported nine form fields. Place fields produced five Initials and four Signature fields. |
+| Pages | Initials appear on pages 1, 2, 3, 4, and 8. Signature fields appear on pages 5, 6, 7, and 9. |
+| Assignment | Place fields automatically added the current CMG account as a Signer and assigned all fields to it. No dummy recipient or saved contact was added. |
+| Visual result | Failed. At 200%, the page 1 Initials field shows the original black role-qualified tag text through the field. |
+| Remaining scope | Dual upload, required-field properties, intended signer assignment, all-page field placement, final appearance, signing, and filing remain unverified. |
+
+The current [web field-tag guide](https://support.pandadoc.com/en/articles/9714598-field-tags-recognition) explicitly requires tag font color to match the background.
+Its web workflow places fields on top and assigns them to a recipient; recognition alone does not remove the printed tag.
+The source generator sets `TAG_COLOR = (0, 0, 0)` for both data and signing tags.
+`buildPrefilledLorPdf` replaces data strings but preserves signing strings and their black drawing state.
+This explains the visible text. It is a PDF-preparation defect in the selected manual path, not a failed Turnstile or login check.
+The proposed repair changes only manual output signing-tag glyph color while retaining parseable text, dimensions, and positions.
+It must preserve visible claim values, legal content, bundled assets, and API upload bytes.
+The owner approved local branch `bugfix/manual-signing-tag-visibility` and the repair, with both signer variants tested.
+The isolated checkout starts at verified current `develop` commit `1b7f7f9`; the stale local `develop` reference remains unchanged.
+The checkout uses the pre-authorized session scratch area. It reuses matching installed dependencies through a junction; no package was installed.
+The first metadata and junction writes were sandbox-denied without partial changes. The same approved setup then succeeded with required tool access.
+At that checkpoint, local implementation and render checks remained in progress. Later results and approvals appear below.
+
+#### Local repair checks and rejected first output
+
+The original prefill tests passed nine tests before the change.
+New regression tests first failed for black signing glyphs and missing/duplicate marker acceptance.
+The first repair scoped white fill around complete standalone signing text objects at the manifest positions.
+Independent review found that the first broad matcher could hide extra text in the same object; the strict matcher resolved that finding.
+Fifteen focused tests, type checking, lint, and the diff check then passed.
+They cover both variants and missing, duplicate-across-stream, moved, and extra-text markers.
+
+The actual repaired function produced two local synthetic PDFs, with no network, database, Auth, or provider call.
+Both have nine pages and retain all nine or eighteen signing tags. All twenty-five data tags are replaced.
+After removing only the scoped color operators, every content stream matches the earlier approved fixture exactly.
+Extracted text is identical on all eighteen pages. Pixel differences stay within the signing-marker regions.
+Bundled PDF hashes, the API upload module, the shared PDF loader, and the manifest remain unchanged.
+However, white glyphs cut small gaps in underlying lines on pages 1, 7, and 8. Root rejected these outputs after visual review.
+The files remain local evidence, not approved upload files or final letters.
+Poppler repeated the existing Symbol and ArialUnicode font warnings at both rendering sizes.
+
+The next local revision will retain the marker text but use scoped PDF text rendering mode 3 to avoid painting over lines.
+The [PDF standard, section 9.3.6](https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf) defines this mode as neither filling nor stroking text.
+All marker fonts in both bundled variants are Type 1 Helvetica. Both variants need fresh render and regression checks.
+PandaDoc's guide does not confirm recognition of this rendering mode. A new exact draft approval and successful provider check remain required.
+
+The default application build failed because Turbopack rejects the reused dependency junction outside its filesystem root.
+No application compilation success is claimed. The existing installed packages were copied into session scratch without installation or download.
+The first copy preflight stopped before copying because its path comparison mixed slash styles; the normalized comparison passed.
+The existing full-unit process remains under observation. Do not replace its dependency path while it runs or start a duplicate.
+After it exits, replace only the generated junction with the copied packages and repeat the normal build without a configuration workaround.
+
+#### Second local output: non-painting signing tags
+
+The next regression first failed because both signer variants used text rendering mode 0.
+The revised helper now scopes `1 g` and `3 Tr` around each exact standalone signing text object, with `q/Q` restoration.
+All fifteen focused prefill tests pass after the revision. The separate source reviewer found no new Critical or Important issue.
+The fixture source SHA-256 is `14f6e8a48b249989493311816431704bf4e2dc036b3fba876bf274e532628af2`.
+The original output and rejected white-only output remain unchanged as local evidence.
+
+| Revised local test file | Bytes | SHA-256 |
+|---|---:|---|
+| `CMG-SYNTHETIC-single-nonpainting-signing-tags.pdf` | 2,303,966 | `589d1a8fe2fcda63ea27198bac7278b4ce47eb8c5673e37f036fefd2921a1658` |
+| `CMG-SYNTHETIC-dual-nonpainting-signing-tags.pdf` | 2,304,090 | `613747b47a6584952d429929d0052de6d4a52592a305498ca0550f44ec3be816` |
+
+Both files are in the session scratch folder `cmg-manual-signing-tag-fixed-fixtures-v2`.
+They use the actual revised function and the same synthetic values and fixed October 17 dispatch date as the original fixtures.
+Both contain nine pages. Single retains nine marker strings; Dual retains eighteen. All twenty-five data tags are absent.
+Removing only the scoped color/render operators restores every original approved content stream exactly.
+Pypdf confirms identical extracted text on all eighteen pages.
+PDFium renders all eighteen pages pixel-identically to an in-memory reference with only the signing-tag show strings blanked.
+This confirms that the revised markers do not paint over existing lines or content.
+Poppler also rendered every page at 72 and 144 dpi. Root inspected both contact sheets and all eighteen enlarged signing areas.
+The line gaps from the white-only attempt are absent. The existing Symbol and ArialUnicode warnings remain recorded.
+The existing date values on pages 1 and 8 intersect printed lines in both the original and revised files.
+That older layout issue is outside the approved tag-color repair. Do not describe the complete legal PDF layout as accepted.
+
+At this local stage, no revised file was uploaded. The later approved provider results are recorded below.
+The broader unit process began before the render-mode revision and is not final evidence for the revised source.
+Fresh type, lint, normal build, and full unit checks remain required after the local dependency-layout repair.
+
+#### Final local check progress
+
+The final revision passes `npm run type-check` and `npm run lint` under Node 22.22.2.
+The focused selection passes 124 tests in each of `SITE_MODE=simple`, `staff`, and `platform`.
+That selection includes the prefill, marker-color, manual action, and site-mode unit tests. It is not hosted role acceptance.
+The earlier broad run exited 0 with 1,682 tests passed and 56 database/live tests skipped, but preceded the final revision.
+The fresh final full unit run passes 121 files and 1,682 tests; 13 files and 56 database/live tests skip.
+It exits 0 after 639.96 seconds. Do not count the earlier run as final verification.
+
+After that earlier process and mode checks exited, only the verified generated dependency junction was removed.
+The already-copied packages were moved into its place. The original installed packages remain unchanged.
+No package, lockfile, Next.js setting, PostCSS setting, CSS, or production dependency changed.
+The normal build then reached a blocked Google Inter request under the default network restriction.
+The network-enabled build and its diagnostic retry stopped when the Turbopack PostCSS worker exited before connecting.
+Direct PostCSS processed 82,293 CSS bytes successfully. A local parent/child TCP probe failed with EACCES under normal restrictions and passed with required tool access.
+These observations did not prove the exact worker failure cause.
+The failed generated `.next` folder was retained outside application inputs after both absolute paths and its non-link status were verified.
+The fresh normal `npm run build` then passed with required tool access, local placeholder URLs/keys, and telemetry disabled.
+Compilation took 12.9 seconds; TypeScript took 33.8 seconds; all five static pages generated successfully.
+No bundler switch, configuration workaround, validation bypass, hosted call, or deployment was used.
+
+Docker's local engine is unavailable. No disposable database test, reset, or database type generation ran for this PDF-only repair.
+Database/live tests remain explicit skips. SQL, authentication, Storage behavior, and generated database types are unchanged.
+
+The final source SHA-256 is `85387c4d2fcc76012ddc1afe0e34580a475f480fe3e971b40fa530b068050356`.
+It differs from the fixture-generation source only by a comment that now requires a provider check after PDF-preparation changes.
+Root verified that exact comment-only difference. No executable code changed after fixture generation.
+The new test file SHA-256 is `02e6c4acbf365c7f1cfa238d71feed4cb23f6c8a7c190e0c39ff0db9efced4d0`.
+Both revised fixture hashes still match. Both changed source files pass whitespace checks; all thirty-one local Markdown references exist.
+The source diff contains only `lor-prefill.ts` and the new `lor-prefill-color.test.ts`; no Git action followed branch creation.
+The retained PandaDoc document is still Draft at step 2 of 3, with 100% zoom. No provider state changed during the final read.
+Proof: `cmg-pandadoc-retained-draft-2026-10-19.png`.
+
+The next provider action required exact approval for the two revised unsent drafts in the existing CMG workspace `PandaDoc`.
+The owner later approved that exact batch, with unsaved `example.invalid` recipients only. Its completed results follow below.
+The existing failed draft is retained. The unchanged Dual-file approval was not used for revised bytes.
+The revised-file approval excluded send, signature, saved contact, purchase, deletion, CMG change, Git actions, and deployment.
+The local repair needs no Production recovery because no release ran. Preserve the bundled assets and use a reviewed code correction for any later defect.
+
+At the first failed-draft stop, zoom was restored to 100%. No second draft, email, contact, signature, deletion, or CMG write occurred.
+Proof: `cmg-pandadoc-single-visible-tags-2026-10-19.png`, `cmg-pandadoc-single-fields-2026-10-19.png`, and `cmg-pandadoc-workspace-2026-10-19.png`.
+
+#### Revised provider drafts: recognition and required settings pass
+
+On October 19, the owner approved the exact revised files and full hashes listed above as two new unsent drafts.
+Each hash was rechecked before upload. Each file was uploaded once to the same CMG workspace, without a retry or duplicate.
+Single detection passed before the Dual upload began. The old failed Single draft remains unchanged and retained.
+
+| Check | Revised Single | Revised Dual |
+|---|---|---|
+| Document ID | `GxuADmbyQZ5rJDCtZXnpH5` | `9o6Qkr27Yyu5MvhgyRMo9N` |
+| Title | `CMG-SYNTHETIC-single-nonpainting-signing-tags` | `CMG-SYNTHETIC-dual-nonpainting-signing-tags` |
+| Recognition | Nine fields | Eighteen fields |
+| Initials | Five; pages 1, 2, 3, 4, and 8 | Ten; two on each of pages 1, 2, 3, 4, and 8 |
+| Signature | Four; pages 5, 6, 7, and 9 | Eight; two on each of pages 5, 6, 7, and 9 |
+| Required setting | All nine show Required field, Value 1 | All eighteen show Required field, Value 1 |
+| Marker appearance | No visible black marker strings | No visible black marker strings |
+| Assigned signer | All fields default to the current account | All fields default to the current account |
+| Fresh reopen | Nine fields, Draft, no Connecting or Syncing state | Eighteen fields, Draft, no Connecting or Syncing state |
+
+Root inspected each field's actual properties. The Dual initials boxes do not expose their type text on the canvas.
+Their individual properties confirm Initials; a canvas-text count alone would miss them. Every page has the expected two fields.
+One fresh Single reopen initially showed Connecting and partial fields. A later read settled with all nine, without another upload or reload.
+Both saved drafts remain at editing step 2 of 3. Neither Finalize document nor Review and send was selected.
+
+Both recipient searches were checked with the approved synthetic addresses, one in each draft.
+Each offered only **Create as new contact** for the new address. Root dismissed each search without saving a contact.
+The [official recipient guide](https://support.pandadoc.com/en/articles/9714650-add-and-manage-recipients) describes this saved-contact step.
+The existing approval explicitly excluded saved contacts. Intended Single and separate Dual recipient assignments therefore remain unverified.
+Do not edit the current account's personal details as a workaround; that can update its saved contact.
+
+The Single page 7 field rectangle reaches the last affidavit line area.
+The Dual page 7 Signature rectangles overlap each other, and the upper rectangle reaches that area.
+The text remains visible through the editor boxes. This is a placement risk, not proof that completed signed ink damages text.
+Root and an independent Luna review agree that each box needs its own intended INSURED line, clear of text and other fields.
+No field was moved or resized in this batch. Existing page 1 and 8 date-line intersections remain a separate printed-layout gate.
+No completed signature appearance, legal sufficiency, real claim download, provider send, signed filing, or CMG status transition was tested.
+
+One initial Single field click opened the provider's initials dialog. Root canceled before Accept and sign, without entering or accepting initials.
+Later property checks selected field borders. No signature, initials, email, contact, finalization, purchase, deletion, or CMG write occurred.
+No Git action, deployment, Production setting, or DNS record changed. Both revised-file upload approvals are now consumed.
+
+Evidence remains in the session scratch folder:
+
+- `cmg-pandadoc-single-revised-checks-2026-10-19.json` and `cmg-pandadoc-dual-revised-checks-2026-10-19.json` contain all field checks and reopen results.
+- `cmg-pandadoc-single-revised-required-signature-2026-10-19.png` shows the required Signature setting.
+- `cmg-pandadoc-dual-revised-recognition-2026-10-19.png` shows eighteen detected fields before placement.
+- `cmg-pandadoc-single-revised-page7-placement-2026-10-19.png` and `cmg-pandadoc-dual-revised-page7-placement-2026-10-19.png` show the placement risks.
+- `cmg-pandadoc-draft-recipient-contact-limit-2026-10-19.png` and `cmg-pandadoc-dual-contact-limit-2026-10-19.png` show the saved-contact requirement.
+- `cmg-pandadoc-single-revised-saved-2026-10-19.png` and `cmg-pandadoc-dual-revised-persisted-2026-10-19.png` show retained Draft state.
+
+At that checkpoint, the pending request covered two saved contacts, clearly named CMG Synthetic Signer 1 and CMG Synthetic Signer 2.
+Use only `cmg-test-1@example.invalid` and `cmg-test-2@example.invalid` in the existing CMG workspace.
+Then assign Single's nine fields to signer 1 and Dual's corresponding nine fields to each separate signer.
+Correct only field rectangles in these two existing synthetic drafts, then recheck types, required settings, signer ownership, and placement.
+Retain the contacts and all drafts. Exclude new uploads, finalization, email, signing, purchase, deletion, CMG writes, Git actions, and deployment.
+Provider edits save automatically; recovery is another reviewed draft correction. No customer document or account needs to change.
+
+#### Printed-value placement diagnosis only
+
+Read-only review traced the known date intersections to `scripts/build-lor-tagged-pdfs.py` and the shared tag manifest.
+The generator uses text baselines `d1=(464,55)` on page 1 and `d8=(455,30)` on page 8 in both variants.
+It paints the raster page background first, then places tags at those positions. Prefill replaces their strings without moving the text matrix.
+The retained Single renders confirm date glyphs crossing the printed rules. Page 1's policyholder value also crosses its rule.
+Other printed fields need a measured full-value review before calling the layout accepted; a two-date-only repair would not establish that result.
+The independent render review confirms page 1 policyholder and both dispatch-date crossings in both variants.
+Page 1 carrier, policy, loss date, cause, fee, and property positions need measurement against their rules or divider.
+The page 9 adjuster value also needs close measurement. Dates on pages 2–7 need baseline checks; no definite crossing is established there.
+Other page 9 values appear below their rules without definite crossing in these renders. Do not classify every near-line value as defective without measurement.
+No PDF, source, manifest, or bundled asset was changed during this diagnosis. No new draft was uploaded.
+Any asset regeneration would affect the API path too and exceed the prior manual tag-color scope.
+The owner then approved the precise local printed-value repair and its validation. No new branch or Git action is included.
+The approved local extension keeps the current isolated repair branch and changes only measured data baselines in the generator.
+Regenerate its manifest and both bundled variants together; preserve the source background, legal text, values, signer tags, and tag identity.
+Use the actual manual prefill function to verify every printed value in both variants and compare all eighteen pages.
+Run manifest/PDF agreement, prefill, error, three-mode, type, lint, unit, and build checks. Do not install a dependency or change a schema.
+The risk is shared asset placement in both signing paths. Recovery is corrected local regeneration while all current source/output evidence remains retained.
+No Production recovery is needed before release. New provider files would require separate exact upload approval after local checks.
+No contact, upload, email, signature, hosted write, Git action, or deployment is included in the proposed local extension.
+Implementation and available local checks are now complete, as recorded below. Earlier hashes describe the prior version, not the new layout.
+
+#### Approved local printed-value repair: current result
+
+The owner approved this local extension after the diagnosis. Only twelve data baselines change in each variant.
+All horizontal positions, fonts, values, source background pixels, signer strings, signer coordinates, and checkbox positions remain unchanged.
+The page 9 adjuster rule is the generator's replacement at y=480, not the original source rule at y=488.
+Root checked that exception before adding its regression boundary. Correcting only the two dates would have left other confirmed crossings.
+
+| Field | Page | Old y | New y |
+|---|---:|---:|---:|
+| ph | 1 | 550 | 558 |
+| carrier, policy | 1 | 522 | 526 |
+| property | 1 | 484 | 489 |
+| lossdate | 1 | 443 | 446 |
+| cause | 1 | 443 | 447 |
+| fee | 1 | 316 | 320 |
+| d1 | 1 | 55 | 59 |
+| d6 | 6 | 677 | 678 |
+| d7 | 7 | 420 | 418 |
+| d8 | 8 | 30 | 36 |
+| adjuster | 9 | 480 | 483 |
+
+The new tests read actual decoded PDF text matrices and compare every tag against the manifest.
+They also check twenty-two measured printed-rule regions, including valid below-rule fields that should not move.
+The other three fields are the unchanged agreement checkboxes. Existing tests preserve values, black data fill, and exact invisible signing tags.
+The first test collection hit the known sandbox EPERM rename restriction before assertions.
+The same local command with required access then failed both layout cases, with twenty-four expected clearance failures.
+After the manifest changed but before the PDFs changed, both new coordinate cases failed against stale assets.
+After paired regeneration, all twenty-two focused tests pass. This proves both regression checks detect their intended failure.
+
+The actual prefill function produced two new synthetic files. Only the server-only import guard was stubbed.
+There was no network, Auth, database, provider, or audited claim-download call.
+The original October 17 synthetic values and fixed dispatch date are unchanged.
+
+| Current local file | Bytes | SHA-256 |
+|---|---:|---|
+| `CMG-SYNTHETIC-single-layout-fixed.pdf` | 2,106,754 | `fc93e94ecb12aee5ccb094d49d350beaf7da2b87e826d66f25094a626d2618cd` |
+| `CMG-SYNTHETIC-dual-layout-fixed.pdf` | 2,106,876 | `5d3bda620316028e8be2139e84fbc6b3549c94a5123f50ac73fffe4f03ca6a0f` |
+
+The folder is `cmg-manual-signing-layout-fixtures-v3` in session scratch. All older inputs, rejected outputs, approved v2 files, and provider drafts remain retained.
+Restoring only the twelve y values makes every v3 content stream identical to v2, including strings, colors, fonts, and drawing operators.
+All eighteen decoded background images and extracted page strings match v2 exactly.
+At 144 dpi, every changed pixel falls within the union of the old and new data-glyph regions.
+Root reviewed both contact sheets and every changed field area. Independent Luna visual review found no blocking collision on all eighteen pages.
+The page 7 date clears its rule and the nearby parenthetical text. The adjuster value clears the replacement rule and label.
+Independent source/test review found no Critical or Important defect. That reviewer did not independently render the files.
+Poppler rendered all eighteen pages with exit zero. The existing Symbol and ArialUnicode display-font warnings remain in retained stderr logs.
+
+Node 22.22.2 checks pass: `npm run type-check`, `npm run lint`, and the normal `npm run build`.
+The build compiled in 12.2 seconds, completed TypeScript in 7.1 seconds, and generated all five static pages.
+It used the public font network access, telemetry-off setting, and CI loopback placeholder values; no Production credential or deployment was used.
+The focused prefill/action/site-mode selection passes 128 tests in each of simple, staff, and platform modes.
+The fresh `npm test` run finishes with exit zero: 121 files and 1,686 tests pass; thirteen files and 56 tests skip.
+Session 91028 ran for 280.18 seconds. The earlier 1,682-test result remains historical evidence for the prior layout.
+Docker's Linux engine pipe is missing. No database-backed selection, reset, schema change, type generation, or Supabase backup ran.
+Database/live coverage remains incomplete for this local revision. The hosted database and retained local stack remain unchanged.
+
+Changed repository files are the generator, manifest, both bundled PDFs, the earlier manual-prefill source, and its new appearance/layout test.
+The shared assets now change API upload bytes under the new local approval. API implementation, field mapping, and legal wording remain unchanged.
+At that checkpoint, no Git action, deployment, new provider upload, contact, email, signature, or CMG write was approved or performed for v3.
+Provider recognition and assignment results for v2 do not prove v3 acceptance. Exact new-file approval is required after final checks.
+Evidence scripts: `check-manual-signing-layout.cjs` and `review-manual-signing-layout.py`; retained comparison: `review/comparison.json` in the v3 folder.
+
+The owner subsequently approved the exact provider batch below, replacing the unanswered v2 contact and draft-correction request.
+Upload exactly the two v3 files and hashes above as new unsent drafts. Check Single first and stop if recognition fails.
+Create only the retained contacts CMG Synthetic Signer 1 and CMG Synthetic Signer 2 at the two approved synthetic addresses.
+Assign Single's nine fields to signer 1. Assign Dual's corresponding nine fields to each separate signer.
+Correct the new drafts' field rectangles, then check detection, required settings, ownership, placement, and persistence on all pages.
+Provider uploads retain files and contacts; draft edits save automatically. Recovery uses another reviewed draft correction, with all earlier drafts retained.
+This proposal excludes finalization, email, signatures, purchases, deletion, CMG writes, Git actions, deployment, and DNS changes.
+The owner also separately approved the commit of only the six reviewed source, test, manifest, and asset files.
+The five main-checkout records and all unrelated edits remain excluded from that proposed commit.
+Final record checks pass: all thirty-one local Markdown references resolve, and both scoped Git whitespace checks return exit zero.
+The pre-commit integrity check confirmed the six changed paths, no staged files, and both exact v3 fixture hashes and sizes.
+The retained `cmg-pandadoc-before-v3-approval-2026-10-19.png` shows the older Dual draft and its current account recipient.
+An idle reconnect warning cleared before that capture. No provider edit, reload, new upload, contact, or signature occurred.
+
+#### Approved six-file commit and v3 provider batch
+
+The owner approved the exact commit and provider batch in separate answers on October 19.
+The first staging attempt could not write the protected Git index. The authorized access retry succeeded without changing the six-file scope.
+Commit `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26` uses message `fix: hide manual signing tags and align PDF values`.
+Its parent is exactly `1b7f7f98e54a358b3a95875483a63d3f882573a3`. Independent review confirms the six paths and a clean isolated checkout.
+The source and both fixture hashes still match their verified values. No source changed after the passing local checks.
+No push, PR, merge, deployment, or main-checkout record commit is approved or performed.
+The current `npm audit --audit-level=high` check under Node 22 returns zero vulnerabilities with exit zero.
+Its first sandbox attempt ended with `ENOTFOUND registry.npmjs.org`. The same read-only check with permitted registry access succeeded.
+No package, lockfile, registry setting, or dependency changed during the audit.
+
+Each exact v3 file was uploaded once. Single detection passed before Dual was uploaded.
+
+| Variant | Unsent draft ID | Required fields | Types |
+|---|---|---:|---|
+| Single | `3Sh2wmDoV4Zziz4fpkDKx4` | 9 | Five Initials; four Signature |
+| Dual | `K3TCRLokDjx6FC2WkYb4GX` | 18 | Ten Initials; eight Signature |
+
+Both have initials on pages 1–4 and 8, and signatures on pages 5–7 and 9.
+Each Single page has one field. Each Dual page has two fields. All twenty-seven actual property checks show Required field enabled.
+Single page 1 was checked before the evidence helper; its JSON has no field ID. Its other eight IDs are unique.
+All eighteen Dual field IDs and UI field UUIDs are unique. Expected H1/H2 labels in the JSON describe intended roles, not verified assignments.
+
+PandaDoc automatically adds the current account when placing fields. All fields still belong to that account.
+The approved contact form used only `cmg-test-1@example.invalid`, first name `CMG Synthetic`, and last name `Signer 1`.
+PandaDoc shows “Please ensure domain is correct.” and disables Save. Root canceled the form without saving or changing the address.
+Contact 2 was not attempted. No contact, test recipient, or intended separate signer assignment exists from this batch.
+Do not bypass the domain check or substitute another address without exact approval.
+
+Root resized and moved only the three page 7 signature rectangles: one Single and two Dual.
+Each sits on its intended INSURED rule, clear of the affidavit text, labels, other box, date line, and parenthetical text.
+Single's provider navigation reopened the saved document. Dual was explicitly reloaded after its saving indicators cleared.
+Both reopens retain nine and eighteen fields and the corrected boxes. All three edited fields still show Required enabled afterward.
+The final views are Draft, without Saving, Syncing, or Connecting state. Both editor zoom values are restored to 100 percent.
+An independent Luna review confirms the saved page 7 geometry and the evidence limits. Completed signed ink and legal acceptance remain untested.
+
+An early property helper read an accessibility diff as a complete state and refused to record a result.
+The helper was corrected to request the complete visible property state. Required/type checks then passed; no application check was bypassed.
+A saved-draft navigation briefly showed Connecting. Root waited on the same tab and did not create another upload.
+Each new provider tab captures seventeen warnings and zero errors. Warnings name shared module version mismatches and DOM snapshot depth.
+These are provider-page observations, not a clean-console claim. Full network traces remain unverified; no CMG dependency was changed for provider warnings.
+
+Retained evidence in session scratch:
+
+- `cmg-v3-single-checks-2026-10-19.json` and `cmg-v3-dual-checks-2026-10-19.json` contain field checks and reopen results.
+- `cmg-v3-single-recognition-2026-10-19.png` and `cmg-v3-dual-recognition-2026-10-19.png` show nine and eighteen recognized fields.
+- `cmg-v3-single-page7-saved-2026-10-19.png` and `cmg-v3-dual-page7-saved-2026-10-19.png` show the saved corrections.
+- `cmg-v3-synthetic-contact-domain-refusal-2026-10-19.png` shows the rejected address and disabled Save button.
+- Per-field `cmg-v3-*-required-*.png` images retain the property checks, including the three post-correction checks.
+- `cmg-v3-provider-console-summary-2026-10-19.json` contains counts and sanitized warning text, without credential or full-URL output.
+
+The owner then approved the exact usable test addresses and assignment only in these existing v3 drafts.
+Do not upload the PDFs again. Use page positions with UI field UUIDs; the original Dual page 7 expected-role order is not authoritative.
+The account may change only to draft CC under that approval. Saved account and contact details must remain unchanged.
+Contact retention and recipient changes are material external writes. Recovery uses a reviewed draft correction, with all drafts retained.
+The later advance engineering approval covers the exact `56cff18` push and its draft PR, both now complete as PR #25.
+The push starts an automatic Preview; the draft PR starts CI. Its current results are recorded below.
+A separately approved draft PR targeting develop will start the required CI checks.
+The proposed PR title is `fix: hide manual signing tags and align PDF values`. It includes only the six reviewed files.
+The description will state the 1,686 unit passes, 56 skips, local checks, provider draft evidence, and remaining end-to-end acceptance gates.
+These next proposals exclude finalization, email, signatures, purchases, deletion, CMG database writes, Production changes, and DNS changes.
+The current batch changed only approved PandaDoc drafts and the approved local Git commit. Older drafts, original fixtures, and unrelated edits remain intact.
+
+### Approved Gmail contact and assignment continuation — October 19
+
+The owner approved CMG Synthetic Signer 1 at `4miodio@gmail.com` and CMG Synthetic Signer 2 at `robspeciale@gmail.com`.
+Exact search found no existing signer 1 contact. Root created that contact once and reused it in Dual without changing saved details.
+Single now assigns all nine fields to signer 1: five initials and four signatures. The current account becomes CC automatically.
+Root selected all nine Single fields and read Required field as checked. A saved reload retains nine assignments and the CC role.
+
+Dual now assigns nine left/upper fields to signer 1. Its nine right/lower fields still belong to the current account.
+The assigned nine-field group remains required. A saved reload retains all eighteen fields, the nine/nine split, and the page 7 corrections.
+Page 7 uses upper INSURED for H1 and lower INSURED for H2. Its original expected-role array does not match the corrected position order.
+The new assignment evidence records that position mapping explicitly. No field box moved during this contact/assignment continuation.
+The prior full per-field Required checks remain recorded; only the newly assigned nine-field groups were rechecked in this continuation.
+
+Adding another Dual recipient opens the provider's actual plan dialog. It permits two recipients per document and counts the current account.
+Root dismissed the dialog without purchase or plan change. Signer 2 is not created. The account remains a Dual signer with nine fields.
+The recipient menu offers Replace recipient. Root only inspected that menu and made no replacement.
+The proposed next action replaces only the current account's Dual draft recipient entry with signer 2, within the two-recipient limit.
+This needs separate approval because the earlier current-account scope permitted only changing its draft role to CC.
+It must not delete a saved contact or account, change saved personal details, or buy an upgrade.
+After approval, verify nine fields per test signer, required states, correct positions, and persistence. Keep both drafts unsent.
+
+New session-scratch evidence:
+
+- `cmg-v3-contact-assignment-2026-10-19.json` records saved field ownership, page/type mapping, required-group checks, and the incomplete Dual assignment.
+- `cmg-v3-single-assignment-saved-2026-10-19.png` shows signer 1 and the current account's saved CC role.
+- `cmg-v3-dual-partial-assignment-2026-10-19.png` shows separate upper/lower page 7 fields and both current recipients.
+- `cmg-v3-dual-recipient-limit-2026-10-19.png` shows the two-recipient plan limit and purchase dialog.
+
+At that checkpoint, both drafts remained Draft after their saved reloads. No send, signature, new upload, purchase, deletion, CMG data, Production, or DNS write occurred.
+Both editor views were restored to 100 percent. Independent evidence review confirmed the assignment counts, page 7 position mapping, and actual plan limit.
+That checkpoint did not establish fresh post-assignment Required checks for all eighteen Dual fields. Full network traces remain unverified.
+Commit `56cff18` remained local at that checkpoint. The later approved publication is complete in draft PR #25; do not request it again.
+
+### Approved Dual recipient replacement — October 19
+
+The owner approved replacing only Collin Graham's recipient entry in Dual draft `K3TCRLokDjx6FC2WkYb4GX` with CMG Synthetic Signer 2.
+The approved email is `robspeciale@gmail.com`. Exact search found no saved match, so root created that contact once.
+Root used **Replace recipient**, not **Edit personal details**. **Keep Collin Graham as CC** stayed unchecked to retain two recipients.
+The confirmation warns that replacement has no Undo. Recovery uses a reviewed draft correction, not an unverified immediate restore.
+The provider confirms that CMG Synthetic Signer 2 replaced Collin as a signer. No saved account or existing contact details changed.
+
+Exactly nine right/lower fields transferred to signer 2. All nine left/upper signer 1 assignments stayed unchanged.
+Each signer has five initials and four signatures, with one field per signer on pages 1 through 9.
+Root opened all eighteen individual property panels after replacement. Required, type, and actual assignee checks all pass.
+All field IDs remain captured. The type and style comparison confirms no field position or size change.
+Independent read-only review confirms the eighteen checks, exact nine-assignment change, and unchanged signer 1 fields.
+
+After the draft settled, root reloaded the same document. It reopened as Draft, without Saving, Syncing, Connecting, or Reconnecting state.
+All eighteen UI UUIDs, types, assignments, positions, and sizes match the pre-reload result. The current account has no remaining fields or recipient entry.
+The required checks ran before that saved reload; the subsequent comparison verifies field identity, assignment, type, and geometry persistence.
+The page 7 saved view shows H1 on the upper INSURED line and H2 on the lower line, with clear text and separate boxes.
+Dual zoom is restored to 100 percent after proof capture. Single remains unchanged from its saved nine-field assignment and current-account CC result.
+
+New session-scratch evidence:
+
+- `cmg-v3-dual-replacement-checks-2026-10-19.json` records all eighteen property checks, exact replacement differences, and the saved-reload field comparison.
+- `cmg-v3-dual-final-required-1-2026-10-19.png` through `cmg-v3-dual-final-required-18-2026-10-19.png` retain individual property-panel proof.
+- `cmg-v3-dual-two-signers-saved-2026-10-19.png` shows both approved test signers and the saved page 7 fields.
+
+Synthetic draft recognition, required settings, separate assignments, placement, and persistence pass for the two retained v3 drafts.
+This does not prove legal acceptance, a real claim's Preview download, completed signatures, signed-file filing, claim status, or role access.
+The next provider gate needs legal review and exact approval for the real claim, document, signers, and destination.
+Sending, CMG sent-state recording, signed-file storage, status changes, and notifications need their separate hosted-write approvals.
+Do not re-upload either synthetic PDF. Keep all drafts and contacts. No send, signature, purchase, saved-contact deletion, CMG data, Production, DNS, or Git write occurred.
+The later advance approval answers both `56cff18` Git questions. Its push and draft PR #25 are complete.
+Local Docker checks skipped, but PR #25 CI now passes the database job. The live provider test still skips.
+
+### Current independent GitHub check
+
+The October 19 Luna read-only check confirms `develop` remains `1b7f7f98e54a358b3a95875483a63d3f882573a3`.
+GitHub compare reports identical, zero ahead and behind, and no changed files against the earlier reviewed head.
+PR #23 remains open and draft at `15ea5f6`; PR #24 remains open and draft at `e142f5f`. Both target unchanged `develop`.
+The latest CI runs and Vercel statuses succeed. Submitted reviews and inline review threads remain empty.
+CodeRabbit success is not proof of a submitted review; the earlier draft-skip limitation remains.
+The agent's CLI connection failed; connected GitHub read-only APIs supplied the successful snapshot. No remote state changed.
+
+The later October 19 read again confirms unchanged develop and PR #19, #23, and #24 heads, with successful current CI and deployment statuses.
+No new submitted review finding or conversation appeared. PR #19's old hydration finding is already covered by POST and readiness guards in develop.
+The owner then approved closing only superseded PR #19, without merge or branch deletion.
+The GitHub update changed only its state. A fresh read verifies `closed`, `merged=false`, and closed time `2026-10-19T22:24:27Z`.
+Its title, body, base, branch name, and head SHA remain unchanged. No other PR, branch, deployment, DNS, or CMG data changed.
+
+### Local private-verifier coverage
+
+The authorized Luna review found no focused test for `verifyPrivateUploadFiles` in the combined security checkout.
+The new local `src/lib/private-upload/verified-files.test.ts` tests the real signature checker and Storage range reader together.
+Only fetch, Storage metadata/copy, and Supabase proof operations are stubbed. Unexpected fetches throw; globals and environment are restored after each test.
+Fifteen focused tests pass under Node 22.22.2. Project type checking also passes.
+They cover a valid PDF signature, staged/permanent metadata mismatch, bad bytes, missing destination identity/version, unavailable Storage, and invalid range responses.
+They also cover a lost copy response, refused proof persistence, and reuse of a stored proof on retry.
+These tests do not use a real Storage service or prove hosted failure behavior.
+The first test draft mocked the signature helper and range reader. Root review rejected that evidence; the agent replaced those mocks with real helpers.
+Type checking also found a fixture type error. The corrected file passed the focused suite and type check afterward.
+The default temporary directory caused rename errors. The successful tests used the approved session scratch directory for process-local temporary files.
+A separate Luna review found no blocking issue in the final file. Production source, SQL, dependencies, and the old scan-report edit remain unchanged.
+The broader full-unit run passed: 124 files and 1,732 tests passed; 14 files and 57 database/live tests skipped.
+It took 707.49 seconds. The existing process was observed until exit 0; no duplicate run was started.
+Full lint also passed with exit 0. These local results include the new fifteen-test file, which is not committed or CI-covered.
+No new test or report commit, push, CI run, or deployment is approved.
+
+The next bounded local review found missing checks for unsafe verification URLs and accepted writes without persisted proof.
+Eight cases now extend the same test file: foreign origin, embedded credentials, wrong object path, missing readback, and four malformed-proof variants.
+All twenty-three focused cases pass in 5.16 seconds. Fresh type check and full lint pass with exit zero.
+Independent review found no blocking issue. Tests use the real URL guard, signature checker, and range reader, with mocked service calls and restored globals.
+Application code, SQL, dependencies, the existing scan-report edit, and all hosted systems stay unchanged.
+The same broader full-unit process, handle `22567`, completed with exit zero. Root observed it through quiet polls without starting a duplicate.
+All 124 test files and 1,740 tests pass; fourteen files and 57 database/live tests skip. The run took 710.64 seconds.
+Its full log and exit record use `cmg-private-verifier-full-unit-2026-10-19.log` and `.exit` in session scratch.
+The new test file SHA-256 is `2d00e93145c52d2cc172cbb7164bf1db0bb05d1c48e0eb739ad8dd5f701154b7`.
+No application code changed, so the prior normal build remains applicable. No build, browser, or database check was repeated for test-only edits.
+The owner then approved only the one-file local test commit, with message `test: cover private upload verification boundaries`.
+Commit `ff55bbfc615be027911535e2aae72e71ce38faa2` contains 279 added lines in `src/lib/private-upload/verified-files.test.ts` and no other path.
+Its parent is `e142f5f875650f8d9ffa06c6d7fdc6fea9934161`. The staged whitespace check passed before the approved commit.
+Independent post-commit checks confirm the parent, exact path, empty index, and tested file hash. Only the pre-existing scan-report edit remains unstaged.
+The owner's later advance approval authorizes the exact feature push and reviewed task fixes, commits, pushes, and draft PRs.
+Both original commits are now published. The following current record supersedes the earlier pending Git questions.
+
+### Approved feature publication and CI repair on October 19
+
+Exact signed `ff55bbfc615be027911535e2aae72e71ce38faa2` is published to `origin/codex/security-upload-session-checks`.
+Exact signed `56cff18e2e9f0e7f115dfd1d4b953ba7dad87e26` is published to `origin/bugfix/manual-signing-tag-visibility`.
+GitHub reports both original signatures as verified, reason `valid`. No commit was recreated with different bytes.
+The native SSH attempt failed authentication before changing any branch. The crashing HTTPS Git helper was not used.
+Publication used authenticated GitHub API object uploads, with exact blob/tree/commit hash and signature checks before a non-force ref update.
+The preflight checks limited the repository, branch, expected parent, and approved paths. No private SSH store, remote configuration, or permission changed.
+Draft [PR #25](https://github.com/rspeciale0519/cmg/pull/25) targets `develop`, with one commit and exactly the six reviewed PDF files.
+It and existing PR #24 are attached to this task. Neither PR is merged or marked ready for review.
+
+PDF CI run [39349972823](https://github.com/rspeciale0519/cmg/actions/runs/39349972823) passes both jobs.
+Type check, lint, build, and a zero-vulnerability dependency audit pass.
+Unit tests pass 121 files and 1,686 tests; 13 files and 56 database/live tests skip.
+The database job passes 44 pgTAP files and 1,350 assertions, then 35 Vitest files and 253 tests.
+One opt-in live PandaDoc file/test skips. These checks do not prove completed signing or legal acceptance.
+Automatic Preview `dpl_Eko5QAw2p5ADdFDEicMZuNVz5wU2` is Ready at `cmgps-239ch8hei-robs-projects-c72886ba.vercel.app`.
+
+Security CI run [39349917391](https://github.com/rspeciale0519/cmg/actions/runs/39349917391) passes its database job.
+It passes 44 pgTAP files and 1,350 assertions, then 34 Vitest files and 243 tests; one live PandaDoc test skips.
+Audit, type check, and lint pass. The full unit step has 1,739 passes, one failure, and 57 skips; build is skipped.
+The single failure is the five-second timeout in `file-signatures.test.ts`, for the full 25 MiB DOCX allowance.
+Its test fixture calculates CRC with about 210 million JavaScript bit iterations before the bounded-read assertion.
+A measured 25 MiB checksum takes 1,694.4ms in that helper and 9.9ms in Node's native CRC function, with equal results.
+Empty, standard `123456789`, 1 MB, and 25 MiB vector comparisons agree. Node added `zlib.crc32` in 22.2.0, within the project's engine range.
+The repair only imports native `crc32` and removes the test helper. It changes no assertion, timeout, fixture structure, runtime code, SQL, or dependency.
+The 78 focused tests pass in 703ms total, with 121ms test time. Type check and full lint pass.
+The full local suite passes 124 files and 1,740 tests, with 14 files and 57 tests skipped, in 431.73 seconds.
+Independent review finds no blocking issue. Signed commit `d523469e88149c76b8181ed4f277d757f608f47c` contains only this one test-file repair.
+It is published over `ff55bbf` to PR #24 with original signature verified. CI run `39351780332` passes both jobs at that exact head.
+Verify passes type check, lint, build, and a zero-vulnerability audit. Unit passes 124 files and 1,740 tests; 14 files and 57 tests skip.
+CI unit duration is 74.68 seconds. The build compiles in 15.4 seconds.
+Database passes 44 pgTAP files and 1,350 assertions, then 34 Vitest files and 243 tests, with one live PandaDoc test skipped.
+The database Vitest duration is 24.80 seconds. No failed workflow was rerun; the changed commit starts its own CI.
+Automatic Preview `dpl_3HYMqaJ4UicNYTR47GfUmoeyGi3s` is Ready at `cmgps-ibczas125-robs-projects-c72886ba.vercel.app`.
+Vercel inspection confirms project `cmgps`, target Preview, Ready state, and the existing stable branch alias.
+GitHub's status for exact `d523469` associates that deployment with the tested head. The CLI summary does not expose Git metadata.
+The original scan report remains unstaged. Main-checkout edits, Production, DNS, and hosted data are not included in these pushes.
+CodeRabbit skipped automatic review of draft PRs. Its green status is not a submitted review.
+
+### Approved hosted invalid-file refusal on October 19
+
+The owner approved one nine-byte `cmg-invalid-signature-20261019.pdf`, containing exactly `FAKE-PDF!`, on PR #24 claim 0005.
+The normal owner form selects Other and CMG only. The file chooser selects the exact file, confirmed by native input value and screenshot.
+The accessibility tree omits the native filename, but this is not an empty file selection.
+One Add to the file click starts the upload. The page returns: "This upload session has ended. Check the details and submit again."
+No retry is authorized or attempted. Reload clears selection and preserves the earlier single document, without the invalid filename.
+Captured browser warning/error logs are empty. Full network request traces remain unavailable.
+
+Read-only dashboard table filters confirm session `c68baab2-61f4-4864-bd22-8049f9ecaf94`, created October 20 at 00:54:57.319759 UTC.
+It is `cancelled`, has one file, and has null result and completion time.
+The child file has the exact name, `other`, `internal`, `application/pdf`, nine bytes, and null verification.
+Its copy started at 00:54:59.907755 UTC. The exact permanent path has zero matching document rows.
+Both objects exist in private bucket `claim-docs`, each with nine-byte Storage metadata:
+
+- Staging: `private-upload/c68baab2-61f4-4864-bd22-8049f9ecaf94/4ca20785-7d0f-4141-bdb7-c87579c2f25d.pdf`.
+- Unaccepted copy: `claims/153a2250-297d-4b81-ab20-65da3b590852/214a044b-7bde-4430-9bd7-1b1e0d1eb11d.pdf`.
+
+Cleanup eligibility is October 20 at 03:09:57.319759 UTC, or October 19 at 11:09:57 PM EDT.
+At the time of this read, removal after normal cleanup remained unverified. The current section above confirms the later cleanup state; scheduler attribution remains unverified. No cron, retry, manual cleanup, deletion, or compensating write ran during this earlier read.
+The outbox has zero rows created since 00:37 UTC, covering both the Partner note and this upload test.
+No SQL snippet was saved. Only dashboard read filters were used for this independent check.
+Evidence: `pr24-invalid-file-ui-2026-10-19.json`, `pr24-invalid-file-db-read-2026-10-19.json`, and `pr24-note-invalid-file-outbox-read-2026-10-19.json`.
+Proof images: `pr24-invalid-file-refused-2026-10-19.png`, `pr24-invalid-file-session-cancelled-2026-10-19.png`, and `pr24-invalid-file-no-document-2026-10-19.png`.
+The batch changed only its approved synthetic upload/session/rate records and two objects. No document, email, status, access, Production setting, or DNS change occurred.
+
+### Current operations evidence and limits
+
+See the current October 24 Production schedule and bounded-log evidence above.
+No cron endpoint was invoked during that bounded historical read.
+
+
+The available log window is limited. It does not prove a complete retention window or accepted retry delay.
+The owner restored the correct CMG Supabase session. The latest read-only query supersedes the earlier access blocker.
+All 36 hosted migration versions match source. The stored `20260927120000` SQL, after removing carriage returns, hashes to `9d133c55183b362c98abbf3c547600c8611b9dcb549e4b54abf5ecce01701ce6`, matching source.
+The migration viewer adds a final empty statement separator; its body matches after line-ending normalization.
+`notifications_outbox` contains 24 sent and 11 dead rows, with zero pending or failed rows. Cleanup has zero unprocessed or retried-unprocessed rows.
+The query used `begin read only` and `rollback`. No saved snippet, cron call, retry, cleanup execution, or hosted data write occurred.
+Proof: `cmg-hosted-readonly-2026-10-17.jpg` in the session visualization folder.
+
+### Earlier engineering evidence
+
+The following records retain their original commit, environment, and date limits.
 The test totals below are retained evidence from the earlier PR #2 release checks. They do not describe the latest head.
 
 | Check | Historical PR #2 result |
@@ -53,11 +1832,9 @@ The focused partner-directory database regression passed in both platform and st
 The isolated `supabase test db` passed 43 files and 1,322 assertions before the application fix; no migration changed.
 These local results do not replace required CI or hosted Preview acceptance.
 
-## Hosted state on 2026-09-26
+## Hosted state
 
-Superseded on 2026-10-07: Production now runs `SITE_MODE=platform`.
-
-Production ran `SITE_MODE=staff` on `app.cmgpropertysolutions.net`.
+Production runs `SITE_MODE=staff` on `app.cmgpropertysolutions.net`.
 On 2026-09-26, public route checks returned 200 for `/` and `/login` with HSTS and CSP.
 `/invite`, `/portal`, and `/partner` returned 307 to `/platform-disabled`.
 The unauthenticated outbox cron returned 401.
@@ -120,13 +1897,13 @@ On 2026-09-27, the widget retained its four existing hosts and added this exact 
 Vercel's public site key matched the widget key. After propagation, the password-reset widget showed Success.
 On 2026-09-29, Chrome showed Success on the Preview contact form's Turnstile widget. The form was not submitted. The in-app browser did not show a conclusive widget result.
 At a 390px Chrome viewport, the contact form had no horizontal overflow (`scrollWidth` and `clientWidth` were both 375px after the scrollbar). The viewport override was reset.
-One approved reset request for the owner's address reached the generic "Check your email" state.
+One approved reset request for `rob@thespeciales.com` reached the generic "Check your email" state.
 Resend marked email `01a0e4ac-4e53-7162-8e75-89282abcb0ac` Delivered. Inbox receipt and the owner's password change are unverified.
-One approved homeowner invite for synthetic claim `CMG-2026-0003` was sent to the homeowner test address.
+One approved homeowner invite for synthetic claim `CMG-2026-0003` was sent to `rob@miodiollc.com`.
 The hosted database has one new `customer` invite and one `sent` outbox row; Resend marked email `01a0e4c0-d9f5-75c3-a22f-da4b84c9e68a` Delivered.
 The owner opened that email, but its invite link went to Production `/platform-disabled`. The branch Preview inherited the global Production `NEXT_PUBLIC_SITE_URL`.
 A branch-only Preview override now points `NEXT_PUBLIC_SITE_URL` to the PR #18 hostname. Deployment `4vrNEikYKQn5v22d2wtroka9xr2R` is Ready at `284d155`.
-The original email cannot change. The owner approved one resend for `CMG-2026-0003` to the homeowner test address.
+The original email cannot change. The owner approved one resend for `CMG-2026-0003` to `rob@miodiollc.com`.
 The UI queued it, hosted outbox row `20f89351-7747-4de0-a249-6964dfe028d0` is `sent`, and Resend email `01a0e4d2-c38f-737d-80ab-d73d6f86fcb2` is Delivered.
 The new email's link uses the branch Preview hostname. The owner used it and set the password without agent access to it.
 Hosted invite `f4634a6b-fbb5-481e-92ff-f8160d3175db` has `accepted_at` and `accepted_by`; its claimant has a linked user.
@@ -146,7 +1923,7 @@ PR #18 CI run `36351680879` passed `verify` and `database` at `284d155`; its Ver
 At 390px, the hosted owner dashboard, partner directory, staff directory, and synthetic claim document page had no horizontal overflow.
 The document list showed two files, including the private signed letter. No hosted download was attempted.
 
-On 2026-09-27, the owner approved one synthetic adjuster invitation to the adjuster test address and one vendor invitation to the vendor test address.
+On 2026-09-27, the owner approved one synthetic adjuster invitation to `4miodio@gmail.com` and one vendor invitation to `robspeciale@gmail.com`.
 The owner approved and created `CMG Synthetic Vendor Test` as the vendor's company. It has no real referred claims.
 The hosted outbox showed one `sent` invitation for each address before acceptance. Provider delivery records remain unverified.
 The owner reported opening both test portals after setting the credentials. No agent received passwords or MFA codes.
@@ -744,11 +2521,24 @@ Its automatic Vercel Preview `dpl_FaYzi5PwFn1TTCcuGUewXE67rjim` failed during In
 Read-only CLI logs confirm Next.js 16.3.8 and restoration of Production cache `AcDgdsGubFaSGLvUoVRU8Wax54nZ`.
 The build failed with 28 font-resolution errors and `next/font/google queries have exactly one entry`.
 The committed layout and Next.js configuration have no diff from `develop` at `2fdf6bd`; local build evidence remains passed.
-Cache incompatibility is a hypothesis. A rebuild without cache is needed before a source repair decision.
+The owner approved one cache-free Preview rebuild of `9a80e09` on 2026-10-13.
+The Vercel form showed Preview, the original source, and unchecked **Use existing Build Cache**.
+One submission created `dpl_C2UqHb6rSJbXZ9bpQWNTRHyfqRHV`; no second rebuild was submitted.
+CLI project inspection confirmed `robs-projects-c72886ba/cmgps` before deployment inspection.
+CLI inspection and browser status both report Ready.
+Build logs confirm `9a80e09`, `Skipping build cache, deployment was triggered without cache.`, Next.js 16.3.8, successful compilation, and completed deployment.
+The ready deployment uses `cmgps-git-bugfix-launch-integration-robs-projects-c72886ba.vercel.app` and deployment URL `cmgps-jub1jpwi0-robs-projects-c72886ba.vercel.app`.
+The public root renders. Its computed body font family names Inter, and its font set reports loaded; no individual font faces were exposed by the inspection.
+No console warning or error was captured. Full network tracing and private acceptance remain unverified.
+Proof: `C:/Users/rob/.codex/visualizations/2026/08/30/01a05474-d495-7123-b74b-29a8631befca/launch-integration-preview-ready-2026-10-13.png`.
+The clean rebuild passed without code changes. Cache incompatibility remains a supported hypothesis, not an isolated root cause.
 Vercel's connector denied scope access; the existing CLI login supplied logs without exposing credentials.
 The browser independently showed the failed Preview, branch, and commit. DOM inspection timed out; its screenshot succeeded.
-Automatic approval review rejected opening the Redeploy control because separate deployment approval is missing.
-No redeployment, source repair, PR change, merge, or Production change ran.
+The earlier automatic approval rejection is settled by the owner's exact rebuild approval.
+No source repair, PR change, merge, Production setting, DNS record, database write, or backup ran during this task.
+Read-only CLI inspection now resolves the public Production alias to ready deployment `dpl_3UAUKnaYdUPv78pAAQUXZa4CJYaF`.
+Its source commit is absent from the CLI summary. This differs from the older recorded deployment and needs release preflight verification.
+The shared project board's T03 also records a newer `develop` dependency repair. No integration update was made here.
 The push did not start combined GitHub Actions; branch triggers cover only `develop` and `main`.
 These post-commit facts are recorded in the main worktree; no unapproved amend or second commit was created.
 
@@ -802,13 +2592,13 @@ The owner restored Chrome Resend access on 2026-10-05. Read-only email-list reco
 
 | Test message | Recipient | Provider record |
 |---|---|---|
-| Staff invitation | the adjuster test address | `01a0e500-6d22-774e-8daf-f30fcd766f92` |
-| Vendor invitation | the vendor test address | `01a0e506-2c25-70b5-8eac-50e336150562` |
-| Owner reset | the owner's address | `01a0e4ac-4e53-7162-8e75-89282abcb0ac` |
-| Homeowner reset | the homeowner test address | `01a0e4e3-912a-709d-999e-a7cf08a70cdc` |
-| Corrected homeowner invite | the homeowner test address | `01a0e4d2-c38f-737d-80ab-d73d6f86fcb2` |
+| Staff invitation | `4miodio@gmail.com` | `01a0e500-6d22-774e-8daf-f30fcd766f92` |
+| Vendor invitation | `robspeciale@gmail.com` | `01a0e506-2c25-70b5-8eac-50e336150562` |
+| Owner reset | `rob@thespeciales.com` | `01a0e4ac-4e53-7162-8e75-89282abcb0ac` |
+| Homeowner reset | `rob@miodiollc.com` | `01a0e4e3-912a-709d-999e-a7cf08a70cdc` |
+| Corrected homeowner invite | `rob@miodiollc.com` | `01a0e4d2-c38f-737d-80ab-d73d6f86fcb2` |
 | Synthetic question alert | CMG staff inbox | `01a0e4da-2d11-7744-85b7-7bb083f3f6ef` |
-| September 15 lead receipt | the homeowner test address | `34c1225a-203e-4b8a-bb59-a400ba3e823b` |
+| September 15 lead receipt | `rob@miodiollc.com` | `34c1225a-203e-4b8a-bb59-a400ba3e823b` |
 | September 15 lead alert | CMG staff inbox | `0d3345a3-84fa-41cb-9d6b-f8f99eefca04` |
 
 The provider date filter covered the last 30 days. No email body or invitation token was needed.
@@ -875,368 +2665,3 @@ Required checks include owner identity, staff MFA, AAL2, role isolation, invitat
 PandaDoc uses the bundled single-owner and dual-owner PDFs with `H1` and `H2` roles. Template UUIDs are not required.
 Retention automation, export, erasure, and legal holds need separate implementation and approval.
 See [RETENTION.md](../RETENTION.md) and [PANDADOC_SETUP.md](PANDADOC_SETUP.md).
-
-<a id="dated-evidence-log"></a>
-
-## Dated evidence log
-
-Add new entries at the end of this log. Each entry names its date.
-
-### Release-state narrative moved from RELEASE_STATE.md on 2026-10-07
-
-RELEASE_STATE.md is a short snapshot. Its narrative from 2026-09-22 through 2026-10-05 moved here without other changes, except that headings were demoted and recipient addresses were replaced by role names.
-Statements in this entry describe their own dates. Several are superseded: Production now runs `platform`, PRs #16, #17, and #21 are merged, and `bugfix/launch-integration-v2` replaces `bugfix/launch-integration`.
-
-#### Hosted migration procedure recorded on 2026-09-23
-
-This procedure was in RELEASE_STATE.md on `develop` before 2026-10-07.
-A later record warns against passing a production database URL on a visible command line. Review that warning before reuse.
-The agent cannot read or write the production database. Claude Code's permission classifier blocks it even with chat approval. The owner runs hosted migrations with the Supabase CLI installed directly:
-
-```powershell
-$env:PROD_SUPABASE_DIRECT_URL = ((Select-String -Path .env.local -Pattern '^PROD_SUPABASE_DIRECT_URL=').Line -split '=',2)[1].Trim('"'); supabase db push --dry-run --db-url $env:PROD_SUPABASE_DIRECT_URL
-```
-
-Remove `--dry-run` and add `--yes` to apply. Do not call it through `npx`. npm consumes `--yes` and echoes the full connection string, including the password, into its output.
-
-#### Release state as recorded on 2026-10-05
-
-##### Production
-
-| Item | Current state |
-|---|---|
-| Vercel project | `cmgps`, Hobby plan |
-| Site mode | Production uses `SITE_MODE=staff`. Default Preview and Development use `simple`; selected branch Previews have `platform` overrides. |
-| Public host | `app.cmgpropertysolutions.net` |
-| Deployed code | Read-only Vercel inspection on 2026-10-04 confirmed ready Production deployment `dpl_AcDgdsGubFaSGLvUoVRU8Wax54nZ` at `develop` commit `2fdf6bd0982c9be5b58ae76b998870c5f215083f`, with `app.cmgpropertysolutions.net` assigned |
-| Hosted migrations | Approved private-upload migration applied on 2026-09-30; 36 applied, through `20260927120000` |
-| Backups | The owner declined backups for the applied migrations |
-| Recovery path | Reviewed forward repair; immediate restoration is unverified |
-
-Production carries the direct-to-Storage upload transport, contractor intake fields, vendor intake links, the per-vendor fee setting, the prefilled Letter of Representation download, the corrected agreement-type checkbox positions, password recovery on the sign-in form, and the `staff` site mode. The staff desk is live: `/login`, `/mfa`, and `/admin` are open; `/portal`, `/partner`, and `/invite` stay closed.
-
-Production environment facts recorded on 2026-09-22: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SHARED_KEY` apply to Preview only. Production uses the manual e-signing path. A current webhook response has not been checked. Supabase public sign-up is disabled; accounts are created only by invitation.
-
-Synthetic test claims in Production: `CMG-2026-0001` (new intake), `CMG-2026-0002` (under review), `CMG-2026-0003` (`lor_signed`, signed letter uploaded, fee 20%), and `CMG-2026-0004` (under review, fee 20% seeded at acceptance). Their descriptions mark them as tests.
-
-##### Pull requests
-
-PRs #1 through #17 are merged into `develop`. PR #18, `bugfix/partner-directory-count`, is open against `develop`.
-GitHub run `36003466471` passed `verify` and `database` for head `2fdf6bd`.
-Read-only GitHub inspection on 2026-09-30 confirmed that PR #18 remains open at `284d155`. Its `verify` and `database` checks passed in run `36351680879`; Vercel and CodeRabbit also passed.
-The private-upload fix is committed as `aa19129` on `bugfix/private-upload-transport`. With separate owner approvals, it was pushed and PR #19 was opened against `develop` on 2026-09-30. The remote branch matches the full commit, and the isolated worktree is clean. Vercel deployment `EYvgCwCaHHCX9KAZg8wJvDmR7AzB` completed successfully. CI run `36765828554` passed `database` but failed the `verify` dependency audit: Next.js 16.3.5 has a critical advisory, and transitive brace-expansion and undici have high advisories. No merge is approved. Commit approval excluded the main-worktree release records and unrelated edits.
-
-The owner approved local dependency patches and then separately approved their commit and push. Commit `c3e4781` contains only `package.json` and `package-lock.json`: Next.js and eslint-config-next 16.3.8, brace-expansion 1.1.21 and 5.0.12, and undici 8.11.2. The isolated worktree is clean. Local audit reports zero vulnerabilities. Type check, lint, build, full Vitest, database-backed Vitest, and the local document-page smoke check passed. PR #19 and its remote branch now match `c3e478116f1dae1d47ab524bf8d3b05e5f1c55a4`. CI run `36776578059` passed both verify and database. The patched Preview build and CodeRabbit check also passed. The Preview login route redirects to platform-disabled; private hosted acceptance needs a branch-only platform configuration. No merge or Production activation is approved.
-
-##### Migration heads
-
-The verified hosted head is `20260927120000`; `develop` remains at migration head `20260917130000`.
-The owner separately approved `20260927120000_private_upload_sessions.sql` without a backup. It was applied to CMG Production on 2026-09-30 before the dependent application deployment. Schema, RLS, grants, document guards, cleanup protection, and the stored SQL hash passed verification. The private-upload branch was then pushed with separate approval. Its automatic Preview build passed; GitHub CI and hosted acceptance remain open.
-Compare hosted history against repository files before every approved Production write.
-The connector denied access on 2026-10-04; no query ran.
-The existing authorized Supabase browser session then showed all 36 migration versions and names.
-They match the private-upload branch through `20260927120000`.
-The stored SQL hash and schema checks were not repeated.
-
-The 2026-09-26 migration check used a read-only connection and did not print the database password.
-Do not pass a production database URL on a visible command line. Obtain separate approval for every Production write.
-
-##### Site modes
-
-| Mode | Open | Closed |
-|---|---|---|
-| `simple` | Public site and forms | All six private prefixes |
-| `staff` | `/login`, `/mfa`, `/admin` | `/portal`, `/partner`, `/invite` |
-| `platform` | Everything | Nothing |
-
-Unknown or missing values resolve to `simple`. In `staff` mode, only the three staff-alert email templates are added, because the other private templates link into portals that stay closed. Outbox rows older than `OUTBOX_MAX_AGE_DAYS` (default 7) are dead-lettered instead of sent. While `/invite` is closed, accepting an intake issues no invitations, and every admin invite control shows a "paused" note.
-
-Invitation is the only way to create an account, so staff mode cannot add new staff members until `/invite` reopens.
-
-##### E-signing
-
-The first release uses the manual path.
-Staff download a prefilled letter, upload it to PandaDoc, and record the confirmed send with **Mark letter as sent**.
-After all signatures, staff upload the final copy as `lor_signed` and separately advance the claim to **LOR signed**.
-Upload alone does not advance manual claim status.
-Actual web-upload field recognition, assignment, and signing remain open acceptance requirements.
-This path needs no PandaDoc API key or webhook.
-The API path remains in the code for later.
-Current PR #19 Preview reports API and webhook keys as configured.
-Its nonblank API key selects the API provider; it does not match manual Production signing.
-Manual hosted acceptance requires separately approved branch-only key overrides and redeployment.
-Keep shared Preview values and Production unchanged. Do not send through the API for this test.
-
-##### Staff-desk acceptance — 2026-09-22 and 2026-09-23
-
-| Step | Result |
-|---|---|
-| Owner sign-in with TOTP | Pass |
-| Dashboard, intake queue, claims list, partners, staff, settings | Pass; no console errors |
-| Letter refuses with no saved fee | Pass |
-| Save fee on Financials | Pass |
-| Download prefilled letter | Pass; valid 2.3 MB PDF |
-| Mark letter as sent | Pass; claim moved to `lor_sent`, feed entry recorded |
-| `lor_signed` blocked until a signed letter is uploaded | Pass |
-| Accept intake | Pass; 20% fee seeded, no invitations issued in staff mode |
-| Password recovery routes | Pass, including real email delivery. On 2026-09-23 Resend showed "Reset your CMG password" delivered to the owner's address. |
-| Forgot-password retry | Watch item. The first submission in Chrome was refused once. The retry succeeded. The cause is unknown. |
-| Upload a signed letter | Pass on 2026-09-23. A signed LOR was uploaded to `CMG-2026-0003` as kind `lor_signed` (CMG only). The claim moved to `lor_signed`, and the Representation signed milestone was recorded. |
-| Letter panel after `lor_signed` | The panel showed stale pending controls on 2026-09-23. PR #16 merged a fix; current rendered behavior still needs confirmation. |
-
-##### Environment
-
-| Item | Current state |
-|---|---|
-| Turnstile | Managed widget with six authorized hostnames, including PR #19's stable Preview host added with approval on 2026-10-05; existing hosts stayed in place |
-| Resend domain | `cmgpropertysolutions.net`, verified 2026-09-09; sender `claims@cmgpropertysolutions.net` |
-| Mail DNS | Microsoft 365 MX and SPF unchanged; Resend DKIM and `send.` subdomain records verified |
-| DMARC | `v=DMARC1; p=none;` |
-| Cron | `/api/cron/outbox` daily at 14:00 UTC; `/api/cron/storage-cleanup` daily at 14:17 UTC |
-
-The approved private-upload branch now has Preview-only `SITE_MODE=platform` and its stable `NEXT_PUBLIC_SITE_URL` override.
-PR #19's current branch host is `cmgps-git-bugfix-private-upload-t-cffa43-robs-projects-c72886ba.vercel.app`.
-The ready deployment renders login and redirects unauthenticated private routes to login.
-The restored Codex browser supplied the authorized Cloudflare session on 2026-10-05.
-The approved PR #19 hostname was saved as the sixth entry.
-All five previous entries, Managed mode, and disabled pre-clearance stayed unchanged.
-Password recovery, contact, and intake now complete automatic verification without the failure message.
-Each form held a nonempty response; no response value was printed and no form was submitted.
-Cloudflare iframe logs contain obfuscated warning and error entries; full request tracing remains unverified.
-Production settings, DNS, credentials, and widget keys did not change.
-Current Vercel cron settings show both daily schedules enabled and matching `vercel.json`.
-Recent Production cron logs are empty within the available last-hour window; scheduled execution remains unverified.
-
-Read-only checks on 2026-09-26 found the `app.` CNAME at `50238cf0f774d850.vercel-dns-017.com`.
-The Microsoft 365 MX remains present, and DMARC remains `v=DMARC1; p=none;`.
-The `app.` TLS certificate passed normal validation with TLS 1.3 and expires on 2026-12-08.
-No DNS record or certificate setting changed during these checks.
-
-Daily cron caveat: Hobby scheduling does not guarantee the configured minute, and a retry or cleanup backlog can take several days to drain.
-The connector denied the queue read on 2026-10-04.
-Read-only browser filters then verified zero pending or failed messages among 28 outbox records.
-Eleven records remain dead, including four claim updates and the old invitation.
-All five cleanup records have a completion timestamp; no unprocessed job remains.
-No record was changed, and no message was sent.
-Read-only inspection on 2026-09-27 found four pending `claim_status_update` messages for synthetic test claims.
-Two were older than seven days and had a stale `www` portal link. The newer two linked to `app.`.
-The Storage cleanup queue had no open jobs; all three retained rows were processed.
-One failed August invitation was also owed. Its first send failed while the old `updates.` sender domain was unverified.
-With owner approval, all five synthetic rows were marked `dead` on 2026-09-27. The rows remain for review, and no pending or failed outbox rows remain.
-
-PR #19's hydration finding was repaired and pushed as `d8e55fa` with separate approvals. PR #19 and the remote branch match `d8e55fa5444af9b4f2486381860bfb708dd0f934`. CI run `37244906090` passed database checks but failed verify at the dependency audit. Vercel deployment `D9eKGZ14YuXYm7auuQW2cbhyUN63` and CodeRabbit passed. No merge or Production change is approved.
-
-##### Current dependency audit
-
-The failed audit reports five high findings from one `braces` dependency chain under the Next.js ESLint plugin. The current advisory lists no patched `braces` release. The registry's latest stable and canary Next.js ESLint plugins still depend on `fast-glob`.
-
-A scoped local override replaces only `@next/eslint-plugin-next@16.3.8`'s glob dependency.
-A direct tinyglobby alias failed compatibility tests and was rejected.
-The private adapter preserves static directories, absolute paths, and filesystem roots.
-It rejects unsupported calls.
-The generated lock removes `braces` and `micromatch` without changing unrelated package versions.
-
-Final checks passed: four compatibility tests, type checking, lint, 1,655 unit tests, and the optimized build.
-Fifty-five credential-dependent or opt-in tests skipped.
-Audit reports zero vulnerabilities.
-Review found that the adapter needs Node 22.12 or later.
-The manifest now requires `^22.12.0`.
-After that metadata correction, exact `npm ci`, compatibility tests, audit, and diff checks passed again.
-
-No audit threshold or lint rule changed.
-Database checks were not repeated because this repair changes development tooling only.
-The owner approved the six-file commit on 2026-10-05.
-The final staged check found an extra blank line at the adapter's end; it was removed without changing behavior.
-The staged diff check then passed, and commit `3922e5a` contains only the six reviewed files.
-The isolated worktree is clean.
-The owner approved the push and the Turnstile hostname addition.
-Two push attempts did not execute because automatic approval review failed with a model-capacity error.
-The next retry succeeded. PR #19 now matches `3922e5a08e8ad89780225825e9ea64ee28b6aa42`.
-CI run `37314652490` passed both `verify` and `database`; Vercel and CodeRabbit also passed.
-The restored Codex browser completed the approved Turnstile hostname addition and verification retest.
-The owner approved both branch-only overrides and Preview redeployment.
-The Vercel dashboard saved `SITE_MODE=platform` and `NEXT_PUBLIC_SITE_URL=https://cmgps-git-bugfix-private-upload-t-cffa43-robs-projects-c72886ba.vercel.app` for Preview branch `bugfix/private-upload-transport` only.
-Ready Preview deployment `dpl_5dkvuwLMDURbm1qEe2dQM8r8g1T2` uses `3922e5a` and the stable branch alias.
-The login page renders. Unauthenticated admin, portal, partner, and MFA routes redirect to login.
-The synthetic invalid invite shows the generic expired-link page, with no captured console warning or error.
-Login and invalid-invite layouts passed at 390px after the viewport settled; no horizontal overflow remained.
-Production `/portal` still redirects to `/platform-disabled`.
-The owner signed in through Chrome. Current owner pages now open on this PR #19 Preview.
-The owner also restored Resend access. Provider delivery records were inspected without sending or retrying a message.
-Resend Metrics reports eight emails, 100% deliverability, zero bounces, and zero complaints for September 21–October 5.
-No Resend webhook is configured. The application records provider acceptance rather than subsequent delivery events.
-Daily operator review and a monitored reply mailbox remain open email-operation requirements.
-Fresh GitHub reads confirm both PRs remain open at `284d155` and `3922e5a`, with successful recorded checks and individual mergeability.
-Each PR retains one unresolved review thread. Exact head contents already fix the README selection and upload hydration findings.
-No review thread, comment, or remote record changed. Combined release checks remain required.
-Recovery, contact, and intake verification passed at measured 390px without horizontal overflow.
-The remaining three FAQ disclosures opened and closed with Enter at desktop width.
-Read-only `git merge-tree --trivial-merge` review of PR #18 at `284d155` and PR #19 at `3922e5a` reports two test-file conflicts.
-They affect `src/lib/intake/test-fixtures.ts` and `src/lib/storage-cleanup/intake-uploads.test.ts`.
-Integration must retain PR #19's exact local-stack allowlist and PR #18's partner regression and CI selection.
-The owner authorized the local integration task. Branch `bugfix/launch-integration` now combines both PR heads from `develop` at `2fdf6bd`.
-It reuses the previously clean private-upload worktree. Both original branches and all remotes remain unchanged.
-The two conflicts retain PR #19's exact fixture allowlist and cleanup safeguards.
-The candidate also retains PR #18's partner fix and database CI selection.
-Adversarial review found a silent count-query failure. Local repair rejects failed or missing counts with a generic error.
-The admin error boundary now uses Next.js 16.3's `retry()` to refresh server data before recovery.
-Eight focused tests, type check, lint, and the final full unit run passed after the retry repair.
-The first combined full run passed 117 files and 1,662 tests; 13 files and 56 tests skipped.
-The final full run passed 118 files and 1,663 tests; 13 files and 56 tests skipped.
-Mode-specific checks then found a test fixture that assumed an unset `SITE_MODE`.
-Only the test changed: it explicitly unsets the variable for the missing-value case and checks all three environment modes.
-All five affected files and 113 tests passed in each of `simple`, `staff`, and `platform`.
-Type check and lint passed again after that test-only repair. Runtime mode rules did not change.
-The final platform build passed after the retry repair. Audit reports zero vulnerabilities.
-The owner approved the disposable-stack reset on 2026-10-05. It completed on ports 15521/15522 using the verified scratch directory.
-All 36 migrations applied. Combined pgTAP passed 44 files and 1,350 assertions.
-The database-backed CI selection passed 34 files and 243 tests; one intentional live PandaDoc file and test skipped.
-Fresh generated database types match the candidate. Credentials stayed in memory, and live provider tests remained disabled.
-With separate owner approval, the 53-file candidate was committed as `9a80e090f3badd86ff046f0252d00f3d3f77932e` on `bugfix/launch-integration`.
-The commit tree matches the reviewed staging, and its worktree is clean.
-The owner separately approved the push. The remote branch now matches `9a80e090f3badd86ff046f0252d00f3d3f77932e`.
-The automatic Preview deployment `dpl_FaYzi5PwFn1TTCcuGUewXE67rjim` failed during the Inter font build.
-Its logs confirm Next.js 16.3.8 and cache restored from Production deployment `AcDgdsGubFaSGLvUoVRU8Wax54nZ`.
-Turbopack reported 28 font errors, including `next/font/google queries have exactly one entry`.
-The font setup and Next.js configuration match the base; the combined local build passed.
-A stale build cache is suspected, not confirmed. Obtain separate approval to rebuild this exact Preview without cache.
-No code repair, PR change, remote merge, manual redeployment, or Production change occurred.
-Combined hosted acceptance remains open. This branch push does not start GitHub Actions; the workflow requires a PR or an integration-branch push.
-Production, retained local stacks, and DNS stay unchanged. No backup was created.
-
-Current hosted owner reads passed dashboard, staff, intake, leads, questions, settings, audit, and all six sections of synthetic claim `CMG-2026-0003`.
-Owner requests to customer and vendor portals redirect to the staff dashboard.
-Missing and malformed claim IDs show identical generic not-found text at 390px without overflow or captured warnings/errors.
-The claim has four documents and a completed representation panel. The staff upload form uses POST and becomes enabled after hydration.
-Dashboard, documents, claims, settings, staff, intake, leads, questions, audit, and all synthetic claim sections fit a measured 390px viewport.
-Synthetic claim search returned the expected empty state. The New lead filter returned two leads.
-The current PR #19 Preview still shows an empty partner directory because PR #18's fix is absent there.
-The combined candidate must pass that hosted check before release.
-Chrome captured five asynchronous-listener errors on the claim overview. Their source is unverified; no later error appeared in these reads.
-Full request tracing remains unavailable. No hosted record, role, claim status, financial value, or document changed.
-Temporary viewport overrides were cleared. The original owner tab remains on the dashboard at normal width.
-
-Resend shows Delivered for the staff invitation to the adjuster test address and vendor invitation to the vendor test address.
-It also shows Delivered for the 2026-09-15 synthetic lead receipt and staff alert.
-The homeowner invite, owner and homeowner reset messages, and synthetic question alert are Delivered.
-Provider delivery does not prove inbox receipt. The lead's inbox receipt remains an owner check.
-The current Resend domain list confirms `cmgpropertysolutions.net` is verified.
-The older unused `updates.cmgpropertysolutions.net` entry is not started. It was not changed or removed.
-
-##### Combined PR review
-
-Read-only inspection confirmed that PR #18 remains open at `284d155`, with all recorded checks passing. PR #19 remains open at `3922e5a`, with verify, database, Vercel, and CodeRabbit passing. PR #18's README correction addresses its recorded review finding. PR #19's hydration repair addresses its recorded review finding. No review comment was changed or resolved remotely.
-
-The 2026-10-04 GitHub review found no new PR #19 finding.
-Its one recorded hydration finding still refers to the earlier code.
-The current `develop` head is `2fdf6bd0982c9be5b58ae76b998870c5f215083f`; GitHub reports it as unprotected.
-The existing account permitted these reads; no credential or permission changed.
-
-Both PRs change `src/lib/intake/test-fixtures.ts` and `src/lib/storage-cleanup/intake-uploads.test.ts`. The authorized local combination retains PR #19's explicit stack allowlist and PR #18's partner-count regression and CI selection. The current separate Previews do not prove the combined release. No remote merge, deployment, or Production activation occurred.
-
-##### Open gates
-
-| Item | Who | Status |
-|---|---|---|
-| Admin invitations for staff, vendors, and homeowners | engineering, then owner | Local synthetic browser acceptance passed on 2026-09-26. Hosted owner sign-in and MFA passed on 2026-09-27. A branch-only Preview URL override was deployed after the first homeowner invite linked to closed Production. The approved resend was Delivered; homeowner redemption and portal access passed. The customer cannot open staff or partner routes. The visible PNG downloaded with an audit entry. A synthetic question appeared on the claim, and its staff alert was Delivered. Two 68-byte synthetic uploads were stored during browser testing. Four owner pages and the homeowner document page fit 390px without horizontal overflow. One synthetic partner company was created. The approved adjuster and vendor invitations were sent. The owner reports both test portals open. The vendor sees the synthetic company, no referred claims, and cannot open staff or homeowner routes. The adjuster sees an empty assigned caseload; owner pages and an unassigned claim return not-found. Replay, provider delivery records, and upload boundaries stay open. |
-| Owed customer messages | engineering | Five old synthetic rows were marked `dead` with owner approval on 2026-09-27. The rows remain for review. No pending or failed outbox rows remain. |
-| Maximum-size upload boundary acceptance | engineering | Hosted acceptance remains open. Homeowner and staff uploads use multipart Server Actions while the UI offers 25 MiB. [Vercel documents a 4.5 MB function request limit](https://vercel.com/docs/errors/function_payload_too_large). Public intake uses direct-to-Storage upload. An isolated local branch contains a private direct-to-Storage fix. On 2026-09-29, a fresh disposable reset applied the final migration, and all 44 pgTAP files passed with 1,350 assertions. The database-backed CI selection passed. On 2026-09-30, the local homeowner Chrome upload succeeded after a local CSP correction. Its database record and Storage object both contain exactly 26,214,400 bytes. Type-check, lint, full Vitest, and the optimized build passed after that correction. Local Chrome refused the one-byte-over-limit file without a document or upload reservation. Staff MFA and assigned-claim document access passed. The approved local staff 25 MiB upload passed with internal visibility, exact byte counts, and a completed session. Homeowner page and direct API access exclude it. Both document pages fit 390px. Hosted boundaries remain open. Apply the migration before deploying code that calls its cleanup RPC. |
-| Rotate the old preview PandaDoc webhook key | owner | Pending |
-| Delete stray root folders | owner | Pending |
-| Cron delay acceptance | owner | Both daily schedules are enabled. Scheduled execution and acceptable retry delay remain open. |
-| DMARC `p=none` policy decision | owner | Open question |
-| Legal review of both bundled LOR PDFs | external | Open. The checkbox positions were corrected on 2026-09-22 and owner-checked visually. |
-| Owner and legal approval of public copy | owner | Deliberately second-to-last |
-| Commercial Vercel plan | owner | Open |
-| Private-repository plan and branch protection | owner | Open |
-| SEO origin fix and `app.` to `www.` cutover | owner | Deliberately last |
-
-##### Owner decisions
-
-- `app.cmgpropertysolutions.net` stays the demo host until CMG pays for the project.
-- The SEO origin fix in `src/lib/site.ts`, which hardcodes `www`, and the `app.` to `www.` cutover are deliberately last.
-- Owner and legal approval of public copy is deliberately second-to-last. It covers the statistics, the testimonial, "Se habla español", "licensed and bonded in every state", and the partner payment promises.
-- E-signing ships in the first release through the manual prefilled-PDF path, which avoids PandaDoc API fees.
-- The staff desk opens first. On 2026-09-23 the owner decided that admins must be able to invite staff, vendors, and homeowners. This opens customer and partner logins through `SITE_MODE=platform`.
-- The CMG standard fee is 20 percent. Each vendor can have its own rate, set by owners only. The public form never sets a fee.
-- Backups stay declined. Recovery is reviewed forward repair.
-
-##### Ordered next steps
-
-1. Preview configuration and its Turnstile hostname addition are complete; no duplicate approval is needed.
-2. The approved push of `9a80e09` is complete; both existing PR branches remain unchanged.
-3. Obtain approval for a cache-free rebuild of the failed combined Preview, then diagnose any remaining failure.
-4. Obtain separate PR and branch-only Preview configuration approvals, then verify the combined hosted candidate.
-5. Complete remaining role, upload, invitation, and operational acceptance against the launch checklist.
-6. Obtain separate merge and Production deployment approvals.
-7. Recheck queues before requesting separate Production platform activation approval.
-8. Test the activated full platform.
-9. Complete the separately approved real PandaDoc signing test.
-10. Resolve commercial hosting, repository protection, email operations, privacy, retention, and legal gates.
-11. Obtain owner and legal approval of public copy second-to-last.
-12. Complete approved SEO and domain work last.
-
-### 2026-10-07 — Production platform activation and hosted acceptance
-
-The coordinator recorded these facts from the owner's session. No engineering agent changed Production for this entry.
-
-The owner switched Production to `SITE_MODE=platform` on 2026-10-07.
-The switch followed the merges of PR #16 and PR #17 and a check that the five old dead outbox rows were safe.
-Production `NEXT_PUBLIC_SITE_URL` is `https://app.cmgpropertysolutions.net`.
-
-| Check on Production | Result |
-|---|---|
-| Staff invitation (adjuster) | Pass. The invitee set a password and enrolled TOTP. The adjuster sees only assigned claims. Owner-only pages return not-found. `/portal` and `/partner` redirect to `/admin`. |
-| Vendor invitation | Pass. Test company "CMG Test Vendor" uses the standard 20% fee, and its rep is active. The rep lands on `/partner` and sees only that company's referred claim, without documents, policy, or homeowner contact. The rep cannot open `/admin` or `/portal`. |
-| Homeowner invitation to an existing account | Pass. The claim linked to the existing account, and the password stayed unchanged by design. The owner used Forgot password to sign in. The portal shows only that account's claims. `/admin` and `/partner` redirect back. |
-| New homeowner through public intake | Pass. Intake `CMG-2026-0005` was accepted with referral "Existing → CMG Test Vendor" and adjuster Staff1 Tester. The intake receipt and invitation emails were delivered. The new account landed directly on its claim. The assigned adjuster sees exactly that one claim. The vendor rep sees it under "Claims you referred". |
-| PR #16 manual-signature panel | Live and verified. The panel shows "Representation completed" after `lor_signed`. |
-| PR #17 referral attribution and claimants refresh | Live and verified. Partner-portal attribution is kept on accept, and the claimants tab refreshes after an invite. |
-
-Earlier hosted evidence still applies: password-reset email delivery and the `lor_signed` upload on `CMG-2026-0003` passed on 2026-09-23.
-
-Known gap now that platform mode is live: homeowner and staff document uploads go through Server Actions while the UI offers 25 MiB.
-Vercel limits function request bodies to 4.5 MB, so larger uploads fail in Production.
-PR #19's direct-to-Storage upload fixes this, and its migration is already in Production. `bugfix/launch-integration-v2` carries that fix.
-The owner partner directory still lacks PR #18's count fix in Production.
-
-### 2026-10-07 — Combined launch branch rebuilt on current develop
-
-The owner approved this rebuild in chat on 2026-10-07. No push, PR, merge, hosted write, or database reset was part of it.
-
-Branch `bugfix/launch-integration-v2` starts from `origin/develop` after the PR #21 merge.
-It cherry-picks the code of PR #18 and PR #19 with original authorship, plus the code repairs from the first combined commit `9a80e09`:
-
-| Commit content | Source |
-|---|---|
-| Partner directory counts `claim_partner_summaries`; CI selection adds `src/lib/admin/partners.test.ts`; isolated-fixture test support | `242ab01` (PR #18), code only |
-| Private document uploads go directly to Storage, with migration `20260927120000` (already in Production) | `aa19129` (PR #19) |
-| Upload forms stay disabled until hydration | `d8e55fa` (PR #19) |
-| Partner directory read failures throw a generic error; admin boundary uses `retry()`; site-mode tests pass in every mode | `9a80e09`, code only |
-
-PR #19's dependency commits `c3e4781` and `3922e5a` were not applied; PR #21 already carries those fixes in `develop`.
-The documentation of PR #18's docs-only commits and `9a80e09` was reconciled by hand into the current records.
-
-Conflict: `aa19129` conflicted with `242ab01` in `src/lib/intake/test-fixtures.ts` and `src/lib/storage-cleanup/intake-uploads.test.ts`.
-The resolution keeps PR #19's named-stack allowlist (`CMG_TEST_STACK`), which replaces PR #18's free-form port variables. This matches the `9a80e09` resolution.
-
-Review of the incoming code found no new defect. It covered staff and homeowner authorization, caller-scoped RLS reads, storage paths, the 25 MiB and ten-file limits, signed-capability expiry, copy gating, cleanup embargo, and generic failures.
-The code tree matches `9a80e09` except for `package-lock.json`, which follows current `develop`.
-
-Checks on Node 22.22.2:
-
-| Check | Result |
-|---|---|
-| Affected suites before the documentation commit | 22 files and 261 tests passed; 4 files and 11 tests skipped (database-backed) |
-| `npm run type-check` | Exit 0 |
-| `npm run lint` | Exit 0 |
-| `npm test` | 118 files and 1,665 tests passed; 13 files and 56 tests skipped |
-| `npm run build` | Exit 0 |
-| `npm audit --audit-level=high` | 0 vulnerabilities |
-| Affected suites in `simple`, `staff`, and `platform` | 56 files and 759 tests passed in each mode; 4 files and 11 tests skipped |
-| `git diff --check` | Exit 0 |
-
-Not run: `npm run db:reset`, `npm run db:test`, and the CI database-backed Vitest selection.
-Reset approval was not given, and no disposable local stack was running. Only the retained `supabase_db_CMGPA` database container was up, without its API.
-The earlier combined candidate passed those database checks on 2026-10-05 against a disposable stack; CI runs them on the PR.
-The earlier `bugfix/launch-integration` Preview failed with 28 `next/font/google` errors after restoring the Production build cache. Watch the v2 Preview for the same failure.

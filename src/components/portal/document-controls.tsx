@@ -105,9 +105,13 @@ export function DocumentUpload({ claimId }: { claimId: string }) {
 export function DocumentDownload({
   documentId,
   label,
+  position,
+  count,
 }: {
   documentId: string;
   label: string;
+  position: number;
+  count: number;
 }) {
   const [state, formAction] = useActionState(resilient(issuePortalDownload), idleDownloadState);
   const anchor = useRef<HTMLAnchorElement>(null);
@@ -127,7 +131,7 @@ export function DocumentDownload({
       <form action={formAction}>
         <input type="hidden" name="documentId" value={documentId} />
         <SubmitButton variant="secondary" pendingLabel="Preparing…">
-          Download
+          Download{" "}<span className="sr-only">{label}, file {position} of {count} on this page</span>
         </SubmitButton>
       </form>
 

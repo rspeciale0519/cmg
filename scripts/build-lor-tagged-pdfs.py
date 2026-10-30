@@ -24,28 +24,30 @@ def tag(field_type: str, role: str, field_id: str, width: int = 0) -> str:
 
 
 def system_fields() -> dict[int, list[tuple[float, float, str]]]:
+    # These are text baselines, not rule centers. Keep descenders clear of the
+    # raster form's rules; dates below a rule also need room for their glyphs.
     return {
         1: [
-            (103, 550, tag("t", "H1", "ph", 30)),
-            (72, 522, tag("t", "H1", "carrier", 15)),
-            (358, 522, tag("t", "H1", "policy", 15)),
-            (72, 484, tag("t", "H1", "property", 55)),
-            (94, 443, tag("t", "H1", "lossdate", 13)),
-            (298, 443, tag("t", "H1", "cause", 16)),
-            (450, 316, tag("t", "H1", "fee", 5)),
-            (464, 55, tag("t", "H1", "d1", 8)),
+            (103, 558, tag("t", "H1", "ph", 30)),
+            (72, 526, tag("t", "H1", "carrier", 15)),
+            (358, 526, tag("t", "H1", "policy", 15)),
+            (72, 489, tag("t", "H1", "property", 55)),
+            (94, 446, tag("t", "H1", "lossdate", 13)),
+            (298, 447, tag("t", "H1", "cause", 16)),
+            (450, 320, tag("t", "H1", "fee", 5)),
+            (464, 59, tag("t", "H1", "d1", 8)),
         ],
         2: [(425, 104, tag("t", "H1", "d2", 8))],
         3: [(455, 145, tag("t", "H1", "d3", 8))],
         4: [(455, 95, tag("t", "H1", "d4", 8))],
         5: [(430, 698, tag("t", "H1", "d5", 8))],
-        6: [(430, 677, tag("t", "H1", "d6", 8))],
-        7: [(115, 420, tag("t", "H1", "d7", 12))],
-        8: [(455, 30, tag("t", "H1", "d8", 8))],
+        6: [(430, 678, tag("t", "H1", "d6", 8))],
+        7: [(115, 418, tag("t", "H1", "d7", 12))],
+        8: [(455, 36, tag("t", "H1", "d8", 8))],
         9: [
             (403, 516, tag("t", "H1", "claimno", 16)),
             (185, 480, tag("t", "H1", "accepted", 14)),
-            (416, 480, tag("t", "H1", "adjuster", 13)),
+            (416, 483, tag("t", "H1", "adjuster", 13)),
             (177, 441, tag("t", "H1", "phone", 13)),
             (414, 441, tag("t", "H1", "d9a", 8)),
             (128, 403, tag("t", "H1", "email", 20)),

@@ -15,7 +15,7 @@ It contains production facts, open pull requests, migration heads, environment f
 
 Use Node.js 22 and npm.
 `package-lock.json` controls installed dependency versions.
-The application uses Next.js 16.3, React 19, TypeScript, Tailwind CSS, Supabase, Resend, PandaDoc, and Turnstile.
+The application uses Next.js 16.4, React 19, TypeScript, Tailwind CSS, Supabase, Resend, PandaDoc, and Turnstile.
 
 1. Start Docker Desktop.
 2. Confirm that the Supabase CLI is available.

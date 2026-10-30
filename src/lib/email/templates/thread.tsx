@@ -93,7 +93,7 @@ export function ReplyPosted(payload: ReplyPostedPayload) {
   return (
     <EmailLayout
       preview={`A new note on ${payload.claimRef}.`}
-      reason="Sent because CMG Property Solutions is representing you on this claim. We email you when someone here posts to your claim."
+      reason="Sent because CMG Property Solutions posted a message to your claim."
     >
       <Text style={emailStyles.kicker}>Your adjuster wrote</Text>
       <Text style={emailStyles.heading}>There is a new note on your claim.</Text>

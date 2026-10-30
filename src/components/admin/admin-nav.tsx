@@ -1,7 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { cx } from "@/lib/cx";
 import { isAdminRouteActive, type AdminNavItem } from "./nav";
@@ -31,7 +31,16 @@ export function AdminNav({
   counts: NavCounts;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const previousPathname = useRef(pathname);
   const rail = useRef<HTMLDivElement>(null);
+
+  // The shared layout persists across navigation, so refresh its queue counts.
+  useEffect(() => {
+    if (previousPathname.current === pathname) return;
+    previousPathname.current = pathname;
+    router.refresh();
+  }, [pathname, router]);
 
   // The rail is 733px of items in a 390px phone. Left alone it opens at
   // scrollLeft 0, so on Partners, Staff, Audit and Settings the marked item sat
@@ -65,8 +74,14 @@ export function AdminNav({
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
+                  onFocus={(event) =>
+                    event.currentTarget.scrollIntoView({
+                      inline: "nearest",
+                      block: "nearest",
+                    })
+                  }
                   className={cx(
-                    "relative flex items-center gap-2 whitespace-nowrap px-3 py-[14px] text-[13px] leading-[1.4] no-underline",
+                    "relative flex scroll-mx-1 items-center gap-2 whitespace-nowrap px-3 py-[14px] text-[13px] leading-[1.4] no-underline focus-visible:outline-offset-[-2px]",
                     "transition-colors duration-150",
                     "after:absolute after:inset-x-2 after:-bottom-px after:h-[2px] after:content-['']",
                     active

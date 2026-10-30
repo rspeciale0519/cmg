@@ -63,6 +63,8 @@ function environment(overrides: Partial<IntegrationEnvironment> = {}): Integrati
     resendApiKey: null,
     emailFrom: "CMG <claims@cmgpropertysolutions.net>",
     outboxDue: 0,
+    outboxHeld: 0,
+    staffRecipientConfigured: true,
     turnstileSiteKey: "1x00000000000000000000AA",
     turnstileSecretKey: "1x0000000000000000000000000000000AA",
     esign: MANUAL_ESIGN,
@@ -162,6 +164,38 @@ describe("buildIntegrations — Turnstile", () => {
 });
 
 describe("buildIntegrations — Resend", () => {
+  it("reports an unknown staff recipient policy as needing attention", () => {
+    const resend = pick(environment({ resendApiKey: "re_live_key", staffRecipientConfigured: null }), "resend");
+    expect(resend.state).toBe("attention");
+    expect(resend.detail).toMatch(/could not be checked/i);
+  });
+  it("warns when staff recipients are unresolved even with a delivery key", () => {
+    const resend = pick(environment({
+      resendApiKey: "re_live_key",
+      staffRecipientConfigured: false,
+      outboxHeld: 2,
+    }), "resend");
+    expect(resend.state).toBe("attention");
+    expect(resend.facts).toContainEqual(expect.objectContaining({
+      label: "Notifications held for review",
+      value: "2 notifications",
+    }));
+    expect(resend.detail).toMatch(/review/i);
+  });
+
+  it("reports an unreadable held count instead of treating it as zero", () => {
+    const resend = pick(environment({
+      resendApiKey: "re_live_key",
+      staffRecipientConfigured: true,
+      outboxHeld: null,
+    }), "resend");
+    expect(resend.state).toBe("attention");
+    expect(resend.facts).toContainEqual(expect.objectContaining({
+      label: "Notifications held for review",
+      value: "could not be read",
+    }));
+  });
+
   it("reports an absent key as mail queued but not delivered", () => {
     const resend = pick(environment(), "resend");
     expect(resend.state).toBe("absent");

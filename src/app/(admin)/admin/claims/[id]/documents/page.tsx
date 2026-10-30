@@ -101,7 +101,7 @@ export default async function DocumentsPage({
         ) : (
           <>
           <ul className="divide-y divide-ink/8">
-            {rows.map((document) => {
+            {rows.map((document, index) => {
               const uploader = document.uploader
                 ? `${document.uploader.first_name ?? ""} ${document.uploader.last_name ?? ""}`.trim()
                 : null;
@@ -159,6 +159,8 @@ export default async function DocumentsPage({
                   <DocumentDownload
                     documentId={document.id}
                     label={document.original_name}
+                    position={index + 1}
+                    count={rows.length}
                   />
                 </li>
               );

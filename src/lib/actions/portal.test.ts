@@ -61,6 +61,8 @@ const stub = vi.hoisted(() => {
       error: null as { message: string } | null,
     },
     signOut: vi.fn(async () => ({ error: null })),
+    globalSignOut: vi.fn(),
+    updateUser: vi.fn(),
     leaked: false,
     updateUserError: null as { message: string } | null,
   };
@@ -69,7 +71,10 @@ const stub = vi.hoisted(() => {
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn(), notFound: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((path: string) => { throw new Error(`redirect:${path}`); }),
+  notFound: vi.fn(),
+}));
 
 vi.mock("@/lib/authz", () => ({
   requireRole: vi.fn(async () => stub.session),
@@ -104,7 +109,8 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => ({})) })
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: {
-      updateUser: vi.fn(async () => ({ error: stub.updateUserError })),
+      updateUser: stub.updateUser,
+      signOut: stub.globalSignOut,
     },
     from: (table: string) => {
       if (table === "claims") {
@@ -178,6 +184,8 @@ beforeEach(() => {
   stub.signInResult = { data: { user: { id: stub.USER_ID } }, error: null };
   stub.leaked = false;
   stub.updateUserError = null;
+  stub.updateUser.mockImplementation(async () => ({ error: stub.updateUserError }));
+  stub.globalSignOut.mockResolvedValue({ error: null });
 });
 
 describe("askQuestion — gate order: rate limit, then schema, then ownership", () => {
@@ -350,15 +358,61 @@ describe("changePassword — order: rate limit, then schema, then current-passwo
     );
   });
 
-  it("changes the password and audits the success, with no values to echo", async () => {
-    const state = await changePassword(idleState, validForm());
+  it("ends all sessions after the password update and returns to sign-in", async () => {
+    await expect(changePassword(idleState, validForm())).rejects.toThrow(
+      "redirect:/login?notice=password-changed",
+    );
 
-    expect(state.status).toBe("success");
-    expect(state.values).toBeUndefined();
+    expect(stub.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(stub.updateUser).toHaveBeenCalledWith({ password: "Xk9#mQ7!vBz2" });
+    expect(stub.globalSignOut).toHaveBeenCalledWith({ scope: "global" });
+    expect(stub.updateUser.mock.invocationCallOrder[0]).toBeLessThan(
+      stub.globalSignOut.mock.invocationCallOrder[0],
+    );
     expect(stub.audited).toHaveBeenCalledWith(
       expect.objectContaining({ action: "auth.password_changed", meta: { surface: "portal" } }),
     );
   });
+
+  it("keeps sessions when the password update fails and returns no secrets", async () => {
+    stub.updateUserError = { message: "private provider detail" };
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const state = await changePassword(idleState, validForm());
+    expect(state.status).toBe("error");
+    expect(stub.globalSignOut).not.toHaveBeenCalled();
+    expect(state.values).toBeUndefined();
+    expect(state.message).not.toContain("private provider detail");
+    vi.restoreAllMocks();
+  });
+
+  it("still revokes sessions and returns to sign-in if the audit transport fails", async () => {
+    stub.audited.mockImplementationOnce(() => { throw new Error("private audit detail"); });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(changePassword(idleState, validForm())).rejects.toThrow(
+      "redirect:/login?notice=password-changed",
+    );
+    expect(stub.globalSignOut).toHaveBeenCalledWith({ scope: "global" });
+    vi.restoreAllMocks();
+  });
+
+  it.each(["returned", "thrown"])(
+    "reports the changed password without claiming session revocation after a %s sign-out failure",
+    async (failure) => {
+      if (failure === "returned") {
+        stub.globalSignOut.mockResolvedValue({ error: { code: "unexpected_failure" } });
+      } else {
+        stub.globalSignOut.mockRejectedValue(new Error("private provider detail"));
+      }
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const state = await changePassword(idleState, validForm());
+      expect(state.status).toBe("error");
+      expect(state.message).toMatch(/password changed/i);
+      expect(state.message).toMatch(/could not sign out all devices/i);
+      expect(state.values).toBeUndefined();
+      expect(state.message).not.toContain("private provider detail");
+      vi.restoreAllMocks();
+    },
+  );
 });
 
 describe("withdrawConsent — idempotent on `withdrawn_at is null`", () => {

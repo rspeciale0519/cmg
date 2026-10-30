@@ -51,6 +51,11 @@ export const RATE_LIMITS = {
   passwordResetIp: { scope: "password-reset:ip", max: 10, window: "1 hour" },
   passwordResetEmail: { scope: "password-reset:email", max: 3, window: "1 hour" },
   passwordResetUser: { scope: "password-reset:user", max: 10, window: "15 minutes" },
+  /* `/auth/confirm` spends a GoTrue `verifyOtp` call. The token is 32–128 hex
+     characters, so guessing one is not the threat; hammering the verifier
+     from one source is. Same window as login. The refusal uses the same
+     expired-link notice as a bad token, so the budget is not an oracle. */
+  recoveryConfirmIp: { scope: "recovery-confirm:ip", max: 10, window: "15 minutes" },
 
   /* Portal surfaces. Keyed on the account rather than the IP: every caller here
      has already signed in, so the identity is known and is the thing worth

@@ -97,7 +97,7 @@ export default async function PortalDocumentsPage({
         ) : (
           <>
             <ul className="divide-y divide-ink/8">
-              {rows.map((row) => (
+              {rows.map((row, index) => (
                 <li
                   key={row.id}
                   className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 px-[clamp(18px,2.4vw,28px)] py-[16px]"
@@ -119,7 +119,7 @@ export default async function PortalDocumentsPage({
                     </p>
                   </div>
 
-                  <DocumentDownload documentId={row.id} label={row.original_name} />
+                  <DocumentDownload documentId={row.id} label={row.original_name} position={index + 1} count={rows.length} />
                 </li>
               ))}
             </ul>

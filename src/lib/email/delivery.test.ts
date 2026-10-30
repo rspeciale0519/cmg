@@ -10,6 +10,7 @@ import {
   type ClaimedRow,
   type OutboxStore,
   type SettleInput,
+  type SendMessage,
 } from "./delivery";
 
 function row(overrides: Partial<ClaimedRow> = {}): ClaimedRow {
@@ -19,6 +20,7 @@ function row(overrides: Partial<ClaimedRow> = {}): ClaimedRow {
     template: "lead_auto_reply",
     payload: { firstName: "Dana" },
     attempts: 1,
+    lease_token: "lease-default",
     ...overrides,
   };
 }
@@ -94,16 +96,34 @@ describe("outcomeAfterFailure — the dead-letter rule", () => {
 });
 
 describe("deliverClaimed", () => {
+  it("holds a policy-check failure rather than treating it as a provider failure", async () => {
+    const claimed = row({ attempts: 5, lease_token: "lease-policy-test" });
+    const { store, settled } = singleClaimStore([claimed]);
+    const send = vi.fn(async () => {
+      throw Object.assign(new Error("policy unavailable"), { code: "RECIPIENT_POLICY_HOLD" });
+    });
+
+    const report = await deliverClaimed(store, send, { limit: 1 });
+
+    expect(report).toMatchObject({ held: 1, failed: 0, dead: 0 });
+    expect(settled).toEqual([expect.objectContaining({
+      id: claimed.id,
+      leaseToken: "lease-policy-test",
+      outcome: "held",
+    })]);
+  });
+
   it("marks a delivered row sent, with no error and no retry", async () => {
     const { store, settled } = singleClaimStore([row()]);
     const send = vi.fn(async () => {});
 
     const report = await deliverClaimed(store, send, { limit: 10 });
 
-    expect(report).toEqual({ claimed: 1, sent: 1, failed: 0, dead: 0, stale: 0 });
+    expect(report).toEqual({ claimed: 1, sent: 1, failed: 0, dead: 0, stale: 0, held: 0 });
     expect(settled).toEqual([
       {
         id: row().id,
+        leaseToken: "lease-default",
         outcome: "sent",
         error: null,
         retryInSeconds: null,
@@ -136,11 +156,14 @@ describe("deliverClaimed", () => {
     expect(settle).toHaveBeenCalledWith(expect.objectContaining({ outcome: "sent" }));
   });
 
-  it("times out a stuck provider call and leaves the row retryable", async () => {
+  it("holds a timed-out provider call for review", async () => {
     vi.useFakeTimers();
     try {
       const { store, settled } = singleClaimStore([row()]);
-      const send = vi.fn(() => new Promise<void>(() => {}));
+      const send = vi.fn((message: Parameters<SendMessage>[0]) => {
+        expect(message.signal).toBeDefined();
+        return new Promise<void>(() => {});
+      });
 
       const delivery = deliverClaimed(store, send, { limit: 1 });
       await vi.advanceTimersByTimeAsync(10_000);
@@ -148,17 +171,29 @@ describe("deliverClaimed", () => {
       await expect(delivery).resolves.toEqual({
         claimed: 1,
         sent: 0,
-        failed: 1,
+        failed: 0,
         dead: 0,
         stale: 0,
+        held: 1,
       });
       expect(settled[0]).toMatchObject({
-        outcome: "failed",
+        outcome: "uncertain",
         error: "provider send timed out",
       });
+      expect(send.mock.calls[0]?.[0].signal?.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("holds an uncertain provider result without retry", async () => {
+    const { store, settled } = singleClaimStore([row()]);
+    const send = vi.fn(async () => {
+      throw Object.assign(new Error("connection lost"), { code: "PROVIDER_OUTCOME_UNKNOWN" });
+    });
+    const report = await deliverClaimed(store, send, { limit: 1 });
+    expect(report).toMatchObject({ held: 1, failed: 0, dead: 0 });
+    expect(settled[0]).toMatchObject({ outcome: "uncertain", retryInSeconds: null });
   });
 
   it("never exceeds the requested worker-pool concurrency", async () => {
@@ -189,7 +224,7 @@ describe("deliverClaimed", () => {
 
     const report = await deliverClaimed(store, send, { limit: 10 });
 
-    expect(report).toEqual({ claimed: 1, sent: 0, failed: 1, dead: 0, stale: 0 });
+    expect(report).toEqual({ claimed: 1, sent: 0, failed: 1, dead: 0, stale: 0, held: 0 });
     expect(settled[0]).toMatchObject({
       outcome: "failed",
       error: "451 mailbox unavailable",
@@ -205,7 +240,7 @@ describe("deliverClaimed", () => {
 
     const report = await deliverClaimed(store, send, { limit: 10 });
 
-    expect(report).toEqual({ claimed: 1, sent: 0, failed: 0, dead: 1, stale: 0 });
+    expect(report).toEqual({ claimed: 1, sent: 0, failed: 0, dead: 1, stale: 0, held: 0 });
     expect(settled[0]).toMatchObject({ outcome: "dead", retryInSeconds: null });
   });
 
@@ -250,7 +285,7 @@ describe("deliverClaimed", () => {
 
     const report = await deliverClaimed(store, send, { limit: 10 });
 
-    expect(report).toEqual({ claimed: 3, sent: 2, failed: 1, dead: 0, stale: 0 });
+    expect(report).toEqual({ claimed: 3, sent: 2, failed: 1, dead: 0, stale: 0, held: 0 });
     expect(settled).toHaveLength(3);
   });
 });
@@ -287,7 +322,7 @@ describe("deliverClaimed — two sweepers cannot send the same notification twic
 
     const report = await deliverClaimed(store, send, { limit: 25 });
 
-    expect(report).toEqual({ claimed: 0, sent: 0, failed: 0, dead: 0, stale: 0 });
+    expect(report).toEqual({ claimed: 0, sent: 0, failed: 0, dead: 0, stale: 0, held: 0 });
     expect(send).not.toHaveBeenCalled();
   });
 });
@@ -409,6 +444,7 @@ describe("deliverClaimed — the age guard in the delivery loop", () => {
       failed: 0,
       dead: 1,
       stale: 1,
+      held: 0,
     });
     expect(settled[0]).toMatchObject({
       outcome: "dead",

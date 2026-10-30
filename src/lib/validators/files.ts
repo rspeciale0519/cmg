@@ -53,15 +53,17 @@ export type FileValidationResult =
 
 /**
  * `original_name` is stored for display only — the object itself is written
- * under a UUID (spec §7.4). Drop path separators and control characters so a
- * crafted name cannot travel anywhere it is later interpolated.
+ * under a UUID (spec §7.4). Drop path separators, control characters, and
+ * header/markup delimiters so a crafted name cannot travel into
+ * `Content-Disposition` (via the signed download URL) or into a page.
  */
 export function safeOriginalName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "upload";
   const cleaned = Array.from(base)
     .filter((character) => {
       const code = character.codePointAt(0) ?? 0;
-      return code >= 0x20 && code !== 0x7f;
+      if (code < 0x20 || code === 0x7f) return false;
+      return !'"\'`;=<>'.includes(character);
     })
     .join("")
     .trim();

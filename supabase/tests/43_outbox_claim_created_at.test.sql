@@ -28,23 +28,23 @@ select plan(14);
 
 select ok(
   not (select prosecdef from pg_proc
-        where oid = 'public.claim_outbox_batch(integer,integer,uuid[])'::regprocedure),
+        where oid = 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])'::regprocedure),
   'claim_outbox_batch is still SECURITY INVOKER after the recreate, so it carries no elevation of its own'
 );
 
 select ok(
-  not has_function_privilege('anon', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  not has_function_privilege('anon', 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])', 'execute'),
   'anon still cannot execute the claim function'
 );
 
 select ok(
-  not has_function_privilege('authenticated', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  not has_function_privilege('authenticated', 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])', 'execute'),
   'authenticated still cannot execute it either — a homeowner or a referring contractor has no business claiming delivery work, and the function returns recipient_email by design'
 );
 
 select ok(
-  has_function_privilege('service_role', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
-  'service_role can, which is the sweeper and the post-commit dispatch'
+  not has_function_privilege('service_role', 'public.claim_outbox_batch(integer,integer,uuid[])', 'execute'),
+  'the legacy unfenced claim is unavailable after the fenced cutover'
 );
 
 -- ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ select ok(
 select ok(
   'created_at' = any (
     select unnest(proargnames) from pg_proc
-     where oid = 'public.claim_outbox_batch(integer,integer,uuid[])'::regprocedure
+     where oid = 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])'::regprocedure
   ),
   'created_at is one of the function''s named results'
 );
@@ -62,7 +62,7 @@ select ok(
 select is(
   (select count(*)::int from pg_proc p, unnest(p.proallargtypes, p.proargmodes, p.proargnames)
         as a(argtype, argmode, argname)
-    where p.oid = 'public.claim_outbox_batch(integer,integer,uuid[])'::regprocedure
+    where p.oid = 'public.claim_outbox_batch_v2(integer,integer,uuid[],text[])'::regprocedure
       and a.argmode = 't'
       and a.argname = 'created_at'
       and a.argtype = 'timestamptz'::regtype),
@@ -90,7 +90,7 @@ values
    now() - interval '9 days');
 
 select is(
-  (select c.created_at from public.claim_outbox_batch(
+  (select c.created_at from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000001']::uuid[]) c),
   (select o.created_at from public.notifications_outbox o
     where o.id = '42000000-0000-4000-a000-000000000001'),
@@ -106,14 +106,14 @@ select isnt(
 );
 
 select is(
-  (select c.created_at::date from public.claim_outbox_batch(
+  (select c.created_at::date from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000002']::uuid[]) c),
   (now() - interval '45 days')::date,
   'a forty-five-day-old row reports forty-five days, so the engine can refuse it'
 );
 
 select is(
-  (select c.created_at::date from public.claim_outbox_batch(
+  (select c.created_at::date from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000003']::uuid[]) c),
   (now() - interval '9 days')::date,
   'a failed row that has been retried carries its original queue time, not the time of its last attempt'
@@ -132,21 +132,21 @@ values
    '{"suite":42,"case":"exhausted"}'::jsonb, 'pending', 5, now() - interval '1 minute');
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(
+  (select count(*)::int from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000011']::uuid[])),
   1,
   'a due row is still claimed exactly once'
 );
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(
+  (select count(*)::int from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000011']::uuid[])),
   0,
   'and is invisible to the next claim, because the lease pushed it past due — the concurrency guard survived the recreate'
 );
 
 select is(
-  (select count(*)::int from public.claim_outbox_batch(
+  (select count(*)::int from public.claim_outbox_batch_v2(
      10, 300, array['42000000-0000-4000-a000-000000000012']::uuid[])),
   0,
   'an attempt-exhausted row is still never returned for delivery'

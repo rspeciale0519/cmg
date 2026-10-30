@@ -76,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   stub.auditFails = false;
   stub.document.storage_path = `claims/${stub.document.claim_id}/evidence.pdf`;
+  stub.document.original_name = "evidence.pdf";
 });
 
 describe.each([
@@ -98,9 +99,34 @@ describe.each([
 
     expect(result.status).toBe("success");
     expect(result.url).toBe("https://storage.example.test/signed-secret");
+    expect(result.filename).toBe("evidence.pdf");
+    expect(stub.signUrl).toHaveBeenCalledWith(stub.document.storage_path, 300, {
+      download: "evidence.pdf",
+    });
     expect(stub.audited).toHaveBeenCalledWith(
       expect.objectContaining({ action: "document.signed_url_issued" }),
     );
+  });
+
+  it.each([
+    ['roof.pdf"; filename="unsafe.exe', "roof.pdf filenameunsafe.exe"],
+    ['";=<>', "upload"],
+  ])("cleans stored filename %j before signing and returning it", async (stored, expected) => {
+    stub.document.original_name = stored;
+
+    const result = await action({ status: "idle" }, form());
+
+    expect(result.status).toBe("success");
+    expect(stub.signUrl).toHaveBeenCalledWith(stub.document.storage_path, 300, {
+      download: expected,
+    });
+    expect(result.filename).toBe(expected);
+    expect(result.message).toContain(expected);
+    expect(result.message).not.toContain(stored);
+    expect(stub.document.original_name).toBe(stored);
+    expect(stub.audited).toHaveBeenCalledWith(expect.objectContaining({
+      meta: expect.objectContaining({ original_name: stored }),
+    }));
   });
 
   it("withholds the minted bearer URL when its required audit fails", async () => {

@@ -98,7 +98,8 @@ export function usePrivateDocumentUpload(
       const canUploadMissing = result.status === "idle" &&
         typeof result.pendingFiles === "number" && attempt.uploaded.size < attempt.files.length;
       if (!canUploadMissing) {
-        if (finish(result) || attempt.uploaded.size === attempt.files.length) return;
+        finish(result);
+        return;
       }
       setState(idleState);
     }

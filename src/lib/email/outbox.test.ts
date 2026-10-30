@@ -27,7 +27,7 @@ vi.mock("./delivery", () => ({
   OUTBOX_LEASE_SECONDS: 30,
 }));
 
-const { dispatchOutbox, sweepOutbox, countOutboxOwed, supabaseOutboxStore } = await import(
+const { dispatchOutbox, sweepOutbox, countOutboxOwed, countOutboxHeld, supabaseOutboxStore } = await import(
   "./outbox"
 );
 
@@ -41,6 +41,14 @@ function fakeQuery(result: { data?: unknown; error?: unknown; count?: number | n
     },
     in: (...args: unknown[]) => {
       calls.push({ method: "in", args });
+      return builder;
+    },
+    not: (...args: unknown[]) => {
+      calls.push({ method: "not", args });
+      return builder;
+    },
+    ilike: (...args: unknown[]) => {
+      calls.push({ method: "ilike", args });
       return builder;
     },
     lte: (...args: unknown[]) => {
@@ -279,144 +287,50 @@ describe("dispatchOutbox — no transport configured", () => {
   });
 });
 
-describe("sweepOutbox — the cron preselect", () => {
-  it("filters pending/failed rows by template and due time, then hands the ids through", async () => {
-    const { builder, calls } = fakeQuery({
-      data: [{ id: "row-1" }, { id: "row-2" }],
-      error: null,
-    });
-    const admin = { from: vi.fn(() => builder) } as unknown as Parameters<
-      typeof sweepOutbox
-    >[0];
-    const send = vi.fn();
-
-    await sweepOutbox(admin, send, 12, 3, ["intake_confirmation", "lead_auto_reply"]);
-
-    expect(admin.from).toHaveBeenCalledWith("notifications_outbox");
-    const statusCall = calls.find(
-      (c) => c.method === "in" && c.args[0] === "status",
-    );
-    const templateCall = calls.find(
-      (c) => c.method === "in" && c.args[0] === "template",
-    );
-    expect(statusCall?.args[1]).toEqual(["pending", "failed"]);
-    expect(templateCall?.args[1]).toEqual(["intake_confirmation", "lead_auto_reply"]);
-    expect(calls.some((c) => c.method === "lte")).toBe(true);
-    expect(calls.some((c) => c.method === "order")).toBe(true);
-
-    expect(deliverClaimed).toHaveBeenCalledWith(
-      expect.anything(),
-      send,
-      expect.objectContaining({ limit: 12, concurrency: 3, ids: ["row-1", "row-2"] }),
-    );
+describe("held notification count", () => {
+  it("uses the policy-aware count without exposing rows", async () => {
+    const rpc = vi.fn(async () => ({ data: 2, error: null }));
+    const admin = { rpc } as unknown as Parameters<typeof countOutboxHeld>[0];
+    expect(await countOutboxHeld(admin)).toBe(2);
+    expect(rpc).toHaveBeenCalledWith("count_outbox_held");
   });
-
-  it("runs with no template filter and no id preselect when none is given", async () => {
-    const admin = { from: vi.fn() } as unknown as Parameters<typeof sweepOutbox>[0];
-    const send = vi.fn();
-
-    await sweepOutbox(admin, send, 25);
-
-    expect(admin.from).not.toHaveBeenCalled();
-    expect(deliverClaimed).toHaveBeenCalledWith(
-      expect.anything(),
-      send,
-      expect.objectContaining({ limit: 25, concurrency: 1, ids: undefined }),
-    );
-  });
-
-  it("throws rather than sweeping everything when the preselect query fails", async () => {
-    const { builder } = fakeQuery({ data: null, error: { message: "timeout" } });
-    const admin = { from: vi.fn(() => builder) } as unknown as Parameters<
-      typeof sweepOutbox
-    >[0];
-
-    await expect(
-      sweepOutbox(admin, vi.fn(), 10, 1, ["intake_confirmation"]),
-    ).rejects.toThrow("timeout");
-    expect(deliverClaimed).not.toHaveBeenCalled();
+  it("returns unknown when the count cannot be read", async () => {
+    const admin = { rpc: vi.fn(async () => ({ data: null, error: { message: "failure" } })) } as unknown as Parameters<typeof countOutboxHeld>[0];
+    expect(await countOutboxHeld(admin)).toBeNull();
   });
 });
 
-describe("supabaseOutboxStore — settle", () => {
-  function fakeAdmin(update: (patch: unknown) => Promise<{ error: unknown }>) {
-    return {
-      from: vi.fn(() => ({
-        update: (patch: unknown) => ({
-          eq: async () => update(patch),
-        }),
-      })),
-    } as unknown as Parameters<typeof supabaseOutboxStore>[0];
-  }
-
-  it("omits next_attempt_at when settling a row sent", async () => {
-    const patches: unknown[] = [];
-    const admin = fakeAdmin(async (patch) => {
-      patches.push(patch);
-      return { error: null };
-    });
-
-    await supabaseOutboxStore(admin).settle({
-      id: "row-1",
-      outcome: "sent",
-      error: null,
-      retryInSeconds: null,
-    });
-
-    expect(patches[0]).toMatchObject({ status: "sent", last_error: null });
-    expect(patches[0]).toHaveProperty("sent_at");
-    expect(patches[0]).not.toHaveProperty("next_attempt_at");
+describe("sweepOutbox atomic claim", () => {
+  it("passes templates to the delivery engine without a preselect", async () => {
+    const admin = { from: vi.fn() } as unknown as Parameters<typeof sweepOutbox>[0];
+    const send = vi.fn();
+    await sweepOutbox(admin, send, 12, 3, ["intake_confirmation", "lead_auto_reply"]);
+    expect(admin.from).not.toHaveBeenCalled();
+    expect(deliverClaimed).toHaveBeenCalledWith(expect.anything(), send,
+      { limit: 12, concurrency: 3, templates: ["intake_confirmation", "lead_auto_reply"] });
   });
-
-  it("omits next_attempt_at when settling a row dead", async () => {
-    const patches: unknown[] = [];
-    const admin = fakeAdmin(async (patch) => {
-      patches.push(patch);
-      return { error: null };
-    });
-
-    await supabaseOutboxStore(admin).settle({
-      id: "row-1",
-      outcome: "dead",
-      error: "still failing",
-      retryInSeconds: null,
-    });
-
-    expect(patches[0]).toMatchObject({ status: "dead", last_error: "still failing" });
-    expect(patches[0]).not.toHaveProperty("next_attempt_at");
-    expect(patches[0]).not.toHaveProperty("sent_at");
+  it("passes no filter when none is given", async () => {
+    const admin = { from: vi.fn() } as unknown as Parameters<typeof sweepOutbox>[0];
+    const send = vi.fn();
+    await sweepOutbox(admin, send, 25);
+    expect(deliverClaimed).toHaveBeenCalledWith(expect.anything(), send,
+      { limit: 25, concurrency: 1, templates: undefined });
   });
+});
 
-  it("carries next_attempt_at when settling a row failed with a retry", async () => {
-    const patches: unknown[] = [];
-    const admin = fakeAdmin(async (patch) => {
-      patches.push(patch);
-      return { error: null };
+describe("supabaseOutboxStore fenced settlement", () => {
+  it.each(["sent", "dead", "failed", "held", "uncertain"] as const)("passes %s with the owning token", async (outcome) => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const admin = { rpc } as unknown as Parameters<typeof supabaseOutboxStore>[0];
+    await supabaseOutboxStore(admin).settle({ id: "row-1", leaseToken: "lease-1", outcome, error: null, retryInSeconds: outcome === "failed" ? 300 : null });
+    expect(rpc).toHaveBeenCalledWith("settle_outbox_claim_v2", {
+      p_id: "row-1", p_token: "lease-1", p_outcome: outcome, p_error: null,
+      p_retry_seconds: outcome === "failed" ? 300 : null,
     });
-
-    await supabaseOutboxStore(admin).settle({
-      id: "row-1",
-      outcome: "failed",
-      error: "451 mailbox unavailable",
-      retryInSeconds: 300,
-    });
-
-    expect(patches[0]).toMatchObject({ status: "failed", last_error: "451 mailbox unavailable" });
-    expect(patches[0]).toHaveProperty("next_attempt_at");
-    expect(patches[0]).not.toHaveProperty("sent_at");
   });
-
-  it("throws rather than silently losing a settle the database refused", async () => {
-    const admin = fakeAdmin(async () => ({ error: { message: "connection reset" } }));
-
-    await expect(
-      supabaseOutboxStore(admin).settle({
-        id: "row-1",
-        outcome: "sent",
-        error: null,
-        retryInSeconds: null,
-      }),
-    ).rejects.toThrow("connection reset");
+  it("throws when settlement fails", async () => {
+    const admin = { rpc: vi.fn(async () => ({ data: null, error: { message: "failure" } })) } as unknown as Parameters<typeof supabaseOutboxStore>[0];
+    await expect(supabaseOutboxStore(admin).settle({ id: "row-1", leaseToken: "lease-1", outcome: "sent", error: null, retryInSeconds: null })).rejects.toThrow();
   });
 });
 

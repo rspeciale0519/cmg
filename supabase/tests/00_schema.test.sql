@@ -7,7 +7,7 @@ begin;
 set local client_min_messages = warning;
 create extension if not exists pgtap with schema extensions;
 
-select plan(61);
+select plan(62);
 
 -- ---------------------------------------------------------------------------
 -- Every relation the platform stores data in actually exists
@@ -74,10 +74,17 @@ select is_empty(
                               'storage_cleanup_queue', 'esign_dispatch_attempts',
                               'esign_recipient_completions', 'intake_upload_sessions',
                               'intake_upload_files', 'private_upload_sessions',
-                              'private_upload_files')) $$,
+                              'private_upload_files', 'email_recipient_policy')) $$,
   'only service-role ledgers carry zero policies, so RLS-on-with-no-policy is a deliberate lockout and every client-facing table has an explicit policy'
 );
 
+select is_empty(
+  $$ select role_name || ':' || privilege
+       from unnest(array['anon', 'authenticated']) as roles(role_name)
+       cross join unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) as privileges(privilege)
+      where has_table_privilege(role_name, 'public.email_recipient_policy', privilege) $$,
+  'email recipient policy grants no table privileges to client roles'
+);
 select is_empty(
   $$ select p.polname::text
        from pg_policy p

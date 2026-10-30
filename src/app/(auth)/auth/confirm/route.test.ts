@@ -17,6 +17,8 @@ const stub = vi.hoisted(() => ({
   verifyOtp: vi.fn(),
   createServerClient: vi.fn(),
   auditInserts: [] as Record<string, unknown>[],
+  allowRate: true,
+  checkRateLimit: vi.fn(async () => true),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -35,6 +37,15 @@ vi.mock("@/lib/supabase/admin", () => ({
     }),
   }),
 }));
+vi.mock("@/lib/rate-limit", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/rate-limit")>(
+    "@/lib/rate-limit",
+  );
+  return {
+    ...actual,
+    checkRateLimit: stub.checkRateLimit,
+  };
+});
 
 const { GET } = await import("./route");
 
@@ -80,6 +91,8 @@ const EXPIRED = "https://cmg.test/forgot-password?notice=link-expired";
 beforeEach(() => {
   vi.clearAllMocks();
   stub.auditInserts.length = 0;
+  stub.allowRate = true;
+  stub.checkRateLimit.mockImplementation(async () => stub.allowRate);
   process.env.SITE_MODE = "staff";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:15421";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "publishable-key";
@@ -192,6 +205,26 @@ describe("GET /auth/confirm — refused links", () => {
 
     expect(response.headers.get("location")).toBe(EXPIRED);
     expect(response.headers.get("location")).not.toContain("evil");
+  });
+});
+
+describe("GET /auth/confirm — rate limit", () => {
+  it("does not call Auth when the IP budget is spent, and uses the same notice as a bad token", async () => {
+    stub.allowRate = false;
+
+    const response = await GET(request(`?token_hash=${HASH}&type=recovery`));
+
+    expect(response.headers.get("location")).toBe(EXPIRED);
+    expect(stub.createServerClient).not.toHaveBeenCalled();
+    expect(stub.verifyOtp).not.toHaveBeenCalled();
+    expect(stub.auditInserts).toEqual([]);
+  });
+
+  it("does not spend the budget on a malformed token", async () => {
+    const response = await GET(request("?token_hash=abc&type=recovery"));
+
+    expect(response.headers.get("location")).toBe(EXPIRED);
+    expect(stub.checkRateLimit).not.toHaveBeenCalled();
   });
 });
 

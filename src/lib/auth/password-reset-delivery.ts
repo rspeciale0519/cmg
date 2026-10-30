@@ -129,7 +129,7 @@ async function attempt(
     return { outcome: "site_url_missing", userId: user.id };
   }
 
-  const send = await resendSender();
+  const send = await resendSender(admin);
   if (!send) {
     console.info("[password-reset] RESEND_API_KEY not set; no email sent");
     return { outcome: "delivery_unconfigured", userId: user.id };

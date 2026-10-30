@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { STATUS_LABEL, STATUS_MEANING } from "@/lib/claims/status";
 import {
   isNotificationTemplate,
   NOTIFICATION_TEMPLATES,
@@ -134,6 +135,56 @@ describe("renderNotification", () => {
     expect(html).toContain("An adjuster will call you.");
   });
 
+  it.each(["under_review", "lor_sent", "lor_signed", "filed"] as const)(
+    "gives a factual notification reason for %s without changing its meaning",
+    async (status) => {
+      const { subject, html, text } = await renderNotification({
+        template: "claim_status_update",
+        payload: {
+          firstName: "Dana", claimRef: "CMG-2026-0042",
+          statusLabel: STATUS_LABEL[status], statusMeaning: STATUS_MEANING[status],
+          portalUrl: "https://example.test/portal",
+        },
+      });
+      expect(subject).toBe(`CMG-2026-0042 — ${STATUS_LABEL[status]}`);
+      for (const output of [html, text]) {
+        const content = output.replace(/\s+/g, " ");
+        expect(content).toContain(STATUS_MEANING[status]);
+        expect(content).toContain("Sent because CMG Property Solutions recorded a status update for your claim.");
+        expect(content).not.toContain("is representing you on this claim");
+        expect(content).not.toContain("Every update to your file is emailed to you");
+      }
+      expect(html).toContain('href="https://example.test/portal"');
+      expect(text).toContain("https://example.test/portal");
+    },
+  );
+
+  it.each(["CMG-2026-0042", undefined])(
+    "describes customer portal access accurately with claim reference %s",
+    async (claimRef) => {
+      const { subject, html, text } = await renderNotification({
+        template: "invite",
+        payload: {
+          firstName: "Dana", audience: "customer", claimRef,
+          inviteUrl: "https://example.test/invite/abc", expiresInHours: 168,
+        },
+      });
+      expect(subject).toBe(claimRef ? `Your CMG claim portal — ${claimRef}` : "Your CMG portal invitation");
+      for (const output of [html, text]) {
+        const content = output.replace(/<!-- -->/g, "").replace(/\s+/g, " ");
+        expect(content).toContain(`Hi Dana — CMG Property Solutions has invited you to view ${claimRef ? `claim ${claimRef}` : "your claim"} in your portal.`);
+        expect(content).toContain("Use this invitation to see the claim status and documents shared with you.");
+        expect(content).not.toContain("is now representing you");
+        expect(content).not.toContain("every document on the file");
+        expect(content).not.toContain("undefined");
+        expect(content).toContain("This link works once and expires in 168 hours.");
+        expect(content).toContain("Set my password");
+      }
+      expect(html).toContain('href="https://example.test/invite/abc"');
+      expect(text).toContain("https://example.test/invite/abc");
+    },
+  );
+
   it("renders the settled notice with the figure when one is recorded", async () => {
     const { subject, html, text } = await renderNotification({
       template: "settled_notice",
@@ -149,6 +200,15 @@ describe("renderNotification", () => {
     expect(text).toContain("Hi Dana");
     expect(html).toContain("$48,200.00");
     expect(html).toContain("Settlement");
+    for (const output of [html, text]) {
+      const content = output.replace(/\s+/g, " ");
+      expect(content).toContain("Sent because CMG Property Solutions recorded your claim as settled.");
+      expect(content).not.toContain("represented you on this claim");
+      expect(content).not.toContain("Every update to your file is emailed to you");
+      expect(content).toContain("Your fee agreement applies to the recovery.");
+    }
+    expect(html).toContain('href="https://example.test/portal"');
+    expect(text).toContain("https://example.test/portal");
   });
 
   it("omits the settlement row entirely when no figure is on the file", async () => {
@@ -265,6 +325,14 @@ describe("renderNotification", () => {
     expect(subject).toBe("New note on CMG-2026-0042");
     expect(text).toContain("Hi Dana");
     expect(html).toContain("The carrier acknowledged receipt this morning.");
+    for (const output of [html, text]) {
+      const content = output.replace(/\s+/g, " ");
+      expect(content).toContain("Sent because CMG Property Solutions posted a message to your claim.");
+      expect(content).not.toContain("is representing you on this claim");
+      expect(content).toContain("The carrier acknowledged receipt this morning.");
+    }
+    expect(html).toContain('href="https://example.test/portal"');
+    expect(text).toContain("https://example.test/portal");
   });
 
   /**
