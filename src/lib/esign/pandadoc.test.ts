@@ -96,7 +96,17 @@ describe("PandaDocProvider.dispatchLor", () => {
       carrier: { role: "H1", value: "Citizens" },
       i1: { role: "H1", value: "" },
       j1: { role: "H2", value: "" },
+      ia2: { role: "H1", value: "" },
+      ja2: { role: "H2", value: "" },
+      da2: { role: "H1", value: "" },
     });
+    const signingFields = create.fields as Record<string, { role: string; value: string }>;
+    for (const id of ["i1", "i2", "i3", "i4", "i8", "s5", "s6", "s7", "s9", "ia2", "da2"]) {
+      expect(signingFields[id], id).toEqual({ role: "H1", value: "" });
+    }
+    for (const id of ["j1", "j2", "j3", "j4", "j8", "t5", "t6", "t7", "t9", "ja2"]) {
+      expect(signingFields[id], id).toEqual({ role: "H2", value: "" });
+    }
     expect(new TextDecoder().decode(calls[0].init.body as Uint8Array)).toContain(
       'filename="CMG_LOR-2026-PandaDoc-Dual.pdf"',
     );
@@ -117,7 +127,12 @@ describe("PandaDocProvider.dispatchLor", () => {
 
     const body = new TextDecoder().decode(calls[0].init.body as Uint8Array);
     expect(body).toContain('filename="CMG_LOR-2026-PandaDoc-Single.pdf"');
-    expect(createData(calls[0]).fields).not.toHaveProperty("j1");
+    const fields = createData(calls[0]).fields as Record<string, { role: string; value: string }>;
+    for (const id of ["j1", "ja2", "j2", "j3", "j4", "j8", "t5", "t6", "t7", "t9"]) {
+      expect(fields).not.toHaveProperty(id);
+    }
+    expect(fields.ia2).toEqual({ role: "H1", value: "" });
+    expect(fields.da2).toEqual({ role: "H1", value: "" });
   });
 
   it("polls until the async creation reaches document.draft before sending", async () => {

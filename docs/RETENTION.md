@@ -137,10 +137,12 @@ Dead records remain for operator recovery.
 
 These delays are minimum wait times.
 They are not execution schedules.
-[vercel.json](../vercel.json) schedules outbox processing daily at 14:00 UTC.
+[vercel.json](../vercel.json) schedules outbox processing every five minutes.
 It schedules Storage cleanup daily at 14:17 UTC.
-Daily batches can delay retries or cleanup until later days.
-Hobby execution can vary within the scheduled hour.
+Vercel Pro must be active before deploying the five-minute outbox schedule.
+Outbox retries wait for a later eligible sweep and available batch space.
+Daily cleanup batches can delay cleanup retries until later days.
+Storage cleanup remains blocked. Do not run either job manually.
 See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
 Verify active production jobs and queue age after deployment.

@@ -156,14 +156,31 @@ describe.each([
   it(`carries the ${variant} signature tag set and no other`, () => {
     const expected =
       signerCount > 1
-        ? ["i1", "j1", "i2", "j2", "i3", "j3", "i4", "j4", "s5", "t5", "s6", "t6", "s7", "t7", "i8", "j8", "s9", "t9"]
-        : ["i1", "i2", "i3", "i4", "s5", "s6", "s7", "i8", "s9"];
+        ? ["i1", "j1", "ia2", "ja2", "da2", "i2", "j2", "i3", "j3", "i4", "j4", "s5", "t5", "s6", "t6", "s7", "t7", "i8", "j8", "s9", "t9"]
+        : ["i1", "ia2", "da2", "i2", "i3", "i4", "s5", "s6", "s7", "i8", "s9"];
 
     const ids = lorSignatureTags(signerCount).map(
-      (tag) => tag.replace(/^\{\{[a-z]:H[12]:/, "").replace(/_*\}\}$/, ""),
+      (tag) => tag.replace(/^\{\{[a-z]\*?:H[12]:/, "").replace(/_*\}\}$/, ""),
     );
-    expect(ids).toEqual(expected);
+    expect(ids.sort()).toEqual(expected.sort());
   });
+
+  it(`keeps the optional consent date as a blank calendar field for the ${variant} signer`, async () => {
+    const request = requestFor(signerCount);
+    request.tokens = [...request.tokens, { name: "da2", value: "07/01/2026" }];
+    const bytes = await buildPrefilledLorPdf(request, DISPATCH_DATE);
+    const shown = await drawnStrings(bytes);
+    const tags = lorSignatureTags(signerCount);
+
+    expect(tags).toContainEqual(expect.stringMatching(/^\{\{i\*:H1:ia2_*\}\}$/));
+    expect(tags).toContainEqual(expect.stringMatching(/^\{\{d\*:H1:da2_*\}\}$/));
+    if (signerCount === 2) {
+      expect(tags).toContainEqual(expect.stringMatching(/^\{\{i\*:H2:ja2_*\}\}$/));
+    }
+    expect(lorDataPlacements(signerCount).map((field) => field.id)).not.toContain("da2");
+    for (const tag of tags.filter((tag) => tag.includes("*:"))) expect(shown).toContain(tag);
+    expect(shown).not.toContain("07/01/2026");
+  }, 60_000);
 });
 
 describe("tag coordinate manifest", () => {
@@ -178,7 +195,7 @@ describe("tag coordinate manifest", () => {
     const source = await readFile(
       path.join(process.cwd(), "src", "lib", "esign", "templates", lorPdfName(signerCount)),
     );
-    const drawn = (await pageText(source)).match(/\{\{[a-z]:H[12]:[a-z0-9_]+\}\}/g) ?? [];
+    const drawn = (await pageText(source)).match(/\{\{[a-z]\*?:H[12]:[a-z0-9_]+\}\}/g) ?? [];
 
     const expected = [
       ...lorDataPlacements(signerCount).map((placement) => placement.tag),

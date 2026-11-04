@@ -64,11 +64,13 @@ export function buildLorPdfFields(
   for (const fieldId of DATE_FIELDS) {
     fields[fieldId] = { value: formatDispatchDate(dispatchDate), role: "H1" };
   }
-  for (const fieldId of [...H1_INITIALS, ...H1_SIGNATURES]) {
+  // Optional authorization is a separate consent choice. Never prefill its
+  // initials or date, including when the ordinary download dates are stamped.
+  for (const fieldId of [...H1_INITIALS, ...H1_SIGNATURES, "ia2", "da2"]) {
     fields[fieldId] = { value: "", role: "H1" };
   }
   if (request.signers.some((signer) => signer.role === "Homeowner2")) {
-    for (const fieldId of [...H2_INITIALS, ...H2_SIGNATURES]) {
+    for (const fieldId of [...H2_INITIALS, ...H2_SIGNATURES, "ja2"]) {
       fields[fieldId] = { value: "", role: "H2" };
     }
   }

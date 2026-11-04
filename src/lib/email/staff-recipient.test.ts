@@ -96,13 +96,34 @@ describe("staff alert recipient", () => {
     expect(provider.send).not.toHaveBeenCalled();
   });
 
-  it("sends an allowed direct message only after the policy check", async () => {
+  it("sends an allowed direct message with CMG replies after the policy check", async () => {
     vi.stubEnv("RESEND_API_KEY", "re_local_test");
     const rpc = vi.fn(async () => ({ data: true, error: null }));
     const send = await resendSender({ rpc } as unknown as Parameters<typeof resendSender>[0]);
     await send!({ idempotencyKey: "direct", to: "someone@example.test", subject: "Test", html: "Test", text: "Test" });
     expect(rpc).toHaveBeenCalledWith("email_recipient_allowed", { p_recipient: "someone@example.test" });
     expect(provider.send).toHaveBeenCalledOnce();
+    expect(provider.send).toHaveBeenCalledWith({
+      from: expect.any(String), to: "someone@example.test",
+      replyTo: "collin@cmgpropertysolutions.net", subject: "Test",
+      html: "Test", text: "Test",
+    }, { idempotencyKey: "direct" });
+    expect(rpc.mock.invocationCallOrder[0]).toBeLessThan(provider.send.mock.invocationCallOrder[0]);
+  });
+
+  it("sends an allowed queued message with CMG replies after the claim check", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_local_test");
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const send = await resendSender({ rpc } as unknown as Parameters<typeof resendSender>[0]);
+    await send!({ idempotencyKey: "row", leaseToken: "token", to: "queued@example.test", subject: "Queued", html: "Queued", text: "Queued" });
+    expect(rpc).toHaveBeenCalledWith("outbox_claim_ready_v2", { p_id: "row", p_token: "token", p_recipient: "queued@example.test" });
+    expect(provider.send).toHaveBeenCalledOnce();
+    expect(provider.send).toHaveBeenCalledWith({
+      from: expect.any(String), to: "queued@example.test",
+      replyTo: "collin@cmgpropertysolutions.net", subject: "Queued",
+      html: "Queued", text: "Queued",
+    }, { idempotencyKey: "row" });
+    expect(rpc.mock.invocationCallOrder[0]).toBeLessThan(provider.send.mock.invocationCallOrder[0]);
   });
 
   it("marks a provider connection error as an uncertain outcome", async () => {

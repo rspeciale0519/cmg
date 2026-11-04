@@ -277,7 +277,7 @@ function resendIntegration(
     state: "ready",
     headline: "Configured — notifications are delivered.",
     detail:
-      "The outbox attempts delivery immediately after each write, and the cron sweep retries anything that failed — after 1 minute, 5, 25 and about 2 hours, then marking it dead on the fifth failed attempt.",
+      "The outbox attempts delivery after each write. Retries wait at least 1, 5, 25, and 125 minutes. The cron runs every five minutes. Each retry waits for an eligible sweep, so delivery can take longer. A message becomes dead after its fifth failed attempt.",
     facts,
   };
 }
