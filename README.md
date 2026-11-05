@@ -280,24 +280,28 @@ See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for mi
 
 | Route | Schedule |
 |---|---|
-| `/api/cron/outbox` | Every five minutes (`*/5 * * * *`) |
+| `/api/cron/outbox` | Daily at 14:00 UTC (`0 14 * * *`) |
 | `/api/cron/storage-cleanup` | Daily at 14:17 UTC (`17 14 * * *`) |
 
 Both routes require `CRON_SECRET`.
 The outbox attempts delivery after a public submission commits.
-The five-minute sweep retries eligible queued messages that the current site mode permits.
+The daily sweep retries eligible queued messages that the current site mode permits.
 Simple mode delivers only the public-form templates. Staff mode adds the staff-alert templates.
 Platform mode delivers every template.
 
 Retry delays are minimum waits of 1, 5, 25, and 125 minutes.
 An eligible retry waits for a later sweep and available batch space.
-A backlog can need several sweeps, so these delays do not promise a delivery time.
+Daily batches can delay retries until later days, so these delays do not promise a delivery time.
+A backlog can need several daily sweeps.
+The unchanged default seven-day age limit can stop old messages.
 The fifth failed attempt marks a message dead.
 Each sweep claims at most 12 messages and sends at most three concurrently.
 The claim lease remains 300 seconds.
 
-Vercel Pro must be active before deploying the five-minute outbox schedule.
-The schedule change requires separate deployment approval.
+The daily schedule meets Hobby's frequency limit only.
+Hobby can start this job between 14:00 and 14:59 UTC.
+The separate commercial-use requirement in this runbook remains in force.
+Any schedule change requires separate deployment approval.
 See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
 Storage cleanup remains blocked. Its daily schedule remains unchanged.

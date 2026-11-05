@@ -8,7 +8,7 @@ import { deliverableTemplates } from "@/lib/site-mode";
  *
  * SCHEDULE
  *
- * Every five minutes, as configured in `vercel.json` for `/api/cron/outbox`.
+ * Daily at 14:00 UTC, as configured in `vercel.json` for `/api/cron/outbox`.
  * Retry delays in `delivery.ts` are minimum delays. A due retry waits for an
  * eligible sweep and available batch space; the delay is not a delivery time.
  *
@@ -21,7 +21,7 @@ import { deliverableTemplates } from "@/lib/site-mode";
  * between workers. Its lease excludes a claimed row until that lease expires.
  * The same claim covers `dispatchOutbox` after commit racing a sweep.
  */
-// Expected schedule: */5 * * * *
+// Expected schedule: 0 14 * * *
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
