@@ -65,6 +65,7 @@ export default async function PartnersPage({
   const statusParam = firstParam(raw, "status");
   const status = statusParam && isPartnerStatus(statusParam) ? statusParam : "";
   const justDeleted = raw.deleted === "1";
+  const airtableConnectionFailed = firstParam(raw, "airtable") === "connection_failed";
 
   // Counted first, so a stale `?page=9` on a three-page list lands on the last
   // page that exists rather than on an empty table under a header saying 42.
@@ -93,8 +94,12 @@ export default async function PartnersPage({
       <PageHeader
         eyebrow={`Owner · ${total} ${total === 1 ? "company" : "companies"}`}
         title="Partner companies."
-        lede="Contractors who send work to CMG. Each one gets reps with a portal that shows the status, milestones and settlement of the claims they referred — and nothing else."
+        lede="Companies that refer claims to CMG. Their representatives can use a portal to see the stages, milestones, and settlements for their own referrals."
       />
+
+      {airtableConnectionFailed ? <p role="alert" className="mb-5 border-l-2 border-accent py-1 pl-3 text-sm">
+        Airtable could not be connected. Open the company and review its Airtable settings before trying again.
+      </p> : null}
 
       {justDeleted ? (
         <p
@@ -131,7 +136,7 @@ export default async function PartnersPage({
               status ? `No ${status} companies.` : "No partner companies yet."
             }
           >
-            Add the contractor first, then invite their rep. Claims that arrive
+            Add the company first, then invite their representative. Claims that arrive
             through a referral can be attributed to the company when you accept
             the intake.
           </EmptyState>

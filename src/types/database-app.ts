@@ -25,6 +25,9 @@ type NullableArgs<
 // Generation does not retain these SQL null contracts. Keep database.ts as the
 // untouched CLI output; preserve every other field and optional argument here.
 type FunctionOverrides = {
+  // A null firm ID creates a firm; only a return milestone needs a return stage.
+  save_law_firm: NullableArgs<"save_law_firm", "p_firm_id">;
+  record_legal_milestone: NullableArgs<"record_legal_milestone", "p_return_status">;
   // Error and retry fields are nullable for successful, held, and dead claims.
   settle_outbox_claim_v2: NullableArgs<"settle_outbox_claim_v2", "p_error" | "p_retry_seconds">;
   // 20260815240000: optional intake facts use COALESCE; partner fields depend on

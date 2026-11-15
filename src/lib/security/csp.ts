@@ -1,3 +1,8 @@
+export function isLoopbackApplicationHost(hostname: string): boolean {
+  return ["localhost", "127.0.0.1", "::1"].includes(hostname)
+    || hostname.endsWith(".localhost");
+}
+
 function localSupabaseSources(configuredUrl?: string): string {
   const sources = new Set(["http://127.0.0.1:15421", "ws://127.0.0.1:15421"]);
   if (configuredUrl) {

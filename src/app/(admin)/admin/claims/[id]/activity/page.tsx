@@ -18,6 +18,7 @@ import { formatTimestamp, initialsFor } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /* Its own title, so the six tabs of one claim are six distinct tabs in a
    strip rather than six copies of the reference. */

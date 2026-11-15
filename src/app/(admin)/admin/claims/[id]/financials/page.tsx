@@ -10,6 +10,7 @@ import { FEE_PERCENT_DEFAULT } from "@/lib/settings/config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * The claim layout above this one titles every tab with the reference, which is

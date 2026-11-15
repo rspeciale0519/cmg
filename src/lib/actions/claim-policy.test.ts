@@ -129,6 +129,22 @@ beforeEach(() => {
 });
 
 describe("advanceClaimStatus — the move that sends the letter", () => {
+  it("requires the legal handoff action to enter the optional legal stage", async () => {
+    stub.claim.status = "lor_signed";
+    stub.allowed = ["documenting", "with_law_firm"];
+    const state = await advanceClaimStatus(idleState, form({ claimId: stub.CLAIM_ID, to: "with_law_firm" }));
+    expect(state.status).toBe("error");
+    expect(stub.updated).not.toHaveBeenCalled();
+  });
+
+  it("requires the legal return action to leave the optional legal stage", async () => {
+    stub.claim.status = "with_law_firm";
+    stub.allowed = ["documenting", "settled"];
+    const state = await advanceClaimStatus(idleState, form({ claimId: stub.CLAIM_ID, to: "documenting" }));
+    expect(state.status).toBe("error");
+    expect(stub.updated).not.toHaveBeenCalled();
+  });
+
   it("refuses lor_sent on a claim that names no carrier, and writes nothing", async () => {
     const state = await advanceClaimStatus(
       idleState,

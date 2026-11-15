@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { contentSecurityPolicy } from "@/lib/security/csp";
+import { contentSecurityPolicy, isLoopbackApplicationHost } from "@/lib/security/csp";
 import { updateSession } from "@/lib/supabase/proxy";
 
 /**
@@ -15,9 +15,7 @@ import { updateSession } from "@/lib/supabase/proxy";
  */
 export async function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
-    request.nextUrl.hostname,
-  );
+  const isLoopback = isLoopbackApplicationHost(request.nextUrl.hostname);
   const policy = contentSecurityPolicy(
     nonce,
     process.env.NODE_ENV === "development",

@@ -123,6 +123,10 @@ const STATUS_NARRATIVE: Record<
     now: "The claim is back with the carrier after the refusal.",
     next: "They review it again and we press for a decision.",
   },
+  with_law_firm: {
+    now: "Your claim is with a law firm. CMG records its progress here.",
+    next: "We will let you know when the firm accepts the claim or records another milestone.",
+  },
   settled: {
     now: "Agreed with the carrier.",
     next: "Payment is issued and the file closes.",
@@ -184,7 +188,14 @@ export function progressFor(
   status: ClaimStatus,
   history: readonly StatusHistoryRow[],
 ): ProgressView | null {
-  const phase = customerPhaseFor(status);
+  // Legal review is optional and may start before documentation or filing.
+  // Keep the ordinary ladder at its last recorded phase, not an invented one.
+  const precedingStatus = status === "with_law_firm"
+    ? [...history]
+        .filter((row) => row.to_status !== "with_law_firm" && customerPhaseFor(row.to_status as ClaimStatus))
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.to_status as ClaimStatus | undefined
+    : undefined;
+  const phase = customerPhaseFor(precedingStatus ?? (status === "with_law_firm" ? "lor_signed" : status));
   if (!phase) return null;
 
   const currentIndex = CUSTOMER_PHASE.indexOf(phase);

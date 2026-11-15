@@ -22,6 +22,7 @@ export const STATUS_LABEL: Record<ClaimStatus, string> = {
   closed: "Closed",
   denied: "Denied",
   reopened: "Reopened",
+  with_law_firm: "With law firm",
   rejected: "Rejected",
 };
 
@@ -41,8 +42,9 @@ export const STATUS_MEANING: Record<ClaimStatus, string> = {
   settlement_offered: "An offer is on the table and needs a decision.",
   settled: "Agreed. Payment and closeout remain.",
   closed: "Finished. No further moves.",
-  denied: "The carrier refused. Reopening is the only way forward.",
+  denied: "The carrier refused. CMG can reopen the claim or consider a law-firm handoff.",
   reopened: "Back with the carrier after a denial.",
+  with_law_firm: "With a law firm. CMG records the firm's progress and the next step.",
   /* "…and no invite was ever sent" was true of the intake queue, whose reject
      action is pinned to `status = 'new_intake'`, and false of the status picker,
      which `allowed_claim_transitions` also offers at `under_review` and
@@ -77,6 +79,7 @@ export const PIPELINE: readonly ClaimStatus[] = [
 export const BRANCH_STATUSES: readonly ClaimStatus[] = [
   "denied",
   "reopened",
+  "with_law_firm",
   "rejected",
 ] as const;
 
@@ -135,6 +138,7 @@ export const STATUS_TONE: Record<ClaimStatus, StatusTone> = {
   closed: "resolved",
   denied: "halted",
   reopened: "active",
+  with_law_firm: "active",
   rejected: "declined",
 };
 
@@ -150,7 +154,7 @@ export function isClaimStatus(value: unknown): value is ClaimStatus {
   return typeof value === "string" && Object.hasOwn(STATUS_LABEL, value);
 }
 
-/** Position on the mainline, or -1 for the three branch statuses. */
+/** Position on the mainline, or -1 for an optional branch status. */
 export function pipelineIndex(status: ClaimStatus): number {
   return PIPELINE.indexOf(status);
 }
@@ -196,6 +200,7 @@ export function customerPhaseFor(status: ClaimStatus): CustomerPhase | null {
     // A rejected intake never became a claim the homeowner can see, so it has
     // no phase rather than a phase of "none".
     case "rejected":
+    case "with_law_firm":
       return null;
   }
 }

@@ -34,6 +34,378 @@ export type Database = {
   }
   public: {
     Tables: {
+      airtable_claim_links: {
+        Row: {
+          authorized_by: string
+          base_id: string
+          claim_id: string
+          company_id: string
+          config_revision: number
+          connection_id: string
+          enabled: boolean
+          fields_override: string[] | null
+          last_source: Json
+          last_values: Json
+          mode_override: string | null
+          record_id: string
+          review_required: boolean
+          revision: number
+          source_revision: number
+          table_id: string
+          updated_at: string
+        }
+        Insert: {
+          authorized_by: string
+          base_id: string
+          claim_id: string
+          company_id: string
+          config_revision: number
+          connection_id: string
+          enabled?: boolean
+          fields_override?: string[] | null
+          last_source?: Json
+          last_values?: Json
+          mode_override?: string | null
+          record_id: string
+          review_required?: boolean
+          revision?: number
+          source_revision?: number
+          table_id: string
+          updated_at?: string
+        }
+        Update: {
+          authorized_by?: string
+          base_id?: string
+          claim_id?: string
+          company_id?: string
+          config_revision?: number
+          connection_id?: string
+          enabled?: boolean
+          fields_override?: string[] | null
+          last_source?: Json
+          last_values?: Json
+          mode_override?: string | null
+          record_id?: string
+          review_required?: boolean
+          revision?: number
+          source_revision?: number
+          table_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_claim_links_authorized_by_fkey"
+            columns: ["authorized_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_claim_links_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: true
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_claim_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_claim_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "airtable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      airtable_connections: {
+        Row: {
+          base_id: string | null
+          company_id: string
+          config_revision: number
+          created_at: string
+          default_fields: string[]
+          default_mode: string
+          enabled: boolean
+          id: string
+          mappings: Json
+          needs_reconnect: boolean
+          table_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_id?: string | null
+          company_id: string
+          config_revision?: number
+          created_at?: string
+          default_fields?: string[]
+          default_mode?: string
+          enabled?: boolean
+          id?: string
+          mappings?: Json
+          needs_reconnect?: boolean
+          table_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_id?: string | null
+          company_id?: string
+          config_revision?: number
+          created_at?: string
+          default_fields?: string[]
+          default_mode?: string
+          enabled?: boolean
+          id?: string
+          mappings?: Json
+          needs_reconnect?: boolean
+          table_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      airtable_credentials: {
+        Row: {
+          ciphertext: string
+          connection_id: string
+          expires_at: string
+          refresh_lease: string | null
+          refresh_started_at: string | null
+          token_version: number
+        }
+        Insert: {
+          ciphertext: string
+          connection_id: string
+          expires_at: string
+          refresh_lease?: string | null
+          refresh_started_at?: string | null
+          token_version?: number
+        }
+        Update: {
+          ciphertext?: string
+          connection_id?: string
+          expires_at?: string
+          refresh_lease?: string | null
+          refresh_started_at?: string | null
+          token_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_credentials_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: true
+            referencedRelation: "airtable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      airtable_delivery_requests: {
+        Row: {
+          attempts: number
+          authorized_by: string
+          base_id: string
+          claim_id: string
+          config_revision: number
+          connection_id: string
+          created_at: string
+          digest: string
+          expected_values: Json
+          id: string
+          last_error: string | null
+          lease_token: string | null
+          lease_until: string | null
+          link_revision: number
+          next_attempt_at: string
+          record_id: string
+          reviewed: boolean
+          selected_fields: string[]
+          sent_at: string | null
+          source_revision: number
+          source_values: Json
+          status: string
+          table_id: string
+        }
+        Insert: {
+          attempts?: number
+          authorized_by: string
+          base_id: string
+          claim_id: string
+          config_revision: number
+          connection_id: string
+          created_at?: string
+          digest: string
+          expected_values: Json
+          id?: string
+          last_error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          link_revision: number
+          next_attempt_at?: string
+          record_id: string
+          reviewed?: boolean
+          selected_fields: string[]
+          sent_at?: string | null
+          source_revision: number
+          source_values: Json
+          status: string
+          table_id: string
+        }
+        Update: {
+          attempts?: number
+          authorized_by?: string
+          base_id?: string
+          claim_id?: string
+          config_revision?: number
+          connection_id?: string
+          created_at?: string
+          digest?: string
+          expected_values?: Json
+          id?: string
+          last_error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          link_revision?: number
+          next_attempt_at?: string
+          record_id?: string
+          reviewed?: boolean
+          selected_fields?: string[]
+          sent_at?: string | null
+          source_revision?: number
+          source_values?: Json
+          status?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_delivery_requests_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_delivery_requests_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "airtable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      airtable_oauth_states: {
+        Row: {
+          ciphertext: string
+          company_id: string
+          consumed_at: string | null
+          expires_at: string
+          owner_id: string
+          state_hash: string
+        }
+        Insert: {
+          ciphertext: string
+          company_id: string
+          consumed_at?: string | null
+          expires_at: string
+          owner_id: string
+          state_hash: string
+        }
+        Update: {
+          ciphertext?: string
+          company_id?: string
+          consumed_at?: string | null
+          expires_at?: string
+          owner_id?: string
+          state_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_oauth_states_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      airtable_rate_slots: {
+        Row: {
+          base_id: string
+          next_request_at: string
+        }
+        Insert: {
+          base_id: string
+          next_request_at: string
+        }
+        Update: {
+          base_id?: string
+          next_request_at?: string
+        }
+        Relationships: []
+      }
+      airtable_shared_messages: {
+        Row: {
+          author_id: string
+          body: string
+          claim_id: string
+          connection_id: string
+          created_at: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          claim_id: string
+          connection_id: string
+          created_at?: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          claim_id?: string
+          connection_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airtable_shared_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_shared_messages_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "airtable_shared_messages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "airtable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -156,6 +528,198 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_legal_handoffs: {
+        Row: {
+          cancellation_request_id: string | null
+          claim_id: string
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          firm_id: string
+          firm_snapshot: Json
+          id: string
+          milestone: string | null
+          outcome: string | null
+          prior_status: Database["public"]["Enums"]["claim_status"]
+          request_id: string
+          version: number
+        }
+        Insert: {
+          cancellation_request_id?: string | null
+          claim_id: string
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          firm_id: string
+          firm_snapshot: Json
+          id?: string
+          milestone?: string | null
+          outcome?: string | null
+          prior_status: Database["public"]["Enums"]["claim_status"]
+          request_id: string
+          version?: number
+        }
+        Update: {
+          cancellation_request_id?: string | null
+          claim_id?: string
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          firm_id?: string
+          firm_snapshot?: Json
+          id?: string
+          milestone?: string | null
+          outcome?: string | null
+          prior_status?: Database["public"]["Enums"]["claim_status"]
+          request_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_legal_handoffs_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_handoffs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_handoffs_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_legal_milestones: {
+        Row: {
+          claim_id: string
+          from_status: Database["public"]["Enums"]["claim_status"]
+          handoff_id: string
+          id: string
+          milestone: string
+          occurred_on: string
+          recorded_at: string
+          recorded_by: string
+          recorded_txid: number
+          request_id: string
+          request_payload: Json
+          to_status: Database["public"]["Enums"]["claim_status"]
+        }
+        Insert: {
+          claim_id: string
+          from_status: Database["public"]["Enums"]["claim_status"]
+          handoff_id: string
+          id?: string
+          milestone: string
+          occurred_on: string
+          recorded_at?: string
+          recorded_by: string
+          recorded_txid?: number
+          request_id: string
+          request_payload: Json
+          to_status: Database["public"]["Enums"]["claim_status"]
+        }
+        Update: {
+          claim_id?: string
+          from_status?: Database["public"]["Enums"]["claim_status"]
+          handoff_id?: string
+          id?: string
+          milestone?: string
+          occurred_on?: string
+          recorded_at?: string
+          recorded_by?: string
+          recorded_txid?: number
+          request_id?: string
+          request_payload?: Json
+          to_status?: Database["public"]["Enums"]["claim_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_legal_milestones_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_milestones_handoff_id_fkey"
+            columns: ["handoff_id"]
+            isOneToOne: false
+            referencedRelation: "claim_legal_handoffs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_milestones_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_legal_packages: {
+        Row: {
+          claim_id: string
+          created_at: string
+          created_by: string
+          handoff_id: string
+          id: string
+          request_id: string
+          request_payload: Json
+          snapshot: Json
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          created_by: string
+          handoff_id: string
+          id?: string
+          request_id: string
+          request_payload: Json
+          snapshot: Json
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          created_by?: string
+          handoff_id?: string
+          id?: string
+          request_id?: string
+          request_payload?: Json
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_legal_packages_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_packages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_legal_packages_handoff_id_fkey"
+            columns: ["handoff_id"]
+            isOneToOne: false
+            referencedRelation: "claim_legal_handoffs"
             referencedColumns: ["id"]
           },
         ]
@@ -867,6 +1431,60 @@ export type Database = {
           },
         ]
       }
+      law_firms: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "law_firms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "law_firms_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string
@@ -1259,6 +1877,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      airtable_request_ready: {
+        Args: {
+          p_lease_token: string
+          p_reconcile?: boolean
+          p_request_id: string
+        }
+        Returns: Json
+      }
       allowed_claim_transitions: {
         Args: { p_from: Database["public"]["Enums"]["claim_status"] }
         Returns: Database["public"]["Enums"]["claim_status"][]
@@ -1272,8 +1898,20 @@ export type Database = {
         }
         Returns: string
       }
+      approve_airtable_update: {
+        Args: { p_digest: string; p_request_id: string }
+        Returns: undefined
+      }
       assert_claim_loss_date: {
         Args: { p_loss_date: string }
+        Returns: undefined
+      }
+      begin_airtable_oauth: {
+        Args: {
+          p_ciphertext: string
+          p_company_id: string
+          p_state_hash: string
+        }
         Returns: undefined
       }
       begin_intake_upload_session: {
@@ -1301,6 +1939,14 @@ export type Database = {
       }
       cancel_intake_upload_session: {
         Args: { p_id: string; p_token_hash: string }
+        Returns: Json
+      }
+      cancel_legal_preparation: {
+        Args: {
+          p_expected_version: number
+          p_handoff_id: string
+          p_request_id: string
+        }
         Returns: Json
       }
       cancel_private_upload_session: {
@@ -1335,6 +1981,14 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
+      claim_airtable_batch: {
+        Args: { p_claim_id?: string; p_limit?: number }
+        Returns: Json
+      }
+      claim_airtable_refresh: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
       claim_esign_dispatch: {
         Args: {
           p_actor_id?: string
@@ -1350,6 +2004,7 @@ export type Database = {
         Args: { p_id: string; p_index: number; p_token_hash: string }
         Returns: Json
       }
+      claim_legal_progress: { Args: { p_claim_id: string }; Returns: Json }
       claim_outbox_batch: {
         Args: { p_ids?: string[]; p_lease_seconds?: number; p_limit?: number }
         Returns: {
@@ -1419,6 +2074,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      configure_airtable_claim: {
+        Args: {
+          p_claim_id: string
+          p_enabled: boolean
+          p_expected_revision: number
+          p_override: Json
+          p_record_id: string
+        }
+        Returns: Json
+      }
+      configure_airtable_company: {
+        Args: {
+          p_company_id: string
+          p_config: Json
+          p_expected_revision: number
+        }
+        Returns: Json
+      }
+      consume_airtable_oauth: { Args: { p_state_hash: string }; Returns: Json }
       count_outbox_held: { Args: never; Returns: number }
       email_recipient_allowed: {
         Args: { p_recipient: string }
@@ -1485,6 +2159,17 @@ export type Database = {
         }
         Returns: Json
       }
+      legal_package_document: {
+        Args: { p_document_id: string; p_package_id: string }
+        Returns: {
+          claim_id: string
+          id: string
+          mime: string
+          original_name: string
+          size_bytes: number
+          updated_at: string
+        }[]
+      }
       link_invited_claimant: {
         Args: { p_claim_id: string; p_email: string; p_user_id: string }
         Returns: boolean
@@ -1526,6 +2211,24 @@ export type Database = {
           last_name: string
         }[]
       }
+      post_airtable_message: {
+        Args: { p_body: string; p_claim_id: string; p_request_id: string }
+        Returns: string
+      }
+      prepare_legal_package: {
+        Args: {
+          p_document_ids: string[]
+          p_handoff_id: string
+          p_request_id: string
+          p_summary_fields: string[]
+          p_summary_note: string
+        }
+        Returns: Json
+      }
+      preview_airtable_update: {
+        Args: { p_claim_id: string }
+        Returns: undefined
+      }
       reassign_claim: {
         Args: { p_claim_id: string; p_new_adjuster: string }
         Returns: undefined
@@ -1556,12 +2259,88 @@ export type Database = {
         }
         Returns: Json
       }
+      record_legal_milestone: {
+        Args: {
+          p_expected_version: number
+          p_handoff_id: string
+          p_milestone: string
+          p_occurred_on: string
+          p_request_id: string
+          p_return_status: Database["public"]["Enums"]["claim_status"]
+        }
+        Returns: Json
+      }
       refresh_claim_partner_summary: {
         Args: { p_claim_id: string }
         Returns: undefined
       }
       release_pandadoc_webhook_event: {
         Args: { p_claim_token: string; p_error: string; p_event_id: string }
+        Returns: boolean
+      }
+      reserve_airtable_rate_slot: {
+        Args: { p_base_id: string }
+        Returns: number
+      }
+      retry_airtable_update: {
+        Args: { p_digest: string; p_request_id: string }
+        Returns: undefined
+      }
+      save_law_firm: {
+        Args: {
+          p_contact_email: string
+          p_contact_name: string
+          p_contact_phone: string
+          p_firm_id: string
+          p_is_active: boolean
+          p_name: string
+        }
+        Returns: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          updated_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "law_firms"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_airtable_claim_paused: {
+        Args: { p_claim_id: string; p_paused: boolean }
+        Returns: undefined
+      }
+      set_airtable_company_paused: {
+        Args: { p_company_id: string; p_paused: boolean }
+        Returns: undefined
+      }
+      settle_airtable_refresh: {
+        Args: {
+          p_ciphertext: string
+          p_connection_id: string
+          p_expires_at: string
+          p_lease_token: string
+          p_ok: boolean
+          p_version: number
+        }
+        Returns: boolean
+      }
+      settle_airtable_request: {
+        Args: {
+          p_error?: string
+          p_lease_token: string
+          p_outcome: string
+          p_request_id: string
+          p_values?: Json
+        }
         Returns: boolean
       }
       settle_esign_dispatch: {
@@ -1603,6 +2382,38 @@ export type Database = {
           status: Database["public"]["Enums"]["claim_status"]
           updated_at: string
         }[]
+      }
+      start_legal_handoff: {
+        Args: { p_claim_id: string; p_firm_id: string; p_request_id: string }
+        Returns: {
+          cancellation_request_id: string | null
+          claim_id: string
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          firm_id: string
+          firm_snapshot: Json
+          id: string
+          milestone: string | null
+          outcome: string | null
+          prior_status: Database["public"]["Enums"]["claim_status"]
+          request_id: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "claim_legal_handoffs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      store_airtable_tokens: {
+        Args: {
+          p_ciphertext: string
+          p_company_id: string
+          p_expires_at: string
+        }
+        Returns: string
       }
       submit_claim_transaction: {
         Args: {
@@ -1656,6 +2467,7 @@ export type Database = {
         | "denied"
         | "reopened"
         | "rejected"
+        | "with_law_firm"
       consent_kind: "sms" | "email"
       document_kind:
         | "declarations"
@@ -1843,6 +2655,7 @@ export const Constants = {
         "denied",
         "reopened",
         "rejected",
+        "with_law_firm",
       ],
       consent_kind: ["sms", "email"],
       document_kind: [
