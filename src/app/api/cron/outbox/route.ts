@@ -9,8 +9,8 @@ import { deliverableTemplates } from "@/lib/site-mode";
  * SCHEDULE
  *
  * Daily at 14:00 UTC, as configured in `vercel.json` for `/api/cron/outbox`.
- * Retry delays in `delivery.ts` are minimum delays. A due retry waits for a
- * later sweep, so daily processing can delay mail until the following day.
+ * Retry delays in `delivery.ts` are minimum delays. A due retry waits for an
+ * eligible sweep and available batch space; the delay is not a delivery time.
  *
  * Node runtime: the claim goes through the service-role client, and
  * `constantTimeEquals` behind the auth gate is `node:crypto`.

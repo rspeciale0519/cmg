@@ -379,7 +379,7 @@ export async function processPandaDocWebhook(
      and must never turn a processed event back into a retry. Every other
      enqueue site dispatches immediately after its commit, and a signed letter
      is the one notification a homeowner is actively waiting for — without this
-     it would wait for the next daily sweep. Rows are found by the dedupe key
+     it would wait for a later daily sweep. Rows are found by the dedupe key
      the handlers stamped, so only this event's messages are attempted. */
   await dispatchWebhookNotifications(admin, eventId);
 

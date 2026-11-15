@@ -139,8 +139,13 @@ These delays are minimum wait times.
 They are not execution schedules.
 [vercel.json](../vercel.json) schedules outbox processing daily at 14:00 UTC.
 It schedules Storage cleanup daily at 14:17 UTC.
-Daily batches can delay retries or cleanup until later days.
-Hobby execution can vary within the scheduled hour.
+The daily schedule meets Hobby's frequency limit only.
+Its separate commercial-use restriction still applies.
+Outbox retries wait for a later daily sweep and available batch space.
+Daily outbox batches can delay retries until later days.
+The unchanged default seven-day age limit can stop old messages.
+Daily cleanup batches can delay cleanup retries until later days.
+Storage cleanup remains blocked. Do not run either job manually.
 See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
 Verify active production jobs and queue age after deployment.

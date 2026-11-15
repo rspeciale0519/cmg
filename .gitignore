@@ -28,6 +28,9 @@ tmp/
 .env
 .env.local
 .env*.local
+.env*.local_bak
+.env*.local.bak
+.env*.local.backup
 
 # supabase
 supabase/.branches/

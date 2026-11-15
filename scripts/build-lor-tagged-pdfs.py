@@ -19,13 +19,13 @@ TAG_COLOR = (0, 0, 0)
 FONT_SIZE = 7
 
 
-def tag(field_type: str, role: str, field_id: str, width: int = 0) -> str:
-    return "{{" + f"{field_type}:{role}:{field_id}{'_' * width}" + "}}"
+def tag(field_type: str, role: str, field_id: str, width: int = 0, *, optional: bool = False) -> str:
+    return "{{" + f"{field_type}{'*' if optional else ''}:{role}:{field_id}{'_' * width}" + "}}"
 
 
 def system_fields() -> dict[int, list[tuple[float, float, str]]]:
     # These are text baselines, not rule centers. Keep descenders clear of the
-    # raster form's rules; dates below a rule also need room for their glyphs.
+    # raster form's rules. Printed values belong above their matching rules.
     return {
         1: [
             (103, 558, tag("t", "H1", "ph", 30)),
@@ -38,20 +38,20 @@ def system_fields() -> dict[int, list[tuple[float, float, str]]]:
             (464, 59, tag("t", "H1", "d1", 8)),
         ],
         2: [(425, 104, tag("t", "H1", "d2", 8))],
-        3: [(455, 145, tag("t", "H1", "d3", 8))],
-        4: [(455, 95, tag("t", "H1", "d4", 8))],
-        5: [(430, 698, tag("t", "H1", "d5", 8))],
+        3: [(455, 155.5, tag("t", "H1", "d3", 8))],
+        4: [(445, 115, tag("t", "H1", "d4", 8))],
+        5: [(430, 710, tag("t", "H1", "d5", 8))],
         6: [(430, 678, tag("t", "H1", "d6", 8))],
-        7: [(115, 418, tag("t", "H1", "d7", 12))],
+        7: [(115, 427, tag("t", "H1", "d7", 12))],
         8: [(455, 36, tag("t", "H1", "d8", 8))],
         9: [
-            (403, 516, tag("t", "H1", "claimno", 16)),
-            (185, 480, tag("t", "H1", "accepted", 14)),
+            (403, 528, tag("t", "H1", "claimno", 16)),
+            (169, 491, tag("t", "H1", "accepted", 14)),
             (416, 483, tag("t", "H1", "adjuster", 13)),
-            (177, 441, tag("t", "H1", "phone", 13)),
-            (414, 441, tag("t", "H1", "d9a", 8)),
-            (128, 403, tag("t", "H1", "email", 20)),
-            (125, 366, tag("t", "H1", "d9b", 8)),
+            (177, 454.5, tag("t", "H1", "phone", 13)),
+            (393, 454, tag("t", "H1", "d9a", 8)),
+            (128, 414, tag("t", "H1", "email", 20)),
+            (125, 380, tag("t", "H1", "d9b", 8)),
             # Centred inside the printed checkboxes on page 9, which sit at
             # y 323.2-330.5 (EMERGENCY), 304.9-312.2 (NON-EMERGENCY) and
             # 286.5-293.8 (SUPPLEMENTAL), x 108.8-115.2. The earlier baselines
@@ -67,15 +67,22 @@ def system_fields() -> dict[int, list[tuple[float, float, str]]]:
 
 
 def signer_fields(dual: bool) -> dict[int, list[tuple[float, float, str]]]:
+    # Marker anchors guide detection, not final ink bounds. PandaDoc can retain
+    # custom field heights. Review and resize imported boxes using the measured
+    # placement guide before sending either variant.
     fields: dict[int, list[tuple[float, float, str]]] = {
         1: [(176, 55, tag("i", "H1", "i1", 8))],
-        2: [(166, 104, tag("i", "H1", "i2", 8))],
-        3: [(166, 145, tag("i", "H1", "i3", 8))],
-        4: [(176, 95, tag("i", "H1", "i4", 8))],
+        2: [
+            (108, 373.41, tag("i", "H1", "ia2", optional=True)),
+            (424, 378, tag("d", "H1", "da2", optional=True)),
+            (166, 104, tag("i", "H1", "i2", 8)),
+        ],
+        3: [(166, 150.78, tag("i", "H1", "i3", 8))],
+        4: [(176, 110.44, tag("i", "H1", "i4", 8))],
         5: [(125, 698, tag("s", "H1", "s5", 35))],
-        6: [(125, 677, tag("s", "H1", "s6", 35))],
-        7: [(145, 486, tag("s", "H1", "s7", 38))],
-        8: [(174, 30, tag("i", "H1", "i8", 8))],
+        6: [(125, 666.44, tag("s", "H1", "s6", 35))],
+        7: [(145, 495.65, tag("s", "H1", "s7", 38))],
+        8: [(174, 31.48, tag("i", "H1", "i8", 8))],
         9: [(150, 516, tag("s", "H1", "s9", 28))],
     }
     if not dual:
@@ -87,32 +94,35 @@ def signer_fields(dual: bool) -> dict[int, list[tuple[float, float, str]]]:
             (222, 55, tag("i", "H2", "j1", 3)),
         ],
         2: [
+            (108, 373.41, tag("i", "H1", "ia2", optional=True)),
+            (154, 373.41, tag("i", "H2", "ja2", optional=True)),
+            (424, 378, tag("d", "H1", "da2", optional=True)),
             (166, 104, tag("i", "H1", "i2", 3)),
             (212, 104, tag("i", "H2", "j2", 3)),
         ],
         3: [
-            (166, 145, tag("i", "H1", "i3", 3)),
-            (212, 145, tag("i", "H2", "j3", 3)),
+            (166, 150.78, tag("i", "H1", "i3", 3)),
+            (212, 150.78, tag("i", "H2", "j3", 3)),
         ],
         4: [
-            (176, 95, tag("i", "H1", "i4", 3)),
-            (222, 95, tag("i", "H2", "j4", 3)),
+            (176, 110.44, tag("i", "H1", "i4", 3)),
+            (222, 110.44, tag("i", "H2", "j4", 3)),
         ],
         5: [
             (125, 698, tag("s", "H1", "s5", 16)),
             (245, 698, tag("s", "H2", "t5", 16)),
         ],
         6: [
-            (125, 677, tag("s", "H1", "s6", 16)),
-            (245, 677, tag("s", "H2", "t6", 16)),
+            (125, 666.44, tag("s", "H1", "s6", 16)),
+            (245, 666.44, tag("s", "H2", "t6", 16)),
         ],
         7: [
-            (145, 486, tag("s", "H1", "s7", 38)),
-            (145, 451, tag("s", "H2", "t7", 38)),
+            (145, 495.65, tag("s", "H1", "s7", 38)),
+            (145, 463.97, tag("s", "H2", "t7", 38)),
         ],
         8: [
-            (174, 30, tag("i", "H1", "i8", 3)),
-            (220, 30, tag("i", "H2", "j8", 3)),
+            (174, 31.48, tag("i", "H1", "i8", 3)),
+            (220, 31.48, tag("i", "H2", "j8", 3)),
         ],
         9: [
             (150, 516, tag("s", "H1", "s9", 13)),
@@ -168,7 +178,7 @@ def build(output: Path, dual: bool) -> None:
     output_canvas.save()
 
 
-TAG_ID = re.compile(r"\{\{(?P<type>[a-z]):(?P<role>H[12]):(?P<id>[a-z0-9]+)_*\}\}")
+TAG_ID = re.compile(r"\{\{(?P<type>[a-z])(?P<optional>\*)?:(?P<role>H[12]):(?P<id>[a-z0-9]+)_*\}\}")
 
 
 def placements(fields: dict[int, list[tuple[float, float, str]]]) -> list[dict[str, object]]:
@@ -188,6 +198,7 @@ def placements(fields: dict[int, list[tuple[float, float, str]]]) -> list[dict[s
                     "role": match.group("role"),
                     "type": match.group("type"),
                     "tag": value,
+                    **({"optional": True} if match.group("optional") else {}),
                 }
             )
     return rows
@@ -199,8 +210,8 @@ def manifest() -> dict[str, object]:
     `src/lib/esign/lor-prefill.ts`.
 
     `data` holds the tags the application replaces with claim values.
-    `signature` holds the initial and signature tags, which must survive
-    prefilling verbatim so PandaDoc still detects them on upload.
+    `signature` holds all signer-entered fields, including the optional
+    authorization date. They survive prefilling for detection on upload.
     """
     system = placements(system_fields())
     return {

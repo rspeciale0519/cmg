@@ -18,7 +18,7 @@ import manifest from "./lor-tag-manifest.json";
  * `pandadoc.ts` uploads the bundled tagged PDF and lets PandaDoc fill the text
  * tags from the field map. Without an API key nobody is there to do that, so
  * this module does the same substitution locally: every *data* tag becomes the
- * claim's value. Signature and initial tags keep their exact text and position,
+ * claim's value. Signer-entered tags keep their exact text and position,
  * but use invisible text rendering so their glyphs do not cover printed lines.
  * Staff upload the result to PandaDoc's web app for field recognition.
  * Both variants need a provider check when the PDF preparation changes.
@@ -29,7 +29,8 @@ import manifest from "./lor-tag-manifest.json";
  * and `lor-prefill.test.ts` checks that export against the bundled PDFs so a
  * regenerated asset cannot drift away from it silently.
  *
- * Data tags are replaced in the page text. Signature tags remain searchable
+ * The optional authorization date stays blank for the primary signer.
+ * Data tags are replaced in the page text. Signing tags remain searchable
  * text for PandaDoc, but their text rendering mode prevents glyph paint. White
  * paint would hide the tags but could also cover parts of printed lines.
  */
@@ -49,10 +50,24 @@ type Variant = { data: Placement[]; signature: Placement[] };
 const VARIANTS = manifest.variants as Record<"single" | "dual", Variant>;
 
 export const LOR_TAG_FONT_SIZE = manifest.fontSize;
+const LOR_DATA_FONT_SIZE = 9;
+const CHECKBOX_FIELDS = new Set(["em", "ne", "su"]);
+
+// Measured from the retained form's rule ends and the current text anchors.
+// Accepted-by can use more of its line; narrow dates and the fee need a cap.
+const PRINTED_TEXT_WIDTHS: Partial<Record<string, number>> = {
+  fee: 51.334,
+  d1: 61.934,
+  d2: 58.094,
+  d3: 57.974,
+  d4: 61.854,
+  d8: 58.694,
+  accepted: 125,
+};
 
 /**
  * The floor for shrink-to-fit, as a percentage of normal glyph width. Below
- * about 60% Helvetica at 7 pt stops being readable in print, and an unreadable
+ * about 60% Helvetica stops being readable in print, and an unreadable
  * agreement term is worse than a visibly shortened one.
  */
 const MIN_HORIZONTAL_SCALE = 60;
@@ -199,7 +214,9 @@ function showText(
   const fitted = boxWidth / (scale / 100);
 
   let text = value;
-  if (widthOf(text) > fitted) {
+  // Floating division can put an otherwise fitted value just above its budget.
+  // Truncation is needed only when the minimum scale still cannot fit it.
+  if (scale === MIN_HORIZONTAL_SCALE && natural > fitted + 0.001) {
     while (text.length > 1 && widthOf(`${text}${ELLIPSIS}`) > fitted) {
       text = text.slice(0, -1);
     }
@@ -209,15 +226,17 @@ function showText(
   /* `Tz` is text state and survives `ET`, so it is put back to 100 straight
      after the value; the tags that follow on the page are drawn by the same
      content stream and must not inherit this one's squeeze. */
-  return `${scale.toFixed(2)} Tz (${escapePdfString(text)}) Tj 100 Tz`;
+  const paintedScale = Math.floor(scale * 100) / 100;
+  return `${paintedScale.toFixed(2)} Tz (${escapePdfString(text)}) Tj 100 Tz`;
 }
 
 /**
  * Build the staff-downloadable Letter of Representation.
  *
- * Each data tag's `(tag) Tj` becomes `(value) Tj` in place, so the value
- * inherits the tag's position, font and size exactly as PandaDoc's own fill
- * would. A value wider than the tag it replaces is first **shrunk to fit**
+ * Each data tag's `(tag) Tj` becomes `(value) Tj` at the same baseline.
+ * Manual-download values use 9 pt; detection markers and checkbox marks keep
+ * their original 7 pt size. The separate API upload still uses its source PDF.
+ * A value wider than its available printed line is first **shrunk to fit**
  * horizontally, down to `MIN_HORIZONTAL_SCALE`; only if it still does not fit
  * at that width is it **truncated** with a trailing "...", so a long property
  * address loses its tail rather than running across the next printed field.
@@ -234,7 +253,7 @@ export async function buildPrefilledLorPdf(
      font the tags were drawn in, and embedding a second copy into the file
      staff are about to upload would add an object nothing references. */
   const metrics = await (await PDFDocument.create()).embedFont(StandardFonts.Helvetica);
-  const widthOf = (text: string) => metrics.widthOfTextAtSize(text, LOR_TAG_FONT_SIZE);
+  const tagWidthOf = (text: string) => metrics.widthOfTextAtSize(text, LOR_TAG_FONT_SIZE);
 
   const byPage = new Map<number, Placement[]>();
   for (const placement of lorDataPlacements(signerCount)) {
@@ -251,11 +270,29 @@ export async function buildPrefilledLorPdf(
 
       for (const placement of placements) {
         const target = `(${placement.tag}) Tj`;
-        if (!content.includes(target)) continue;
+        const targetIndex = content.indexOf(target);
+        if (targetIndex < 0) continue;
+
+        const checkbox = CHECKBOX_FIELDS.has(placement.id);
+        const size = checkbox ? LOR_TAG_FONT_SIZE : LOR_DATA_FONT_SIZE;
+        // Raw Tj does not apply kerning pairs. Measure its actual glyph advance.
+        const valueWidthOf = (text: string) => [...text].reduce(
+          (width, character) => width + metrics.widthOfTextAtSize(character, size), 0,
+        );
+        const width = PRINTED_TEXT_WIDTHS[placement.id] ?? tagWidthOf(placement.tag);
+        let replacement = showText(fields[placement.id]?.value ?? "", width, valueWidthOf);
+
+        if (!checkbox) {
+          const selections = [...content.slice(0, targetIndex).matchAll(/\/([A-Za-z0-9]+)\s+([\d.]+)\s+Tf/g)];
+          const selected = selections.at(-1);
+          if (!selected) throw new Error(`Missing text font for LOR field ${placement.id}.`);
+          // Restore text state before subsequent detection markers are read.
+          replacement = `/${selected[1]} ${size} Tf ${replacement} /${selected[1]} ${selected[2]} Tf`;
+        }
 
         content = content.replace(
           target,
-          showText(fields[placement.id]?.value ?? "", widthOf(placement.tag), widthOf),
+          replacement,
         );
         changed = true;
       }

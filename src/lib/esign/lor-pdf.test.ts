@@ -39,12 +39,39 @@ describe("bundled LOR PDF mapping", () => {
       email: { value: "dana@example.com", role: "H1" },
       em: { value: "X", role: "H1" },
       i1: { value: "", role: "H1" },
+      ia2: { value: "", role: "H1" },
+      da2: { value: "", role: "H1" },
       s9: { value: "", role: "H1" },
       j1: { value: "", role: "H2" },
+      ja2: { value: "", role: "H2" },
       t9: { value: "", role: "H2" },
       d1: { value: "08/14/2026", role: "H1" },
     });
     expect(JSON.stringify(fields)).not.toContain("must not enter the PDF");
+  });
+
+  it.each([1, 2])("maps all signing slots without choosing optional consent for %i signer(s)", (signerCount) => {
+    const request = sendLorRequestFixture({
+      tokens: [{ name: "da2", value: "08/01/2026" }],
+    });
+    const fields = buildLorPdfFields(
+      { ...request, signers: request.signers.slice(0, signerCount) },
+      new Date("2026-08-14T16:00:00Z"),
+    );
+    const h1 = ["i1", "ia2", "da2", "i2", "i3", "i4", "s5", "s6", "s7", "i8", "s9"];
+    const h2 = ["j1", "ja2", "j2", "j3", "j4", "t5", "t6", "t7", "j8", "t9"];
+
+    for (const id of h1) expect(fields[id], id).toEqual({ value: "", role: "H1" });
+    for (const id of h2) {
+      if (signerCount === 2) expect(fields[id], id).toEqual({ value: "", role: "H2" });
+      else expect(fields).not.toHaveProperty(id);
+    }
+    expect(fields.d2).toEqual({ value: "08/14/2026", role: "H1" });
+    expect(Object.keys(fields).filter((id) => ![
+      "ph", "carrier", "policy", "property", "lossdate", "cause", "fee", "claimno",
+      "accepted", "adjuster", "phone", "email", "em", "ne", "su",
+      "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9a", "d9b",
+    ].includes(id)).sort()).toEqual([...h1, ...(signerCount === 2 ? h2 : [])].sort());
   });
 
   it("uses PandaDoc roles H1 and H2 without changing internal claimant roles", () => {

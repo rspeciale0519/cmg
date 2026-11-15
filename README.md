@@ -193,6 +193,11 @@ A plan upgrade does not remove Vercel's 4.5 MB request limit.
 8. Verify domain DNS, TLS, redirects, `CRON_SECRET`, backups, PITR, and the recovery procedure.
 9. Resolve release blockers before merge or deployment approval.
 
+Outbox email uses `EMAIL_FROM` as the sender.
+The server sets `Reply-To` to `collin@cmgpropertysolutions.net`.
+This fixed value needs no environment variable.
+Delivery recipients and staff recipient checks remain separate.
+
 The advertised upload allowance remains ten files of 25 MiB each.
 The Server Action receives text fields and a small file manifest only.
 The browser uploads file bytes directly to private Supabase Storage with one-time signed capabilities.
@@ -271,25 +276,38 @@ See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for mi
 
 ## Cron operation
 
-[vercel.json](vercel.json) defines these daily schedules:
+[vercel.json](vercel.json) defines these schedules for deployment:
 
-| Route | Scheduled time |
+| Route | Schedule |
 |---|---|
-| `/api/cron/outbox` | 14:00 UTC |
-| `/api/cron/storage-cleanup` | 14:17 UTC |
+| `/api/cron/outbox` | Daily at 14:00 UTC (`0 14 * * *`) |
+| `/api/cron/storage-cleanup` | Daily at 14:17 UTC (`17 14 * * *`) |
 
 Both routes require `CRON_SECRET`.
 The outbox attempts delivery after a public submission commits.
-The daily sweep retries queued messages that the current site mode permits.
+The daily sweep retries eligible queued messages that the current site mode permits.
 Simple mode delivers only the public-form templates. Staff mode adds the staff-alert templates.
 Platform mode delivers every template.
 
-Daily schedules can delay retries and cleanup until a later day.
-A backlog can need several daily batches.
-Short retry intervals do not create additional cron executions.
-Hobby scheduling does not guarantee the configured minute.
+Retry delays are minimum waits of 1, 5, 25, and 125 minutes.
+An eligible retry waits for a later sweep and available batch space.
+Daily batches can delay retries until later days, so these delays do not promise a delivery time.
+A backlog can need several daily sweeps.
+The unchanged default seven-day age limit can stop old messages.
+The fifth failed attempt marks a message dead.
+Each sweep claims at most 12 messages and sends at most three concurrently.
+The claim lease remains 300 seconds.
+
+The daily schedule meets Hobby's frequency limit only.
+Hobby can start this job between 14:00 and 14:59 UTC.
+The separate commercial-use requirement in this runbook remains in force.
+Any schedule change requires separate deployment approval.
 See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
+Storage cleanup remains blocked. Its daily schedule remains unchanged.
+Do not run either job manually.
+Daily cleanup batches can delay cleanup retries until later days.
+Keep uncertain sends and held notifications blocked until their required review is complete.
 Record queue age, failed rows, dead rows, and approved recovery actions.
 Do not delete unresolved queue records.
 

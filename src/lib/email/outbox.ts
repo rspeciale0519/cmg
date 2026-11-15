@@ -143,6 +143,7 @@ export async function resendSender(admin: Admin): Promise<SendMessage | null> {
       try {
         result = await resend.emails.send({
           from: fromAddress(), to: message.to, subject: message.subject,
+          replyTo: "collin@cmgpropertysolutions.net",
           html: message.html, text: message.text,
         }, { idempotencyKey: message.idempotencyKey });
       } catch {
