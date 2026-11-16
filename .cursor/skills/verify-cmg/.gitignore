@@ -1,0 +1,9 @@
+run/
+evidence/*
+!evidence/README.md
+!evidence/.gitkeep
+scripts/node_modules/
+scripts/package-lock.json
+scripts/test-results/
+scripts/playwright-report/
+scripts/blob-report/
