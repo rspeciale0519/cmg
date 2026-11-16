@@ -19,7 +19,7 @@ Authorized in this task: plan creation, preservation of the existing synthetic e
 - Checked upstream: SignuDoc 0.2.1 at bb9bc099151fed39da5de017d9b4cd61b124cbbd.
 - Recheck these against the actual current CMG work before implementing; do not discard intervening fixes.
 - Branch-only Vercel deployment suppression accompanies publication. Keep it on this experiment branch. Do not blindly merge/cherry-pick deployment configuration into other branches.
-- Publication receipt is recorded in the experiment README after remote verification; until then Task 1 publication stays unchecked.
+- Initial publication was verified at 890f907e5e488f2c779643115f42636d93f7d929; the experiment README records the receipt. Task 1 is complete; implementation tasks remain unstarted.
 
 ## Required product behavior
 
@@ -120,9 +120,9 @@ Never accept tenant/claim routing solely from a callback's user-supplied metadat
 
 - [x] Record current CMG/upstream SHAs, original reports and successful test evidence.
 - [x] Keep the synthetic fixtures visibly labeled NOT A LEGAL AGREEMENT; retain MIT/third-party notices.
-- [ ] Package replayable mapper/harness source snapshots and checksums without runtime databases, credentials, customer content or link-bearing outbox/trace files.
-- [ ] Validate the branch-only no-deployment setting, secret scan and exact changed-file scope.
-- [ ] Publish to the authorized experiment branch and independently read back the commit, plan and source files. Record the receipt.
+- [x] Package replayable mapper/harness source snapshots and checksums without runtime databases, credentials, customer content or link-bearing outbox/trace files.
+- [x] Validate the branch-only no-deployment setting, secret scan and exact changed-file scope.
+- [x] Publish to the authorized experiment branch and independently read back all 24 files at 890f907e5e488f2c779643115f42636d93f7d929. Record the receipt.
 
 **Acceptance/tests:** source snapshots regenerate a separate experiment outside the CMG checkout; file hashes match; no application source or dependency change; only the exact experiment branch is updated; develop remains unchanged. No merge/PR/deploy is part of this task.
 

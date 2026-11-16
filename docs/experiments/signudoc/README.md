@@ -43,4 +43,6 @@ Do not remove that block or blindly merge/cherry-pick the entire experiment into
 
 ## Publication receipt
 
-Pending initial remote verification. This line will be replaced after the first experiment commit is read back successfully.
+Initial publication commit: [890f907](https://github.com/rspeciale0519/cmg/commit/890f907e5e488f2c779643115f42636d93f7d929). All 24 published files were independently read back and matched exactly. The branch comparison contains only the documented experiment/plan files and the exact-branch Vercel deployment block. Develop remains at 950cb27514ce10c92a1b05a4ef87bee9fc627ca2.
+
+The passive materializer passed restore, source-checksum, nonempty-target refusal and in-repository-target refusal checks. The restored mapper passed all eleven tests. No CMG application code, dependencies, migrations or runtime provider settings changed; root application tests were not rerun for this documentation/archive-only publication. No merge, pull request, deployment command or real send occurred. GitHub had no commit-status entries at the readback checkpoint; the no-deployment claim relies on the documented branch-specific suppression, not a completed hosted acceptance test.
