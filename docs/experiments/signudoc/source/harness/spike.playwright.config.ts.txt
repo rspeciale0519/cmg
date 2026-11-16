@@ -1,0 +1,5 @@
+import base from "./playwright.config";
+import { defineConfig } from "@playwright/test";
+const servers = base.webServer as any[];
+servers[0].command = "node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3187";
+export default defineConfig({ ...base, webServer:servers, projects: [{ name: "chromium", use: { viewport: {width:1440,height:900}, launchOptions: { executablePath: "/usr/bin/chromium", args:["--no-sandbox"] } } }], timeout: 300000, retries:0 });

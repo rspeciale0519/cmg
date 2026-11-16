@@ -1,0 +1,6 @@
+import pg from "../upstream/node_modules/pg/lib/index.js";
+import {verifyAuditChain} from "../upstream/src/lib/services/audit.ts";
+const url = new URL(process.env.E2E_DATABASE_URL!);
+if (url.hostname !== "127.0.0.1" || url.port !== "55437" || !url.pathname.endsWith("_e2e")) throw Error("Not isolated");
+const pool = new pg.Pool({connectionString:url.toString()});
+try {console.log(JSON.stringify(await verifyAuditChain(process.argv[2]!,pool)));} finally {await pool.end();}

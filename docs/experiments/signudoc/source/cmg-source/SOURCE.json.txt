@@ -1,0 +1,4 @@
+{
+  "cmg": "950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+  "signudoc": "bb9bc099151fed39da5de017d9b4cd61b124cbbd"
+}

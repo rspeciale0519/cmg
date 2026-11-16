@@ -1,0 +1,13 @@
+{
+  "prototype/field-map.cjs": "b091642fdc736adca098578175ae23c54e6eecb85166945b1855f6f7dbbf1dac",
+  "prototype/field-map.test.mjs": "8312978499f2258b3286a634548c20091dd6b82fbb9106dd6a2fb579d0b5a9f7",
+  "prototype/verify-audit.mts": "a39c5737b12f5683fa1728b37a99e68ec5adbb77531965fae973a4e094c4e496",
+  "harness/cmg-signudoc-api.spec.ts": "3a0e0f975f2b5518a294b19549c8ce3ea2215e3168b2d97c249e6d636cb0804b",
+  "harness/spike.playwright.config.ts": "c57be8c6277fa8e660c3578053eb4dc7fca2e0a7dbf5a1c32b5775f7ed71b1a8",
+  "run-local-api.py": "cd6a04f9f136a0e15faf28aeb9ecc8691a22839c305daee11014d86e5f3f8ece",
+  "README.md": "91aaedb737a380e6ff3bbb60b3249e7ccbd051d27add63d71c762b89b453f5fa",
+  "cmg-source/lor-tag-manifest.json": "e7a0486f898f4189a2abf9f7041d030605a6774555848545f18b6fe9e0713c4d",
+  "cmg-source/lor-pdf.ts": "0e734916922f7ab1dc015687d28a186a4fa12e09947be4a016ed019eb0573ae8",
+  "cmg-source/types.ts": "9ca6b2c744b495f444a24938beacece990cad1b06ac694a85061781ad7f907cb",
+  "cmg-source/SOURCE.json": "5719b1bce7ddaf26e3e7a4e7bb0d208e91036a2e68174906a4f0214f8e3954e7"
+}

@@ -1,0 +1,42 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mapSigningFields, assertLocalTrialUrl, manifest } from "./field-map.cjs";
+test("single maps all nine required fields, without inventing authorization", () => {
+  const f = mapSigningFields("single",{H1:"one"},{syntheticRequiredOnly:true});
+  assert.equal(f.length,9);
+  assert.equal(f.filter(x=>x.type==="initials").length,5);
+  assert.equal(f.filter(x=>x.type==="signature").length,4);
+  assert.deepEqual(f.map(x=>x.page),[1,2,3,4,5,6,7,8,9]);
+});
+test("dual preserves nine required fields per signer", () => {
+  const f=mapSigningFields("dual",{H1:"one",H2:"two"},{syntheticRequiredOnly:true});
+  assert.equal(f.length,18);
+  assert.equal(f.filter(x=>x.signerId==="one").length,9);
+  assert.equal(f.filter(x=>x.signerId==="two").length,9);
+});
+test("production-like mapping refuses unsupported optional authorization",()=>{
+  assert.throws(()=>mapSigningFields("single",{H1:"one"}),/BLOCKED/);
+  assert.throws(()=>mapSigningFields("dual",{H1:"one",H2:"two"}),/BLOCKED/);
+});
+test("optional authorization definitions remain in source unmodified",()=>{
+  assert.equal(manifest.variants.single.signature.filter(x=>x.optional).length,2);
+  assert.equal(manifest.variants.dual.signature.filter(x=>x.optional).length,3);
+});
+test("unknown variants fail closed",()=>assert.throws(()=>mapSigningFields("triple",{}),/Unknown/));
+test("missing second signer fails closed",()=>assert.throws(()=>mapSigningFields("dual",{H1:"one"})));
+test("repeated signer identity fails closed",()=>assert.throws(()=>mapSigningFields("dual",{H1:"one",H2:"one"}),/Distinct/));
+test("extra role fails closed",()=>assert.throws(()=>mapSigningFields("single",{H1:"one",H3:"bad"})));
+test("blank signer fails closed",()=>assert.throws(()=>mapSigningFields("single",{H1:" "}),/Missing/));
+test("all mapped fields stay inside pages",()=>{
+ for(const variant of ["single","dual"]) {
+  const ids=variant==="single"?{H1:"one"}:{H1:"one",H2:"two"};
+  for(const f of mapSigningFields(variant,ids,{syntheticRequiredOnly:true})) {
+   assert(f.x>=0&&f.y>=0&&f.width>0&&f.height>0);
+   assert(f.x+f.width<=1&&f.y+f.height<=1);
+  }
+ }
+});
+test("only trial localhost endpoint allowed",()=>{
+ assert.equal(assertLocalTrialUrl("http://127.0.0.1:3187"),"http://127.0.0.1:3187");
+ for(const u of ["https://cmg.example.com","http://127.0.0.1:3000","http://evil.example:3187","http://127.0.0.1.evil.example:3187"]) assert.throws(()=>assertLocalTrialUrl(u));
+});

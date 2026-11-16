@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-16",
+  "scope": "pinned isolated synthetic cloud experiment; not CMG production integration",
+  "upstream_sha": "bb9bc099151fed39da5de017d9b4cd61b124cbbd",
+  "cmg_sha": "950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+  "unit": {
+    "passed": 286,
+    "failed": 0,
+    "skipped": 0
+  },
+  "database": {
+    "passed": 150,
+    "failed": 0,
+    "skipped": 0
+  },
+  "mapper": {
+    "passed": 11,
+    "failed": 0
+  },
+  "http_scenario": {
+    "passed": 1,
+    "variants": [
+      "single",
+      "dual"
+    ],
+    "pages_per_agreement": 9
+  },
+  "build": {
+    "exit": 0,
+    "deployed": false
+  },
+  "typecheck": {
+    "exit": 0,
+    "scope": "clean upstream before archived harness"
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 5,
+    "scope": "clean upstream"
+  },
+  "production_audit": {
+    "exit": 1,
+    "moderate_affected_packages": [
+      "node-forge"
+    ],
+    "high": 0,
+    "critical": 0
+  },
+  "browser_mobile": "UNVERIFIED: Chromium startup blocked by sandbox Unix sockets",
+  "production_bridge": "NOT IMPLEMENTED",
+  "optional_authorization": "BLOCKED: upstream currently forces signature/initial/date fields required",
+  "original_signed_pdf_hashes": "cmg-api-results.json",
+  "certificate_trust": "valid signature, self-signed issuer unknown",
+  "original_zip_sha256": "7490bf159384591282f3528b885ea8a5b4cab2e4e8848e79ff9e0ccff7d9ebf1"
+}

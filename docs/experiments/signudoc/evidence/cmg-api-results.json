@@ -1,0 +1,33 @@
+{
+  "upstream": "bb9bc099151fed39da5de017d9b4cd61b124cbbd",
+  "results": [
+    {
+      "variant": "single",
+      "requiredFields": 9,
+      "optionalAuthorization": "unsupported; intentionally absent only in synthetic fixture",
+      "pageCount": 9,
+      "hashes": {
+        "signed": "41f3d48232bbb22ea4f02610d9c87753dded086d88c5192a5b999fe36c9a5f20",
+        "evidence": "5496f7932385c4d4722f278ef9e3ad78348c2b294da448156abfac3bdddbde36"
+      },
+      "auditEvents": 9,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "blocked by environment"
+    },
+    {
+      "variant": "dual",
+      "requiredFields": 18,
+      "optionalAuthorization": "unsupported; intentionally absent only in synthetic fixture",
+      "pageCount": 9,
+      "hashes": {
+        "signed": "dc8a570769ce1982ddce6779e0a8de999378d7988dc71d82550364cde192e9e1",
+        "evidence": "907a2acbbe84a43bab78067e4096994006f4843b77e4a247592a876d9b46446a"
+      },
+      "auditEvents": 14,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "blocked by environment"
+    }
+  ]
+}
