@@ -105,6 +105,7 @@ These rules add repository facts to the global working agreement.
 - For dependency or release changes, run `npm audit --audit-level=high`.
 - Test affected application behavior in `SITE_MODE=simple`, `SITE_MODE=staff`, and `SITE_MODE=platform`.
 - For UI changes, check affected routes at desktop width and 390px.
+- For a local launch / doctor / drive / evidence loop on this app, follow `.cursor/skills/verify-cmg/SKILL.md`.
 - Check the relevant roles, site modes, loading states, errors, console, and network requests.
 - Repeat successful checks only when later changes or unresolved concerns affect their validity.
 - Report all skipped credential-dependent checks.

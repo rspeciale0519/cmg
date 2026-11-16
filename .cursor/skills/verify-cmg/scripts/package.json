@@ -1,0 +1,9 @@
+{
+  "name": "verify-cmg-harness",
+  "private": true,
+  "type": "module",
+  "description": "Isolated Playwright resolver for verify-cmg. Not an app dependency.",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
