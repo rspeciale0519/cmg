@@ -52,5 +52,6 @@
   "optional_authorization": "BLOCKED: upstream currently forces signature/initial/date fields required",
   "original_signed_pdf_hashes": "cmg-api-results.json",
   "certificate_trust": "valid signature, self-signed issuer unknown",
-  "original_zip_sha256": "7490bf159384591282f3528b885ea8a5b4cab2e4e8848e79ff9e0ccff7d9ebf1"
+  "original_zip_sha256": "7490bf159384591282f3528b885ea8a5b4cab2e4e8848e79ff9e0ccff7d9ebf1",
+  "laterActualContractCheckpoint": "../actual-contracts/evidence/verification-summary.json"
 }

@@ -1,0 +1,159 @@
+import { test, expect } from "@playwright/test";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import pg from "pg";
+import path from "node:path";
+import { mapSigningFields, manifest } from "../../prototype/field-map.cjs";
+import { e2eDatabaseUrl, e2eOutboxDir, e2eSetupToken } from "../playwright.config";
+import {execFile} from "node:child_process";
+import {promisify} from "node:util";
+const exec = promisify(execFile);
+async function verifyAuditChain(id:string,_database:unknown) {
+ const {stdout} = await exec(process.execPath,["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON","../prototype/verify-audit.mts",id]);
+ return JSON.parse(stdout);
+}
+
+const out = path.resolve("../actual-contract-evidence/signing");
+const password = "Synthetic-Only-Password-4130!x";
+async function outbox() {
+ const entries = await readdir(e2eOutboxDir).catch(()=>[]);
+ return Promise.all(entries.filter(x=>x.endsWith(".json")).sort().map(async x=>JSON.parse(await readFile(path.join(e2eOutboxDir,x),"utf8"))));
+}
+async function invitation(email:string) {
+ for(let i=0;i<80;i++){
+  const hit=(await outbox()).reverse().find(x=>x.template==="signing_invitation"&&x.to.includes(email));
+  if(hit) return hit;
+  await new Promise(r=>setTimeout(r,100));
+ }
+ throw Error("No captured invitation");
+}
+async function actualPdf(variant:"single"|"dual") {
+ return readFile(path.resolve("../actual-contract-evidence/input/"+variant+"-actual-cmg-prefilled.pdf"));
+}
+function fullManifestFields(variant:"single"|"dual",ids:any) {
+ return manifest.variants[variant].signature.map((f:any)=>{
+  const type=({i:"initials",s:"signature",d:"date"} as any)[f.type];
+  const width=type==="initials"?38:type==="date"?74:145;
+  return {signerId:ids[f.role],type,page:f.page,x:f.x/612,y:(792-f.y-18)/792,width:width/612,height:18/792,required:!f.optional,label:f.id};
+ });
+}
+test("Actual CMG single and dual contract diagnostics through real SignuDoc HTTP routes",async({playwright,baseURL})=>{
+ const database=new pg.Pool({connectionString:e2eDatabaseUrl});
+ const sender=await playwright.request.newContext({baseURL,extraHTTPHeaders:{origin:baseURL!}});
+ const anonymous=await playwright.request.newContext({baseURL});
+ const findings:any[]=[];
+ await mkdir(out,{recursive:true});
+ try {
+  const setup=await sender.post("/api/setup",{data:{email:"cmg-admin@example.com",fullName:"CMG Synthetic Admin",organizationName:"CMG Test Firm",password,supportAddress:"cmg-support@example.com",setupToken:e2eSetupToken}});
+  expect(setup.status(),await setup.text()).toBe(201);
+  const login=await sender.post("/api/auth/sign-in/email",{data:{email:"cmg-admin@example.com",password}});
+  expect(login.status(),await login.text()).toBe(200);
+  // An independently verified synthetic sender proves per-user isolation, not full multi-tenant isolation.
+  const outsider=await playwright.request.newContext({baseURL,extraHTTPHeaders:{origin:baseURL!}});
+  const signup=await outsider.post("/api/auth/sign-up/email",{data:{email:"other-sender@example.com",name:"Other Synthetic Sender",password}});
+  expect(signup.status(),await signup.text()).toBe(200);
+  let verification;
+  for(let wait=0;wait<100;wait++) {
+   verification=(await outbox()).reverse().find(x=>x.to.includes("other-sender@example.com")&&/verify/i.test(x.text));
+   if(verification) break;
+   await new Promise(r=>setTimeout(r,100));
+  }
+  expect(verification).toBeTruthy();
+  const link=(verification.text.match(/https?:\/\/[^\s<>"]+/g)||[]).find((x:string)=>x.includes("verify-email"));
+  expect(link).toBeTruthy();
+  expect((await outsider.get(link)).ok()).toBeTruthy();
+  expect((await outsider.post("/api/auth/sign-in/email",{data:{email:"other-sender@example.com",password}})).status()).toBe(200);
+  for(const variant of ["single","dual"] as const) {
+   const pdf=await actualPdf(variant);
+   await writeFile(path.join(out,variant+"-unsigned.pdf"),pdf);
+   const denied=await anonymous.post("/api/envelopes",{multipart:{title:"Unauthorized",file:{name:"test.pdf",mimeType:"application/pdf",buffer:pdf}}});
+   expect(denied.status()).toBe(401);
+   const created=await sender.post("/api/envelopes",{multipart:{title:"CMG "+variant+" SYNTHETIC",file:{name:variant+".pdf",mimeType:"application/pdf",buffer:pdf}}});
+   expect(created.status(),await created.text()).toBe(201);
+   const {envelopeId}=await created.json();
+   const names=variant==="single"?["Avery Synthetic"]:["Avery Synthetic","Blake Synthetic"];
+   const emails=names.map((_,i)=>variant+"-"+i+"@example.invalid");
+   const parties=await sender.put("/api/envelopes/"+envelopeId+"/signers",{data:{signers:names.map((name,i)=>({name,email:emails[i],signOrder:i+1}))}});
+   expect(parties.status(),await parties.text()).toBe(200);
+   const partyList=(await parties.json()).signers;
+   const ids=variant==="single"?{H1:partyList[0].id}:{H1:partyList[0].id,H2:partyList[1].id};
+   const mapped=mapSigningFields(variant,ids,{syntheticRequiredOnly:true});
+   const optionalRefusal=await sender.put("/api/envelopes/"+envelopeId+"/fields",{data:{fields:fullManifestFields(variant,ids)}});
+   expect(optionalRefusal.status()).toBe(400);
+   const optionalError=await optionalRefusal.json();
+   // Continue only as an explicitly incomplete diagnostic: optional authorizations remain unexecuted.
+   const document=await sender.get("/api/envelopes/"+envelopeId+"/document");
+   expect(document.status()).toBe(200);
+   expect(createHash("sha256").update(await document.body()).digest("hex")).toBe(createHash("sha256").update(pdf).digest("hex"));
+   const fields=await sender.put("/api/envelopes/"+envelopeId+"/fields",{data:{fields:mapped}});
+   expect(fields.status(),await fields.text()).toBe(200);
+   expect((await outsider.put("/api/envelopes/"+envelopeId+"/fields",{data:{fields:[]}})).status()).toBe(404);
+   expect((await outsider.get("/api/envelopes/"+envelopeId+"/document")).status()).toBe(404);
+   const savedTemplate=await sender.post("/api/envelopes/"+envelopeId+"/template",{data:{name:"CMG "+variant+" synthetic template",roleNames:variant==="single"?["Homeowner1"]:["Homeowner1","Homeowner2"]}});
+   expect(savedTemplate.status(),await savedTemplate.text()).toBe(201);
+   const {templateId}=await savedTemplate.json();
+   expect((await outsider.post("/api/templates/"+templateId+"/use",{data:{title:"Foreign template",signers:names.map((name,i)=>({name,email:emails[i]}))}})).status()).toBe(404);
+   const reused=await sender.post("/api/templates/"+templateId+"/use",{data:{title:"Reused "+variant+" synthetic",signers:names.map((name,i)=>({name,email:"next-"+emails[i]}))}});
+   expect(reused.status(),await reused.text()).toBe(201);
+   const send=await sender.post("/api/envelopes/"+envelopeId+"/send",{data:{permittedUseConfirmed:true,expiresInDays:7,reminderIntervalDays:2}});
+   expect(send.status(),await send.text()).toBe(200);
+   if(variant==="dual") expect((await outbox()).filter(x=>x.template==="signing_invitation"&&x.to.includes(emails[1])).length).toBe(0);
+   for(let i=0;i<names.length;i++){
+    const mail=await invitation(emails[i]);
+    const signingUrl=(mail.text.match(/https?:\/\/[^\s<>"]+/g)||[]).find((u:string)=>new URL(u).pathname.startsWith("/sign/"));
+    expect(signingUrl).toBeTruthy();
+    const token=new URL(signingUrl).pathname.split("/").pop();
+    const recipient=await playwright.request.newContext({baseURL,userAgent:"CMG synthetic mobile HTTP check (not visual browser evidence)"});
+    const payloadResponse=await recipient.get("/api/signing/"+token);
+    expect(payloadResponse.status(),await payloadResponse.text()).toBe(200);
+    const payload=await payloadResponse.json();
+    expect(payload.currentSignerFields.length).toBe(9);
+    const answers=payload.currentSignerFields.map((f:any)=>({fieldId:f.id,type:f.type,inputMethod:"typed",value:f.type==="initials"?(i===0?"AE":"BE"):names[i]}));
+    const withoutConsent=await recipient.post(payload.submitUrl,{data:{clientTimezoneOffsetMinutes:300,fields:answers}});
+    expect(withoutConsent.ok()).toBe(false);
+    expect((await recipient.post(payload.consentUrl,{data:{disclosureVersion:payload.disclosure.version}})).status()).toBe(200);
+    const partial=await recipient.post(payload.submitUrl,{data:{clientTimezoneOffsetMinutes:300,fields:answers.slice(0,1)}});
+    expect(partial.ok()).toBe(false);
+    const completed=await recipient.post(payload.submitUrl,{data:{clientTimezoneOffsetMinutes:300,fields:answers}});
+    expect(completed.status(),await completed.text()).toBe(200);
+    const replay=await recipient.post(payload.submitUrl,{data:{clientTimezoneOffsetMinutes:300,fields:answers}});
+    expect(replay.ok()).toBe(false);
+    const state=await database.query("select status from envelopes where id=$1",[envelopeId]);
+    expect(state.rows[0].status).toBe(i===names.length-1?"completed":"sent");
+    await recipient.dispose();
+   }
+   const hashes:any={};
+   for(const type of ["signed","evidence"]){
+    expect((await anonymous.get("/api/envelopes/"+envelopeId+"/download?type="+type)).status()).toBe(401);
+    expect((await outsider.get("/api/envelopes/"+envelopeId+"/download?type="+type)).status()).toBe(404);
+    const response=await sender.get("/api/envelopes/"+envelopeId+"/download?type="+type);
+    expect(response.status(),await response.text()).toBe(200);
+    const bytes=await response.body();
+    expect(bytes.subarray(0,5).toString()).toBe("%PDF-");
+    expect(bytes.toString("latin1")).toContain("/ByteRange");
+    hashes[type]=createHash("sha256").update(bytes).digest("hex");
+    await writeFile(path.join(out,variant+"-"+type+".pdf"),bytes);
+    const checked=await anonymous.post("/api/verify",{data:{sha256:hashes[type]}});
+    expect((await checked.json()).match).toBe(true);
+    const altered=Buffer.from(bytes);altered[20]^=1;
+    const rejected=await anonymous.post("/api/verify",{data:{sha256:createHash("sha256").update(altered).digest("hex")}});
+    expect((await rejected.json()).match).toBe(false);
+   }
+   const audit=await verifyAuditChain(envelopeId,database);
+   expect(audit.ok).toBe(true);
+   expect(audit.chainedEvents).toBeGreaterThan(5);
+   // Deliberately corrupt and restore one synthetic audit row; no production data is connected.
+   const row=await database.query("select id,metadata from audit_events where envelope_id=$1 and sequence=1",[envelopeId]);
+   await database.query("update audit_events set metadata='{\"syntheticTampering\":true}'::jsonb where id=$1",[row.rows[0].id]);
+   expect((await verifyAuditChain(envelopeId,database)).ok).toBe(false);
+   await database.query("update audit_events set metadata=$2::jsonb where id=$1",[row.rows[0].id,JSON.stringify(row.rows[0].metadata)]);
+   expect((await verifyAuditChain(envelopeId,database)).ok).toBe(true);
+   findings.push({variant,requiredFields:mapped.length,optionalAuthorization:{status:"BLOCKED",attemptedActualManifestFields:fullManifestFields(variant,ids).length,httpStatus:optionalRefusal.status(),error:optionalError,diagnosticOnly:"Only required fields exercised; optional authorizations unexecuted, agreement not launch-ready"},actualCmgContract:true,wholeCmgInAppWorkflow:false,pageCount:9,hashes,auditEvents:audit.chainedEvents,status:"completed",email:"captured locally only",browserAndMobileVisual:"blocked by environment"});
+  }
+  await writeFile(path.join(out,"actual-cmg-api-results.json"),JSON.stringify({upstream:"bb9bc099151fed39da5de017d9b4cd61b124cbbd",results:findings},null,2));
+  await outsider.dispose();
+ } finally {
+  await sender.dispose(); await anonymous.dispose(); await database.end();
+ }
+});

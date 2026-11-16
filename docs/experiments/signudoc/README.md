@@ -9,6 +9,12 @@ This branch contains the actual synthetic experiment source, evidence and an ord
 - [Feasibility assessment](FEASIBILITY_REPORT.md)
 - [Exact experiment results](evidence/cmg-api-results.json)
 - [Verification summary](evidence/verification-summary.json)
+- [Actual CMG contract tests — 74 targeted CMG checks, real-template HTTP signing, blockers](actual-contracts/RESULTS.md)
+- [Actual-contract replay instructions and evidence](actual-contracts/README.md)
+
+## Latest actual-contract checkpoint
+
+The original synthetic-page proof has now been followed by tests of both actual CMG legal PDF assets using the real CMG prefill implementation and fake homeowners. Seventy-four targeted CMG tests passed; one real SignuDoc HTTP scenario completed required fields for both actual layouts. All 18 signed pages preserve original legal images and show no visual changes outside signing fields. The full manifests remain blocked by optional authorization; browser/phone acceptance and the combined CMG provider bridge remain unverified/unimplemented. Read the linked report before interpreting these results as readiness. No provider/production code changed.
 
 ## Product requirements
 

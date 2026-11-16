@@ -1,0 +1,46 @@
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.12 <SPIKE_WORKSPACE>/actual-cmg
+
+(node:52) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:56) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/lib/esign/send-lor.test.ts (9 tests) 24ms
+(node:83) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | src/lib/esign/prefill-lor.test.ts > prefilled LOR success > withholds the letter when its required audit fails
+[esign] prefilled LOR audit failed Error: audit unavailable
+    at <SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.test.ts:49:33
+    at Mock (file://<SPIKE_WORKSPACE>/actual-cmg/node_modules/@vitest/spy/dist/index.js:332:34)
+    at prefillLorForClaim (<SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.ts:127:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at <SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.test.ts:267:20
+    at file://<SPIKE_WORKSPACE>/actual-cmg/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | src/lib/esign/prefill-lor.test.ts > prefilled LOR success > refuses rather than throwing when the letter cannot be built
+[esign] prefilled LOR build failed Error: pdf-lib exploded
+    at buildPrefilledLorPdf (<SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.test.ts:69:36)
+    at prefillLorForClaim (<SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.ts:109:17)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at <SPIKE_WORKSPACE>/actual-cmg/src/lib/esign/prefill-lor.test.ts:276:5
+    at file://<SPIKE_WORKSPACE>/actual-cmg/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ src/lib/esign/prefill-lor.test.ts (15 tests) 24ms
+ ✓ src/lib/esign/lor-pdf.test.ts (5 tests) 31ms
+(node:99) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/lib/esign/lor-prefill.test.ts (11 tests) 394ms
+ ✓ src/lib/esign/signudoc-actual-contract-export.test.ts (2 tests) 193ms
+ ✓ src/lib/esign/lor-prefill-color.test.ts (32 tests) 778ms
+
+ Test Files  6 passed (6)
+      Tests  74 passed (74)
+   Start at  18:36:35
+   Duration  1.22s (transform 437ms, setup 0ms, import 1.16s, tests 1.44s, environment 1ms)
+

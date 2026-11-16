@@ -1,0 +1,147 @@
+{
+  "sourceCommit": "950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+  "variants": [
+    {
+      "variant": "single",
+      "pages": [
+        {
+          "page": 1,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 387
+        },
+        {
+          "page": 2,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 389
+        },
+        {
+          "page": 3,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 389
+        },
+        {
+          "page": 4,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 389
+        },
+        {
+          "page": 5,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 1305
+        },
+        {
+          "page": 6,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 1308
+        },
+        {
+          "page": 7,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 1312
+        },
+        {
+          "page": 8,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 387
+        },
+        {
+          "page": 9,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 1300
+        }
+      ],
+      "allNineSourceLegalImagesPreserved": true,
+      "allNineWatermarksPresent": true,
+      "outsideFieldPixelChanges": 0
+    },
+    {
+      "variant": "dual",
+      "pages": [
+        {
+          "page": 1,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 857
+        },
+        {
+          "page": 2,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 862
+        },
+        {
+          "page": 3,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 862
+        },
+        {
+          "page": 4,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 862
+        },
+        {
+          "page": 5,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 2687
+        },
+        {
+          "page": 6,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 2691
+        },
+        {
+          "page": 7,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 2701
+        },
+        {
+          "page": 8,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 857
+        },
+        {
+          "page": 9,
+          "sourceLegalBackgroundImagePreserved": true,
+          "watermarkPresent": true,
+          "changedPixelsOutsidePaddedRequiredSigningFields": 0,
+          "totalChangedPixels": 2681
+        }
+      ],
+      "allNineSourceLegalImagesPreserved": true,
+      "allNineWatermarksPresent": true,
+      "outsideFieldPixelChanges": 0
+    }
+  ]
+}

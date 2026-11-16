@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-16",
+  "cmgSourceCommit": "950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+  "experimentParentCommit": "7dd1cea56211070130ccf3468621c9f84e087292",
+  "signudocCommit": "bb9bc099151fed39da5de017d9b4cd61b124cbbd",
+  "scope": "Actual CMG blank legal templates and real CMG PDF builder with synthetic identities; real isolated SignuDoc HTTP and local Postgres. No implemented CMG provider bridge.",
+  "originalCmgSourceFilesUnchanged": 31,
+  "cmgNodeVersion": "22.22.2",
+  "targetedCmgTests": {
+    "passed": 74,
+    "failed": 0,
+    "files": 6,
+    "existingTests": 72,
+    "newSyntheticExportTests": 2,
+    "fullCmgSuite": false,
+    "authorizationAndServiceTestsUseMocks": true
+  },
+  "actualContractHttpScenario": {
+    "passed": 1,
+    "variants": [
+      "single",
+      "dual"
+    ],
+    "requiredFields": [
+      9,
+      18
+    ],
+    "fullManifestFieldCounts": [
+      11,
+      21
+    ],
+    "fullManifestSubmissionHttpStatus": [
+      400,
+      400
+    ],
+    "completeAgreementSupport": false,
+    "visualBrowserWasUsed": false
+  },
+  "pdfInspection": {
+    "pages": 18,
+    "sourceLegalBackgroundImagesPreserved": 18,
+    "watermarksPresent": 18,
+    "changedPixelsOutsidePaddedRequiredFields": 0,
+    "means": "At 2x raster scale, comparison of prefilled unsigned vs signed copies; 10pt padding around known signing fields. Does not establish mobile UX or legal sufficiency."
+  },
+  "digitalSeals": [
+    {
+      "variant": "single",
+      "artifact": "signed",
+      "sha256": "eec5a6e546f796a0d143f647dfa576df6d588d5268e69b9762dfd1957746fcd6",
+      "validDigitalSeal": true,
+      "certificateTrust": "self-signed issuer unknown"
+    },
+    {
+      "variant": "single",
+      "artifact": "evidence",
+      "sha256": "7c9d94f1e79118e39bc80dc6c8b6386068aebd6c06eb575c6eaaa6afc7ede119",
+      "validDigitalSeal": true,
+      "certificateTrust": "self-signed issuer unknown"
+    },
+    {
+      "variant": "dual",
+      "artifact": "signed",
+      "sha256": "8770c965149108ed13bc32e374a4e7719030b5a3e859da68d8fdb027f9bae08f",
+      "validDigitalSeal": true,
+      "certificateTrust": "self-signed issuer unknown"
+    },
+    {
+      "variant": "dual",
+      "artifact": "evidence",
+      "sha256": "c7fdac7003ab45d25091d8068d07361cea8b82ccc64e705ebda4bc2301faffee",
+      "validDigitalSeal": true,
+      "certificateTrust": "self-signed issuer unknown"
+    }
+  ],
+  "browser": {
+    "status": "BLOCKED",
+    "managedBrowser": "ERR_CONNECTION_REFUSED at http://localhost:3187 while the server passed a readiness check within its execution process; execution loopback not reachable from managed browser",
+    "executionChromium": "Earlier attempt aborted at process_singleton_posix.cc:297 socket() Operation not permitted",
+    "physicalPhonesTested": false,
+    "viewportEmulationTested": false
+  },
+  "hardBlockers": [
+    "Optional authorization fields rejected by pinned SignuDoc schema",
+    "Authenticated CMG-to-SignuDoc provider connection, status reconciliation and claim filing not implemented",
+    "Browser and real-phone signing acceptance unverified",
+    "Deployment-grade certificates and security/operations/legal release gates remain open"
+  ],
+  "limits": [
+    "Dates were prepared at a fixed synthetic time; cross-day signing/date policy remains unverified",
+    "Per-user isolation tested within one synthetic SignuDoc installation; multi-firm isolation not proven",
+    "Template reuse tested with synthetic prefilled documents; production templates must exclude prior homeowner details"
+  ],
+  "safety": {
+    "realCustomerData": false,
+    "externalEmailSent": false,
+    "emailDriver": "capture",
+    "database": "fixed disposable loopback-only cmg_signudoc_e2e",
+    "productionChanges": false,
+    "pandaDocUnchanged": true,
+    "deploymentInvoked": false,
+    "localServicesStopped": true
+  }
+}

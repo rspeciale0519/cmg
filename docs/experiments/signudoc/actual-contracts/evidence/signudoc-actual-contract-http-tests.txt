@@ -1,0 +1,26 @@
+waiting for server to start.... done
+server started
+[migrate] applied 20260325160428_init.sql
+[migrate] applied 20261112060000_settings_and_roles.sql
+[migrate] applied 20261112070000_rate_limits.sql
+[migrate] applied 20261113090000_signature_evidence.sql
+[migrate] applied 20261114090000_envelope_deadline.sql
+[migrate] applied 20261114100000_automatic_reminders.sql
+[migrate] applied 20261114110000_copy_recipients.sql
+[migrate] applied 20261114120000_branding.sql
+[migrate] applied 20261114130000_more_field_types.sql
+[migrate] applied 20261114140000_templates.sql
+[migrate] applied 20261114150000_handed_over_envelopes.sql
+[migrate] applied 20261115090000_part11_mode.sql
+[migrate] applied 20261115100000_copied_audit_event.sql
+[migrate] applied 20261116090000_signer_signatures.sql
+[migrate] applied 20261116100000_signer_corrected.sql
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/cmg-actual-contract.spec.ts:41:5 › Actual CMG single and dual contract diagnostics through real SignuDoc HTTP routes (6.6s)
+::notice title=🎭 Playwright Run Summary::  1 passed (10.0s)
+
+  1 passed (10.0s)
+waiting for server to shut down.... done
+server stopped

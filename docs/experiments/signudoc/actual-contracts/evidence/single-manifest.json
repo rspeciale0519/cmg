@@ -1,0 +1,26 @@
+{
+  "variant": "single",
+  "sourceGitCommit": "950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+  "sourceFile": "CMG_LOR-2026-PandaDoc-Single.pdf",
+  "originalAssetSha256": "f637a50f1b16551095c86b38d59ae5d028ec64c8c174f531bce29b36b5e5d75e",
+  "prefilledSha256": "ef09f59e4a29c019d19e88377144dd300be387ce137dfbe3c4647f520aead4fb",
+  "syntheticWatermarkedSha256": "daa1283297d24b53d09841f1c3f5f5529d0cae136b3679db4dce8a64d05cbb93",
+  "pages": 9,
+  "requiredFields": 9,
+  "optionalFields": [
+    {
+      "id": "ia2",
+      "type": "i",
+      "role": "H1"
+    },
+    {
+      "id": "da2",
+      "type": "d",
+      "role": "H1"
+    }
+  ],
+  "actualCmgSourceExecuted": true,
+  "realCustomerData": false,
+  "watermark": "SYNTHETIC TEST ONLY - NOT AN EXECUTED AGREEMENT",
+  "limitation": "These are real CMG legal template assets with fake data, not legal approvals or production executions."
+}

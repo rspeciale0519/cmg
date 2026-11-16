@@ -1,0 +1,53 @@
+{
+  "upstream": "bb9bc099151fed39da5de017d9b4cd61b124cbbd",
+  "results": [
+    {
+      "variant": "single",
+      "requiredFields": 9,
+      "optionalAuthorization": {
+        "status": "BLOCKED",
+        "attemptedActualManifestFields": 11,
+        "httpStatus": 400,
+        "error": {
+          "error": "initials fields are always required"
+        },
+        "diagnosticOnly": "Only required fields exercised; optional authorizations unexecuted, agreement not launch-ready"
+      },
+      "actualCmgContract": true,
+      "wholeCmgInAppWorkflow": false,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "eec5a6e546f796a0d143f647dfa576df6d588d5268e69b9762dfd1957746fcd6",
+        "evidence": "7c9d94f1e79118e39bc80dc6c8b6386068aebd6c06eb575c6eaaa6afc7ede119"
+      },
+      "auditEvents": 9,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "blocked by environment"
+    },
+    {
+      "variant": "dual",
+      "requiredFields": 18,
+      "optionalAuthorization": {
+        "status": "BLOCKED",
+        "attemptedActualManifestFields": 21,
+        "httpStatus": 400,
+        "error": {
+          "error": "initials fields are always required"
+        },
+        "diagnosticOnly": "Only required fields exercised; optional authorizations unexecuted, agreement not launch-ready"
+      },
+      "actualCmgContract": true,
+      "wholeCmgInAppWorkflow": false,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "8770c965149108ed13bc32e374a4e7719030b5a3e859da68d8fdb027f9bae08f",
+        "evidence": "c7fdac7003ab45d25091d8068d07361cea8b82ccc64e705ebda4bc2301faffee"
+      },
+      "auditEvents": 14,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "blocked by environment"
+    }
+  ]
+}

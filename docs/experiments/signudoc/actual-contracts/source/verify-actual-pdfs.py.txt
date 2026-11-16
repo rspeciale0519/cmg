@@ -1,0 +1,36 @@
+"""Read-only integrity checks for synthetic actual-CMG signing diagnostics."""
+from pathlib import Path
+import fitz,hashlib,json,numpy as np
+root=Path(__file__).resolve().parent
+out=root/'actual-contract-evidence'
+manifest=json.loads((root/'cmg-source/lor-tag-manifest.json').read_text())
+report={'sourceCommit':'950cb27514ce10c92a1b05a4ef87bee9fc627ca2','variants':[]}
+for variant in ('single','dual'):
+ source=fitz.open(root/'actual-cmg/src/lib/esign/templates'/('CMG_LOR-2026-PandaDoc-'+variant.title()+'.pdf'))
+ unsigned=fitz.open(out/'input'/(variant+'-actual-cmg-prefilled.pdf'))
+ signed=fitz.open(out/'signing'/(variant+'-signed.pdf'))
+ assert len(source)==len(unsigned)==len(signed)==9
+ pages=[]
+ for n in range(9):
+  def images(doc):
+   return {hashlib.sha256(doc.extract_image(x[0])['image']).hexdigest() for x in doc[n].get_images(full=True)}
+  originals=images(source)
+  assert originals and originals<=images(unsigned) and originals<=images(signed)
+  assert 'SYNTHETIC TEST ONLY' in signed[n].get_text()
+  def raster(doc):
+   pix=doc[n].get_pixmap(matrix=fitz.Matrix(2,2),alpha=False)
+   return np.frombuffer(pix.samples,dtype=np.uint8).reshape(pix.height,pix.width,3)
+  before,after=raster(unsigned),raster(signed)
+  different=np.any(before!=after,axis=2)
+  mask=np.zeros(different.shape,dtype=bool)
+  for f in manifest['variants'][variant]['signature']:
+   if f['page']!=n+1 or f.get('optional'):continue
+   width=38 if f['type']=='i' else 74 if f['type']=='d' else 145
+   x,y=f['x'],792-f['y']-18
+   mask[max(0,int((y-10)*2)):min(mask.shape[0],int((y+28)*2)),max(0,int((x-10)*2)):min(mask.shape[1],int((x+width+10)*2))]=True
+  outside=int(np.count_nonzero(different&~mask))
+  assert outside==0,(variant,n+1,outside)
+  pages.append({'page':n+1,'sourceLegalBackgroundImagePreserved':True,'watermarkPresent':True,'changedPixelsOutsidePaddedRequiredSigningFields':outside,'totalChangedPixels':int(different.sum())})
+ report['variants'].append({'variant':variant,'pages':pages,'allNineSourceLegalImagesPreserved':True,'allNineWatermarksPresent':True,'outsideFieldPixelChanges':sum(p['changedPixelsOutsidePaddedRequiredSigningFields'] for p in pages)})
+(out/'pdf-integrity-results.json').write_text(json.dumps(report,indent=2)+'\n')
+print('PASS: 18/18 pages preserve original legal images, watermark and pixels outside padded signing fields.')

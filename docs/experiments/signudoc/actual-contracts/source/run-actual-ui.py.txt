@@ -1,0 +1,24 @@
+import os,subprocess,pathlib,time,urllib.request
+root=pathlib.Path(__file__).resolve().parent
+pg=str(root/'postgres/usr/lib/postgresql/17/bin/pg_ctl');data=str(root/'postgres/data')
+keys=['PATH','HOME','LANG','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy','NODE_EXTRA_CA_CERTS','NODE_USE_ENV_PROXY','SSL_CERT_FILE']
+e={k:os.environ[k] for k in keys if k in os.environ}
+e.update({'APP_URL':'http://localhost:3187','BETTER_AUTH_URL':'http://localhost:3187','BETTER_AUTH_SECRET':'e2e-only-secret-not-used-anywhere-else-0123456789','DATABASE_URL':'postgres://agent@127.0.0.1:55437/cmg_signudoc_e2e','EMAIL_DRIVER':'capture','EMAIL_CAPTURE_DIR':str(root/'upstream/.data/e2e/outbox'),'STORAGE_DRIVER':'local','STORAGE_LOCAL_DIR':str(root/'upstream/.data/e2e/storage'),'PASSWORD_BREACH_CHECK':'off','NEXT_TELEMETRY_DISABLED':'1','SETUP_TOKEN':'e2e-setup-token'})
+with open(root/'actual-ui-server.log','w') as f:
+ subprocess.run([pg,'-D',data,'-l',str(root/'postgres/server.log'),'-o',"-h 127.0.0.1 -p 55437 -c unix_socket_directories=''",'start'],check=True,stdout=f,stderr=subprocess.STDOUT)
+ server=None
+ try:
+  server=subprocess.Popen(['node','node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3187'],cwd=root/'upstream',env=e,stdout=f,stderr=subprocess.STDOUT)
+  for n in range(100):
+   try:
+    if urllib.request.urlopen('http://localhost:3187/icon.svg',timeout=2).status==200:break
+   except Exception:time.sleep(.2)
+  subprocess.run(['node',str(root/'prepare-actual-ui.cjs')],env=e,check=True)
+  print('LOCAL UI READY at http://localhost:3187; capture-only and no production connections.',flush=True)
+  for n in range(1800):
+   if (root/'STOP-actual-ui').exists():break
+   if server.poll() is not None:raise RuntimeError('Server stopped')
+   time.sleep(1)
+ finally:
+  if server:server.terminate();server.wait(timeout=20)
+  subprocess.run([pg,'-D',data,'-m','fast','stop'],stdout=f,stderr=subprocess.STDOUT)

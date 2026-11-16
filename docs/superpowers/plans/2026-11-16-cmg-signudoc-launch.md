@@ -12,7 +12,7 @@
 
 ## Authorization and current state
 
-Authorized in this task: plan creation, preservation of the existing synthetic experiment, and publication to the existing experiment branch. The later explicit publication instruction supersedes the initial no-push restriction. There is no authorization to merge, deploy, create paid resources, change hosted credentials/security, migrate production, email real agreements or replace PandaDoc.
+Authorized in this task: plan creation, preservation of the existing synthetic experiment, actual CMG contract/system diagnostics using exclusively synthetic data, and publication to the existing experiment branch. The later explicit publication instruction supersedes the initial no-push restriction. There is no authorization to merge, deploy, create paid resources, change hosted credentials/security, migrate production, email real agreements or replace PandaDoc.
 
 - Experiment branch: spike/signudoc-white-label-2026-11-16.
 - Checked base: develop at 950cb27514ce10c92a1b05a4ef87bee9fc627ca2.
@@ -67,6 +67,18 @@ Authorized in this task: plan creation, preservation of the existing synthetic e
 | Clean upstream build/typecheck passed; lint exit 0 with five warnings | Unmodified pinned SignuDoc source | CI on future production changes |
 | Dependency audit: zero high/critical; one moderate affected package | Pinned installed production tree | Zero vulnerabilities or full security audit |
 | Browser run blocked at Chromium Unix socket startup | Confirmed execution-environment limitation | A product browser failure or a successful mobile test |
+
+### Later actual-CMG-contract checkpoint — 2026-11-16
+
+See [actual contract results](../../experiments/signudoc/actual-contracts/RESULTS.md). Both real nine-page CMG assets were downloaded/hash-verified and prefilled by the unmodified actual CMG builder with fake identities, then watermarked on every page. 74 targeted CMG tests passed (72 existing + two exports). Existing claim authorization/service tests use mocks; this is not a hosted CMG or RLS integration test.
+
+A new real SignuDoc HTTP scenario passed for required-field signing of both actual layouts (9/18 required fields). Full manifests (11/21 fields) were deliberately submitted and both failed HTTP 400: optional initials are currently prohibited. The optional sections remained blank/unexecuted in the subsequent diagnostic. This confirms Task 5 is a hard blocker, not completed agreement support.
+
+All 18 final pages retained the original legal background images and watermark; a 2x pixel comparison found no changes outside padded signing fields. All four signed/evidence artifact seals validated; their issuers are self-signed/unknown. Local capture-only email and disposable Postgres were used; servers were stopped. Source files and production workflows were unchanged.
+
+Actual UI testing was attempted through the managed browser but its loopback could not reach the execution environment (ERR_CONNECTION_REFUSED after the local server passed in-process readiness). Execution-side Chromium had independently failed at Unix socket startup. No phone, viewport emulation or visual signing acceptance is established. No CMG provider bridge, pending-signer screen, callback reconciliation or automatic claim filing was exercised. Dates were fixed/same-day; cross-day two-signer date behavior still needs acceptance. Production template reuse must exclude prior homeowner data.
+
+This evidence advances diagnosis only. Tasks 5–17 and all pilot/rollout gates retain their acceptance requirements; do not mark them complete from this partial scenario.
 
 No combined CMG/SignuDoc production readiness percentage is assigned.
 
@@ -265,7 +277,7 @@ Never accept tenant/claim routing solely from a callback's user-supplied metadat
 - [ ] Complete one homeowner, then two distinct homeowners on actual supported phones and desktop browsers; cover narrow 390px layout and keyboard accessibility.
 - [ ] Test typed and drawn signatures/initials, zoom/scroll, consent accept/decline, all pages and final downloads.
 - [ ] Test optional authorization chosen/declined, incomplete fields, wrong signer, back/refresh, lost connection, expiry and recipient correction.
-- [ ] Inspect every finished PDF page and certificate for field identity, wording, dates, placement, clipping and preserved signatures.
+- [ ] Inspect every finished PDF page and certificate for field identity, wording, dates, placement, clipping and preserved signatures. Include a send on one day and completion on another, two homeowners completing on different days, timezone differences and the approved date policy; fixed same-day prefill is insufficient evidence.
 
 **Acceptance/tests:** actual tap/draw/finish/download behavior works; the second homeowner cannot edit the first's fields. A mobile User-Agent or programmatic HTTP success is insufficient.
 

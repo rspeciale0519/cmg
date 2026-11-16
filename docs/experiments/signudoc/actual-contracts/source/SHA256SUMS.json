@@ -1,0 +1,8 @@
+{
+  "signudoc-actual-contract-export.test.ts.txt": "eb817125c17c4ada2cf709ab82b51d0fb3a561fcda72fb0ddca19814a544ecb7",
+  "cmg-actual-contract.spec.ts.txt": "355cfa6e238bb7d2001229d9d48bd36e78b913cff3a39f02586177a53ebb7e64",
+  "run-actual-api.py.txt": "2bb74e748cfa786c2d7c7c16be88fc81ad93396c9848a031d0549f9cf320df3c",
+  "verify-actual-pdfs.py.txt": "02a87c9bd0fd37740db6460d779d270cd27f0a09f32e64284ce668c3b81526f9",
+  "prepare-actual-ui.cjs.txt": "62a28167ae142ab4c652ab2211f53708b1849bf777086b6d4e840305e6b91da4",
+  "run-actual-ui.py.txt": "1a353fdd94324163d7a9bb161e9b5c7f0b983dc21993a1c27181803c2509a2fa"
+}

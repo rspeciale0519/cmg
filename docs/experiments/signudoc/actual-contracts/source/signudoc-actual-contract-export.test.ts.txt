@@ -1,0 +1,52 @@
+// @vitest-environment node
+import { describe,it,expect,vi } from "vitest";
+import { readFile,mkdir,writeFile } from "node:fs/promises";
+import path from "node:path";
+import { createHash } from "node:crypto";
+import { PDFDocument,StandardFonts,rgb } from "pdf-lib";
+vi.mock("server-only",()=>({}));
+const {buildPrefilledLorPdf}=await import("./lor-prefill");
+const {lorPdfName}=await import("./lor-pdf");
+const manifest=(await import("./lor-tag-manifest.json")).default;
+const out=path.resolve("../actual-contract-evidence/input");
+describe("Actual CMG LOR assets with exclusively synthetic values",()=>{
+ for(const variant of ["single","dual"] as const) {
+  it("generates and preserves the real "+variant+" contract for isolated signing diagnostics",async()=>{
+   const signers=[{email:"avery@example.invalid",firstName:"Avery",lastName:"Synthetic",phone:"2025550100",role:"Homeowner1" as const}];
+   if(variant==="dual") signers.push({email:"blake@example.invalid",firstName:"Blake",lastName:"Synthetic",phone:"2025550101",role:"Homeowner2" as any});
+   const data:Record<string,string>={
+    "Policyholders.Name":variant==="dual"?"Avery Synthetic and Blake Synthetic":"Avery Synthetic",
+    "Claim.Carrier":"Synthetic Insurance","Claim.PolicyNumber":"TEST-POLICY-001",
+    "Property.Address":"100 Synthetic Example Lane, Example City, FL 00000",
+    "Claim.LossDate":"11/01/2026","Claim.Cause":"Wind (synthetic)","Fee.Percent":"10",
+    "Claim.ClaimNumber":"TEST-CLAIM-001","Adjuster.Name":"Synthetic Adjuster",
+    "Homeowner1.Phone":"2025550100","Homeowner1.Email":"avery@example.invalid",
+    "Claim.EmergencyMark":"","Claim.NonEmergencyMark":"X","Claim.SupplementalMark":""
+   };
+   const raw=await readFile(path.join("src/lib/esign/templates",lorPdfName(signers.length)));
+   const expected=variant==="single"?"f637a50f1b16551095c86b38d59ae5d028ec64c8c174f531bce29b36b5e5d75e":"ffa0caa9fba7436931674e183cb636f429216ac064e13c44f9886853980c039a";
+   expect(createHash("sha256").update(raw).digest("hex")).toBe(expected);
+   const built=await buildPrefilledLorPdf({signers,tokens:Object.entries(data).map(([name,value])=>({name,value}))},new Date("2026-11-16T12:00:00Z"));
+   const pdf=await PDFDocument.load(built);
+   expect(pdf.getPageCount()).toBe(9);
+   const font=await pdf.embedFont(StandardFonts.Helvetica);
+   for(const page of pdf.getPages()){
+    page.drawText("SYNTHETIC TEST ONLY - NOT AN EXECUTED AGREEMENT",{font,size:7,x:20,y:8,color:rgb(0.8,0,0)});
+   }
+   const testPdf=await pdf.save();
+   await mkdir(out,{recursive:true});
+   await writeFile(path.join(out,variant+"-actual-cmg-prefilled.pdf"),testPdf);
+   await writeFile(path.join(out,variant+"-manifest.json"),JSON.stringify({
+    variant,sourceGitCommit:"950cb27514ce10c92a1b05a4ef87bee9fc627ca2",
+    sourceFile:lorPdfName(signers.length),originalAssetSha256:expected,
+    prefilledSha256:createHash("sha256").update(built).digest("hex"),
+    syntheticWatermarkedSha256:createHash("sha256").update(testPdf).digest("hex"),
+    pages:9,requiredFields:manifest.variants[variant].signature.filter(x=>!x.optional).length,
+    optionalFields:manifest.variants[variant].signature.filter(x=>x.optional).map(x=>({id:x.id,type:x.type,role:x.role})),
+    actualCmgSourceExecuted:true,realCustomerData:false,
+    watermark:"SYNTHETIC TEST ONLY - NOT AN EXECUTED AGREEMENT",
+    limitation:"These are real CMG legal template assets with fake data, not legal approvals or production executions."
+   },null,2));
+  },30000);
+ }
+});
