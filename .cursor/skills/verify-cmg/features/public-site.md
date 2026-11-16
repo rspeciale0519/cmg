@@ -46,7 +46,7 @@ Contact rate limit: 5 per IP / 3 per email per hour (`src/lib/rate-limit.ts`). U
 
 - Turnstile always-pass keys still load `challenges.cloudflare.com`. If that script cannot load, waitForTurnstile fails — do not fake the token.
 - `noValidate` is on both forms; native HTML5 bubbles are not the error UI. Failed submits mark `[aria-invalid="true"]` and a `FormAlert`.
-- Empty `RESEND_API_KEY` leaves outbox `pending`. That is the local pass. Live Resend is opt-in and skipped here.
+- Empty vendor keys leave outbox `pending`. That is the local pass. Live Resend/PandaDoc is `--live-vendors` / `VERIFY_CMG_LIVE_VENDORS=1` and skipped here.
 - Contact without email writes a lead and only `lead_staff_alert` (consent requires email).
 - Intake is prepare → optional uploads → finalize inside `useIntakeUpload`. Drive the visible button; do not call `/api` helpers.
 - Simple mode is the proof default. The same public forms exist in staff and platform; private routes differ.

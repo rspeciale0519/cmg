@@ -83,11 +83,11 @@ What launch does:
 2. Copies `.env.example` → `.env.local` **only when `.env.local` is missing**. It does not rewrite an existing file.
 3. Starts `npm run db:start` if GoTrue at `http://127.0.0.1:15421/auth/v1/health` is down, and records that this skill started Supabase.
 4. Optionally `npm run db:reset` (migrations + seed).
-5. Overlays, for this process only: `SITE_MODE`, `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:<port>`, local `API_URL` / `ANON_KEY` / `SECRET_KEY` from `supabase status -o env`, and **empty `RESEND_API_KEY`** so an existing `.env.local` secret cannot send mail. Turnstile falls back to the official always-pass pair from `.env.example` (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`) when unset. Live Resend is opt-in: `--live-email` or `VERIFY_CMG_LIVE_EMAIL=1`.
-6. Starts `npm run dev -- --hostname 127.0.0.1 --port 3000` (or `npm run build && npm run start` with `--prod`).
+5. Overlays, for this process only: `SITE_MODE`, `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:<port>`, and `API_URL` / `ANON_KEY` / `SECRET_KEY` taken **only** from `supabase status -o env` (no inherited-env fallback). The URL host must be `127.0.0.1` or `localhost` or launch hard-fails. Empty overlays for every outbound/paid vendor key in `.env.example` (`RESEND_API_KEY`, `PANDADOC_API_KEY`, `PANDADOC_WEBHOOK_SHARED_KEY`, `PANDADOC_DRAFT_TEST_EMAIL`, `PANDADOC_LOR_TEMPLATE_UUID`, `PANDADOC_LOR_TEMPLATE_UUID_SINGLE`, `CRON_SECRET`) so Next’s in-process `.env.local` load cannot send or charge. Cloudflare always-pass Turnstile keys are forced whenever the stack URL is local. Live vendors are opt-in: `--live-vendors` or `VERIFY_CMG_LIVE_VENDORS=1`.
+6. Starts `npm run dev -- --hostname 127.0.0.1 --port 3000` (or `npm run build && npm run start` with `--prod`). `--port` must be 1024–65535.
 7. Waits until **doctor** passes — not until a port accepts TCP.
 
-Nested Docker on some VMs drops Postgres traffic on the user-defined `supabase_network_*` bridge while `docker0` still works. Do **not** change host sysctl by default. Pass `--bridge-forward` / `VERIFY_CMG_BRIDGE_FORWARD=1` only then; cleanup restores the previous `bridge-nf-call-iptables` / `bridge-nf-call-ip6tables` values.
+`--bridge-forward` / `VERIFY_CMG_BRIDGE_FORWARD=1` is **only for nested-Docker cloud VMs** where user-defined `supabase_network_*` bridges cannot reach Postgres. Never use it on a laptop, Rob’s PC, or a shared host. It is opt-in. The iptables rule is scoped to the Supabase network subnet when that network exists, otherwise `-i br+ -o br+` (bridge-to-bridge). It is never a blanket `DOCKER-USER ACCEPT`. Cleanup restores the previous sysctl values and deletes that rule.
 
 Per `SITE_MODE` (from `src/lib/site-mode.ts` and `.env.example`):
 
@@ -111,7 +111,7 @@ Seeded local accounts (`supabase/seed.sql`), password `CmgDev!2026` for every ro
 | `customer@cmg.test` | customer | `/portal` (no TOTP) |
 | `partner@cmg.test` | partner | `/partner` (Summit Exteriors LLC) |
 
-Staff rows have **no TOTP factor**. First `/admin` visit goes through `/mfa` enrollment. Customer claim `CMG-2026-0001` id `20000000-0000-4000-a000-000000000001`. Launch overlays empty `RESEND_API_KEY` so outbox rows stay `pending` (queued, not sent). That is the local side-effect to assert.
+Staff rows have **no TOTP factor**. First `/admin` visit goes through `/mfa` enrollment. Customer claim `CMG-2026-0001` id `20000000-0000-4000-a000-000000000001`. Launch overlays empty vendor keys so outbox rows stay `pending` (queued, not sent). That is the local side-effect to assert.
 
 ## 3. Doctor
 
@@ -126,8 +126,9 @@ Checks, in order:
 1. **App up** — `GET http://127.0.0.1:<port>/` is 200 and the body contains the homepage copy above.
 2. **Right build** — `started.json` git SHA equals `HEAD`; app log names Next.js.
 3. **Port ours** — the PID recorded by launch is alive and that port answers.
-4. **Supabase healthy** — `GET {API_URL}/auth/v1/health` and REST `{API_URL}/rest/v1/` with the publishable key.
-5. **Auth works (mode-accurate, no session)** —
+4. **Supabase healthy** — `supabase status -o env` only (no inherited URL/key fallback); host must be `127.0.0.1` or `localhost`; GoTrue health + REST with the publishable key.
+5. **Vendor keys blank** — `/proc/<pid>/environ` (and children) have empty Resend/PandaDoc/cron keys; Turnstile is the always-pass test pair. Skipped only when `--live-vendors` was recorded.
+6. **Auth works (mode-accurate, no session)** —
    - `simple`: `/login` lands on “Online claim accounts are not open yet.”
    - `staff`: `/login` shows “Sign in to your claim.”; `/portal` stays on platform-disabled.
    - `platform`: `/login` shows “Sign in to your claim.”
@@ -208,7 +209,7 @@ Proof standard:
 ./.cursor/skills/verify-cmg/scripts/cleanup.sh
 ```
 
-Stops **only** what launch recorded: the app PID and its children, then `npm run db:stop` **only if this skill started Supabase**. Never `pkill node`, `killall next`, or `docker kill` by image/name.
+Stops **only** what launch recorded: the app PID (after `/proc/<pid>/cmdline` contains `npm` or `next`; a mismatch drops the stale record and does not kill) and its children, then `npm run db:stop` **only if this skill started Supabase**. Never `pkill node`, `killall next`, or `docker kill` by image/name. If `--bridge-forward` was used, cleanup deletes the scoped `DOCKER-USER` rule and restores sysctl.
 
 After cleanup, confirm `ls .cursor/skills/verify-cmg/evidence/` still lists the proof directories.
 
@@ -221,7 +222,7 @@ All scripts are executable. Repo-root invocations:
 | Static gates | `./.cursor/skills/verify-cmg/scripts/static-gates.sh` |
 | Static gates + DB | `./.cursor/skills/verify-cmg/scripts/static-gates.sh --with-db` |
 | Launch | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset` |
-| Launch + nested-Docker bridge | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset --bridge-forward` |
+| Launch + nested-Docker bridge (cloud VM only) | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset --bridge-forward` |
 | Launch production-like | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --prod` |
 | Doctor | `./.cursor/skills/verify-cmg/scripts/doctor.sh` |
 | Drive | `./.cursor/skills/verify-cmg/scripts/drive.sh public-contact` |
@@ -239,5 +240,6 @@ Runtime pid/log files: `.cursor/skills/verify-cmg/run/` (gitignored). Evidence: 
 - Filling Turnstile with a fake token or skipping the widget.
 - Asserting only the success heading without `leads` / `notifications_outbox` rows.
 - Killing every `node` process on the machine.
-- Running live PandaDoc or Resend from this skill by default.
+- Running live PandaDoc or Resend from this skill by default (`VERIFY_CMG_LIVE_VENDORS` is off).
+- Using `--bridge-forward` on a laptop or shared host.
 - Encoding temporary SHAs, test totals, or local ports into `AGENTS.md`.

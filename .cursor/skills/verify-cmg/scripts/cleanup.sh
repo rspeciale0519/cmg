@@ -25,7 +25,7 @@ fi
 
 if [[ -n "$APP_PID" ]]; then
   log "stopping app pid ${APP_PID} and its children"
-  kill_tree "$APP_PID"
+  kill_tree "$APP_PID" app || log "did not kill pid ${APP_PID}"
 else
   log "no app pid recorded"
 fi

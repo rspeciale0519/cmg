@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Start local Supabase (if needed) and the Next.js app for verification.
 # Usage: launch.sh [--mode simple|staff|platform] [--port 3000] [--reset] [--prod]
-#                  [--bridge-forward] [--live-email]
+#                  [--bridge-forward] [--live-vendors]
 # --reset           rebuilds the local database from migrations + supabase/seed.sql.
 #                   Use only against disposable data (fresh VM / empty data dir).
 # --prod            serves `npm run build && npm run start` instead of `npm run dev`.
-# --bridge-forward  opt-in nested-Docker sysctl workaround (VERIFY_CMG_BRIDGE_FORWARD=1).
-# --live-email      keep inherited RESEND_API_KEY (VERIFY_CMG_LIVE_EMAIL=1). Default: empty.
+# --bridge-forward  nested-Docker cloud VMs only, never a laptop or shared host
+#                   (VERIFY_CMG_BRIDGE_FORWARD=1). Cleanup restores sysctl + the
+#                   scoped DOCKER-USER rule.
+# --live-vendors    keep inherited Resend/PandaDoc/cron keys (VERIFY_CMG_LIVE_VENDORS=1).
+#                   Default: overlay empty vendor keys so .env.local cannot send.
 
 # shellcheck source=common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
@@ -17,7 +20,7 @@ PORT="$DEFAULT_PORT"
 RESET=0
 PROD=0
 BRIDGE_FORWARD=0
-LIVE_EMAIL=0
+LIVE_VENDORS=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -26,20 +29,22 @@ while [[ $# -gt 0 ]]; do
     --reset) RESET=1; shift ;;
     --prod) PROD=1; shift ;;
     --bridge-forward) BRIDGE_FORWARD=1; shift ;;
-    --live-email) LIVE_EMAIL=1; shift ;;
+    --live-vendors) LIVE_VENDORS=1; shift ;;
     -h|--help)
-      sed -n '2,8p' "$0"
+      sed -n '2,12p' "$0"
       exit 0
       ;;
     *) fail "unknown argument: $1" ;;
   esac
 done
 
+require_app_port "$PORT"
+
 if [[ "${VERIFY_CMG_BRIDGE_FORWARD:-}" == "1" ]]; then
   BRIDGE_FORWARD=1
 fi
-if [[ "${VERIFY_CMG_LIVE_EMAIL:-}" == "1" ]]; then
-  LIVE_EMAIL=1
+if [[ "${VERIFY_CMG_LIVE_VENDORS:-}" == "1" ]]; then
+  LIVE_VENDORS=1
 fi
 
 if [[ "$BRIDGE_FORWARD" -eq 1 ]]; then
@@ -79,6 +84,10 @@ fi
 
 load_supabase_env || fail "could not read supabase status -o env"
 
+if [[ "$BRIDGE_FORWARD" -eq 1 ]]; then
+  refresh_docker_user_to_subnet
+fi
+
 export SITE_MODE="$MODE"
 export NEXT_PUBLIC_SITE_URL="http://${BASE_HOST}:${PORT}"
 # Overlay local stack keys for this process. Do not rewrite an existing .env.local.
@@ -86,22 +95,16 @@ export NEXT_PUBLIC_SUPABASE_URL
 export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 export SUPABASE_SECRET_KEY
 
-# Official Cloudflare always-pass test keys from .env.example, if the process
-# did not already inherit live keys. Launch never prints them.
-if [[ -z "${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}" ]]; then
-  export NEXT_PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"
-fi
-if [[ -z "${TURNSTILE_SECRET_KEY:-}" ]]; then
-  export TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
-fi
+# Local stack (M1) always gets Cloudflare always-pass Turnstile keys.
+force_turnstile_test_keys
 
-# Default: force an empty delivery key so an existing .env.local Resend secret
-# cannot send synthetic verification mail. Opt in with --live-email.
-if [[ "$LIVE_EMAIL" -eq 1 ]]; then
-  log "live email opt-in: inherited RESEND_API_KEY is unchanged"
+# Next loads .env.local in-process. Empty overlays win over a real key on disk
+# unless VERIFY_CMG_LIVE_VENDORS=1 / --live-vendors.
+if [[ "$LIVE_VENDORS" -eq 1 ]]; then
+  log "live vendors opt-in: inherited Resend/PandaDoc/cron keys are unchanged"
 else
-  export RESEND_API_KEY=""
-  log "overlaying empty RESEND_API_KEY (outbox stays pending; --live-email to send)"
+  blank_vendor_keys
+  log "overlaying empty vendor keys (Resend/PandaDoc/cron); --live-vendors to send"
 fi
 
 if command -v ss >/dev/null 2>&1 && ss -tln | grep -q ":${PORT} "; then
@@ -120,6 +123,13 @@ start_app() {
     NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
     TURNSTILE_SECRET_KEY="$TURNSTILE_SECRET_KEY" \
     RESEND_API_KEY="${RESEND_API_KEY-}" \
+    PANDADOC_API_KEY="${PANDADOC_API_KEY-}" \
+    PANDADOC_WEBHOOK_SHARED_KEY="${PANDADOC_WEBHOOK_SHARED_KEY-}" \
+    PANDADOC_DRAFT_TEST_EMAIL="${PANDADOC_DRAFT_TEST_EMAIL-}" \
+    PANDADOC_LOR_TEMPLATE_UUID="${PANDADOC_LOR_TEMPLATE_UUID-}" \
+    PANDADOC_LOR_TEMPLATE_UUID_SINGLE="${PANDADOC_LOR_TEMPLATE_UUID_SINGLE-}" \
+    CRON_SECRET="${CRON_SECRET-}" \
+    PANDADOC_LIVE_DRAFT_TEST="${PANDADOC_LIVE_DRAFT_TEST-}" \
     npm run "$npm_script" -- --hostname "$BASE_HOST" --port "$PORT" \
     >"$RUN_DIR/app.log" 2>&1 &
 }
@@ -143,9 +153,9 @@ write_started "$(node -e 'console.log(JSON.stringify({
   startedSupabase: process.argv[6] === "1",
   resetDb: process.argv[7] === "1",
   prod: process.argv[8] === "1",
-  liveEmail: process.argv[9] === "1",
+  liveVendors: process.argv[9] === "1",
   bridgeForward: process.argv[10] === "1",
-}))' "$GIT_SHA" "$MODE" "$PORT" "$NEXT_PUBLIC_SITE_URL" "$APP_PID" "$STARTED_SUPABASE" "$RESET" "$PROD" "$LIVE_EMAIL" "$BRIDGE_FORWARD")"
+}))' "$GIT_SHA" "$MODE" "$PORT" "$NEXT_PUBLIC_SITE_URL" "$APP_PID" "$STARTED_SUPABASE" "$RESET" "$PROD" "$LIVE_VENDORS" "$BRIDGE_FORWARD")"
 
 log "waiting for doctor (usable homepage, not only a bound port)"
 for i in $(seq 1 90); do

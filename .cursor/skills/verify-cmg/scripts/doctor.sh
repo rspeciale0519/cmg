@@ -104,6 +104,43 @@ else
   bad "supabase status -o env failed (stack not running on this project?)"
 fi
 
+# --- vendor keys blank in the running process (unless live-vendors) ---
+LIVE_VENDORS_REC=""
+if [[ -f "$STARTED_JSON" ]]; then
+  LIVE_VENDORS_REC="$(json_get "$STARTED_JSON" liveVendors 2>/dev/null || true)"
+fi
+if [[ "$LIVE_VENDORS_REC" == "true" || "$LIVE_VENDORS_REC" == "1" ]]; then
+  note "live vendors opt-in recorded; not requiring blank Resend/PandaDoc/cron in /proc/environ"
+elif [[ -z "$APP_PID" ]]; then
+  bad "no recorded pid — cannot read /proc/<pid>/environ for vendor keys"
+else
+  PIDS_TO_SCAN=("$APP_PID")
+  while read -r child; do
+    [[ -n "$child" ]] || continue
+    PIDS_TO_SCAN+=("$child")
+  done < <(pgrep -P "$APP_PID" || true)
+  VENDOR_FAIL=0
+  while read -r key; do
+    [[ -n "$key" ]] || continue
+    for pid in "${PIDS_TO_SCAN[@]}"; do
+      val="$(proc_env_value "$pid" "$key" || true)"
+      if [[ -n "$val" ]]; then
+        bad "pid ${pid} has ${key} set in /proc/environ (must be blank without --live-vendors)"
+        VENDOR_FAIL=1
+      fi
+    done
+  done < <(vendor_key_names)
+  if [[ "$VENDOR_FAIL" -eq 0 ]]; then
+    pass "vendor keys blank in /proc/${APP_PID}/environ and children (Resend/PandaDoc/cron)"
+  fi
+  SITE_KEY="$(proc_env_value "$APP_PID" NEXT_PUBLIC_TURNSTILE_SITE_KEY || true)"
+  if [[ "$SITE_KEY" == "1x00000000000000000000AA" ]]; then
+    pass "Turnstile site key is the Cloudflare always-pass test key"
+  else
+    bad "Turnstile site key is not the always-pass test key on pid ${APP_PID}"
+  fi
+fi
+
 # --- auth works (mode-accurate, read-only: no sign-in) ---
 # Follow redirects so we see the page a person lands on.
 LOGIN_BODY="$(mktemp)"
