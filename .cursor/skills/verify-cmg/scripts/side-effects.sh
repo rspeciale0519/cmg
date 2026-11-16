@@ -29,8 +29,16 @@ async function rows(path) {
   }
   return body;
 }
-const leads = await rows("/rest/v1/leads?email=eq." + encodeURIComponent(email) + "&select=id,name,phone,email,status,created_at&order=created_at.desc");
-const claims = await rows("/rest/v1/claims?select=id,claim_ref,status,property_street,created_at&order=created_at.desc&limit=5");
-const outbox = await rows("/rest/v1/notifications_outbox?or=(recipient_email.eq." + encodeURIComponent(email) + ",template.in.(lead_staff_alert,lead_auto_reply,intake_staff_alert,intake_confirmation))&select=id,recipient_email,template,status,attempts,created_at&order=created_at.desc&limit=20");
+const enc = encodeURIComponent(email);
+const leads = await rows("/rest/v1/leads?email=eq." + enc + "&select=id,name,phone,email,status,created_at&order=created_at.desc");
+const rawClaims = await rows(
+  "/rest/v1/claims?select=id,claim_ref,status,property_street,created_at,claimants!inner(email)&claimants.email=eq." + enc + "&order=created_at.desc",
+);
+const claims = Array.isArray(rawClaims)
+  ? rawClaims.map(({ claimants, ...row }) => row)
+  : rawClaims;
+const outbox = await rows(
+  "/rest/v1/notifications_outbox?or=(recipient_email.eq." + enc + ",payload->>email.eq." + enc + ")&select=id,recipient_email,template,status,attempts,created_at,payload&order=created_at.desc&limit=20",
+);
 process.stdout.write(JSON.stringify({ email, leads, claims, outbox }, null, 2) + "\n");
 ' "$EMAIL"

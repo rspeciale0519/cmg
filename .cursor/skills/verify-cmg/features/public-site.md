@@ -36,9 +36,9 @@ Contact (`scripts/journeys/public-contact.spec.mjs`):
 4. Wait for `input[name="cf-turnstile-response"]` to hold a token.
 5. Click “Request my free review”.
 6. Expect heading “Request received.”
-7. `side-effects.sh` must show a `leads` row (`status=new`) and outbox templates `lead_staff_alert` and `lead_auto_reply`.
+7. `side-effects.sh <that-email>` must show a `leads` row (`status=new`) plus outbox `lead_staff_alert` (`payload.email`) and `lead_auto_reply` (`recipient_email`) for that address, not an earlier drive.
 
-Intake (`public-intake.spec.mjs`): `#field-firstName` … `#field-consent`, radios `hasSecondPolicyholder=no`, `priorRoofClaim=no`, `lorContractType=non_emergency`, `#field-requestedAdjuster=austin-graham`, “Submit intake”, heading “Intake received.” plus “Your reference”. Outbox: `intake_staff_alert`, `intake_confirmation`. Claim row `property_street = 100 Verification Way`.
+Intake (`public-intake.spec.mjs`): `#field-firstName` … `#field-consent`, radios `hasSecondPolicyholder=no`, `priorRoofClaim=no`, `lorContractType=non_emergency`, `#field-requestedAdjuster=austin-graham`, “Submit intake”, heading “Intake received.” Read the visible claim reference, then assert that `claim_ref` (via `claimants.email`) and outbox rows for that email. Do not accept a prior `100 Verification Way` row.
 
 Contact rate limit: 5 per IP / 3 per email per hour (`src/lib/rate-limit.ts`). Use a unique `*.verify.cmg.test` address per run.
 

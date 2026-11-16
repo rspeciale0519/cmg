@@ -7,6 +7,7 @@
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 if [[ ! -f "$STARTED_JSON" && ! -f "$RUN_DIR/app.pid" ]]; then
+  restore_bridge_forward
   log "nothing recorded in ${RUN_DIR}; no processes to stop"
   log "evidence kept at ${EVIDENCE_ROOT}"
   exit 0
@@ -36,6 +37,8 @@ if [[ "$STARTED_SUPABASE" == "true" || "$STARTED_SUPABASE" == "1" ]]; then
 else
   log "leaving Supabase running (this skill did not start it)"
 fi
+
+restore_bridge_forward
 
 rm -f "$RUN_DIR/app.pid" "$STARTED_JSON" "$RUN_DIR/storage-owner.json"
 log "runtime pid records removed; evidence kept at ${EVIDENCE_ROOT}"

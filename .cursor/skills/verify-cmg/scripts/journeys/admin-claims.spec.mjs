@@ -64,7 +64,10 @@ test.describe("admin claim management", () => {
     await expect(page).toHaveURL(/\/admin\/claims/);
     await expect(page.getByRole("heading", { name: "Claims." })).toBeVisible();
     await page.locator("#claim-search").fill(SEED.customerClaimRef);
-    await expect(page.getByText(SEED.customerClaimRef)).toBeVisible();
+    // Cards (xl:hidden) and the desktop table both render the same reference.
+    await expect(
+      page.getByText(SEED.customerClaimRef, { exact: true }).filter({ visible: true }),
+    ).toHaveCount(1);
 
     await page.getByRole("navigation", { name: "Workspace" }).getByRole("link", { name: "Intake" }).click();
     await expect(page.getByRole("heading", { name: "Intake queue." })).toBeVisible();

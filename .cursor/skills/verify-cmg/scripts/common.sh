@@ -38,28 +38,77 @@ log() {
   echo "verify-cmg: $*"
 }
 
-# User-defined bridges (supabase_network_*) must forward. Nested Docker with
-# bridge-nf-call-iptables=1 and no per-bridge FORWARD rules drops that traffic
-# while docker0 still works — realtime then cannot reach Postgres.
-ensure_docker_bridge_forward() {
-  [[ "$(uname -s)" == "Linux" ]] || return 0
-  if [[ -w /proc/sys/net/bridge/bridge-nf-call-iptables ]]; then
-    echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables 2>/dev/null || true
-    echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables 2>/dev/null || true
-  elif command -v sudo >/dev/null 2>&1; then
-    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1 || true
-    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1 || true
-    sudo iptables -C DOCKER-USER -j ACCEPT >/dev/null 2>&1 \
-      || sudo iptables -I DOCKER-USER 1 -j ACCEPT >/dev/null 2>&1 \
-      || true
+BRIDGE_STATE="$RUN_DIR/bridge-sysctl.json"
+
+# Nested Docker with bridge-nf-call-iptables=1 can drop user-defined-bridge
+# Postgres traffic. Do not apply this on a normal host. Opt in with
+# VERIFY_CMG_BRIDGE_FORWARD=1 or launch.sh --bridge-forward. Cleanup restores.
+write_sysctl() {
+  local key="$1" value="$2"
+  local path="/proc/sys/net/bridge/${key}"
+  if [[ -w "$path" ]]; then
+    echo "$value" >"$path" 2>/dev/null && return 0
   fi
+  if command -v sudo >/dev/null 2>&1; then
+    sudo sysctl -w "net.bridge.${key}=${value}" >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
+apply_bridge_forward() {
+  [[ "$(uname -s)" == "Linux" ]] || return 0
+  if [[ -f "$BRIDGE_STATE" ]]; then
+    write_sysctl bridge-nf-call-iptables 0 || true
+    write_sysctl bridge-nf-call-ip6tables 0 || true
+    log "bridge forward already recorded; re-applied without overwriting the snapshot"
+    return 0
+  fi
+  local prev4 prev6 inserted=0
+  prev4="$(cat /proc/sys/net/bridge/bridge-nf-call-iptables 2>/dev/null || echo "")"
+  prev6="$(cat /proc/sys/net/bridge/bridge-nf-call-ip6tables 2>/dev/null || echo "")"
+  write_sysctl bridge-nf-call-iptables 0 || log "could not set bridge-nf-call-iptables=0"
+  write_sysctl bridge-nf-call-ip6tables 0 || log "could not set bridge-nf-call-ip6tables=0"
+  if command -v sudo >/dev/null 2>&1 && command -v iptables >/dev/null 2>&1; then
+    if ! sudo iptables -C DOCKER-USER -j ACCEPT >/dev/null 2>&1; then
+      if sudo iptables -I DOCKER-USER 1 -j ACCEPT >/dev/null 2>&1; then
+        inserted=1
+      fi
+    fi
+  fi
+  node -e '
+    const fs = require("fs");
+    fs.writeFileSync(process.argv[1], JSON.stringify({
+      iptables: process.argv[2],
+      ip6tables: process.argv[3],
+      dockerUserAcceptInserted: process.argv[4] === "1",
+    }, null, 2) + "\n");
+  ' "$BRIDGE_STATE" "$prev4" "$prev6" "$inserted"
+  log "applied nested-Docker bridge forward (opt-in); cleanup will restore prior sysctl"
+}
+
+restore_bridge_forward() {
+  [[ -f "$BRIDGE_STATE" ]] || return 0
+  local prev4 prev6 inserted
+  prev4="$(json_get "$BRIDGE_STATE" iptables 2>/dev/null || true)"
+  prev6="$(json_get "$BRIDGE_STATE" ip6tables 2>/dev/null || true)"
+  inserted="$(json_get "$BRIDGE_STATE" dockerUserAcceptInserted 2>/dev/null || echo 0)"
+  if [[ "$prev4" == "0" || "$prev4" == "1" ]]; then
+    write_sysctl bridge-nf-call-iptables "$prev4" || true
+  fi
+  if [[ "$prev6" == "0" || "$prev6" == "1" ]]; then
+    write_sysctl bridge-nf-call-ip6tables "$prev6" || true
+  fi
+  if [[ "$inserted" == "true" || "$inserted" == "1" ]] && command -v sudo >/dev/null 2>&1; then
+    sudo iptables -D DOCKER-USER -j ACCEPT >/dev/null 2>&1 || true
+  fi
+  rm -f "$BRIDGE_STATE"
+  log "restored host bridge sysctl recorded at launch"
 }
 
 # Re-exec under the docker group when the daemon is up but this shell lacks it.
 # Database-backed Vitest also shells out to `docker inspect`/`docker exec`.
 ensure_docker() {
   if docker info >/dev/null 2>&1; then
-    ensure_docker_bridge_forward
     return 0
   fi
   if getent group docker >/dev/null 2>&1 && getent group docker | grep -qw "${USER:-ubuntu}"; then

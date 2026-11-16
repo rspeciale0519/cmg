@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Start local Supabase (if needed) and the Next.js app for verification.
 # Usage: launch.sh [--mode simple|staff|platform] [--port 3000] [--reset] [--prod]
-# --reset rebuilds the local database from migrations + supabase/seed.sql.
-#          Use only against disposable data (fresh VM / empty data dir).
-# --prod   serves `npm run build && npm run start` instead of `npm run dev`.
+#                  [--bridge-forward] [--live-email]
+# --reset           rebuilds the local database from migrations + supabase/seed.sql.
+#                   Use only against disposable data (fresh VM / empty data dir).
+# --prod            serves `npm run build && npm run start` instead of `npm run dev`.
+# --bridge-forward  opt-in nested-Docker sysctl workaround (VERIFY_CMG_BRIDGE_FORWARD=1).
+# --live-email      keep inherited RESEND_API_KEY (VERIFY_CMG_LIVE_EMAIL=1). Default: empty.
 
 # shellcheck source=common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
@@ -13,6 +16,8 @@ MODE="$DEFAULT_MODE"
 PORT="$DEFAULT_PORT"
 RESET=0
 PROD=0
+BRIDGE_FORWARD=0
+LIVE_EMAIL=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -20,13 +25,26 @@ while [[ $# -gt 0 ]]; do
     --port) PORT="${2:?}"; shift 2 ;;
     --reset) RESET=1; shift ;;
     --prod) PROD=1; shift ;;
+    --bridge-forward) BRIDGE_FORWARD=1; shift ;;
+    --live-email) LIVE_EMAIL=1; shift ;;
     -h|--help)
-      sed -n '2,6p' "$0"
+      sed -n '2,8p' "$0"
       exit 0
       ;;
     *) fail "unknown argument: $1" ;;
   esac
 done
+
+if [[ "${VERIFY_CMG_BRIDGE_FORWARD:-}" == "1" ]]; then
+  BRIDGE_FORWARD=1
+fi
+if [[ "${VERIFY_CMG_LIVE_EMAIL:-}" == "1" ]]; then
+  LIVE_EMAIL=1
+fi
+
+if [[ "$BRIDGE_FORWARD" -eq 1 ]]; then
+  apply_bridge_forward
+fi
 
 case "$MODE" in
   simple|staff|platform) ;;
@@ -77,6 +95,15 @@ if [[ -z "${TURNSTILE_SECRET_KEY:-}" ]]; then
   export TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
 fi
 
+# Default: force an empty delivery key so an existing .env.local Resend secret
+# cannot send synthetic verification mail. Opt in with --live-email.
+if [[ "$LIVE_EMAIL" -eq 1 ]]; then
+  log "live email opt-in: inherited RESEND_API_KEY is unchanged"
+else
+  export RESEND_API_KEY=""
+  log "overlaying empty RESEND_API_KEY (outbox stays pending; --live-email to send)"
+fi
+
 if command -v ss >/dev/null 2>&1 && ss -tln | grep -q ":${PORT} "; then
   fail "port ${PORT} is already in use. Pass --port or stop the occupant by PID."
 fi
@@ -84,25 +111,24 @@ fi
 GIT_SHA="$(git rev-parse HEAD)"
 log "starting app SITE_MODE=${MODE} port=${PORT} sha=${GIT_SHA} prod=${PROD}"
 
+start_app() {
+  local npm_script="$1"
+  nohup env SITE_MODE="$MODE" NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+    NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+    SUPABASE_SECRET_KEY="$SUPABASE_SECRET_KEY" \
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
+    TURNSTILE_SECRET_KEY="$TURNSTILE_SECRET_KEY" \
+    RESEND_API_KEY="${RESEND_API_KEY-}" \
+    npm run "$npm_script" -- --hostname "$BASE_HOST" --port "$PORT" \
+    >"$RUN_DIR/app.log" 2>&1 &
+}
+
 if [[ "$PROD" -eq 1 ]]; then
   npm run build
-  nohup env SITE_MODE="$MODE" NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
-    NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
-    SUPABASE_SECRET_KEY="$SUPABASE_SECRET_KEY" \
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
-    TURNSTILE_SECRET_KEY="$TURNSTILE_SECRET_KEY" \
-    npm run start -- --hostname "$BASE_HOST" --port "$PORT" \
-    >"$RUN_DIR/app.log" 2>&1 &
+  start_app start
 else
-  nohup env SITE_MODE="$MODE" NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
-    NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
-    SUPABASE_SECRET_KEY="$SUPABASE_SECRET_KEY" \
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
-    TURNSTILE_SECRET_KEY="$TURNSTILE_SECRET_KEY" \
-    npm run dev -- --hostname "$BASE_HOST" --port "$PORT" \
-    >"$RUN_DIR/app.log" 2>&1 &
+  start_app dev
 fi
 APP_PID=$!
 echo "$APP_PID" >"$RUN_DIR/app.pid"
@@ -117,7 +143,9 @@ write_started "$(node -e 'console.log(JSON.stringify({
   startedSupabase: process.argv[6] === "1",
   resetDb: process.argv[7] === "1",
   prod: process.argv[8] === "1",
-}))' "$GIT_SHA" "$MODE" "$PORT" "$NEXT_PUBLIC_SITE_URL" "$APP_PID" "$STARTED_SUPABASE" "$RESET" "$PROD")"
+  liveEmail: process.argv[9] === "1",
+  bridgeForward: process.argv[10] === "1",
+}))' "$GIT_SHA" "$MODE" "$PORT" "$NEXT_PUBLIC_SITE_URL" "$APP_PID" "$STARTED_SUPABASE" "$RESET" "$PROD" "$LIVE_EMAIL" "$BRIDGE_FORWARD")"
 
 log "waiting for doctor (usable homepage, not only a bound port)"
 for i in $(seq 1 90); do

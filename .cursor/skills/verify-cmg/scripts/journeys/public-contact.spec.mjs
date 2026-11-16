@@ -72,8 +72,12 @@ test.describe("simple-mode public contact submission", () => {
     expect(match.status).toBe("new");
 
     const outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
-    const staff = outbox.find((row) => row.template === "lead_staff_alert");
-    const reply = outbox.find((row) => row.template === "lead_auto_reply" && row.recipient_email === email);
+    const staff = outbox.find(
+      (row) => row.template === "lead_staff_alert" && row.payload?.email === email,
+    );
+    const reply = outbox.find(
+      (row) => row.template === "lead_auto_reply" && row.recipient_email === email,
+    );
     expect(staff, "lead_staff_alert outbox row missing").toBeTruthy();
     expect(reply, "lead_auto_reply outbox row missing").toBeTruthy();
     expect(["pending", "sending", "sent"]).toContain(staff.status);

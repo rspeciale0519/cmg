@@ -71,19 +71,23 @@ Empty data dir → running instance.
 ./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset
 ./.cursor/skills/verify-cmg/scripts/launch.sh --mode staff --reset
 ./.cursor/skills/verify-cmg/scripts/launch.sh --mode platform --reset
+# Nested Docker only, when user-defined bridges cannot reach Postgres:
+VERIFY_CMG_BRIDGE_FORWARD=1 ./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset --bridge-forward
 ```
 
 `--reset` is the empty-data-dir path. Omit it when the stack is already seeded and disposable-data approval is not in hand.
 
 What launch does:
 
-1. Re-execs under the `docker` group if the daemon is up but this shell cannot talk to it. On Linux it also clears `bridge-nf-call-iptables` so the user-defined `supabase_network_*` bridge can carry Postgres traffic (nested Docker otherwise drops it while `docker0` still works).
+1. Re-execs under the `docker` group if the daemon is up but this shell cannot talk to it.
 2. Copies `.env.example` → `.env.local` **only when `.env.local` is missing**. It does not rewrite an existing file.
 3. Starts `npm run db:start` if GoTrue at `http://127.0.0.1:15421/auth/v1/health` is down, and records that this skill started Supabase.
 4. Optionally `npm run db:reset` (migrations + seed).
-5. Overlays, for this process only: `SITE_MODE`, `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:<port>`, and the local `API_URL` / `ANON_KEY` / `SECRET_KEY` from `supabase status -o env`. Turnstile falls back to the official always-pass pair from `.env.example` (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`) when unset.
+5. Overlays, for this process only: `SITE_MODE`, `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:<port>`, local `API_URL` / `ANON_KEY` / `SECRET_KEY` from `supabase status -o env`, and **empty `RESEND_API_KEY`** so an existing `.env.local` secret cannot send mail. Turnstile falls back to the official always-pass pair from `.env.example` (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`) when unset. Live Resend is opt-in: `--live-email` or `VERIFY_CMG_LIVE_EMAIL=1`.
 6. Starts `npm run dev -- --hostname 127.0.0.1 --port 3000` (or `npm run build && npm run start` with `--prod`).
 7. Waits until **doctor** passes — not until a port accepts TCP.
+
+Nested Docker on some VMs drops Postgres traffic on the user-defined `supabase_network_*` bridge while `docker0` still works. Do **not** change host sysctl by default. Pass `--bridge-forward` / `VERIFY_CMG_BRIDGE_FORWARD=1` only then; cleanup restores the previous `bridge-nf-call-iptables` / `bridge-nf-call-ip6tables` values.
 
 Per `SITE_MODE` (from `src/lib/site-mode.ts` and `.env.example`):
 
@@ -107,7 +111,7 @@ Seeded local accounts (`supabase/seed.sql`), password `CmgDev!2026` for every ro
 | `customer@cmg.test` | customer | `/portal` (no TOTP) |
 | `partner@cmg.test` | partner | `/partner` (Summit Exteriors LLC) |
 
-Staff rows have **no TOTP factor**. First `/admin` visit goes through `/mfa` enrollment. Customer claim `CMG-2026-0001` id `20000000-0000-4000-a000-000000000001`. Leave `RESEND_API_KEY` empty so outbox rows stay `pending` (queued, not sent). That is the local side-effect to assert.
+Staff rows have **no TOTP factor**. First `/admin` visit goes through `/mfa` enrollment. Customer claim `CMG-2026-0001` id `20000000-0000-4000-a000-000000000001`. Launch overlays empty `RESEND_API_KEY` so outbox rows stay `pending` (queued, not sent). That is the local side-effect to assert.
 
 ## 3. Doctor
 
@@ -182,7 +186,7 @@ Capture, for every driven feature:
 - Screenshots at **desktop (1280×800)** and **390px** (`*-desktop.png`, `*-mobile-390.png`).
 - Console errors and pageerrors (`console.json`). Filter by this navigation; do not call a console clean from leftover Preview noise.
 - Network status ≥400 and failed requests (`network-errors.json`). Cloudflare Turnstile script noise is expected on first paint; application 4xx/5xx on `/contact`, `/file-a-claim`, `/login`, `/admin`, `/portal` is not.
-- Database rows the user path wrote (`side-effects.json` via `side-effects.sh <email>`): `public.leads`, `public.claims`, `public.notifications_outbox`.
+- Database rows the user path wrote (`side-effects.json` via `side-effects.sh <email>`): `public.leads` for that email, `public.claims` joined through `claimants.email`, `public.notifications_outbox` where `recipient_email` or `payload.email` is that address. Do not accept an unrelated recent claim or staff-alert row.
 - Outbox: with empty `RESEND_API_KEY`, contact writes `lead_staff_alert` + `lead_auto_reply` (when email present) as `pending`. Intake writes `intake_staff_alert` + `intake_confirmation`. Status `pending` is a pass locally. Live Resend is opt-in and reported skipped.
 
 Proof lives in `.cursor/skills/verify-cmg/evidence/<utc>-<journey>/`. Cleanup deletes PID files under `run/` only. It must not delete `evidence/`.
@@ -217,6 +221,7 @@ All scripts are executable. Repo-root invocations:
 | Static gates | `./.cursor/skills/verify-cmg/scripts/static-gates.sh` |
 | Static gates + DB | `./.cursor/skills/verify-cmg/scripts/static-gates.sh --with-db` |
 | Launch | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset` |
+| Launch + nested-Docker bridge | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --reset --bridge-forward` |
 | Launch production-like | `./.cursor/skills/verify-cmg/scripts/launch.sh --mode simple --prod` |
 | Doctor | `./.cursor/skills/verify-cmg/scripts/doctor.sh` |
 | Drive | `./.cursor/skills/verify-cmg/scripts/drive.sh public-contact` |

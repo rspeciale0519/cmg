@@ -40,6 +40,6 @@ Accepting an intake (`/admin/intake`) assigns an adjuster and, in `platform` mod
 
 - Without AAL2 the dashboard never renders; `/mfa` is the page. Fail if still on `/mfa` after the journey’s enrollment step.
 - `#claim-search` does not submit on Enter; it `router.replace`s after 260ms. Wait on the reference text.
-- `ul[aria-label^="Claims, sorted by"]` is `xl:hidden`. Desktop 1280px uses the table. Assert the claim reference, not that list, at desktop width.
+- `ul[aria-label^="Claims, sorted by"]` is `xl:hidden` and the table is `hidden xl:block`. Both copies of `CMG-2026-0001` stay in the DOM. Assert `.filter({ visible: true })` (expect count 1), not a bare `getByText`.
 - Seeded claims are `settlement_offered` / `settled`, so `/admin/intake` is empty until a new public intake. An empty intake queue with heading “Intake queue.” / “The queue is clear.” is success for a fresh seed, not a skip.
 - Owner-only routes 404 for adjuster/assistant. Do not treat that 404 as a broken desk.

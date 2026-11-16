@@ -70,7 +70,8 @@ test.describe("partner portal — referred claims", () => {
     await expect(page.getByRole("heading", { name: "Claims you referred." })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Partner portal" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Refer a claim" })).toBeVisible();
-    await expect(page.getByText(/CMG-2026-0001|CMG-2026-0002/)).toBeVisible();
+    await expect(page.getByText("CMG-2026-0001", { exact: true })).toBeVisible();
+    await expect(page.getByText("CMG-2026-0002", { exact: true })).toBeVisible();
 
     await captureEvidence(page, "partner-portal", {
       consoleLines: diag.consoleLines,

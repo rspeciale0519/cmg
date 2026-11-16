@@ -30,7 +30,7 @@ Journey `partner-directory.spec.mjs`:
 
 1. Owner session (storage state or enrollment) → `/admin/partners`.
 2. Heading “Partner companies.”, filter nav “Filter companies”, text “Summit Exteriors LLC”, disclosure “Add a company”.
-3. Separate test: `/login` as partner → `/partner`, heading “Claims you referred.”, nav “Partner portal”, a seeded `CMG-2026-000*` row.
+3. Separate test: `/login` as partner → `/partner`, heading “Claims you referred.”, nav “Partner portal”, exact texts `CMG-2026-0001` and `CMG-2026-0002` (both seeded claims belong to Summit; a combined regex matches two nodes and fails strict mode).
 
 Creating a company: open “Add a company”, `#admin-name` a unique name, submit, expect the new row. Only do that write when the change under test is partner CRUD.
 

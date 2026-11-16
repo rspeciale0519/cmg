@@ -53,6 +53,10 @@ test.describe("simple-mode public claim intake", () => {
       timeout: 60_000,
     });
     await expect(page.getByText("Your reference")).toBeVisible();
+    const reference = (
+      await page.locator("p", { hasText: "Your reference" }).locator("span").innerText()
+    ).trim();
+    expect(reference).toMatch(/^CMG-\d{4}-\d{4}$/);
 
     await captureEvidence(page, "public-intake", {
       email,
@@ -65,9 +69,15 @@ test.describe("simple-mode public claim intake", () => {
     fs.writeFileSync(path.join(evidenceDir(), "side-effects.json"), side);
     const parsed = JSON.parse(side);
     const claims = Array.isArray(parsed.claims) ? parsed.claims : [];
-    expect(claims.some((row) => row.property_street === "100 Verification Way")).toBeTruthy();
+    const claim = claims.find((row) => row.claim_ref === reference);
+    expect(claim, `claim ${reference} for ${email} missing: ${side}`).toBeTruthy();
+    expect(claim.property_street).toBe("100 Verification Way");
     const outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
-    expect(outbox.some((row) => row.template === "intake_staff_alert")).toBeTruthy();
-    expect(outbox.some((row) => row.template === "intake_confirmation")).toBeTruthy();
+    expect(
+      outbox.some((row) => row.template === "intake_staff_alert" && row.payload?.email === email),
+    ).toBeTruthy();
+    expect(
+      outbox.some((row) => row.template === "intake_confirmation" && row.recipient_email === email),
+    ).toBeTruthy();
   });
 });
