@@ -1,0 +1,248 @@
+diff --git a/src/components/envelopes/prepare-live-shell.tsx b/src/components/envelopes/prepare-live-shell.tsx
+index cc77640..f4e1567 100644
+--- a/src/components/envelopes/prepare-live-shell.tsx
++++ b/src/components/envelopes/prepare-live-shell.tsx
+@@ -218,10 +218,12 @@ const fieldTools: readonly FieldTool[] = [
+   },
+ ] as const;
+ 
+-// Fields the sender may leave optional. A signature, initials and the date
+-// are always needed.
++// Any field may be optional. Required remains the default for signing fields.
+ function canBeOptional(type: PrepareFieldType) {
+   return (
++    type === "signature" ||
++    type === "initials" ||
++    type === "date" ||
+     type === "text" ||
+     type === "checkbox" ||
+     type === "number" ||
+diff --git a/src/components/signing/signing-live-shell.tsx b/src/components/signing/signing-live-shell.tsx
+index fd488a4..fb56839 100644
+--- a/src/components/signing/signing-live-shell.tsx
++++ b/src/components/signing/signing-live-shell.tsx
+@@ -191,7 +191,7 @@ function getFieldLabel(
+ 
+ /** The values the signer has entered so far, by field. */
+ type EnteredValues = {
+-  /** Checkboxes and radio buttons. */
++  /** Checkboxes, radio buttons, and explicit optional-date choices. */
+   checkboxValues: Record<string, boolean>;
+   signatureValues: Record<string, SignatureEntry>;
+   /** Text, number and dropdown fields. */
+@@ -261,7 +261,7 @@ function isActionSummaryField(field: SigningCurrentField) {
+     return field.required;
+   }
+ 
+-  return false;
++  return field.type === "date" && !field.required;
+ }
+ 
+ function getCompletionValue(
+@@ -304,7 +304,7 @@ function getCompletionValue(
+     return chosen ? getFieldLabel(chosen) : "Choose one";
+   }
+ 
+-  return localDateLabel;
++  return field.required || checkboxValues[field.id] ? localDateLabel : "Not selected (optional)";
+ }
+ 
+ function isFieldComplete(
+@@ -413,6 +413,11 @@ function buildSigningSubmissionPayload(
+       continue;
+     }
+ 
++    if (field.type === "date" && !field.required) {
++      fields.push({fieldId: field.id, type: "date", checked: Boolean(checkboxValues[field.id])});
++      continue;
++    }
++
+     if (field.type === "checkbox" || field.type === "radio") {
+       fields.push({
+         checked: Boolean(checkboxValues[field.id]),
+@@ -975,9 +980,15 @@ export function SigningLiveShell({
+                                   return next;
+                                 });
+                               }}
+-                              onSignatureClick={() =>
+-                                handleSignatureFieldClick(field)
+-                              }
++                              onSignatureClick={() => handleSignatureFieldClick(field)}
++                              onClearSignature={() => {
++                                setSubmitError(null);
++                                setSignatureValues((current) => {
++                                  const next = {...current};
++                                  delete next[field.id];
++                                  return next;
++                                });
++                              }}
+                               onTextChange={(value) => {
+                                 setSubmitError(null);
+                                 setTextValues((current) => ({
+@@ -1437,6 +1448,7 @@ function CurrentSignerField({
+   localDateLabel,
+   onCheckboxChange,
+   onSignatureClick,
++  onClearSignature,
+   onTextChange,
+   signatureEntry,
+   textValue,
+@@ -1448,6 +1460,7 @@ function CurrentSignerField({
+   localDateLabel: string;
+   onCheckboxChange: (checked: boolean) => void;
+   onSignatureClick: () => void;
++  onClearSignature: () => void;
+   onTextChange: (value: string) => void;
+   signatureEntry?: SignatureEntry;
+   textValue: string;
+@@ -1458,16 +1471,16 @@ function CurrentSignerField({
+ 
+   if (field.type === "signature" || field.type === "initials") {
+     return (
++      <div className="absolute z-2" style={frame}>
+       <button
+-        aria-label={getSummaryLabel(field)}
+-        className={`absolute z-2 overflow-hidden rounded-[0.375rem] border-2 border-(--accent) text-(--accent-ink) transition ${
++        aria-label={`${getSummaryLabel(field)}${field.required ? "" : " (optional)"}`}
++        className={`h-full w-full overflow-hidden rounded-[0.375rem] border-2 border-(--accent) text-(--accent-ink) transition ${
+           signatureEntry?.value
+             ? "bg-[rgb(var(--accent-rgb)/0.10)]"
+             : "bg-[rgb(var(--accent-rgb)/0.07)] hover:bg-[rgb(var(--accent-rgb)/0.16)]"
+         }`}
+         data-signing-field="true"
+         onClick={onSignatureClick}
+-        style={frame}
+         type="button"
+       >
+         <span className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden px-1 text-center">
+@@ -1505,23 +1518,29 @@ function CurrentSignerField({
+           ) : null}
+         </span>
+       </button>
++      {!field.required && signatureEntry ? <button
++        aria-label={`Clear optional ${getSummaryLabel(field)}`}
++        className="absolute -top-5 right-0 rounded bg-white px-1 text-xs text-(--secondary)"
++        onClick={onClearSignature} type="button">Clear</button> : null}
++      </div>
+     );
+   }
+ 
+   if (field.type === "date") {
+-    return (
+-      <div
+-        className="absolute z-2 overflow-hidden rounded-[0.375rem] border border-(--border-strong) bg-white/92 text-sm text-(--fg)"
++    if (!field.required) {
++      return <button
++        aria-label={`${getFieldLabel(field)} (optional date)`}
++        aria-pressed={checkboxValue}
++        className="absolute z-2 overflow-hidden rounded-[0.375rem] border border-(--border-strong) bg-white/92 text-xs text-(--fg)"
+         data-signing-field="true"
+-        style={frame}
+-      >
+-        {showInlineValue ? (
+-          <p className="flex h-full items-center truncate px-2 text-[12px] font-semibold">
+-            {localDateLabel}
+-          </p>
+-        ) : null}
+-      </div>
+-    );
++        onClick={() => onCheckboxChange(!checkboxValue)}
++        style={frame} type="button">
++        {checkboxValue ? localDateLabel : "Add date (optional)"}
++      </button>;
++    }
++    return <div className="absolute z-2 overflow-hidden rounded-[0.375rem] border border-(--border-strong) bg-white/92 text-sm text-(--fg)" data-signing-field="true" style={frame}>
++      {showInlineValue ? <p className="flex h-full items-center truncate px-2 text-[12px] font-semibold">{localDateLabel}</p> : null}
++    </div>;
+   }
+ 
+   if (field.type === "text") {
+diff --git a/src/lib/schemas/field.ts b/src/lib/schemas/field.ts
+index fe2abed..528f1ea 100644
+--- a/src/lib/schemas/field.ts
++++ b/src/lib/schemas/field.ts
+@@ -92,18 +92,7 @@ export const fieldPlacementSchema = z
+       });
+     }
+ 
+-    if (
+-      (field.type === "signature" ||
+-        field.type === "initials" ||
+-        field.type === "date") &&
+-      !field.required
+-    ) {
+-      ctx.addIssue({
+-        code: z.ZodIssueCode.custom,
+-        message: `${field.type} fields are always required`,
+-        path: ["required"],
+-      });
+-    }
++
+   });
+ 
+ // The buttons of one radio group are answered together, so they must agree
+@@ -234,7 +223,16 @@ const radioSubmissionSchema = z.object({
+   checked: z.boolean(),
+ });
+ 
++// Optional dates are explicitly selected. The server supplies the date;
++// a client cannot backdate the completed agreement.
++const dateSubmissionSchema = z.object({
++  fieldId: idSchema,
++  type: z.literal("date"),
++  checked: z.boolean(),
++});
++
+ export const signingFieldSubmissionSchema = z.union([
++  dateSubmissionSchema,
+   typedSignatureSubmissionSchema,
+   drawnSignatureSubmissionSchema,
+   textSubmissionSchema,
+diff --git a/src/lib/schemas/optional-fields.test.ts b/src/lib/schemas/optional-fields.test.ts
+new file mode 100644
+index 0000000..8e6fa51
+--- /dev/null
++++ b/src/lib/schemas/optional-fields.test.ts
+@@ -0,0 +1,17 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++import {fieldPlacementSchema,signingFieldSubmissionSchema} from './field.ts';
++
++const placement={signerId:'synthetic-signer',page:1,x:.1,y:.1,width:.1,height:.03};
++for(const type of ['signature','initials','date'] as const){
++ test(`${type} may be genuinely optional without changing required-by-default behavior`,()=>{
++  const optional=fieldPlacementSchema.parse({...placement,type,required:false});
++  assert.equal(optional.required,false);
++  assert.equal(fieldPlacementSchema.parse({...placement,type}).required,true);
++ });
++}
++test('optional dates require an explicit boolean choice; no arbitrary client-provided date',()=>{
++ assert.equal(signingFieldSubmissionSchema.parse({fieldId:'date-choice',type:'date',checked:true}).type,'date');
++ assert.equal(signingFieldSubmissionSchema.parse({fieldId:'date-choice',type:'date',checked:false}).type,'date');
++ assert.equal(signingFieldSubmissionSchema.safeParse({fieldId:'date-choice',type:'date',value:'01/01/1900'}).success,false);
++});
+diff --git a/src/lib/signing.ts b/src/lib/signing.ts
+index 5a28d43..bba36c4 100644
+--- a/src/lib/signing.ts
++++ b/src/lib/signing.ts
+@@ -2223,13 +2223,17 @@ function buildSignerSubmission(
+     }
+ 
+     if (field.type === "date") {
++      // Required dates retain their existing automatic behavior. Optional
++      // dates remain blank unless this signer explicitly selects them.
++      const selected = field.required ||
++        (submission?.type === "date" && submission.checked);
+       fieldUpdates.set(field.id, {
+         checked: null,
+         fieldId: field.id,
+         imageKey: null,
+-        inputMethod: "auto",
+-        submittedAt,
+-        value: localDateValue,
++        inputMethod: selected ? "auto" : null,
++        submittedAt: selected ? submittedAt : null,
++        value: selected ? localDateValue : null,
+       });
+       continue;
+     }

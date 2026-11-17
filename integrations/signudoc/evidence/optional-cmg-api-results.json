@@ -1,0 +1,98 @@
+{
+  "upstream": "bb9bc099151fed39da5de017d9b4cd61b124cbbd",
+  "results": [
+    {
+      "scenario": "single-declined",
+      "variant": "single",
+      "signerOptionalChoices": [
+        false
+      ],
+      "fullManifestFields": 11,
+      "requiredFields": 9,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "7eb836ea60a2b7bc68dfd4d0a58c3db6d8fe3b684f96572e35bfa510427aae0c",
+        "evidence": "9deb7f8f9da728188d9e64f454c331b1a508d9a7662e381ff0decd1d8bc4b15e"
+      },
+      "auditEvents": 9,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "deferred by owner; HTTP-only evidence"
+    },
+    {
+      "scenario": "single-accepted",
+      "variant": "single",
+      "signerOptionalChoices": [
+        true
+      ],
+      "fullManifestFields": 11,
+      "requiredFields": 9,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "fee0366f3321e5178ff957b50048ce9eb4421ff0aba9e4b7b30330dc7902f061",
+        "evidence": "4f281514f33f3eb70fff9bd5fae991e3da4ab8db7a33c9ba5b42ae8d893d62a0"
+      },
+      "auditEvents": 9,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "deferred by owner; HTTP-only evidence"
+    },
+    {
+      "scenario": "dual-declined",
+      "variant": "dual",
+      "signerOptionalChoices": [
+        false,
+        false
+      ],
+      "fullManifestFields": 21,
+      "requiredFields": 18,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "bb5d53a6ba1509f3c8b4346a9ec1efbeaa8632260f36292d53433cd3ef8a37cc",
+        "evidence": "1e275493d2c854253837b16284301eae217c53d7ec48c705d11c5ea69058566c"
+      },
+      "auditEvents": 14,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "deferred by owner; HTTP-only evidence"
+    },
+    {
+      "scenario": "dual-accepted",
+      "variant": "dual",
+      "signerOptionalChoices": [
+        true,
+        true
+      ],
+      "fullManifestFields": 21,
+      "requiredFields": 18,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "9c43704faedf00530cc3dc07aeda29baae877771c5dde86d239eb5d9befdbe74",
+        "evidence": "a17f83725e5f83b47167d74d77df3a6b95f33e072c62f3f6e82f784baf53acd7"
+      },
+      "auditEvents": 14,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "deferred by owner; HTTP-only evidence"
+    },
+    {
+      "scenario": "dual-mixed",
+      "variant": "dual",
+      "signerOptionalChoices": [
+        false,
+        true
+      ],
+      "fullManifestFields": 21,
+      "requiredFields": 18,
+      "pageCount": 9,
+      "hashes": {
+        "signed": "e1be3edbbcd5983307667f64b0ad85ee6a59764d1ab97e4a913c5eae6cae8e58",
+        "evidence": "aa902150cd96cde55cc37d7d16ad935379c85a14119e0c6d82b4d822196e26f5"
+      },
+      "auditEvents": 14,
+      "status": "completed",
+      "email": "captured locally only",
+      "browserAndMobileVisual": "deferred by owner; HTTP-only evidence"
+    }
+  ]
+}

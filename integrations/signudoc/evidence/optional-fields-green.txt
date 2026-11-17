@@ -1,0 +1,12 @@
+✔ signature may be genuinely optional without changing required-by-default behavior (4.069752ms)
+✔ initials may be genuinely optional without changing required-by-default behavior (0.276217ms)
+✔ date may be genuinely optional without changing required-by-default behavior (0.248346ms)
+✔ optional dates require an explicit boolean choice; no arbitrary client-provided date (7.563176ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 299.679313

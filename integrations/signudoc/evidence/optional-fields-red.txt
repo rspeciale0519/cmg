@@ -1,0 +1,238 @@
+✖ signature may be genuinely optional without changing required-by-default behavior (6.74363ms)
+✖ initials may be genuinely optional without changing required-by-default behavior (0.304418ms)
+✖ date may be genuinely optional without changing required-by-default behavior (0.205543ms)
+✖ optional dates require an explicit boolean choice; no arbitrary client-provided date (6.717832ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 352.257024
+
+✖ failing tests:
+
+test at cmg-signudoc-spike/upstream/src/lib/schemas/optional-fields.test.ts:7:2
+✖ signature may be genuinely optional without changing required-by-default behavior (6.74363ms)
+  ZodError: [
+    {
+      "code": "custom",
+      "message": "signature fields are always required",
+      "path": [
+        "required"
+      ]
+    }
+  ]
+      at TestContext.<anonymous> (file://<ISOLATED_WORKSPACE>/upstream/src/lib/schemas/optional-fields.test.ts:8:39)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+test at cmg-signudoc-spike/upstream/src/lib/schemas/optional-fields.test.ts:7:2
+✖ initials may be genuinely optional without changing required-by-default behavior (0.304418ms)
+  ZodError: [
+    {
+      "code": "custom",
+      "message": "initials fields are always required",
+      "path": [
+        "required"
+      ]
+    }
+  ]
+      at TestContext.<anonymous> (file://<ISOLATED_WORKSPACE>/upstream/src/lib/schemas/optional-fields.test.ts:8:39)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at cmg-signudoc-spike/upstream/src/lib/schemas/optional-fields.test.ts:7:2
+✖ date may be genuinely optional without changing required-by-default behavior (0.205543ms)
+  ZodError: [
+    {
+      "code": "custom",
+      "message": "date fields are always required",
+      "path": [
+        "required"
+      ]
+    }
+  ]
+      at TestContext.<anonymous> (file://<ISOLATED_WORKSPACE>/upstream/src/lib/schemas/optional-fields.test.ts:8:39)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at cmg-signudoc-spike/upstream/src/lib/schemas/optional-fields.test.ts:13:1
+✖ optional dates require an explicit boolean choice; no arbitrary client-provided date (6.717832ms)
+  ZodError: [
+    {
+      "code": "invalid_union",
+      "errors": [
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "signature",
+              "initials"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid option: expected one of \"signature\"|\"initials\""
+          },
+          {
+            "code": "invalid_value",
+            "values": [
+              "typed"
+            ],
+            "path": [
+              "inputMethod"
+            ],
+            "message": "Invalid input: expected \"typed\""
+          },
+          {
+            "expected": "string",
+            "code": "invalid_type",
+            "path": [
+              "value"
+            ],
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "signature",
+              "initials"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid option: expected one of \"signature\"|\"initials\""
+          },
+          {
+            "code": "invalid_value",
+            "values": [
+              "drawn"
+            ],
+            "path": [
+              "inputMethod"
+            ],
+            "message": "Invalid input: expected \"drawn\""
+          },
+          {
+            "expected": "string",
+            "code": "invalid_type",
+            "path": [
+              "imageDataUrl"
+            ],
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "text"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid input: expected \"text\""
+          },
+          {
+            "expected": "string",
+            "code": "invalid_type",
+            "path": [
+              "value"
+            ],
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "checkbox"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid input: expected \"checkbox\""
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "number"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid input: expected \"number\""
+          },
+          {
+            "expected": "string",
+            "code": "invalid_type",
+            "path": [
+              "value"
+            ],
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "dropdown"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid input: expected \"dropdown\""
+          },
+          {
+            "expected": "string",
+            "code": "invalid_type",
+            "path": [
+              "value"
+            ],
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        [
+          {
+            "code": "invalid_value",
+            "values": [
+              "radio"
+            ],
+            "path": [
+              "type"
+            ],
+            "message": "Invalid input: expected \"radio\""
+          }
+        ]
+      ],
+      "path": [],
+      "message": "Invalid input"
+    }
+  ]
+      at TestContext.<anonymous> (file://<ISOLATED_WORKSPACE>/upstream/src/lib/schemas/optional-fields.test.ts:14:44)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

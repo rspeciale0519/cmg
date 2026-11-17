@@ -1,0 +1,42 @@
+[
+  {
+    "scenario": "single-declined",
+    "pages": 9,
+    "originalLegalImagesPreserved": true,
+    "onlyRequiredAndExplicitlyChosenOptionalAreasChanged": true,
+    "bothArtifactSealsValid": true,
+    "certificateTrust": "self-signed issuer unknown"
+  },
+  {
+    "scenario": "single-accepted",
+    "pages": 9,
+    "originalLegalImagesPreserved": true,
+    "onlyRequiredAndExplicitlyChosenOptionalAreasChanged": true,
+    "bothArtifactSealsValid": true,
+    "certificateTrust": "self-signed issuer unknown"
+  },
+  {
+    "scenario": "dual-declined",
+    "pages": 9,
+    "originalLegalImagesPreserved": true,
+    "onlyRequiredAndExplicitlyChosenOptionalAreasChanged": true,
+    "bothArtifactSealsValid": true,
+    "certificateTrust": "self-signed issuer unknown"
+  },
+  {
+    "scenario": "dual-accepted",
+    "pages": 9,
+    "originalLegalImagesPreserved": true,
+    "onlyRequiredAndExplicitlyChosenOptionalAreasChanged": true,
+    "bothArtifactSealsValid": true,
+    "certificateTrust": "self-signed issuer unknown"
+  },
+  {
+    "scenario": "dual-mixed",
+    "pages": 9,
+    "originalLegalImagesPreserved": true,
+    "onlyRequiredAndExplicitlyChosenOptionalAreasChanged": true,
+    "bothArtifactSealsValid": true,
+    "certificateTrust": "self-signed issuer unknown"
+  }
+]
