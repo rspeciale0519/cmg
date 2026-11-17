@@ -11,6 +11,10 @@
     {
       "file": "patches/0002-authenticated-cmg-bridge.patch",
       "sha256": "c47d87dd14fb1391158bb872c175c85f1dafeab1dba0c3de602b681295a24e6e"
+    },
+    {
+      "file": "patches/0003-forge-security-update.patch",
+      "sha256": "941d72436daebe54ae082429a29a12910dedb7453ff80179eb0949bd5ea69490"
     }
   ]
 }

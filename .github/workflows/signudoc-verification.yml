@@ -1,0 +1,126 @@
+name: SignuDoc isolated verification
+
+on:
+  push:
+    branches: [spike/signudoc-white-label-2026-11-16]
+    paths:
+      - .github/workflows/signudoc-verification.yml
+      - integrations/signudoc/verification-request.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: signudoc-isolated-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cmg-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+      - run: npm ci
+      - name: Assert disposable runner and no linked project
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          test -z "${SUPABASE_ACCESS_TOKEN:-}"
+          test ! -e supabase/.temp/project-ref
+          test ! -e .env.local
+          docker info >/dev/null
+      - name: Start disposable Supabase services
+        run: supabase start
+      - name: Rebuild only the disposable local database
+        run: supabase db reset --local
+      - name: All pgTAP schema and RLS checks
+        run: npm run db:test
+      - name: Generate official schema types
+        run: |
+          supabase gen types typescript --local > generated-cmg-database.ts
+          test -s generated-cmg-database.ts
+          grep -q claim_signudoc_poll_batch generated-cmg-database.ts
+          cp generated-cmg-database.ts src/types/database.ts
+      - name: Actual database-backed Vitest selection
+        env:
+          CMG_SIGNUDOC_DATABASE_TEST: '1'
+          RESEND_API_KEY: ''
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          case "$API_URL" in http://127.0.0.1:*|http://localhost:*) ;; *) exit 1 ;; esac
+          SECRET_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:-}}"
+          test -n "$SECRET_KEY"
+          echo "::add-mask::$SECRET_KEY"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+            npx vitest run src/lib/esign src/app/api/pandadoc src/lib/storage-cleanup src/lib/admin/partners.test.ts
+      - name: Type check with actual generated schema
+        run: npm run type-check
+      - name: Lint
+        run: npm run lint
+      - name: Full default unit suite
+        run: npm test
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:15421
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-placeholder
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: signudoc-generated-schema
+          path: generated-cmg-database.ts
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Stop disposable services
+        if: always()
+        run: supabase stop
+
+  signing-service:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-local-test-only
+          POSTGRES_DB: cmg_signudoc_e2e
+        ports:
+          - 55437:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cmg_signudoc_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Materialize pinned service source
+        run: node integrations/signudoc/prepare.mjs "$RUNNER_TEMP/signudoc-service"
+      - name: Locked install and all signing-service checks
+        env:
+          E2E_DATABASE_URL: postgres://postgres:synthetic-local-test-only@127.0.0.1:55437/cmg_signudoc_e2e
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/signudoc-service"
+          npm ci
+          npm test
+          npm run test:db
+          npm run typecheck
+          npm run lint
+          npm run build
+          npm audit --omit=dev --audit-level=high
