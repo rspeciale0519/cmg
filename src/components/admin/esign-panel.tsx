@@ -7,6 +7,7 @@ import { idleState, resilient } from "@/lib/actions/types";
 import { adminESignState, type AdminESignTone } from "@/lib/esign/admin-state";
 import { cx } from "@/lib/cx";
 import { ActionFeedback, AdminButton, SubmitButton } from "./form-controls";
+import {SignuDocControls} from "./signudoc-controls";
 
 const DOWNLOAD_FAILED =
   "The letter could not be prepared. Reload the claim and try again.";
@@ -63,12 +64,12 @@ export function ESignPanel({
   electronicReady: boolean;
   electronicBlocker: string | null;
   /** `manual` when no PandaDoc API key is configured. */
-  providerMode: "manual" | "pandadoc";
+  providerMode: "manual" | "pandadoc" | "signudoc";
 }) {
   const [state, action] = useActionState(resilient(submitLorRecovery), idleState);
   const [downloading, startDownload] = useTransition();
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const display = adminESignState(esignStatus, claimStatus);
+  const display = adminESignState(esignStatus, claimStatus,providerDocumentId?.startsWith("signudoc:")?"signudoc":"pandadoc");
   const canStart = display.key === "not_started" && claimStatus === "under_review";
   // A failure can leave the claim at either dispatchable status: a declined or
   // expired request sits at lor_sent, while a creation failure never advanced
@@ -153,7 +154,9 @@ export function ESignPanel({
         </div>
       ) : null}
 
-      {showActions ? (
+      {canManage && ((showActions && providerMode==="signudoc") || providerDocumentId?.startsWith("signudoc:")) ? <SignuDocControls claimId={claimId} requestId={requestId} canStart={showActions && providerMode==="signudoc"} canRefresh={Boolean(providerDocumentId?.startsWith("signudoc:"))} ready={electronicReady}/> : null}
+
+      {showActions && providerMode!=="signudoc" ? (
         <form action={action} className="mt-[13px]">
           <input type="hidden" name="claimId" value={claimId} />
           <input type="hidden" name="requestId" value={requestId} />

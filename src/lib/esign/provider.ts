@@ -1,6 +1,8 @@
 import "server-only";
 
 import { esignMode, readESignConfig, type ESignConfig } from "./config";
+import {SignuDocProvider} from "./signudoc/provider";
+import {SignuDocClient} from "./signudoc/client";
 import { ManualSignProvider } from "./manual";
 import { PandaDocProvider } from "./pandadoc";
 import { PandaDocClient, type FetchLike, type SleepLike } from "./pandadoc-client";
@@ -27,7 +29,8 @@ export function esignCapabilities(
 ): ESignCapabilities {
   const mode = esignMode(config);
   const templateConfigured = true;
-  const webhookConfigured = config.webhookSharedKey !== null;
+  const webhookConfigured = mode!=="signudoc" && config.webhookSharedKey !== null;
+  if(mode==="signudoc")return {mode,canSendElectronically:true,ready:config.signudoc?.config!=null,templateConfigured,webhookConfigured:false,blocker:config.signudoc?.blocker??null};
 
   if (mode === "manual") {
     return {
@@ -51,6 +54,8 @@ export function esignCapabilities(
 }
 
 export type CreateESignProviderOptions = {
+  /** Existing PandaDoc callbacks retain their provider after a future switch. */
+  forcePandaDoc?:boolean;
   config?: ESignConfig;
   /** Test seam for the PandaDoc HTTP layer. */
   fetchImpl?: FetchLike;
@@ -67,6 +72,10 @@ export function createESignProvider(
   options: CreateESignProviderOptions = {},
 ): ESignProvider {
   const config = options.config ?? readESignConfig();
+  if(!options.forcePandaDoc && config.signudoc?.enabled){
+    const client=config.signudoc.config?new SignuDocClient(config.signudoc.config,options.fetchImpl as typeof fetch|undefined):null;
+    return new SignuDocProvider(client);
+  }
 
   if (config.apiKey === null) {
     return new ManualSignProvider();

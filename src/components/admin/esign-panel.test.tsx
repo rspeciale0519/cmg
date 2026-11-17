@@ -8,6 +8,8 @@ vi.mock("@/lib/actions/esign", () => ({
   downloadPrefilledLor: (...args: unknown[]) => mocks.download(...args),
 }));
 
+vi.mock("@/lib/actions/signudoc",()=>({prepareAgreementReview:vi.fn(),refreshSignuDocAgreement:vi.fn(),remindSignuDocSigner:vi.fn()}));
+
 import { ESignPanel } from "./esign-panel";
 
 afterEach(cleanup);

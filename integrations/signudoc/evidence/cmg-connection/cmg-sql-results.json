@@ -1,0 +1,92 @@
+{
+  "scope": "Real CMG migration and pgTAP SQL on disposable PostgreSQL with minimal test-only Auth/Storage schemas; not a running Supabase Auth/REST/Storage stack",
+  "database": "cmg_provider_f63d0660c3_e2e",
+  "outputs": [
+    {
+      "file": "23_esign_dispatch_lease.test.sql",
+      "lines": [
+        "1..18",
+        "ok 1 - first request owns the preparing lease",
+        "ok 2 - the provider document is durably recorded before send",
+        "ok 3 - the irreversible provider phase is visible",
+        "ok 4 - the possibly-sent document is traceable",
+        "ok 5 - provider identity is current on the claim before external send",
+        "ok 6 - the active attempt token is current before external send",
+        "ok 7 - staff see the truthful in-flight provider state",
+        "ok 8 - a second request cannot take over after the old 120 second lease",
+        "ok 9 - no duplicate dispatch attempt is created",
+        "ok 10 - the possibly-sent attempt is not falsely abandoned",
+        "ok 11 - the original owner remains current for webhook reconciliation",
+        "ok 12 - a matching delivery proof reconciles the ambiguous send",
+        "ok 13 - webhook reconciliation advances the workflow safely",
+        "ok 14 - webhook reconciliation releases dispatch ownership",
+        "ok 15 - the reconciled attempt is durably completed",
+        "ok 16 - the reconciliation source remains auditable",
+        "ok 17 - reconciliation records the workflow transition once",
+        "ok 18 - a mismatched completed replay cannot change the claim"
+      ]
+    },
+    {
+      "file": "24_esign_reconciliation_outcomes.test.sql",
+      "lines": [
+        "1..12",
+        "ok 1 - pending fixture owns dispatch",
+        "ok 2 - pending fixture reaches sending",
+        "ok 3 - non-proving event retains ambiguity",
+        "ok 4 - non-proving event does not falsely complete",
+        "ok 5 - mismatched token is rejected",
+        "ok 6 - subsequent delivery proof reconciles",
+        "ok 7 - failure fixture owns dispatch",
+        "ok 8 - failure fixture reaches sending",
+        "ok 9 - creation failure settles failed",
+        "ok 10 - creation failure does not advance to sent",
+        "ok 11 - creation failure releases ownership",
+        "ok 12 - creation failure writes no sent history"
+      ]
+    },
+    {
+      "file": "46_signudoc_dispatch.test.sql",
+      "lines": [
+        "1..38",
+        "ok 1 - unbound claims are not polled",
+        "ok 2 - unknown provider modes remain closed",
+        "ok 3 - SignuDoc reserves existing dispatch ownership",
+        "ok 4 - SignuDoc refuses an unnamespaced identity",
+        "ok 5 - reviewed SignuDoc identity reaches sending",
+        "ok 6 - bounded poll claims the active request",
+        "ok 7 - overlapping poll cannot reuse the lease",
+        "ok 8 - PandaDoc reservation still works",
+        "ok 9 - PandaDoc cannot claim a SignuDoc identity",
+        "ok 10 - PandaDoc identity still works",
+        "ok 11 - SignuDoc worker never claims PandaDoc",
+        "ok 12 - positive delivery proof clears uncertainty",
+        "ok 13 - reconciliation audit names the actual source",
+        "ok 14 - bearer attempt tokens remain server-only",
+        "ok 15 - dispatch tokens remain server-only",
+        "ok 16 - terminal status is applied",
+        "ok 17 - older sent poll cannot undo a decline",
+        "ok 18 - older partial poll cannot undo a decline",
+        "ok 19 - claimed cleanup paths are permanently burned",
+        "ok 20 - a new filing path works after cleanup",
+        "ok 21 - newer signing progress is applied",
+        "ok 22 - older partial count cannot regress progress",
+        "ok 23 - newest observed progress is retained",
+        "ok 24 - completion status can precede private filing",
+        "ok 25 - missing audit evidence prevents finalization",
+        "ok 26 - missing evidence cannot mark the claim signed",
+        "ok 27 - both artifacts permit finalization",
+        "ok 28 - successful filing advances the claim",
+        "ok 29 - signed agreement and evidence are both retained",
+        "ok 30 - atomic filing writes one explicit audit record",
+        "ok 31 - atomic filing records one transition",
+        "ok 32 - atomic filing posts one claim event",
+        "ok 33 - a repeated completion is idempotent",
+        "ok 34 - replay does not duplicate files",
+        "ok 35 - filed agreements leave the background batch",
+        "ok 36 - signed-in clients cannot run the system worker",
+        "ok 37 - anonymous clients cannot run the system worker",
+        "ok 38 - dispatch ledger stays private"
+      ]
+    }
+  ]
+}

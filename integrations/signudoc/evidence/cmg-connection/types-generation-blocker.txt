@@ -1,0 +1,4 @@
+Exit: 1
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+Connecting to 127.0.0.1 55438
+{"_tag":"Error","error":{"code":"LegacyContainerRuntimeNotFoundError","message":"docker: command not found (podman also not found) — install Docker Desktop or Podman and ensure it is on PATH"}}

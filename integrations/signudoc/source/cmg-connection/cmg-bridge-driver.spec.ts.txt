@@ -1,0 +1,14 @@
+import {test,expect} from '@playwright/test';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import path from 'node:path';
+import {e2eOutboxDir,e2eSetupToken} from '../playwright.config';
+const exec=promisify(execFile);
+test('actual CMG signed client traverses the real SignuDoc service API',async({request,baseURL})=>{
+ const setup=await request.post('/api/setup',{data:{email:'cmg-admin@example.com',fullName:'CMG Synthetic Admin',organizationName:'CMG Test Firm',password:'Synthetic-Only-Password-4130!x',supportAddress:'support@example.invalid',setupToken:e2eSetupToken}});
+ expect(setup.status(),await setup.text()).toBe(201);
+ const root=path.resolve('..');
+ const env={...process.env,CMG_SIGNUDOC_INTEGRATION:'1',SIGNUDOC_TEST_ORIGIN:baseURL,SIGNUDOC_TEST_OUTBOX:e2eOutboxDir,SIGNUDOC_TEST_RESULTS:path.join(root,'bridge-evidence/bridge-http-results.json')};
+ const result=await exec(path.join(root,'node22/node-v22.22.2-linux-x64/bin/node'),['node_modules/vitest/vitest.mjs','run','src/lib/esign/signudoc/bridge.integration.test.ts'],{cwd:path.join(root,'cmg-implementation'),env,timeout:180000,maxBuffer:4000000});
+ console.log(result.stdout);
+});

@@ -1,0 +1,37 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.12 /workspace/scratch/c9906a327d02/cmg-signudoc-spike/cmg-implementation
+
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/lib/esign/signudoc/client.test.ts (5 tests | 1 failed) 36ms
+   × retries only explicit busy rejections with new nonces and never repeats an uncertain send 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/esign/signudoc/client.test.ts > retries only explicit busy rejections with new nonces and never repeats an uncertain send
+AssertionError: promise rejected "ESignError: Signing service request could… { …(3) }" instead of resolving
+ ❯ src/lib/esign/signudoc/client.test.ts:40:131
+     38|   return nonces.length===1?new Response(null,{status:429}):Response.js…
+     39|  });
+     40|  await expect(new SignuDocClient(config,transport as typeof fetch).com…
+       |                                                                                                                                   ^
+     41|  expect(new Set(nonces).size).toBe(2);
+     42|  const lost=vi.fn(async()=>{throw Error('Synthetic response lost');});
+
+Caused by: ESignError: Signing service request could not be confirmed.
+ ❯ SignuDocClient.post src/lib/esign/signudoc/client.ts:43:25
+ ❯ SignuDocClient.command src/lib/esign/signudoc/client.ts:47:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'send_failed', httpStatus: 429, deliveryUncertain: true }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  20:37:49
+   Duration  1.09s (transform 78ms, setup 0ms, import 162ms, tests 36ms, environment 722ms)

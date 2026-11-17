@@ -9,6 +9,7 @@ import { claimDispatch, markDispatchSending, settleDispatch } from "./dispatch-l
 import { handleDispatchFailure } from "./lor-dispatch-failure";
 import { collectLorLetter, loadLorClaim, type LorLetterFailureCode } from "./lor-letter";
 import { createESignProvider } from "./provider";
+import {loadReviewedSignuDocPdf} from "./signudoc/review";
 import {
   ESignError,
   PANDADOC_TERMINAL_FAILURE_STATUSES,
@@ -20,6 +21,8 @@ type Admin = SupabaseClient<Database>;
 
 export type SendLorInput = {
   claimId: string;
+  reviewToken?:string;
+  reviewConfirmed?:boolean;
   /** Stable per form render, so retries of one POST cannot dispatch twice. */
   requestId?: string;
   /** Staff profile id — feed author and audit actor. */
@@ -50,6 +53,7 @@ export type SendLorFailureCode =
   | LorLetterFailureCode
   | "invalid_status"
   | "not_configured"
+  | "review_required"
   | "provider_error"
   | "persist_failed"
   | "request_in_progress"
@@ -136,6 +140,12 @@ export async function dispatchLorForClaim(
   const { signers } = letter;
 
   const requestId = input.requestId ?? randomUUID();
+  let reviewedPdf:Uint8Array|undefined;
+  if(provider.kind==="signudoc"){
+    if(!input.reviewConfirmed||!input.reviewToken)return {ok:false,code:"review_required",message:"Review the current agreement and recipients, then confirm before sending."};
+    try{reviewedPdf=await loadReviewedSignuDocPdf(admin,{claimId:claim.id,requestId,actorId:input.actorId??null,token:input.reviewToken,letter});}
+    catch{return {ok:false,code:"review_required",message:"The agreement review expired or its contents changed. Prepare and review it again."};}
+  }
   const ownership = await claimDispatch(admin, {
     claimId: claim.id,
     requestId,
@@ -175,6 +185,7 @@ export async function dispatchLorForClaim(
       signers,
       tokens: letter.tokens,
       message: input.message ?? null,
+      ...(reviewedPdf?{reviewedPdf}:{}),
       beforeSend: async (providerDocumentId) => {
         const marked = await markDispatchSending(
           admin,
@@ -185,7 +196,7 @@ export async function dispatchLorForClaim(
         if (!marked) {
           throw new ESignError(
             "send_failed",
-            "Signing request ownership was lost before PandaDoc send; nothing was sent.",
+            "Signing request ownership was lost before provider send; nothing was sent.",
           );
         }
       },
@@ -236,7 +247,7 @@ export async function dispatchLorForClaim(
       ok: false,
       code: "request_in_progress",
       message:
-        "PandaDoc sent the letter, but confirmation could not be saved. Automatic retry is locked until a matching webhook reconciles it.",
+        "The provider sent the letter, but confirmation could not be saved. Automatic retry is locked until the matching provider state reconciles it.",
     };
   }
 
@@ -247,9 +258,9 @@ export async function dispatchLorForClaim(
       to_status: "lor_sent",
       changed_by: input.actorId ?? null,
       note:
-        provider.kind === "pandadoc"
-          ? "Letter of Representation sent for signature via PandaDoc."
-          : "Letter of Representation marked as sent (manual signing).",
+        provider.kind === "manual"
+          ? "Letter of Representation marked as sent (manual signing)."
+          : `Letter of Representation sent for signature via ${provider.kind==="signudoc"?"SignuDoc":"PandaDoc"}.`,
     });
   }
 

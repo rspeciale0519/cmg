@@ -1,0 +1,46 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.12 /workspace/scratch/c9906a327d02/cmg-signudoc-spike/cmg-implementation
+
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/lib/esign/signudoc/authorize.test.ts (3 tests | 2 failed) 10ms
+   × permits only the owner or assigned adjuster after staff/MFA authorization 6ms
+   × reads bearer columns only after user-scoped capability authorization 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/esign/signudoc/authorize.test.ts > permits only the owner or assigned adjuster after staff/MFA authorization
+AssertionError: expected null not to be null
+ ❯ src/lib/esign/signudoc/authorize.test.ts:21:151
+     19| });
+     20| it('permits only the owner or assigned adjuster after staff/MFA author…
+     21|  for(const role of ['owner','adjuster']){mocks.session.mockResolvedVal…
+       |                                                                                                                                                       ^
+     22|  mocks.session.mockResolvedValue({userId:actor,role:'assistant',aal:'a…
+     23|  mocks.session.mockResolvedValue({userId:'other',role:'adjuster',aal:'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/lib/esign/signudoc/authorize.test.ts > reads bearer columns only after user-scoped capability authorization
+AssertionError: expected undefined to be 'test-token' // Object.is equality
+
+- Expected:
+"test-token"
+
++ Received:
+undefined
+
+ ❯ src/lib/esign/signudoc/authorize.test.ts:30:252
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:31:09
+   Duration  1.14s (transform 66ms, setup 0ms, import 86ms, tests 10ms, environment 800ms)

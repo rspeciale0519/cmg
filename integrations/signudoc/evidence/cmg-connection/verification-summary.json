@@ -1,0 +1,67 @@
+{
+  "scope": "Experiment source and synthetic local server/SQL verification; NOT live, browser/mobile, full Supabase-stack, legal or production acceptance",
+  "cmg": {
+    "unitPassed": 1921,
+    "unitSkipped": 68,
+    "filesPassed": 150,
+    "filesSkipped": 18,
+    "typeCheckExit": 0,
+    "lintExit": 0,
+    "buildExit": 0,
+    "siteModes": {
+      "simple": 106,
+      "staff": 106,
+      "platform": 106
+    }
+  },
+  "signingService": {
+    "unitPassed": 296,
+    "postgresPassed": 152,
+    "typeCheckExit": 0,
+    "lintExit": 0,
+    "lintExistingWarnings": 5,
+    "buildExit": 0
+  },
+  "realCMGSql": {
+    "assertionsPassed": 68,
+    "scope": "Actual CMG migrations/functions/triggers on disposable Postgres; minimal test-only Auth/Storage schemas, not full Supabase stack"
+  },
+  "realHttp": {
+    "scenarios": [
+      "actual CMG single homeowner",
+      "actual CMG dual homeowner"
+    ],
+    "adapter": "actual CMG SignuDocProvider and client",
+    "email": "capture only; example.invalid synthetic recipients",
+    "optionalFields": "full 11/21 manifests",
+    "recovery": [
+      "lost accepted-send response flagged uncertain, confirmed by status",
+      "duplicate send yields one invitation",
+      "explicit reminder captured once; duplicate refused",
+      "prepared source/recipients cannot be edited via sender API"
+    ],
+    "browserMobile": "deferred by owner"
+  },
+  "sourceReproduction": {
+    "filesMatched": 18,
+    "patches": 2
+  },
+  "releaseBlockers": [
+    "Full disposable Supabase Auth/REST/Storage/MFA integration, db:reset/db:test/database-backed Vitest and generated types (Docker/Podman absent)",
+    "Browser and actual phone acceptance deliberately deferred",
+    "Existing moderate Next16.4.3 and node-forge1.4.2 advisories require reviewed patch upgrades",
+    "Certificate/trusted identity/timestamp and legal review, cross-day date policy",
+    "Per-firm two-install isolation, versioned templates/branding, operations/backup/restore, approved hosted pilot"
+  ],
+  "productionChanged": false,
+  "realMessagesSent": false,
+  "newProviderEnabled": false,
+  "newCronScheduled": false,
+  "review": {
+    "independentImportantFindings": 4,
+    "additionalAuthorFinding": "protected bearer-column user read",
+    "allAddressed": true,
+    "deferredMinorFindings": [],
+    "reviewerDidNotRerunOrRereviewFixes": true
+  }
+}

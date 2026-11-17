@@ -1,0 +1,8 @@
+{
+  "bridge.playwright.config.ts.txt": "6d19c585815aab0dbde43b4e6eae732a46ac8da1c76d30587a7ddb461e1544a9",
+  "cmg-bridge-driver.spec.ts.txt": "64f3d8140ea9f9d121bd103ff8980d07ade6dbc5e7b62dc53d95f0eaa9b8131d",
+  "run-bridge-api.py.txt": "b95b5b2623fd4cbf48e66999971867b7a2310ac203512079ba05b9ffdc5a94cd",
+  "run-cmg-sql.mjs.txt": "3223ce3b546ff6e8334b864e015aff7096b74fde585bec9c931263675fb90253",
+  "run-cmg-sql.py.txt": "270affd22cfbc78c0739b3c127611c918eabbb8acd454218b77796f1a101e480",
+  "spike.playwright.config.ts.txt": "c57be8c6277fa8e660c3578053eb4dc7fca2e0a7dbf5a1c32b5775f7ed71b1a8"
+}

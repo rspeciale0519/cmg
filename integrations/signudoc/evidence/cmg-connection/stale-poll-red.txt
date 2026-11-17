@@ -1,0 +1,138 @@
+waiting for server to start.... done
+server started
+Applied 20260809120000_initial_schema.sql
+Applied 20260809120100_rls_policies.sql
+Applied 20260809120200_storage.sql
+Applied 20260810120000_admin_user_directory.sql
+Applied 20260810130000_change_staff_privileges.sql
+Applied 20260811120000_claim_status_counts.sql
+Applied 20260811140000_portal_claim_contact.sql
+Applied 20260812120000_partner_referral.sql
+Applied 20260813120000_lor_policy_gate.sql
+Applied 20260814120000_outbox_claim.sql
+Applied 20260815120000_storage_cleanup_claim.sql
+Applied 20260815130000_pandadoc_webhook_claim.sql
+Applied 20260815140000_claim_lifecycle_invariants.sql
+Applied 20260815150000_retire_storage_authorization_helpers.sql
+Applied 20260815160000_claim_search_computed_field.sql
+Applied 20260815170000_esign_dispatch_claim.sql
+Applied 20260815180000_partner_portal_profile.sql
+Applied 20260815190000_architecture_convergence_round1.sql
+Applied 20260815200000_expired_invite_account_recovery.sql
+Applied 20260815210000_staff_claims_projection.sql
+Applied 20260815220000_accept_intake_owner_guard.sql
+Applied 20260815230000_lor_contract_mapping.sql
+Applied 20260815240000_accept_intake_lor_contract.sql
+Applied 20260830120000_outbox_attempt_limit.sql
+Applied 20260830121000_document_storage_paths.sql
+Applied 20260830122000_storage_cleanup_enqueue_idempotent.sql
+Applied 20260830123000_outbox_batch_materialized.sql
+Applied 20260830124000_intake_upload_sessions.sql
+Applied 20260830124100_intake_upload_cleanup.sql
+Applied 20260913050000_claim_ref_capacity_guard.sql
+Applied 20260916010000_intake_contractor_details.sql
+Applied 20260916020000_vendor_intake_links.sql
+Applied 20260916020100_vendor_intake_link_index.sql
+Applied 20260917120000_vendor_fee_and_schema_cleanup.sql
+Applied 20260917130000_outbox_claim_created_at.sql
+Applied 20260927120000_private_upload_sessions.sql
+Applied 20261029192505_unresolved_staff_recipient.sql
+RED observed: existing CMG SQL returns invalid_mode for SignuDoc.
+23_esign_dispatch_lease.test.sql
+1..18
+ok 1 - first request owns the preparing lease
+ok 2 - the provider document is durably recorded before send
+ok 3 - the irreversible provider phase is visible
+ok 4 - the possibly-sent document is traceable
+ok 5 - provider identity is current on the claim before external send
+ok 6 - the active attempt token is current before external send
+ok 7 - staff see the truthful in-flight provider state
+ok 8 - a second request cannot take over after the old 120 second lease
+ok 9 - no duplicate dispatch attempt is created
+ok 10 - the possibly-sent attempt is not falsely abandoned
+ok 11 - the original owner remains current for webhook reconciliation
+ok 12 - a matching delivery proof reconciles the ambiguous send
+ok 13 - webhook reconciliation advances the workflow safely
+ok 14 - webhook reconciliation releases dispatch ownership
+ok 15 - the reconciled attempt is durably completed
+ok 16 - the reconciliation source remains auditable
+ok 17 - reconciliation records the workflow transition once
+ok 18 - a mismatched completed replay cannot change the claim
+24_esign_reconciliation_outcomes.test.sql
+1..12
+ok 1 - pending fixture owns dispatch
+ok 2 - pending fixture reaches sending
+ok 3 - non-proving event retains ambiguity
+ok 4 - non-proving event does not falsely complete
+ok 5 - mismatched token is rejected
+ok 6 - subsequent delivery proof reconciles
+ok 7 - failure fixture owns dispatch
+ok 8 - failure fixture reaches sending
+ok 9 - creation failure settles failed
+ok 10 - creation failure does not advance to sent
+ok 11 - creation failure releases ownership
+ok 12 - creation failure writes no sent history
+46_signudoc_dispatch.test.sql
+1..38
+ok 1 - unbound claims are not polled
+ok 2 - unknown provider modes remain closed
+ok 3 - SignuDoc reserves existing dispatch ownership
+ok 4 - SignuDoc refuses an unnamespaced identity
+ok 5 - reviewed SignuDoc identity reaches sending
+ok 6 - bounded poll claims the active request
+ok 7 - overlapping poll cannot reuse the lease
+ok 8 - PandaDoc reservation still works
+ok 9 - PandaDoc cannot claim a SignuDoc identity
+ok 10 - PandaDoc identity still works
+ok 11 - SignuDoc worker never claims PandaDoc
+ok 12 - positive delivery proof clears uncertainty
+ok 13 - reconciliation audit names the actual source
+ok 14 - bearer attempt tokens remain server-only
+ok 15 - dispatch tokens remain server-only
+ok 16 - terminal status is applied
+not ok 17 - older sent poll cannot undo a decline
+# Failed test 17: "older sent poll cannot undo a decline"
+#         have: applied
+#         want: ignored
+not ok 18 - older partial poll cannot undo a decline
+# Failed test 18: "older partial poll cannot undo a decline"
+#         have: applied
+#         want: ignored
+ok 19 - claimed cleanup paths are permanently burned
+ok 20 - a new filing path works after cleanup
+ok 21 - newer signing progress is applied
+not ok 22 - older partial count cannot regress progress
+# Failed test 22: "older partial count cannot regress progress"
+#         have: applied
+#         want: ignored
+not ok 23 - newest observed progress is retained
+# Failed test 23: "newest observed progress is retained"
+#         have: recipient.completed:1:2
+#         want: recipient.completed:2:2
+ok 24 - completion status can precede private filing
+ok 25 - missing audit evidence prevents finalization
+ok 26 - missing evidence cannot mark the claim signed
+ok 27 - both artifacts permit finalization
+ok 28 - successful filing advances the claim
+ok 29 - signed agreement and evidence are both retained
+ok 30 - atomic filing writes one explicit audit record
+ok 31 - atomic filing records one transition
+ok 32 - atomic filing posts one claim event
+ok 33 - a repeated completion is idempotent
+ok 34 - replay does not duplicate files
+ok 35 - filed agreements leave the background batch
+ok 36 - signed-in clients cannot run the system worker
+ok 37 - anonymous clients cannot run the system worker
+ok 38 - dispatch ledger stays private
+# Looks like you failed 4 tests of 38
+file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/run-cmg-sql.mjs:47
+  if(lines.some(x=>/^not ok|^# Looks like/.test(x)))throw Error('pgTAP failure in '+file);
+                                                          ^
+
+Error: pgTAP failure in 46_signudoc_dispatch.test.sql
+    at file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/run-cmg-sql.mjs:47:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.22.1
+waiting for server to shut down.... done
+server stopped

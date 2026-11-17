@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ESignMode } from "./types";
+import {readSignuDocSettings,type SignuDocSettings} from "./signudoc/config";
 
 /**
  * Every PandaDoc value is server-only (spec §7.8). None of them is ever read
@@ -12,6 +13,7 @@ import type { ESignMode } from "./types";
  * the next request rather than the next deploy.
  */
 export type ESignConfig = {
+  signudoc?:SignuDocSettings;
   apiKey: string | null;
   templateUuid: string | null;
   templateUuidSingle: string | null;
@@ -47,6 +49,7 @@ function positiveIntEnv(name: string, fallback: number): number {
 
 export function readESignConfig(): ESignConfig {
   return {
+    signudoc:readSignuDocSettings(),
     apiKey: trimmedEnv("PANDADOC_API_KEY"),
     templateUuid: trimmedEnv("PANDADOC_LOR_TEMPLATE_UUID"),
     templateUuidSingle: trimmedEnv("PANDADOC_LOR_TEMPLATE_UUID_SINGLE"),
@@ -59,5 +62,5 @@ export function readESignConfig(): ESignConfig {
 
 /** `pandadoc` when an API key is present, `manual` otherwise. */
 export function esignMode(config: ESignConfig = readESignConfig()): ESignMode {
-  return config.apiKey === null ? "manual" : "pandadoc";
+  return config.signudoc?.enabled ? "signudoc" : config.apiKey === null ? "manual" : "pandadoc";
 }

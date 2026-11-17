@@ -209,7 +209,7 @@ export async function processPandaDocWebhook(
     return { status: 200, body: { ok: true, reason: "unparseable_payload" } };
   }
 
-  const provider = deps.provider ?? createESignProvider();
+  const provider = deps.provider ?? createESignProvider({forcePandaDoc:true});
   const counts = { applied: 0, ignored: 0, failed: 0 };
 
   for (const [eventIndex, event] of events.entries()) {

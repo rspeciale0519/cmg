@@ -30,6 +30,7 @@ export type AdminESignState = {
 export function adminESignState(
   status: string | null,
   claimStatus?: string,
+  provider:"pandadoc"|"signudoc"="pandadoc",
 ): AdminESignState {
   if (status?.startsWith("recipient.completed")) {
     const [, completed, recipients] = status.split(":");
@@ -172,7 +173,9 @@ export function adminESignState(
         key: "send_uncertain",
         label: "Delivery confirmation pending",
         detail:
-          "Do not resend or switch to manual signing. Verify the provider document in PandaDoc; its next matching webhook will reconcile this claim automatically.",
+          provider==="signudoc"
+            ? "Do not resend or switch to manual signing. Refresh signing status to reconcile the existing SignuDoc request."
+            : "Do not resend or switch to manual signing. Verify the provider document in PandaDoc; its next matching webhook will reconcile this claim automatically.",
         tone: "active",
         recoverable: false,
       };
@@ -180,7 +183,7 @@ export function adminESignState(
       return {
         key: "failed_unknown",
         label: "Provider status needs review",
-        detail: `The provider reported “${status}”. Verify the request in PandaDoc and the claim activity before changing representation state.`,
+        detail: `The provider reported “${status}”. Verify the provider request and the claim activity before changing representation state.`,
         tone: "failure",
         recoverable: false,
       };

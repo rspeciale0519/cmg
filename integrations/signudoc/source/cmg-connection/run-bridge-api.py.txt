@@ -1,0 +1,15 @@
+import os,subprocess,pathlib
+root=pathlib.Path(__file__).resolve().parent
+pg=str(root/'postgres/usr/lib/postgresql/17/bin/pg_ctl'); data=str(root/'postgres/data')
+keys=['PATH','HOME','LANG','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy','NODE_EXTRA_CA_CERTS','NODE_USE_ENV_PROXY','SSL_CERT_FILE']
+e={k:os.environ[k] for k in keys if k in os.environ}
+e.update({'E2E_DATABASE_URL':'postgres://agent@127.0.0.1:55437/cmg_signudoc_e2e','E2E_PORT':'3187','E2E_PROVIDER_PORT':'3188','NEXT_TELEMETRY_DISABLED':'1','CI':'1'})
+with open(root/'bridge-http-test.log','w') as f:
+ start=subprocess.run([pg,'-D',data,'-l',str(root/'postgres/server.log'),'-o',"-h 127.0.0.1 -p 55437 -c unix_socket_directories=''",'start'],stdout=f,stderr=subprocess.STDOUT)
+ if start.returncode: raise SystemExit(start.returncode)
+ try:
+  api=subprocess.run(['node','node_modules/@playwright/test/cli.js','test','--config','bridge.playwright.config.ts','e2e/cmg-bridge-driver.spec.ts'],cwd=root/'upstream',env=e,stdout=f,stderr=subprocess.STDOUT)
+ finally:
+  subprocess.run([pg,'-D',data,'-m','fast','stop'],stdout=f,stderr=subprocess.STDOUT)
+print('CMG bridge HTTP exit:',api.returncode)
+raise SystemExit(api.returncode)

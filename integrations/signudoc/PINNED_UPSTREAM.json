@@ -7,6 +7,10 @@
     {
       "file": "patches/0001-optional-authorization.patch",
       "sha256": "1618fddf5b6d7e0c09d4e82e52f23e60d6b11a17a7f13358dd828a1f27eeeaa6"
+    },
+    {
+      "file": "patches/0002-authenticated-cmg-bridge.patch",
+      "sha256": "c47d87dd14fb1391158bb872c175c85f1dafeab1dba0c3de602b681295a24e6e"
     }
   ]
 }

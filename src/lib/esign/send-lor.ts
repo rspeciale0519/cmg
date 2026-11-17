@@ -23,6 +23,8 @@ export type {
 export type SendLorRequest = {
   claimId: string;
   requestId?: string;
+  reviewToken?:string;
+  reviewConfirmed?:boolean;
   /** Contingency fee stamped into the letter; falls back to claim_financials. */
   feePercent?: number | null;
   /** Overrides the covering message in the provider's notification email. */
@@ -105,6 +107,7 @@ export async function sendLor(
     {
       claimId: claim.id,
       requestId: request.requestId,
+      ...(request.reviewToken?{reviewToken:request.reviewToken,reviewConfirmed:request.reviewConfirmed===true}:{}),
       feePercent: request.feePercent ?? null,
       message: request.message ?? null,
       actorId: session.userId,

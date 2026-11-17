@@ -1,0 +1,103 @@
+(node:1950) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+> cmg-property-solutions@0.1.0 build
+> next build
+
+(node:1963) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.3 (Turbopack)
+✓ Running next.config.ts took 60ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+(node:1986) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Compiled successfully in 1323ms
+  Running TypeScript ...
+  Finished TypeScript in 5.7s ...
+  Collecting page data using 8 workers ...
+(node:2026) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2027) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2033) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2044) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2045) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2063) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2067) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2079) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Your version of Next.js is affected by a known security vulnerability. This command is continuing after the upgrade reminder.
+Reference: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+  Generating static pages using 8 workers (0/5) ...
+  Generating static pages using 8 workers (1/5)
+  Generating static pages using 8 workers (2/5)
+  Generating static pages using 8 workers (3/5)
+✓ Generating static pages using 8 workers (5/5) in 162ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /admin
+├ ƒ /admin/[...unmatched]
+├ ƒ /admin/audit
+├ ƒ /admin/claims
+├ ƒ /admin/claims/[id]
+├ ƒ /admin/claims/[id]/activity
+├ ƒ /admin/claims/[id]/claimants
+├ ƒ /admin/claims/[id]/documents
+├ ƒ /admin/claims/[id]/financials
+├ ƒ /admin/claims/[id]/history
+├ ƒ /admin/closed-invitation-checks
+├ ƒ /admin/intake
+├ ƒ /admin/leads
+├ ƒ /admin/partners
+├ ƒ /admin/partners/[id]
+├ ƒ /admin/questions
+├ ƒ /admin/settings
+├ ƒ /admin/staff
+├ ƒ /api/cron/outbox
+├ ƒ /api/cron/signudoc
+├ ƒ /api/cron/storage-cleanup
+├ ƒ /api/pandadoc/webhook
+├ ƒ /auth/confirm
+├ ƒ /contact
+├ ƒ /contractors
+├ ƒ /file-a-claim
+├ ƒ /forgot-password
+├ ○ /icon.png
+├ ƒ /invite/[token]
+├ ƒ /login
+├ ƒ /mfa
+├ ƒ /partner
+├ ƒ /partner/[...unmatched]
+├ ƒ /partner/claims/[id]
+├ ƒ /partner/claims/[id]/activity
+├ ƒ /partner/profile
+├ ƒ /partner/refer
+├ ƒ /platform-disabled
+├ ƒ /portal
+├ ƒ /portal/[...unmatched]
+├ ƒ /portal/claims/[id]
+├ ƒ /portal/claims/[id]/activity
+├ ƒ /portal/claims/[id]/documents
+├ ƒ /portal/profile
+├ ƒ /reset-password
+├ ○ /robots.txt
+├ ƒ /services
+└ ○ /sitemap.xml
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

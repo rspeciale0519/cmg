@@ -1,0 +1,302 @@
+waiting for server to start.... done
+server started
+[migrate] applied 20261117010200_cmg_bridge_send_capability.sql
+[migrate] done: applied 1 of 18 migration(s) using DATABASE_URL.
+psql:db/migrations/20261117010100_cmg_bridge_review_lock.sql:22: ERROR:  function "cmg_guard_reviewed_parties" already exists with same argument types
+CREATE FUNCTION
+✖ historical send intent never authorizes an ordinary sender transaction (120.264762ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 945.584379
+
+✖ failing tests:
+
+test at src/lib/cmg-bridge/send-guard.dbtest.ts:8:1
+✖ historical send intent never authorizes an ordinary sender transaction (120.264762ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/cmg-bridge/send-guard.dbtest.ts:16:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /CMG send ownership/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+CREATE FUNCTION
+REVOKE
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> signudoc@0.2.1 test:db
+> node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --test-concurrency=1 "src/**/*.dbtest.ts"
+
+Moved finished envelopes from closed account bc8f8e29-8a0f-41a9-b20b-422e8e736589 to 91dc5149-cc18-479f-a223-635c201bcbf0.
+✔ an envelope completed while its sender's account is being deleted goes to an administrator (77.966018ms)
+✔ once the finished envelopes are handed over, no other envelope of the account can be completed (34.355755ms)
+Retention cleanup failed for account 745ada62-8e8c-46e3-8eb7-79a6389069a2: AccountPurgeDeferredError: Account 745ada62-8e8c-46e3-8eb7-79a6389069a2 holds finished envelopes and no other user can keep them. Its purge is deferred until another administrator exists or the records are exported and deleted by hand.
+    at deleteAccountRows (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:591:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async withTransaction (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/db/connection.ts:89:20)
+    at async purgeQueuedAccount (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:649:7)
+    at async runRetentionSweep (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:997:23)
+    at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/account-purge.dbtest.ts:245:21)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ with no administrator to take it, an envelope completed during the deletion keeps its account (15.513291ms)
+✔ the daily job reminds the waiting signer once per interval (105.24952ms)
+✔ no reminder when they are off, the deadline passed, or nobody is waiting (15.975351ms)
+Automatic reminder failed for envelope 947ada96-eef8-4c72-9de1-8c82d30751dc: Error: mail is down
+    at TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/automatic-reminders.dbtest.ts:246:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ a reminder whose email fails leaves the signer's link as it was (25.490733ms)
+Automatic reminder failed for envelope 2f11b27c-6c7f-427b-a097-fc63e21f32e4: Error: mail is down
+    at TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/automatic-reminders.dbtest.ts:273:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ a deadline moved while a reminder's email fails stays moved (20.63691ms)
+✔ a reminder and a signer opening the page do not lock each other out (29.970035ms)
+✔ a run that is out of time leaves the rest for the next one (5.553573ms)
+✔ only the owner changes reminders, and only while the envelope is out (56.419079ms)
+✔ a logo is stored, read back and replaced, and its version follows the image (36.838724ms)
+✔ saving the other settings leaves the logo where it is, and the color beside it (9.343681ms)
+✔ removing the logo clears every trace of it (3.395302ms)
+✔ what is not an image never reaches the database (1.56284ms)
+✔ the database itself refuses a color or a logo that is not one (10.753144ms)
+✔ a draft keeps half-finished choices, and sending waits until they can be answered (143.168504ms)
+✔ choices only belong on dropdowns, groups only on radio buttons, and a group holds together (17.531976ms)
+✔ the database itself keeps choices and groups where they belong (35.441883ms)
+✔ bursts above pool capacity fail fast without starving accepted bridge work (51.099221ms)
+✔ historical send intent never authorizes an ordinary sender transaction (79.129671ms)
+✔ copy recipients are saved beside the signers and stay out of the signing order (97.664827ms)
+✔ saving the signers again keeps, replaces or removes the copy recipients (50.878125ms)
+✔ one address cannot be both a signer and a copy recipient (12.068872ms)
+✔ one saved copy recipient named twice is refused, and nothing is lost (9.468544ms)
+✔ the database refuses to put a copy recipient into the signing order (8.960827ms)
+✔ a data request for an address finds the envelopes it was copied on (12.673361ms)
+✔ two renewals at once send one email, and its links are the ones that work (100.224165ms)
+✔ a new link that cannot be stored leaves both old links as they were (37.770746ms)
+✔ when the email does not go out the old links are put back, and the signer can ask again (20.46022ms)
+✔ erasing a signer leaves a row that was given someone else's address meanwhile (114.268509ms)
+✔ erasing a signer takes them off a draft, with their fields (21.267553ms)
+✔ an envelope is not sent without a signer who was erased while it was being sent (33.60888ms)
+✔ fields saved for a draft do not land on an envelope that was sent meanwhile (21.536415ms)
+✔ signers saved for a draft do not land on an envelope that was sent meanwhile (18.324683ms)
+✔ a completed envelope is copied into a new draft with people, fields and a separate document (220.27318ms)
+✔ a declined or voided envelope can be copied, and so can one still out or past its deadline (272.038707ms)
+✔ a draft cannot be copied (48.878147ms)
+✔ someone else's envelope cannot be copied (55.814729ms)
+✔ a missing document is refused and leaves no draft (58.212739ms)
+✔ what is copied is checked (2.38531ms)
+✔ a copy that loses the source to a purge does not leave a half-made draft (74.848541ms)
+✔ a purge waits for the copy, so the new draft still has the source's fields (74.247106ms)
+✔ a passed deadline stops signing, and a new one brings the same link back (60.357876ms)
+✔ a link that outlives the envelope's deadline does not work past it (6.084214ms)
+✔ only the owner of an envelope that is out can change its deadline (8.549973ms)
+✔ a reminder is refused once the deadline has passed (4.704554ms)
+✔ the daily job tells the sender once that a deadline passed (33.437218ms)
+Expiry notice failed for envelope 6828426b-6618-4c9f-bf6d-8409af07cb5c: Error: mail is down
+    at TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/envelope-deadline.dbtest.ts:355:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ a notice whose email fails is tried again on the next run (11.234238ms)
+✔ nothing is marked as told before the notice has gone out (7.614045ms)
+✔ a deadline moved during the run is not told or noted as passed (15.84311ms)
+✔ a change of deadline and a signer opening the page do not lock each other out (26.491417ms)
+✔ a deadline moved while a signer submits reaches the next signer (39.619906ms)
+✔ a change of deadline and the last signature do not lock each other out (272.776562ms)
+[email:capture] decline_notification to b9467a30-4b73-43b8-a52d-b780a4712f8d@example.test -> /tmp/signudoc-deadline-NtfhV9/outbox/1794879334714-capture-e07e639c-4edb-4d0e-999f-991a7ca04fcd.json
+✔ a change of deadline and a decline do not lock each other out (126.961849ms)
+✔ a picture is kept for an envelope that exists (41.30069ms)
+✔ a browser that already holds the picture is answered without a read from file storage (14.494325ms)
+✔ an envelope keeps the first picture it is given (8.328042ms)
+✔ quoting a picture's name does not show it to another account (6.238831ms)
+✔ nobody else can store a picture for the envelope (3.983252ms)
+✔ a picture written while its draft is being deleted does not stay behind (6.695563ms)
+✔ deleting a draft removes its picture (6.371406ms)
+✔ a picture stays with an envelope that is handed to another account (14.489263ms)
+✔ a picture stored while a finished envelope is being deleted does not stay behind (7.22328ms)
+✔ the install audit trail is one hash chain that shows a changed row (38.958493ms)
+✔ a right password signs and clears earlier misses (6.404836ms)
+✔ a right password with someone else's email address is a miss (3.464919ms)
+✔ five wrong passwords lock signing, tell the administrators and are audited (18.84944ms)
+✔ a data request does not erase a finished Part 11 envelope (8.892307ms)
+✔ an identity confirmation taken back after send stops the signature (3.147287ms)
+✔ an administrator can be added and removed, but never the last one (143.322373ms)
+✔ two administrators removing each other at once leaves one (29.929836ms)
+✔ a request already under way does not outlive its administrator's role (71.121087ms)
+Moved finished envelopes from closed account cfc5ef1a-80ab-4ba4-87ff-db1c6503b2fc to 8fc47dde-9055-4c79-a29f-6309a46c3db7.
+✔ a closed account's records do not go to someone whose role is being taken away (107.667441ms)
+Moved finished envelopes from closed account f48cde03-acf2-4b1f-8de5-852e024ee42d to 7a851964-7e5f-4777-8422-8794190370a1.
+Moved 1 handed-over envelopes from 7a851964-7e5f-4777-8422-8794190370a1, no longer an administrator, to cd5ccded-2646-4585-8b7a-870d78b30282.
+✔ records handed over from a closed account move on when their keeper stops being an administrator (141.067394ms)
+Moved finished envelopes from closed account 0300c71f-baf7-4a85-9d01-2d84196216f2 to 927f5b33-683f-4d0b-a2a4-96140582498c.
+Moved finished envelopes from closed account 927f5b33-683f-4d0b-a2a4-96140582498c to 0aac873c-ec04-4593-beb8-bf7fb3fec44f.
+✔ an administrator who closes their account passes on what they were handed (77.652819ms)
+✔ an administrator whose account is closing does not count as the one that stays (18.991669ms)
+✔ only a confirmed account that is staying can become an administrator (14.109204ms)
+✔ an account past the end of the list can still be found and made an administrator (75.956984ms)
+✔ the sender can choose a provider's signature only when the install has one (1164.051262ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879370517-capture-79100e80-67ab-459b-a016-228c456b9ef3.json
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879370917-capture-a1e3f54b-b501-4917-b658-704a8d15c788.json
+[seal] Long-term validation is incomplete: OCSP at http://127.0.0.1:46879/ocsp failed: Refused to fetch from a private address (127.0.0.1). The revocation list at http://127.0.0.1:46879/ca.crl failed: Refused to fetch from a private address (127.0.0.1). No revocation information was found for CN=Riley Recipient, O=Harbour & Finch Test CA. OCSP at http://127.0.0.1:46879/ocsp failed: Refused to fetch from a private address (127.0.0.1). The revocation list at http://127.0.0.1:46879/ca.crl failed: Refused to fetch from a private address (127.0.0.1). No revocation information was found for CN=Casey Second, O=Harbour & Finch Test CA.
+[email:capture] completion_notification to 93c2bdd9-c863-495b-a9b0-e0979f3a5582@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371352-capture-90d20eab-5729-4b9e-9cf4-2b1e3061ce62.json
+[email:capture] completion_notification to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371358-capture-3a389bff-cd80-4321-8aa7-3a2afacc538c.json
+[email:capture] completion_notification to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371363-capture-3328d4e9-f41f-41d7-ba5d-ff7e6788a46f.json
+✔ two signers sign with qualified signatures, each in a revision of their own (1055.07846ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371510-capture-f7d094fb-41d1-44be-b530-37d8826d29a5.json
+[signing] eID Easy did not sign: SigningProviderError: eID Easy has no signature for this document. The signer may have cancelled.
+    at Object.resume (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/services/signing-providers.ts:202:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async resumeProviderSigning (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.ts:453:12)
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.dbtest.ts:611:5)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371884-capture-c9a8b861-f8ad-4f3e-a3f8-32c2b414e949.json
+✔ a signer who does not finish at the provider can try again (445.953718ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879371918-capture-aa1c132b-1650-4816-9af5-77cc2acc1a48.json
+✔ a return while another is saving the signature leaves that one to finish (154.063909ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879372079-capture-9601986f-48bb-405a-a625-ba59fc4be744.json
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879373379-capture-82d4bd15-8081-47a5-932f-6522f8c3f1cf.json
+✔ the next signer's turn starts when the signer is back from the provider (1340.375843ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879373432-capture-75e4ead9-cc4b-462c-909f-bbd9b0be2971.json
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879373755-capture-395dee92-bb0d-47c9-b6b7-98f156a8b942.json
+✔ an ended session keeps no secrets, and the daily cleanup ends abandoned ones (384.122696ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879373793-capture-31731dce-60ab-4cbb-9a44-fb05b997a057.json
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879373814-capture-4d4a6fdb-2bb8-4f01-8f15-357b89075d03.json
+[email:capture] completion_notification to 699a479c-fc08-4fb7-8f67-f660631b53e5@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374026-capture-412becff-d3fd-4f7b-b653-2fb5435c99aa.json
+[email:capture] completion_notification to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374030-capture-1a6ca05a-50c4-4bbe-8113-0c4f51f58fc8.json
+[email:capture] completion_notification to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374032-capture-7076c249-a9fa-40de-92ad-779eab47d5f5.json
+✔ two submissions by the last signer at once finish the envelope once, and keep its files (270.605596ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374064-capture-92506245-8652-4105-99d9-72bdbc16616c.json
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374086-capture-d8a25d2e-9940-4e59-802a-0fe7b8533e99.json
+[email:capture] completion_notification to 7a39d427-e332-4435-b854-44c24159be4d@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374374-capture-d9ae97e8-0889-4b83-bff9-d5487ff22a33.json
+[email:capture] completion_notification to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374382-capture-3fbbc6ec-8b0e-45d2-b59c-665ace0f228e.json
+[email:capture] completion_notification to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374389-capture-2753753d-56ae-438e-9345-647c6b154395.json
+✔ the last signature needs no second connection while it holds the envelope (356.033828ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374435-capture-1f04bd88-3562-4312-ab13-e708e36a45c6.json
+Failed to delete the unused signer revision of session UNz8opt_B98PlZWrFRRz969E5FazGrXP: Error: Storage is unavailable.
+    at Object.deleteObject (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.dbtest.ts:918:15)
+    at deleteUnusedProviderRevisions (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:368:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async endAbandonedProviderSessions (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:328:3)
+    at async runRetentionSweep (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/retention.ts:968:42)
+    at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.dbtest.ts:925:3)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374659-capture-62a82d89-ef83-4a1d-b6cd-02f92f3aa585.json
+[seal] Long-term validation is incomplete: OCSP at http://127.0.0.1:46879/ocsp failed: Refused to fetch from a private address (127.0.0.1). The revocation list at http://127.0.0.1:46879/ca.crl failed: Refused to fetch from a private address (127.0.0.1). No revocation information was found for CN=Riley Recipient, O=Harbour & Finch Test CA. OCSP at http://127.0.0.1:46879/ocsp failed: Refused to fetch from a private address (127.0.0.1). The revocation list at http://127.0.0.1:46879/ca.crl failed: Refused to fetch from a private address (127.0.0.1). No revocation information was found for CN=Casey Second, O=Harbour & Finch Test CA.
+[email:capture] completion_notification to 2053b5ed-0809-4c33-8b52-dd37f08c942c@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374923-capture-2837ac70-57db-4949-92a3-7fe141eadfe9.json
+[email:capture] completion_notification to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374925-capture-506db699-d838-40ae-9e7b-91d57aba4d9e.json
+[email:capture] completion_notification to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374929-capture-b8892e91-a1c4-4c02-b7a7-3295428d4b9f.json
+✔ a revision the cleanup cannot delete is tried again, and the current one is kept (545.473255ms)
+[email:capture] signing_invitation to riley@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879374961-capture-015d97c1-566a-4f4a-8e19-d3179b623c40.json
+[signing] The provider's signature was refused: SignerNameError: The certificate is in the name of CN=Morgan Other, O=Harbour & Finch Test CA, not Riley Recipient, who this document was sent to.
+    at resumeProviderSigning (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.ts:495:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/provider-signing.dbtest.ts:994:3)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+[email:capture] signing_invitation to casey@example.test -> /tmp/signudoc-provider-PSDUnM/outbox/1794879375257-capture-0c2cb974-f205-4829-8eed-5e8257671ef3.json
+✔ a certificate in someone else's name does not sign for the invited signer (321.983253ms)
+✔ a caller with no secret gets one run an hour (84.962866ms)
+✔ a caller with the secret is not rationed, and gets the summary (9.648279ms)
+✔ a run clears finished rate limit windows (6.760048ms)
+✔ while one run holds the lock, another steps aside (8.284432ms)
+✔ requests up to the limit pass, the next one waits, and the count starts over when the window ends (42.019819ms)
+✔ only a hash of the key is stored (2.496764ms)
+✔ requests that arrive together are each counted once (25.292261ms)
+✔ each key has its own count (2.876624ms)
+✔ finished windows are cleared and live ones are kept (3.247429ms)
+✔ before setup nobody can sign up, and after it the chosen rule applies (63.869754ms)
+✔ the support address given at setup is saved for this install, not guessed (19.232434ms)
+✔ setup without a support address is refused before any account exists (18.321047ms)
+✔ a deployment that sets SUPPORT_EMAIL is not asked for a support address (17.012396ms)
+✔ someone who takes charge of an older install gives it a support address, unless it has one (25.204648ms)
+✔ while the administrator's account is being created, nobody else can sign up (20.595711ms)
+✔ a setup that fails halfway leaves sign-up closed, not open (19.567577ms)
+✔ submissions that arrive together get one winner, and the rest are turned away at once (27.456397ms)
+✔ an install from before settings existed stays open until it is claimed (16.661821ms)
+✔ a sign-up rule changed a moment ago applies at once (20.91859ms)
+✔ a database that is behind this version still applies its sign-up rule (30.246162ms)
+✔ an email check only vouches for the sender address it was made with (25.102677ms)
+✔ the audit chain verifies, and shows an edited row (43.474139ms)
+✔ a signer's data can be exported, then erased from finished envelopes only (32.371149ms)
+Moved finished envelopes from closed account 4f3cb7d9-c978-4613-9e3a-5808c2b3c7c5 to 8260d490-c829-4f0f-8a80-35149fe0d6b8.
+✔ closing an account hands finished envelopes to an administrator (26.501692ms)
+✔ the retention period warns the sender, then deletes (32.551294ms)
+✔ the retention period never warns about or deletes a Part 11 record (14.790933ms)
+✔ correcting a notified signer rotates the link and emails the new address (92.034762ms)
+✔ correcting a pending signer records the change and sends no invitation (18.36604ms)
+✔ the same name and email is a no-op: the link stays and nothing is audited (10.966915ms)
+✔ a passed deadline can still have a signer corrected (17.029574ms)
+✔ another signer's email is refused (12.808055ms)
+✔ a signed or declined signer cannot be corrected (11.186524ms)
+✔ a copy recipient cannot be corrected here (12.741747ms)
+✔ draft, completed, declined and voided envelopes are refused (33.696048ms)
+✔ a Part 11 envelope cannot have a signer corrected (6.084886ms)
+✔ another user cannot correct a signer (5.507866ms)
+✔ an empty or invalid correction is refused by the schema (4.046235ms)
+✔ a failed invitation leaves the old name, email and link in place (6.784125ms)
+✔ recipient certificates omit a correction's previous email (682.827551ms)
+✔ the certificate credits consent recorded after a signer correction (124.862078ms)
+✔ an in-flight submit on the old link cannot finish after a correction (29.860157ms)
+✔ an in-flight consent on the old link cannot finish after a correction (13.847ms)
+✔ an in-flight decline on the old link cannot finish after a correction (103.991982ms)
+✔ activating the next signer emails the address stored under the lock (36.199347ms)
+✔ a failed invitation does not undo a later correction of the same signer (26.396004ms)
+✔ two overlapping failed invitations restore the original signer and link (19.179368ms)
+✔ overlapping successful corrections record audit events in save order (148.773645ms)
+✔ a failed invitation leaves no correction in the audit trail when a later event is recorded (10.451632ms)
+✔ a failed invitation restores consent and keeps it on the certificate (73.011136ms)
+✔ a missing email configuration rolls the correction back (7.517318ms)
+✔ a failed reminder does not bring back the link a correction replaced (13.926837ms)
+[email:capture] decline_notification to 479fe1df-1acc-4a11-b6a0-6d1b915d877e@example.test -> /tmp/signudoc-correct-other-decline-7zM1tl/outbox/1794879379845-capture-4acaf8c2-2399-4b04-8e9c-a12c7a38cf23.json
+✔ a decline whose certificate missed another signer's correction is refused (150.197456ms)
+[email:capture] decline_notification to a66e4a0e-a510-42ac-bec8-bc8626c9abed@example.test -> /tmp/signudoc-correct-other-decline-IMv5ZG/outbox/1794879379984-capture-9a381376-652b-45a7-ab6c-81a7a48e273c.json
+✔ a decline whose recipients were read before another signer's correction is refused (137.809759ms)
+✔ the corrected recipient's first view is recorded (20.408066ms)
+✔ a template keeps the document, the fields and the order, and no one's name (401.026709ms)
+✔ a draft made from a template has the fields on the people named for it (263.7702ms)
+✔ a template belongs to the person who saved it (57.657404ms)
+✔ what a template is given is checked (34.538573ms)
+✔ a draft that cannot be finished is not left half made (63.206144ms)
+✔ the database refuses a template without signers (6.213596ms)
+Failed to delete the document of template a51b7f53-2b34-4f2c-a43c-69c3a009027f: Error: storage is down
+    at Object.deleteObject (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/templates.dbtest.ts:554:13)
+    at deleteTemplate (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/templates.ts:546:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async TestContext.<anonymous> (file:///workspace/scratch/c9906a327d02/cmg-signudoc-spike/upstream/src/lib/templates.dbtest.ts:558:3)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ a template whose document cannot be deleted is kept, to be deleted again (37.01004ms)
+✔ saves at the same moment cannot pass the most an account may keep (42.902965ms)
+✔ closing the account removes its templates and their documents (48.545307ms)
+✔ a template saved while its account is being deleted leaves no document behind (532.356253ms)
+ℹ tests 152
+ℹ suites 0
+ℹ pass 152
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57262.470731
+waiting for server to shut down.... done
+server stopped
+Valid baseline send-guard RED: 1

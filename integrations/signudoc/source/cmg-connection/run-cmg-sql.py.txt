@@ -1,0 +1,10 @@
+import subprocess,pathlib,os
+root=pathlib.Path(__file__).resolve().parent
+pg=root/'postgres/usr/lib/postgresql/17/bin';data=root/'postgres/cmg-sql-data'
+with open(root/'cmg-sql-tests.log','w') as f:
+ if not data.exists():subprocess.run([str(pg/'initdb'),'-D',str(data),'-A','trust','-U','agent','--no-locale','-E','UTF8'],check=True,stdout=f,stderr=subprocess.STDOUT)
+ subprocess.run([str(pg/'pg_ctl'),'-D',str(data),'-l',str(root/'postgres/cmg-sql-server.log'),'-o',"-h 127.0.0.1 -p 55438 -c unix_socket_directories=''",'start'],check=True,stdout=f,stderr=subprocess.STDOUT)
+ try:p=subprocess.run(['node',str(root/'run-cmg-sql.mjs')],cwd=root,stdout=f,stderr=subprocess.STDOUT)
+ finally:subprocess.run([str(pg/'pg_ctl'),'-D',str(data),'-m','fast','stop'],stdout=f,stderr=subprocess.STDOUT)
+print('CMG isolated SQL exit:',p.returncode)
+raise SystemExit(p.returncode)

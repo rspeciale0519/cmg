@@ -1,0 +1,55 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.12 /workspace/scratch/c9906a327d02/cmg-signudoc-spike/cmg-implementation
+
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/lib/esign/signudoc/reconcile.test.ts (6 tests | 1 failed) 19ms
+   × uses fresh filing object paths when persistence fails and cleanup burns a prior path 6ms
+ ❯ src/lib/esign/signudoc/authorize.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/esign/signudoc/authorize.test.ts [ src/lib/esign/signudoc/authorize.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] [0mExpected `,` or `}` but found `)`
+ - `,` or `}` expected in src/lib/esign/signudoc/authorize.test.ts at 894..895
+ - Opened here in src/lib/esign/signudoc/authorize.test.ts at 636..637
+
+  Plugin: vite:oxc
+  File: /workspace/scratch/c9906a327d02/cmg-signudoc-spike/cmg-implementation/src/lib/esign/signudoc/authorize.test.ts
+ ❯ transformWithOxc node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:31102:51
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:20837:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/esign/signudoc/reconcile.test.ts > uses fresh filing object paths when persistence fails and cleanup burns a prior path
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/esign/signudoc/reconcile.test.ts:35:439
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 5 passed (6)
+   Start at  20:30:02
+   Duration  1.49s (transform 90ms, setup 0ms, import 117ms, tests 19ms, environment 1.10s)

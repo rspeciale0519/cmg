@@ -12,9 +12,11 @@ This branch contains the actual synthetic experiment source, evidence and an ord
 - [Actual CMG contract tests — 74 targeted CMG checks, real-template HTTP signing, blockers](actual-contracts/RESULTS.md)
 - [Actual-contract replay instructions and evidence](actual-contracts/README.md)
 
-## Latest actual-contract checkpoint
+## Latest implementation checkpoint
 
-The original synthetic-page proof has now been followed by tests of both actual CMG legal PDF assets using the real CMG prefill implementation and fake homeowners. Seventy-four targeted CMG tests passed; one real SignuDoc HTTP scenario completed required fields for both actual layouts. All 18 signed pages preserve original legal images and show no visual changes outside signing fields. The full manifests remain blocked by optional authorization; browser/phone acceptance and the combined CMG provider bridge remain unverified/unimplemented. Read the linked report before interpreting these results as readiness. No provider/production code changed.
+**Steps 1 and 2 are implemented and locally server-tested.** Read [current results and remaining gates](CMG_CONNECTION_RESULTS.md) and [service source/setup](../../../integrations/signudoc/README.md) first. Optional authorization now works; the authenticated CMG provider, review-before-send controls, status/reminders and private artifact filing are built. The feature is disabled. Browser/phone acceptance is deferred, and full Supabase-stack/type regeneration plus other release gates remain incomplete.
+
+The earlier actual-contract report below is retained as diagnostic history; its optional-field and missing-bridge blockers have been superseded by this implementation. It is not the current status report.
 
 ## Product requirements
 
@@ -37,8 +39,8 @@ The original unsigned/signed synthetic PDFs and full ZIP are retained in the ori
 1. Read this README, the assessment and the complete launch plan before coding.
 2. Reconcile current develop/release work; do not overwrite it or introduce a second competing workflow.
 3. Keep existing PandaDoc/manual behavior and in-flight agreements intact.
-4. Start with the optional-authorization incompatibility and a reviewed per-firm bridge design. Local success does not prove phone usability or production readiness.
-5. Treat the listed file names/interfaces as the proposed next design; they are not an implemented service API.
+4. Intake the current implementation and pinned patches; resolve the current results report’s runtime, generated-type, security, browser and release gates. Local success does not prove production readiness.
+5. Current code is authoritative. The older plan includes historical proposed interfaces; the current service uses one authenticated POST endpoint and a leased poller.
 6. Obtain the appropriate resource, hosted-testing, real-send/signature and production approvals at the named gates.
 
 ## Deployment suppression
@@ -47,7 +49,7 @@ The only root configuration change is `vercel.json` -> `git.deploymentEnabled` -
 
 Do not remove that block or blindly merge/cherry-pick the entire experiment into develop. Publishing research does not authorize Preview/Production deployment. No pull request is opened by this task; the CMG team can review/intake the branch deliberately.
 
-## Publication receipt
+## Initial publication receipt — historical
 
 Initial publication commit: [890f907](https://github.com/rspeciale0519/cmg/commit/890f907e5e488f2c779643115f42636d93f7d929). All 24 published files were independently read back and matched exactly. The branch comparison contains only the documented experiment/plan files and the exact-branch Vercel deployment block. Develop remains at 950cb27514ce10c92a1b05a4ef87bee9fc627ca2.
 

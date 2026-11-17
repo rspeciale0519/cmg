@@ -6,7 +6,7 @@
  * and payload-reading tests import them without stubbing the module.
  */
 
-export type ESignMode = "pandadoc" | "manual";
+export type ESignMode = "pandadoc" | "manual" | "signudoc";
 
 export type LorRole = "Homeowner1" | "Homeowner2";
 
@@ -32,6 +32,8 @@ export type LorRequest = {
   message?: string | null;
   /** Persist provider identity and irreversible-send intent before transport. */
   beforeSend?: (providerDocumentId: string) => Promise<void>;
+  /** Server-held bytes whose contents and recipients staff reviewed. */
+  reviewedPdf?: Uint8Array;
 };
 
 /** What a provider gives back once the letter is on its way. */

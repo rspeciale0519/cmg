@@ -80,8 +80,9 @@ export async function handleDispatchFailure(
     return {
       ok: false,
       code: "request_in_progress",
-      message:
-        "PandaDoc may have accepted this letter. Automatic retry is locked to prevent a duplicate. Check the request in PandaDoc before manual recovery.",
+      message: input.mode==="signudoc"
+        ? "The signing provider may have accepted this letter. Automatic retry is locked to prevent a duplicate. Refresh the SignuDoc request before manual recovery."
+        : "PandaDoc may have accepted this letter. Automatic retry is locked to prevent a duplicate. Check the request in PandaDoc before manual recovery.",
     };
   }
 

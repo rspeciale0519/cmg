@@ -1,4 +1,4 @@
-import type { Database as GeneratedDatabase } from "./database";
+import type { Database as GeneratedDatabase,Json } from "./database";
 
 export type {
   CompositeTypes,
@@ -25,6 +25,9 @@ type NullableArgs<
 // Generation does not retain these SQL null contracts. Keep database.ts as the
 // untouched CLI output; preserve every other field and optional argument here.
 type FunctionOverrides = {
+  // Forward-migration RPC contract. The generated baseline remains untouched;
+  // regenerate with the local stack before merge/activation.
+  claim_signudoc_poll_batch:{Args:{p_limit?:number;p_lease_seconds?:number};Returns:Json};
   // Error and retry fields are nullable for successful, held, and dead claims.
   settle_outbox_claim_v2: NullableArgs<"settle_outbox_claim_v2", "p_error" | "p_retry_seconds">;
   // 20260815240000: optional intake facts use COALESCE; partner fields depend on

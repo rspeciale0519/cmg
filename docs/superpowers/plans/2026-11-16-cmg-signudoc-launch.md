@@ -19,7 +19,22 @@ Authorized in this task: plan creation, preservation of the existing synthetic e
 - Checked upstream: SignuDoc 0.2.1 at bb9bc099151fed39da5de017d9b4cd61b124cbbd.
 - Recheck these against the actual current CMG work before implementing; do not discard intervening fixes.
 - Branch-only Vercel deployment suppression accompanies publication. Keep it on this experiment branch. Do not blindly merge/cherry-pick deployment configuration into other branches.
-- Initial publication was verified at 890f907e5e488f2c779643115f42636d93f7d929; the experiment README records the receipt. Task 1 is complete; implementation tasks remain unstarted.
+- Initial publication was verified at 890f907e5e488f2c779643115f42636d93f7d929; the experiment README records the receipt. Task 1 is complete. The subsequent authorization and current implementation checkpoint below supersede the original no-implementation planning boundary.
+
+## Current authorized implementation checkpoint
+
+Rob subsequently approved fixing optional authorization first and then building the CMG connection, with synthetic local testing and publication to this same experiment branch. Browser/mobile acceptance is explicitly deferred until after implementation. This does not authorize hosted changes, merge, deployment, paid resources or real agreements/messages.
+
+- [x] Optional-authorization implementation and server/actual-contract regressions.
+- [x] Authenticated CMG provider/bridge, reviewed-byte send controls, progress/reminders, private filing and fair leased worker implementation.
+- [x] One independent whole-branch review; Important findings fixed and regression/full checks rerun.
+- [x] Reproducible checksum-pinned service patches and implementation evidence prepared.
+- [ ] Full disposable Supabase stack, database-backed Vitest and official generated types (Docker/Podman absent here).
+- [ ] Dependency advisory updates and the existing security/legal/operational gates.
+- [ ] Browser/phone acceptance, deliberately deferred by Rob.
+- [ ] Hosted pilot and white-label rollout approval/gates.
+
+Read [current implementation results](../../experiments/signudoc/CMG_CONNECTION_RESULTS.md) for exact scope, decisions and open checks. The detailed tasks below retain their individual acceptance requirements; server implementation does not close their legal, mobile, operations or rollout portions. Historical diagnostics are not current blockers after a later verified fix.
 
 ## Required product behavior
 

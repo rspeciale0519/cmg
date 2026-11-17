@@ -1,0 +1,48 @@
+[
+  {
+    "variant": "single",
+    "requiredFields": 9,
+    "totalFields": 11,
+    "status": "completed",
+    "signers": [
+      {
+        "role": "Homeowner1",
+        "status": "signed"
+      }
+    ],
+    "artifacts": {
+      "signedSha256": "408f7f3063c2e12d027e74b3507a7550bdd50533e1f8ce8e4001290f4f9e5213",
+      "evidenceSha256": "79300903c05167c27ad11a24c3645a6810f1b5cb52f96adaa7c167382ceb6ec4"
+    },
+    "transport": "actual CMG provider and client to real SignuDoc HTTP, local Postgres, capture-only email",
+    "lostSendResponse": "not injected",
+    "manualReminder": "captured once; duplicate refused",
+    "browserMobile": "deferred",
+    "cmgDatabaseWorkflow": "not exercised by this transport test"
+  },
+  {
+    "variant": "dual",
+    "requiredFields": 18,
+    "totalFields": 21,
+    "status": "completed",
+    "signers": [
+      {
+        "role": "Homeowner1",
+        "status": "signed"
+      },
+      {
+        "role": "Homeowner2",
+        "status": "signed"
+      }
+    ],
+    "artifacts": {
+      "signedSha256": "7729da6f8570d40edc7e8e34d506ef863cba047beba849c39d14bc86faf9d48b",
+      "evidenceSha256": "187511b0bb1909eb878a030f493ba2063ff60fa4e213347c63884c76fa3465ac"
+    },
+    "transport": "actual CMG provider and client to real SignuDoc HTTP, local Postgres, capture-only email",
+    "lostSendResponse": "locked as uncertain; remote confirmation recovered",
+    "manualReminder": "not requested",
+    "browserMobile": "deferred",
+    "cmgDatabaseWorkflow": "not exercised by this transport test"
+  }
+]

@@ -14,6 +14,8 @@ const requestSchema = z.object({
   claimId: z.string().uuid(),
   requestId: z.string().uuid(),
   intent: z.enum(["electronic", "manual"]),
+  reviewToken:z.string().max(4000).optional(),
+  reviewConfirmed:z.boolean().optional(),
 });
 
 export async function submitLorRecovery(
@@ -24,13 +26,15 @@ export async function submitLorRecovery(
     claimId: formData.get("claimId"),
     requestId: formData.get("requestId"),
     intent: formData.get("intent"),
+    reviewToken:typeof formData.get("reviewToken")==="string"?formData.get("reviewToken"):undefined,
+    reviewConfirmed:formData.get("reviewConfirmed")==="yes",
   });
   if (!parsed.success) {
     return { status: "error", message: "That signing request is not available." };
   }
 
   const result = await sendLor(
-    { claimId: parsed.data.claimId, requestId: parsed.data.requestId },
+    { claimId: parsed.data.claimId, requestId: parsed.data.requestId,...(parsed.data.reviewToken?{reviewToken:parsed.data.reviewToken,reviewConfirmed:parsed.data.reviewConfirmed}:{} ) },
     parsed.data.intent === "manual"
       ? { provider: new ManualSignProvider() }
       : undefined,

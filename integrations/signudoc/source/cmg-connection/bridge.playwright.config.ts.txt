@@ -1,0 +1,5 @@
+import base from './spike.playwright.config';
+import {defineConfig,type PlaywrightTestConfig} from '@playwright/test';
+const servers=base.webServer as Exclude<PlaywrightTestConfig['webServer'],undefined> & Array<{command:string;env:Record<string,string>}>;
+servers[0].env={...servers[0].env,CMG_BRIDGE_ENABLED:'1',CMG_BRIDGE_FIRM_ID:'11111111-1111-4111-8111-111111111111',CMG_BRIDGE_KEY:'synthetic-bridge-fixture-only-01234567890123456789',CMG_BRIDGE_SENDER_EMAIL:'cmg-admin@example.com'};
+export default defineConfig({...base,webServer:servers});
