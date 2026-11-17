@@ -39,7 +39,7 @@ Protect first-run setup with SignuDoc's setup token before any external exposure
 
 CMG's example environment keeps new signing disabled with empty settings. Enabling it without valid settings fails closed rather than silently switching providers. The existing opaque provider reference is namespaced `signudoc:<UUID>` in the legacy-named CMG column. Existing PandaDoc callbacks explicitly use the PandaDoc adapter. In-flight SignuDoc reconciliation can retain credentials while `SIGNUDOC_ENABLED=0` prevents new SignuDoc sends.
 
-The CMG migration adds a distinct dispatch mode and a private leased poll RPC using the existing protected ledger. Run it only on an approved disposable CMG stack first. Regenerate `src/types/database.ts` with the official command and inspect the result. The current temporary declaration lives in the non-generated `database-app.ts` overlay; the generated baseline was not hand-edited.
+The CMG migration adds a distinct dispatch mode and a private leased poll RPC using the existing protected ledger. Run it only on an approved disposable CMG stack first. Regenerate `src/types/database.ts` with the official command and inspect the result. The follow-up took in the official generated file from the disposable CI stack. Its four-line diff declares the poll RPC, so the temporary RPC overlay is removed; existing nullable overrides remain. The generated file was not hand-edited.
 
 ## Workflow and recovery
 
@@ -58,7 +58,7 @@ Per-install admission permits one active bridge operation and promptly rejects c
 
 Use Node 22 and the locked install for CMG; Node 24 and its locked install for the separately prepared service. Do not change CMG's Node requirement. Standard commands are the respective `package.json` definitions.
 
-CMG: affected tests, `npm run type-check`, `npm run lint`, `npm test`, `npm run build`; the native preparation test above. Run the repository's official disposable Supabase database/type checks and database-backed Vitest suites before merge/activation. They remain incomplete here because Docker/Podman are unavailable. The real SQL fallback is narrower, as documented in the results.
+CMG: affected tests, `npm run type-check`, `npm run lint`, `npm test`, `npm run build`; the native preparation test above. Run the repository's official disposable Supabase database/type checks and database-backed Vitest suites before merge/activation. These checks now run on an isolated GitHub runner with Docker, using the pinned CLI and no hosted credentials; consult the follow-up report for the exact completed runs. The earlier local SQL fallback remains narrower historical evidence.
 
 Separate service: `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`; `npm run test:db` only with an explicitly disposable local database whose name contains `e2e`. Never reset retained/hosted data. The preserved HTTP/SQL harness snapshots under `source/cmg-connection/` are evidence source, not automatic installers: they show this task's isolated ports/tool locations and must be reviewed/adapted to a new approved disposable environment. The native CMG transport scenario is explicitly opt-in with `CMG_SIGNUDOC_INTEGRATION=1`; it reads no optional environment/files unless enabled.
 

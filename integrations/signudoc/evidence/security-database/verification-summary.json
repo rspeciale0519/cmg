@@ -1,0 +1,77 @@
+{
+  "status": "requested production security fixes and full disposable database verification completed",
+  "sourceCommit": "052e0e20a5ac233450a757bcb4785dc6e1447572",
+  "firstCiRun": 44152218172,
+  "finalCiRun": 44154829008,
+  "firstRun": {
+    "pgTapFiles": 47,
+    "pgTapAssertions": 1441,
+    "databaseVitestPassed": 313,
+    "databaseVitestSkipped": 2,
+    "databaseSkips": [
+      "actual CMG client-to-SignuDoc HTTP opt-in harness",
+      "live PandaDoc test"
+    ],
+    "defaultUnitPassed": 1921,
+    "defaultUnitSkipped": 70,
+    "serviceUnitPassed": 298,
+    "serviceDatabasePassed": 152
+  },
+  "localFinal": {
+    "cmgUnitPassed": 1924,
+    "cmgUnitSkipped": 70,
+    "typeCheckExit": 0,
+    "lintExit": 0,
+    "buildExit": 0
+  },
+  "generatedSchema": {
+    "artifactId": 14360570761,
+    "zipSha256": "ec3eaa8679f48742f748ed94d926fcde6a4d12ce7e61356772cc2bc20e7ac463",
+    "fileSha256": "72af45bc1e8ccd54e3b3934e874fe8cba395fd140c949da85ea5794907d8535f",
+    "generatedDiffLines": 4,
+    "temporaryRpcOverlayRemoved": true,
+    "finalArtifactId": 14359369878,
+    "finalZipSha256": "0983bca034b943a57ee63a2de31d17644bf14dc2b48afacbabb251171bcccd99",
+    "finalGeneratedFileMatchesCommitted": true
+  },
+  "security": {
+    "next": "16.4.6",
+    "nodeForge": "1.4.3",
+    "productionAuditFindings": 0,
+    "fullAuditClean": false,
+    "preexistingDevelopmentFindings": {
+      "cmgHigh": 8,
+      "cmgModerate": 6,
+      "serviceHigh": 9,
+      "serviceModerate": 6
+    }
+  },
+  "sourceReproductionMatched": 21,
+  "reviewImportantFindingsAddressed": 3,
+  "deferredMinors": [
+    "explicit loopback mapping for disposable PG service",
+    "checkout credential persistence hardening"
+  ],
+  "browserMobile": "deferred by owner",
+  "hostedChanges": false,
+  "realMessages": false,
+  "merged": false,
+  "deployed": false,
+  "finalRun": {
+    "id": 44154829008,
+    "url": "https://github.com/rspeciale0519/cmg/actions/runs/44154829008",
+    "conclusion": "success",
+    "sourceCommit": "052e0e20a5ac233450a757bcb4785dc6e1447572",
+    "pgTapFiles": 47,
+    "pgTapAssertions": 1441,
+    "databaseVitestPassed": 316,
+    "databaseVitestSkipped": 2,
+    "defaultUnitPassed": 1924,
+    "defaultUnitSkipped": 70,
+    "serviceUnitPassed": 298,
+    "serviceDatabasePassed": 152,
+    "bothTypeLintBuildPassed": true,
+    "bothLockedInstallsPassed": true,
+    "productionAuditFindings": 0
+  }
+}

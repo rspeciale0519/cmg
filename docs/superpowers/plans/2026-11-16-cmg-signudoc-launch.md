@@ -29,12 +29,12 @@ Rob subsequently approved fixing optional authorization first and then building 
 - [x] Authenticated CMG provider/bridge, reviewed-byte send controls, progress/reminders, private filing and fair leased worker implementation.
 - [x] One independent whole-branch review; Important findings fixed and regression/full checks rerun.
 - [x] Reproducible checksum-pinned service patches and implementation evidence prepared.
-- [ ] Full disposable Supabase stack, database-backed Vitest and official generated types (Docker/Podman absent here).
+- [x] Full disposable Supabase stack, database-backed Vitest and official generated types on an isolated GitHub runner; see the security/database follow-up for the final strengthened verification run.
 - [ ] Dependency advisory updates and the existing security/legal/operational gates.
 - [ ] Browser/phone acceptance, deliberately deferred by Rob.
 - [ ] Hosted pilot and white-label rollout approval/gates.
 
-Read [current implementation results](../../experiments/signudoc/CMG_CONNECTION_RESULTS.md) for exact scope, decisions and open checks. The detailed tasks below retain their individual acceptance requirements; server implementation does not close their legal, mobile, operations or rollout portions. Historical diagnostics are not current blockers after a later verified fix.
+Read [current security/database follow-up](../../experiments/signudoc/SECURITY_DATABASE_RESULTS.md) and [initial implementation results](../../experiments/signudoc/CMG_CONNECTION_RESULTS.md) for exact scope, decisions and open checks. The detailed tasks below retain their individual acceptance requirements; server implementation does not close their legal, mobile, operations or rollout portions. Historical diagnostics are not current blockers after a later verified fix.
 
 ## Required product behavior
 

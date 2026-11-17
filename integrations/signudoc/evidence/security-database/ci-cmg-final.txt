@@ -1,0 +1,13 @@
+Run: https://github.com/rspeciale0519/cmg/actions/runs/44154829008
+Source: 052e0e20a5ac233450a757bcb4785dc6e1447572
+Conclusion: success
+
+2026-11-17T19:08:02.2499796Z Files=47, Tests=1441,  3 wallclock secs ( 0.12 usr  0.06 sys +  0.27 cusr  0.18 csys =  0.63 CPU)
+2026-11-17T19:08:02.2503569Z Result: PASS
+2026-11-17T19:08:11.0353262Z  ✓ src/lib/esign/signudoc/reconcile-db.test.ts (2 tests) 798ms
+2026-11-17T19:08:18.8087740Z  Test Files  45 passed | 2 skipped (47)
+2026-11-17T19:08:18.8088886Z       Tests  316 passed | 2 skipped (318)
+2026-11-17T19:08:55.0049789Z  ↓ src/lib/esign/signudoc/reconcile-db.test.ts (2 tests | 2 skipped)
+2026-11-17T19:09:22.2631354Z  Test Files  150 passed | 19 skipped (169)
+2026-11-17T19:09:22.2639266Z       Tests  1924 passed | 70 skipped (1994)
+2026-11-17T19:09:38.5605932Z found 0 vulnerabilities

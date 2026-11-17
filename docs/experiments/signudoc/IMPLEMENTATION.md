@@ -35,3 +35,5 @@ Final review: four Important findings plus one author-discovered authorization m
 Ruling: retain pinned dependency versions in this integration change and explicitly gate activation on the recorded moderate Next/node-forge upgrades — avoid mixing unrelated upgrades into the bridge patch — cost: this branch cannot be activated until a reviewed dependency update and retest.
 
 Step 2 publication: 94fad6fcec97e79a0668389941cc54f42ca6c9e3; all 85 changed files independently read back exactly. Develop unchanged, branch deployment suppression intact, no commit-status entries. See IMPLEMENTATION_PUBLICATION.md for receipt.
+
+Later security/database follow-up supersedes the original Docker/type-generation blocker: official generated types are now taken in from the successful full disposable CI stack, with the temporary RPC overlay removed. Read SECURITY_DATABASE_RESULTS.md for the patched production dependencies, final strengthened CI run and remaining developer-tool/browser/legal/operations gates.

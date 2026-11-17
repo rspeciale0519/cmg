@@ -19,7 +19,7 @@ Signing service:298unit tests passed; type-check/build exit0; lint exit0 with fi
 
 Existing SQL/server evidence from the initial implementation remains historical evidence; it does not substitute for rerunning database checks after these updates.
 
-## Full database verification — first run passed; strengthened gate rerun pending
+## Full database verification — completed
 
 The newer native CLI2.122.1 was investigated in a separate disposable project. It requires ports outside its internal reserved range, so the tracked CMG port configuration was copied/adapted only in the test project. Official service archives/manifests were retrieved via the working HTTPS proxy and verified against every locked digest, preserving CLI integrity verification. Startup then failed because the execution sandbox prohibits PostgreSQL Unix sockets (`Operation not permitted`). The temporary stack and loopback artifact server were stopped; no native CLI/configuration changes are carried into CMG.
 
@@ -29,7 +29,7 @@ First checkpoint:2d364a0856d1606a2f37cc7538fb98179afec2bc. [Run44152218172](http
 
 Official artifact14360570761 has ZIP SHA-256 ec3eaa8679f48742f748ed94d926fcde6a4d12ce7e61356772cc2bc20e7ac463, matching GitHub. Its exact generated file was taken into src/types/database.ts (SHA-25672af45bc1e8ccd54e3b3934e874fe8cba395fd140c949da85ea5794907d8535f). The whole diff is four lines declaring the poll RPC. The temporary non-generated overlay was removed; existing nullable overrides remain.
 
-The consolidated review fix pass strengthens the next CI gate: all required DB probes fail closed in the explicit job, signed/evidence fixtures have distinct bytes and per-kind hashes, replay orphans must actually exist and exactly match pending cleanup intents, and original native-platform installer metadata is preserved. A second full run on those final changes is still pending at this checkpoint; the first successful run does not prove the changed assertions.
+The consolidated review fix pass strengthens the next CI gate: all required DB probes fail closed in the explicit job, signed/evidence fixtures have distinct bytes and per-kind hashes, replay orphans must actually exist and exactly match pending cleanup intents, and original native-platform installer metadata is preserved. The final strengthened run passed; its results are recorded below.
 
 ## Decisions
 
@@ -39,10 +39,34 @@ The consolidated review fix pass strengthens the next CI gate: all required DB p
 
 ## Remaining release gates
 
-Final strengthened-gate rerun, development-tool advisory disposition, browser/phone acceptance, two-firm separation/branding/template/retention/restore checks, legal/security review and an explicitly approved hosted pilot. No release readiness percentage is assigned.
+Development-tool advisory disposition, browser/phone acceptance, two-firm separation/branding/template/retention/restore checks, legal/security review and an explicitly approved hosted pilot. No release readiness percentage is assigned.
 
 ## Independent review disposition
 
 One fresh-context review found no Critical and three Important issues. Platform filters were demonstrably removed (26CMG/28service), then all original filters were preserved and source reproduction reverified. The explicit required-DB probe tests failed three cases, then passed after fail-closed handling; ordinary offline test behavior remains unchanged. Artifact fixtures/assertions were strengthened rather than an application bug being claimed: the actual implementation already verifies hashes, and the stronger real-stack scenarios must pass in the next run.
 
 Minor hardening deferred: bind the disposable PostgreSQL service port explicitly to loopback and disable checkout credential persistence. This runner contains only synthetic data with a read-only GitHub token, but those settings can reduce its exposure further. Current patch-count/schema-intake documentation was updated as part of the planned handoff; no outdated state should be treated as current. The reviewer did not rerun suites or rereview author fixes.
+
+Final source checkpoint:052e0e20a5ac233450a757bcb4785dc6e1447572; all41changed files independently fetched and matched exactly. [Strengthened run 44154829008](https://github.com/rspeciale0519/cmg/actions/runs/44154829008) passed both jobs. Local final checks:1,924passed/70skipped, type/lint/build exit0. Develop and branch deployment suppression verified unchanged.
+
+## Final verified outcome
+
+The final strengthened run passed against source commit `052e0e20a5ac233450a757bcb4785dc6e1447572`:
+
+| Check | Result |
+|---|---|
+| Complete pgTAP schema/RLS | 47 files, 1,441 assertions passed |
+| Explicit database-backed application selection | 316 passed; 2 intentional opt-in skips: separate service-HTTP harness and live PandaDoc |
+| Default CMG suite | 1,924 passed; 70 database/live/other opt-in skips |
+| Signing service | 298 units and 152 real-Postgres tests passed |
+| Locked installs, type checks, lint, builds | Passed for both applications; service lint retains five existing warnings |
+| Production dependency audits | Zero findings for both applications |
+| Full development dependency audit | Still failing on the documented pre-existing tooling advisories; not counted as clean |
+| Official type generation | Passed; final artifact 14359369878 contains bytes identical to committed database.ts |
+| Three-patch reconstruction | All 21 modified signing-service source files match |
+
+The final schema ZIP digest is `0983bca034b943a57ee63a2de31d17644bf14dc2b48afacbabb251171bcccd99`. Its member file remains `72af45bc1e8ccd54e3b3934e874fe8cba395fd140c949da85ea5794907d8535f`. The original ABI/platform metadata is preserved, explicit required database probes fail closed, and the real filing tests check distinct document kinds/hashes plus exactly matching pending cleanup for actual replay orphans.
+
+This completes the requested full database verification and the two known production dependency updates. It does not establish zero vulnerabilities, a complete security audit, authenticated homeowner filing access, deployed adjuster review/send, current actual-service HTTP signing, physical-phone acceptance or launch approval. Existing separate API evidence is historical, and the actual provider snapshot in these filing tests is simulated. Existing repository Auth/MFA/RLS suites ran in the same full stack; the new filing suite itself uses privileged storage and anonymous-download refusal.
+
+Both disposable CI jobs cleaned up their local services. Develop remains unchanged and the experiment branch deployment suppression is retained. No real message, customer agreement, hosted mutation, merge, deployment or new paid server occurred.
