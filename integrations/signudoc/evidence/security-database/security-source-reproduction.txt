@@ -1,0 +1,4 @@
+Cloning into '/workspace/scratch/c9906a327d02/signudoc-security-reproduced'...
+HEAD is now at bb9bc09 Merge pull request #38 from NYLLON-SOFTWARE/claude/project-thread-orawrx
+Prepared pinned SignuDoc source with 3 verified patches at /workspace/scratch/c9906a327d02/signudoc-security-reproduced.
+No dependencies installed, database changed, service started, message sent, or deployment performed.

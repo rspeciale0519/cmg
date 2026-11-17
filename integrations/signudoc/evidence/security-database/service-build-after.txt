@@ -1,0 +1,140 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> signudoc@0.2.1 build
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 30ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 28.1s
+  Running TypeScript ...
+  Finished TypeScript in 8.4s ...
+  Collecting page data using 8 workers ...
+  Generating static pages using 8 workers (0/37) ...
+  Generating static pages using 8 workers (9/37)
+  Generating static pages using 8 workers (18/37)
+  Generating static pages using 8 workers (27/37)
+✓ Generating static pages using 8 workers (37/37) in 192ms
+Turbopack build encountered 1 warning:
+./src/lib/services/pdf-fonts.ts:71:14
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m69 |[0m
+  [90m70 |[0m   [36mif[0m (!loaded) {
+[33m[1m>[0m [90m71 |[0m     loaded = fs.readFile([33mFONT_PATHS[0m[name]).then((buffer) => {
+  [90m   |[0m              [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m72 |[0m       [36mconst[0m bytes = [36mnew[0m [33mUint8Array[0m(buffer);
+  [90m73 |[0m
+  [90m74 |[0m       [36mreturn[0m {
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: fs.readFile(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  App Route:
+    ./src/lib/services/pdf-fonts.ts
+    ./src/lib/services/pdf-revision.ts
+    ./src/lib/provider-signing.ts
+    ./src/app/api/signing/[token]/provider/start/route.ts
+
+  Server Component:
+    ./src/lib/services/pdf-fonts.ts
+    ./src/lib/services/pdf-finalize.ts
+    ./src/lib/signing.ts
+    ./src/app/sign/[token]/page.tsx
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /accessibility
+├ ƒ /api/account/closure-request
+├ ƒ /api/account/profile
+├ ƒ /api/admin/audit
+├ ƒ /api/admin/email
+├ ƒ /api/admin/logo
+├ ƒ /api/admin/part11
+├ ƒ /api/admin/people
+├ ƒ /api/admin/people/[id]
+├ ƒ /api/admin/people/[id]/part11
+├ ƒ /api/admin/settings
+├ ƒ /api/admin/signer-data
+├ ƒ /api/admin/updates
+├ ƒ /api/auth/[...all]
+├ ƒ /api/brand/logo
+├ ƒ /api/contact
+├ ƒ /api/download/[token]
+├ ƒ /api/download/[token]/renew
+├ ƒ /api/envelopes
+├ ƒ /api/envelopes/[id]
+├ ƒ /api/envelopes/[id]/audit
+├ ƒ /api/envelopes/[id]/copy
+├ ƒ /api/envelopes/[id]/deadline
+├ ƒ /api/envelopes/[id]/document
+├ ƒ /api/envelopes/[id]/download
+├ ƒ /api/envelopes/[id]/fields
+├ ƒ /api/envelopes/[id]/nudge
+├ ƒ /api/envelopes/[id]/reminders
+├ ƒ /api/envelopes/[id]/send
+├ ƒ /api/envelopes/[id]/signers
+├ ƒ /api/envelopes/[id]/signers/[signerId]
+├ ƒ /api/envelopes/[id]/template
+├ ƒ /api/envelopes/[id]/thumbnail
+├ ƒ /api/envelopes/[id]/void
+├ ƒ /api/internal/cmg/v1
+├ ƒ /api/internal/retention
+├ ƒ /api/setup
+├ ƒ /api/signing/[token]
+├ ƒ /api/signing/[token]/consent
+├ ƒ /api/signing/[token]/decline
+├ ƒ /api/signing/[token]/document
+├ ƒ /api/signing/[token]/provider/start
+├ ƒ /api/signing/[token]/submit
+├ ƒ /api/signing/[token]/verify
+├ ƒ /api/signing/[token]/verify/email-code
+├ ƒ /api/signing/provider/return
+├ ƒ /api/templates/[id]
+├ ƒ /api/templates/[id]/use
+├ ƒ /api/uploads
+├ ƒ /api/verify
+├ ƒ /contact
+├ ƒ /dashboard
+├ ƒ /download/[token]
+├ ƒ /electronic-signatures
+├ ƒ /envelopes/[id]
+├ ƒ /envelopes/[id]/prepare
+├ ƒ /envelopes/[id]/review
+├ ƒ /envelopes/[id]/signers
+├ ƒ /envelopes/new
+├ ○ /icon.svg
+├ ƒ /login
+├ ƒ /privacy
+├ ƒ /settings
+├ ƒ /setup
+├ ƒ /sign/[token]
+├ ƒ /sign/[token]/done
+├ ƒ /signer-privacy
+├ ƒ /signup
+├ ƒ /templates
+├ ƒ /templates/[id]/use
+├ ƒ /terms
+└ ƒ /verify
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

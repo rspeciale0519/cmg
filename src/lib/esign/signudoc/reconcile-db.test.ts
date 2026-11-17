@@ -28,16 +28,17 @@ describe.runIf(enabled)('SignuDoc filing against disposable Supabase Auth/REST/S
   const claimed=await admin.rpc('claim_esign_dispatch',{p_claim_id:claim.id,p_request_id:requestId,p_claim_token:attempt,p_mode:'signudoc'});
   expect(claimed.error).toBeNull();expect(claimed.data).toMatchObject({status:'claimed'});
   const marked=await admin.rpc('mark_esign_dispatch_sending',{p_request_id:requestId,p_claim_token:attempt,p_provider_document_id:reference});expect(marked.error).toBeNull();expect(marked.data).toBe(true);
-  const pdf=await PDFDocument.create();const page=pdf.addPage([612,792]);page.drawText('SYNTHETIC TEST ONLY - NOT AN EXECUTED AGREEMENT',{x:30,y:750,size:10});
-  const bytes=await pdf.save(),hash=createHash('sha256').update(bytes).digest('hex');
-  const status:BridgeStatus={version:1,firmId:randomUUID(),claimId:claim.id,attemptToken:attempt,envelopeId:envelope,status:'completed',sourceSha256:hash,deliveryConfirmed:true,sendStarted:true,signers:Array.from({length:count},(_,i)=>({role:i===0?'Homeowner1':'Homeowner2',name:`Synthetic Homeowner ${i+1}`,email:claim.claimantEmails[i],status:'signed',signedAt:Math.floor(Date.now()/1000)})),artifacts:{signedSha256:hash,evidenceSha256:hash}};
-  const client={command:vi.fn(async()=>status),download:vi.fn(async()=>bytes)};
+  const makeArtifact=async(label:string)=>{const pdf=await PDFDocument.create();const page=pdf.addPage([612,792]);page.drawText('SYNTHETIC TEST ONLY - '+label,{x:30,y:750,size:10});return pdf.save();};
+  const signedBytes=await makeArtifact('SIGNED AGREEMENT'),evidenceBytes=await makeArtifact('INTERNAL AUDIT EVIDENCE');
+  const signedHash=createHash('sha256').update(signedBytes).digest('hex'),evidenceHash=createHash('sha256').update(evidenceBytes).digest('hex');expect(signedHash).not.toBe(evidenceHash);
+  const status:BridgeStatus={version:1,firmId:randomUUID(),claimId:claim.id,attemptToken:attempt,envelopeId:envelope,status:'completed',sourceSha256:signedHash,deliveryConfirmed:true,sendStarted:true,signers:Array.from({length:count},(_,i)=>({role:i===0?'Homeowner1':'Homeowner2',name:`Synthetic Homeowner ${i+1}`,email:claim.claimantEmails[i],status:'signed',signedAt:Math.floor(Date.now()/1000)})),artifacts:{signedSha256:signedHash,evidenceSha256:evidenceHash}};
+  const client={command:vi.fn(async()=>status),download:vi.fn(async(_binding:unknown,artifact:string)=>artifact==='signed'?signedBytes:evidenceBytes)};
   expect((await reconcileSignuDocClaim(await readClaim(claim.id),{admin,client})).filed).toBe(true);
   const saved=await readClaim(claim.id);expect(saved.status).toBe('lor_signed');expect(saved.esign_dispatch_token).toBeNull();
   const documents=await admin.from('documents').select('kind,visibility,storage_path').eq('claim_id',claim.id);expect(documents.error).toBeNull();expect(documents.data).toHaveLength(2);
   expect(documents.data).toEqual(expect.arrayContaining([expect.objectContaining({kind:'lor_signed',visibility:'customer'}),expect.objectContaining({kind:'other',visibility:'internal'})]));
   for(const document of documents.data??[]){
-   const file=await admin.storage.from('claim-docs').download(document.storage_path);expect(file.error).toBeNull();expect(file.data).toBeTruthy();expect(createHash('sha256').update(new Uint8Array(await file.data!.arrayBuffer())).digest('hex')).toBe(hash);
+   const file=await admin.storage.from('claim-docs').download(document.storage_path);expect(file.error).toBeNull();expect(file.data).toBeTruthy();expect(createHash('sha256').update(new Uint8Array(await file.data!.arrayBuffer())).digest('hex')).toBe(document.kind==='lor_signed'?signedHash:evidenceHash);
    const publicUrl=admin.storage.from('claim-docs').getPublicUrl(document.storage_path).data.publicUrl;
    expect((await fetch(publicUrl)).ok).toBe(false);
   }
@@ -45,6 +46,9 @@ describe.runIf(enabled)('SignuDoc filing against disposable Supabase Auth/REST/S
   const repeated=await admin.from('documents').select('id').eq('claim_id',claim.id);expect(repeated.error).toBeNull();expect(repeated.data).toHaveLength(2);
   const audit=await admin.from('audit_log').select('id').eq('entity_id',claim.id).eq('action','esign.signudoc_artifacts_filed');expect(audit.error).toBeNull();expect(audit.data).toHaveLength(1);
   const cleanup=await admin.from('storage_cleanup_queue').select('object_path,processed_at').eq('claim_id',claim.id);expect(cleanup.error).toBeNull();
-  const attached=new Set((documents.data??[]).map(d=>d.storage_path));expect(cleanup.data?.filter(row=>!attached.has(row.object_path)).every(row=>row.processed_at===null)).toBe(true);
+  const attached=new Set((documents.data??[]).map(d=>d.storage_path));
+  const objects=await admin.storage.from('claim-docs').list('claims/'+claim.id);expect(objects.error).toBeNull();
+  const orphans=(objects.data??[]).map(file=>'claims/'+claim.id+'/'+file.name).filter(objectPath=>!attached.has(objectPath)).sort();expect(orphans).toHaveLength(2);
+  const pending=(cleanup.data??[]).filter(row=>row.processed_at===null).map(row=>row.object_path).sort();expect(pending).toEqual(orphans);expect(pending.some(objectPath=>attached.has(objectPath))).toBe(false);
  });
 });

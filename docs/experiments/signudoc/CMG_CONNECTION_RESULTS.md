@@ -1,5 +1,7 @@
 # CMG signing implementation — steps 1 and 2
 
+Read the [subsequent security/database follow-up](SECURITY_DATABASE_RESULTS.md) for current dependency and full-stack verification status. This report retains the initial implementation checkpoint.
+
 The optional-authorization fix and CMG connection are implemented on the experiment branch. Synthetic server tests pass. **The feature remains disabled and is not approved for live agreements.** Browser/phone testing is deliberately deferred at Rob's request. The full Supabase runtime checks described below are still incomplete.
 
 ## What is now built

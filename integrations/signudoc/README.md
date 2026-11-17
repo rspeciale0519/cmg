@@ -1,6 +1,6 @@
 # CMG's isolated SignuDoc service
 
-Optional authorization and the authenticated CMG connection are implemented and synthetic-server-tested. The feature is disabled. Read [current results and release gates](../../docs/experiments/signudoc/CMG_CONNECTION_RESULTS.md) before intake. Browser/phone acceptance is deferred; no production deployment or real send is authorized.
+Optional authorization and the authenticated CMG connection are implemented and synthetic-server-tested. The feature is disabled. Read [current security/database follow-up](../../docs/experiments/signudoc/SECURITY_DATABASE_RESULTS.md) and [initial connection results](../../docs/experiments/signudoc/CMG_CONNECTION_RESULTS.md) before intake. Browser/phone acceptance is deferred; no production deployment or real send is authorized.
 
 SignuDoc is a separate Node 24 application; CMG remains one Node 22 application. This directory contains reproducible patches against the exact public upstream revision in `PINNED_UPSTREAM.json`, with SHA-256 verification. Keep `LICENSE.upstream` and all upstream third-party notices.
 
@@ -13,12 +13,14 @@ node --test integrations/signudoc/prepare.test.mjs
 node integrations/signudoc/prepare.mjs /absolute/path/outside/cmg/signing-service
 ```
 
-Preparation clones the pinned public source, checks out the exact commit and verifies/applies both patches. It refuses existing destinations and paths/symlinks inside CMG. It does not install dependencies, migrate/reset a database, start a service, send a message or deploy. Both patches reconstructed all 18 modified service files exactly in a new checkout during verification.
+Preparation clones the pinned public source, checks out the exact commit and verifies/applies the listed patches. It refuses existing destinations and paths/symlinks inside CMG. It does not install dependencies, migrate/reset a database, start a service, send a message or deploy. The security follow-up reconstructs all 21 modified service files exactly from three pinned patches; see the current follow-up evidence.
 
 - `0001-optional-authorization.patch`: optional signatures/initials/dates and signer UI/validation. Required defaults remain required. An optional date stays blank unless selected; its value comes from the server. Optional signature/initial input can be cleared.
 - `0002-authenticated-cmg-bridge.patch`: one server API, schemas/HMAC authentication, atomic nonce replay guard, private binding/reminder tables, atomic draft binding, review locks, transaction-local send capability, nonblocking admission and regression tests. Apply in manifest order. Its three new migrations belong to the separate service database, never CMG's schema.
 
 The bridge deliberately supports the actual current nine-page CMG PDFs and one/two homeowners. It is not a general-purpose public document API or a shared-tenant SaaS conversion.
+
+- `0003-forge-security-update.patch`: node-forge1.4.3 and a forged-identity signature regression, preserving authentic-signature and tampered-content checks.
 
 ## Settings for a later approved isolated test
 

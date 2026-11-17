@@ -1,0 +1,66 @@
+[
+  {
+    "service": "database",
+    "source": "postgres",
+    "version": "17.11.0.006-r0",
+    "archiveSha256": "f3a4389c92c550597cacf8c71c74af025b8e75259753c4e78bb5014e6f29e6f2",
+    "manifestSha256": "457949debc6c8b1d17dfaedcdef4883af3ff1ef7a15998f74d9511294be9a2fa",
+    "bytes": 89500152
+  },
+  {
+    "service": "auth",
+    "source": "auth",
+    "version": "v2.197.0-r0",
+    "archiveSha256": "bd8f59ed1a817014afe71288c2275ad0396630f016f8cb5ab5129388860ec49b",
+    "manifestSha256": "ccad45ee54edf7506b055b85dcebee6db8c5b9ec57ac3c6d30baf38bb81b1deb",
+    "bytes": 10800817
+  },
+  {
+    "service": "rest",
+    "source": "postgrest",
+    "version": "v16.5-r0",
+    "archiveSha256": "e224ec6209a4ff800524c54e3b11715ede07aa3923154e44e97a67bb786b6417",
+    "manifestSha256": "644809d3e7912ef4c1273e848e0a0b52b8c353b909c1b63e95eb7c3d6413f12b",
+    "bytes": 4857312
+  },
+  {
+    "service": "storage",
+    "source": "storage",
+    "version": "v1.84.19-r0",
+    "archiveSha256": "61c049488a4deec67a8b4da947057924391f7efa0e7717b0648ca170255ee998",
+    "manifestSha256": "77f281f5684dd16df93162fb38740ade98464295902247403f2f8607bd5d9320",
+    "bytes": 36677593
+  },
+  {
+    "service": "imgproxy",
+    "source": "imgproxy",
+    "version": "v3.26.0-r0",
+    "archiveSha256": "7865edf054b8217c2daf9d42bce6bebe34f83df5c4183fbbe6495a3603dcd4a8",
+    "manifestSha256": "5ae7f22a6fbdc55f41ffc3334747a3475295676699ac1d2c372bc5fe2ad239bb",
+    "bytes": 27954089
+  },
+  {
+    "service": "realtime",
+    "source": "realtime",
+    "version": "v2.147.1-r0",
+    "archiveSha256": "4f50539770db276c890dd582fef5239a3800a4d074311ec739227738e5f3f576",
+    "manifestSha256": "43651c3933e26580605390cb000fdc36603213e10b2a5fbbeaf519178e6eea9c",
+    "bytes": 17232909
+  },
+  {
+    "service": "mail",
+    "source": "mailpit",
+    "version": "v1.31.3-r0",
+    "archiveSha256": "57e39cb39b2288313e26abe9ae9300f6af9332abd1f76f4d67be533741b2c942",
+    "manifestSha256": "36595519f40e406b17a0ce6e21f153400f217ae24b0365f0a5c495ff315b9f82",
+    "bytes": 8766412
+  },
+  {
+    "service": "pgmeta",
+    "source": "pgmeta",
+    "version": "v0.100.0-r0",
+    "archiveSha256": "5df0dfb03469f358858b8768f39db9a77b5947ec0567aff1056fddbfa1f2db75",
+    "manifestSha256": "3095c4655e8f35451fdb84194065a31c4edee9b52fd5b28ac01dfdae620e07a1",
+    "bytes": 42432367
+  }
+]

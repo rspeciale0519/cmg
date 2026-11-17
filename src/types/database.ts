@@ -1391,6 +1391,10 @@ export type Database = {
         Args: { p_id: string; p_index: number; p_token_hash: string }
         Returns: Json
       }
+      claim_signudoc_poll_batch: {
+        Args: { p_lease_seconds?: number; p_limit?: number }
+        Returns: Json
+      }
       claim_status_counts: {
         Args: never
         Returns: {

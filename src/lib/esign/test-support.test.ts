@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const stub = vi.hoisted(() => ({
-  query: vi.fn(async () => ({ error: null })),
+  query: vi.fn<() => Promise<{error: unknown}>>(async () => ({ error: null })),
   createClient: vi.fn(),
 }));
 
@@ -12,6 +12,7 @@ const { localSupabaseAvailable, testAdminClient } = await import("./test-support
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("CMG_DATABASE_TEST_REQUIRED", "");
   vi.stubEnv("SUPABASE_SECRET_KEY", "test-only-key");
   stub.query.mockResolvedValue({ error: null });
   stub.createClient.mockReturnValue({
@@ -65,5 +66,22 @@ describe("local database test target", () => {
 
     expect(await localSupabaseAvailable()).toBe(false);
     expect(stub.createClient).toHaveBeenCalledOnce();
+  });
+});
+
+describe("explicit complete database verification", () => {
+  it.each(["transport", "query"])("fails instead of skipping when the %s probe fails", async mode => {
+    vi.stubEnv("CMG_DATABASE_TEST_REQUIRED", "1");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:15421");
+    if(mode === "transport")stub.query.mockRejectedValueOnce(new Error("private provider detail"));
+    else stub.query.mockResolvedValueOnce({error:{message:"private provider detail"}});
+    await expect(localSupabaseAvailable()).rejects.toThrow("Required local database verification is unavailable.");
+  });
+  it("fails before a client is created when required local credentials are missing", async () => {
+    vi.stubEnv("CMG_DATABASE_TEST_REQUIRED", "1");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", undefined);
+    vi.stubEnv("SUPABASE_SECRET_KEY", undefined);
+    await expect(localSupabaseAvailable()).rejects.toThrow("Required local database verification is unavailable.");
+    expect(stub.createClient).not.toHaveBeenCalled();
   });
 });

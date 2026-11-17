@@ -1,0 +1,89 @@
+{
+  "matchedFiles": 21,
+  "files": [
+    {
+      "path": "db/migrations/20261117010000_cmg_bridge.sql",
+      "sha256": "76f104ddbb32e79078361585090b3f552c6841c3541645bb0947645924354e19"
+    },
+    {
+      "path": "db/migrations/20261117010100_cmg_bridge_review_lock.sql",
+      "sha256": "637039320a339bb27baf4958a5ab7123bbd1d22e38312cae4f1129880b7d5a90"
+    },
+    {
+      "path": "db/migrations/20261117010200_cmg_bridge_send_capability.sql",
+      "sha256": "b78f74ddf1c1fa37ee325e5d1a1df2707905df98929c74cba7235217c2511bb5"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8333cb8ac854db38a962bc1d6cc506e51273ba93d9e27438d136c1727d235af7"
+    },
+    {
+      "path": "package.json",
+      "sha256": "79c9be7e0acc206e97b066c8752dee5e6a07c95991807fb238299d8a24cd85fb"
+    },
+    {
+      "path": "src/app/api/internal/cmg/v1/route.ts",
+      "sha256": "b77f565ff5a72b7cef34132954587cab8ba39d3afb211efba5b36e5113e86155"
+    },
+    {
+      "path": "src/components/envelopes/prepare-live-shell.tsx",
+      "sha256": "a167f7ad0583ec29155345adc02258cc2215e8e32f1a7381aa6070a8d4310e50"
+    },
+    {
+      "path": "src/components/signing/signing-live-shell.tsx",
+      "sha256": "1aae0c076081141523eca17e8f3fa249df083f442628681ab291d9afeedfc6b9"
+    },
+    {
+      "path": "src/lib/cmg-bridge/admission.dbtest.ts",
+      "sha256": "4ae310a0019c454bb6ee04b0ca619db7d8a1df526d73e25809e4ef45bd2a43fd"
+    },
+    {
+      "path": "src/lib/cmg-bridge/admission.ts",
+      "sha256": "b4a094f08118abfd649e81d71a7a8e93847f34fbf95b3657d1781f8425570074"
+    },
+    {
+      "path": "src/lib/cmg-bridge/auth.test.ts",
+      "sha256": "bdd42cfa04a4b135913ec1a253984d550180a18a3e6d20af36109761238236fa"
+    },
+    {
+      "path": "src/lib/cmg-bridge/auth.ts",
+      "sha256": "6ef36187488d9b0d41ca8fc67aa3dbee6601724b663540d40d4d86877848e3a5"
+    },
+    {
+      "path": "src/lib/cmg-bridge/forge-security.test.ts",
+      "sha256": "20e6a0f8f52e847db0326d232c332508fcb7281f0d9ed752cf111139d6d51498"
+    },
+    {
+      "path": "src/lib/cmg-bridge/handler.ts",
+      "sha256": "f3bde1f6f779cc4789d6793c4512835e9a7c3971ed25bb799c99667f861e18e7"
+    },
+    {
+      "path": "src/lib/cmg-bridge/request.test.ts",
+      "sha256": "f5c60d3cc7d2c065b490ca410e9588ffeb787d2592e1121d1d170794390d63f3"
+    },
+    {
+      "path": "src/lib/cmg-bridge/request.ts",
+      "sha256": "6864c2a3423b8f6996ab1056ec9a4c64171f3c83f5a725065b451cef48428e07"
+    },
+    {
+      "path": "src/lib/cmg-bridge/send-guard.dbtest.ts",
+      "sha256": "d0ad7f6f8a85a3bb2001b8163053d86c311d309e8a0fc741023dda68cdd4ec7b"
+    },
+    {
+      "path": "src/lib/envelopes.ts",
+      "sha256": "2e35550d3fe37fb9aa574815b21b968110594aa230d96b1492aa6c7f2a56adf2"
+    },
+    {
+      "path": "src/lib/schemas/field.ts",
+      "sha256": "284e52e8ede157dd704d243e48ab955a0ce825af44589ebdcc570bca75011f71"
+    },
+    {
+      "path": "src/lib/schemas/optional-fields.test.ts",
+      "sha256": "1c72e4157ff0e3d680481f0462f6dad0fb3a7558ad7d67565c84bacee03cc9bd"
+    },
+    {
+      "path": "src/lib/signing.ts",
+      "sha256": "2f809f65b92562e82942f701f5073f0d81c8c213889b4eda27d0a4237926cad2"
+    }
+  ]
+}

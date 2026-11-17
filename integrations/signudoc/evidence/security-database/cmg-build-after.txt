@@ -1,0 +1,102 @@
+(node:1894) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> cmg-property-solutions@0.1.0 build
+> next build
+
+(node:1907) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 24ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+(node:1930) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Compiled successfully in 14.2s
+  Running TypeScript ...
+  Finished TypeScript in 9.3s ...
+  Collecting page data using 8 workers ...
+(node:1977) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1983) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1991) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1999) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2009) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2015) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2023) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2031) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 8 workers (0/5) ...
+  Generating static pages using 8 workers (1/5)
+  Generating static pages using 8 workers (2/5)
+  Generating static pages using 8 workers (3/5)
+✓ Generating static pages using 8 workers (5/5) in 95ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /admin
+├ ƒ /admin/[...unmatched]
+├ ƒ /admin/audit
+├ ƒ /admin/claims
+├ ƒ /admin/claims/[id]
+├ ƒ /admin/claims/[id]/activity
+├ ƒ /admin/claims/[id]/claimants
+├ ƒ /admin/claims/[id]/documents
+├ ƒ /admin/claims/[id]/financials
+├ ƒ /admin/claims/[id]/history
+├ ƒ /admin/closed-invitation-checks
+├ ƒ /admin/intake
+├ ƒ /admin/leads
+├ ƒ /admin/partners
+├ ƒ /admin/partners/[id]
+├ ƒ /admin/questions
+├ ƒ /admin/settings
+├ ƒ /admin/staff
+├ ƒ /api/cron/outbox
+├ ƒ /api/cron/signudoc
+├ ƒ /api/cron/storage-cleanup
+├ ƒ /api/pandadoc/webhook
+├ ƒ /auth/confirm
+├ ƒ /contact
+├ ƒ /contractors
+├ ƒ /file-a-claim
+├ ƒ /forgot-password
+├ ○ /icon.png
+├ ƒ /invite/[token]
+├ ƒ /login
+├ ƒ /mfa
+├ ƒ /partner
+├ ƒ /partner/[...unmatched]
+├ ƒ /partner/claims/[id]
+├ ƒ /partner/claims/[id]/activity
+├ ƒ /partner/profile
+├ ƒ /partner/refer
+├ ƒ /platform-disabled
+├ ƒ /portal
+├ ƒ /portal/[...unmatched]
+├ ƒ /portal/claims/[id]
+├ ƒ /portal/claims/[id]/activity
+├ ƒ /portal/claims/[id]/documents
+├ ƒ /portal/profile
+├ ƒ /reset-password
+├ ○ /robots.txt
+├ ƒ /services
+└ ○ /sitemap.xml
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

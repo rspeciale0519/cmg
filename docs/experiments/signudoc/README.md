@@ -14,6 +14,8 @@ This branch contains the actual synthetic experiment source, evidence and an ord
 
 ## Latest implementation checkpoint
 
+Read the [security and full-database follow-up](SECURITY_DATABASE_RESULTS.md) for the latest dependency/runtime verification status.
+
 **Steps 1 and 2 are implemented and locally server-tested.** Read [current results and remaining gates](CMG_CONNECTION_RESULTS.md) and [service source/setup](../../../integrations/signudoc/README.md) first. Optional authorization now works; the authenticated CMG provider, review-before-send controls, status/reminders and private artifact filing are built. The feature is disabled. Browser/phone acceptance is deferred, and full Supabase-stack/type regeneration plus other release gates remain incomplete.
 
 The earlier actual-contract report below is retained as diagnostic history; its optional-field and missing-bridge blockers have been superseded by this implementation. It is not the current status report.

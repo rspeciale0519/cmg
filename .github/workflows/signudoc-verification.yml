@@ -53,6 +53,7 @@ jobs:
       - name: Actual database-backed Vitest selection
         env:
           CMG_SIGNUDOC_DATABASE_TEST: '1'
+          CMG_DATABASE_TEST_REQUIRED: '1'
           RESEND_API_KEY: ''
         run: |
           set -euo pipefail

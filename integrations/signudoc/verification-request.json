@@ -1,5 +1,5 @@
 {
-  "request": "security-database-followup-001",
+  "request": "security-database-followup-002",
   "purpose": "Run full disposable Supabase and patched signing-service verification on the existing experiment branch.",
   "hostedChanges": false,
   "realMessages": false,

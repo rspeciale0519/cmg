@@ -76,23 +76,28 @@ export function testAdminClient(): TestAdmin {
  * `database` job does start the stack and does run them.
  */
 export async function localSupabaseAvailable(): Promise<boolean> {
+  const required = process.env.CMG_DATABASE_TEST_REQUIRED === "1";
   loadLocalEnv();
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
+    if (required) throw new Error("Required local database verification is unavailable.");
     return false;
   }
 
   // Reject a hosted configuration outside the availability catch. A dangerous
   // target is a configuration error, not a reason to silently skip the suite.
   const admin = testAdminClient();
+  let available = false;
   try {
     const { error } = await admin
       .from("pandadoc_webhook_events")
       .select("event_id")
       .limit(1);
-    return !error;
+    available = !error;
   } catch {
-    return false;
+    available = false;
   }
+  if (required && !available) throw new Error("Required local database verification is unavailable.");
+  return available;
 }
 
 export type SeededClaim = {
