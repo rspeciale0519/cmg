@@ -1,14 +1,27 @@
 import { randomUUID } from "node:crypto";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Panel, PanelBody } from "@/components/admin/admin-shell";
 import { AirtableLinkForm, AirtableMessageForm, AirtableReviewForm, AirtablePrepareForm } from "@/components/admin/airtable-claim-forms";
 import { loadClaimSharing } from "@/lib/airtable/queries";
+import { adminTitle, NOT_FOUND_TITLE } from "@/lib/authz";
+import { claimTitleContext } from "@/lib/claims/queries";
 import { formatTimestamp } from "@/lib/format";
 import { AirtablePauseForm } from "@/components/admin/airtable-pause-form";
 
 export const dynamic="force-dynamic";
 export const maxDuration=60;
-export const metadata={title:"Company sharing"};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const context = await claimTitleContext(id);
+  if (context?.can.canManage) return { title: "Company sharing" };
+  return { title: { absolute: adminTitle(NOT_FOUND_TITLE) } };
+}
+
 const STATUS={held:"Waiting for review",pending:"Waiting to send",sending:"Sending",uncertain:"Delivery result needs checking",sent:"Sent",review_required:"Needs attention",superseded:"Replaced by a newer update"};
 export default async function ClaimSharingPage({params}:{params:Promise<{id:string}>}) {
   const {id}=await params; const {claim,can,connection,link,requests,available}=await loadClaimSharing(id);

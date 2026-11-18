@@ -1,15 +1,26 @@
 import { randomUUID } from "node:crypto";
+import type { Metadata } from "next";
 import { Panel, PanelBody } from "@/components/admin/admin-shell";
 import { LawFirmForm, StartLegalForm, LegalPackageForm, LegalMilestoneForm, CancelLegalPreparationForm } from "@/components/admin/legal-handoff-forms";
 import { LegalPackageDownload } from "@/components/admin/legal-package-download";
 import { loadLegalWorkspace } from "@/lib/legal/queries";
 import { LEGAL_LABEL } from "@/lib/legal/types";
 import { formatDateOnly, formatTimestamp } from "@/lib/format";
-import { adminTitle } from "@/lib/authz";
+import { adminTitle, NOT_FOUND_TITLE } from "@/lib/authz";
+import { claimTitleContext } from "@/lib/claims/queries";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-export const metadata = { title: { absolute: adminTitle("Legal handoff") } };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const context = await claimTitleContext(id);
+  const title = context?.can.canManage ? "Legal handoff" : NOT_FOUND_TITLE;
+  return { title: { absolute: adminTitle(title) } };
+}
 
 export default async function LegalHandoffPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
