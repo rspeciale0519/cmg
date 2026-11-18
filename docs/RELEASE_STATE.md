@@ -1,5 +1,44 @@
 # Release state — CMG Property Solutions
 
+## Local feature candidate — November 15, 2026
+
+The separate checkout on `codex/cmg-law-firm-airtable` is based on published merge `d685032736260b1eaca57045def9edbd677da93e`.
+The user approved this local branch setup and exact `fflate` 0.8.3 installation.
+The original checkout, its packages, and its retained evidence remain unchanged.
+
+The candidate adds optional legal handoffs and one-way Airtable updates for any referring company.
+Direct homeowner claims require neither a referring company nor an Airtable connection.
+The completed local checks passed. Final review found and repaired an Airtable configuration-confirmation race.
+The repair passed three focused action tests, 105 affected SQL assertions, all ten concurrent checks, TypeScript, and full lint.
+The final full unit run and rebuild passed. The final unit result is 2,033 passed, 77 skipped, zero failed, and exit zero.
+Hosted and real-provider acceptance also remain open.
+
+The first full unit run had five failures. The final focused runs passed all 34 tests in the five affected files.
+Separate browser checks passed for the new components with synthetic data and mocked actions at desktop and 390px.
+No hosted application, database, or provider acceptance is claimed by that browser review.
+
+The user approved the isolated database scope. The new stack started and all three permitted resets passed.
+All 1,554 pgTAP assertions passed across 48 files. Raw database types generated, and the full application type check passed.
+The database-backed CI selection passed 279 tests with only the live PandaDoc test skipped. All 11 required database-backed files passed.
+Final review found three legal permission lock-wait gaps. The regressions failed before repair. The corrected seven-case concurrent selection passed with no skips.
+Baseline pgTAP, affected SQL checks, TypeScript, lint, and the final application build passed.
+The final full unit run passed 2,033 tests and skipped 77 opt-in tests across all 179 discovered files.
+The high-threshold audit passed with four low and eight moderate findings. Earlier failed runs remain recorded as history.
+Actual local browser checks passed for five roles, all three site modes, desktop and 390px layouts, package download, and legal milestones.
+The original PDF bytes survived packaging unchanged. The final customer reload recorded 28 HTTP 200 responses and no failed requests.
+No reset allowance remains.
+Neither retained local database was changed.
+
+No commit, push, hosted change, email, deployment, DNS change, backup, hosting transfer, or cleanup ran for these features.
+Cleanup stays blocked. Existing login preservation and all prior one-time acceptance limits continue.
+
+See [the implementation record](temp/CMG_LAW_FIRM_AIRTABLE_IMPLEMENTATION_2026-11-15.md), [actual browser evidence](temp/CMG_LEGAL_AIRTABLE_ACTUAL_BROWSER_2026-11-15.md), and [the exact database approval](temp/CMG_LEGAL_AIRTABLE_DISPOSABLE_DB_APPROVAL_2026-11-15.md).
+
+The older release entries below are retained history from this checkout's tracked base.
+They do not describe a new Production change made during this feature task.
+
+## Retained release history
+
 Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
 Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.

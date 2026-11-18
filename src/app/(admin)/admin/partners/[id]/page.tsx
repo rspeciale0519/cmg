@@ -195,6 +195,17 @@ export default async function PartnerDetailPage({
       />
 
       <div className="grid gap-[clamp(16px,2vw,24px)]">
+        <Panel title="Airtable updates">
+          <PanelBody>
+            <p className="mb-3 text-sm text-ink/70">
+              Choose which claim updates this referring company receives and when they are sent.
+              A connection is optional.
+            </p>
+            <Link href={`/admin/partners/${id}/airtable`} className="text-sm underline underline-offset-4">
+              Manage Airtable connection and defaults
+            </Link>
+          </PanelBody>
+        </Panel>
         <Panel title="Vendor intake link">
           <PanelBody>
             <p className="mb-3 text-sm text-ink/70">

@@ -282,8 +282,9 @@ See [the intake acceptance record](docs/temp/INTAKE_VENDOR_ACCEPTANCE.md) for mi
 |---|---|
 | `/api/cron/outbox` | Daily at 14:00 UTC (`0 14 * * *`) |
 | `/api/cron/storage-cleanup` | Daily at 14:17 UTC (`17 14 * * *`) |
+| `/api/cron/airtable` | Daily at 15:15 UTC (`15 15 * * *`), when Airtable is enabled |
 
-Both routes require `CRON_SECRET`.
+All three routes require `CRON_SECRET`.
 The outbox attempts delivery after a public submission commits.
 The daily sweep retries eligible queued messages that the current site mode permits.
 Simple mode delivers only the public-form templates. Staff mode adds the staff-alert templates.
@@ -305,7 +306,7 @@ Any schedule change requires separate deployment approval.
 See [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
 
 Storage cleanup remains blocked. Its daily schedule remains unchanged.
-Do not run either job manually.
+Do not run these jobs manually without approval.
 Daily cleanup batches can delay cleanup retries until later days.
 Keep uncertain sends and held notifications blocked until their required review is complete.
 Record queue age, failed rows, dead rows, and approved recovery actions.
@@ -346,3 +347,59 @@ Template UUIDs are not required by the current PDF upload flow.
 Retention automation, export, erasure, and legal holds require separate implementation and approval.
 Public legal approval remains a launch prerequisite.
 See [PandaDoc setup](docs/temp/PANDADOC_SETUP.md) and [RETENTION.md](docs/RETENTION.md).
+
+## Legal handoff and optional Airtable sharing
+
+These additions are local candidate work. See the [implementation record](docs/temp/CMG_LAW_FIRM_AIRTABLE_IMPLEMENTATION_2026-11-15.md) for validation and approval limits.
+
+The Legal handoff tab is for the Owner and the claim's assigned adjuster.
+A represented, active claim can move to the optional With law firm stage after staff confirm that the package was sent.
+Preparing or downloading a package does not record sending.
+Staff select the summary and original documents. Each ZIP part contains at most 100 MiB of selected original files, plus its summary and manifest.
+The package includes a PDF summary and an exact UTF-8 text copy.
+Staff send it outside CMG and record the actual milestone afterward.
+An unsent preparation can be cancelled. Its evidence remains stored.
+No law firm login is created. Homeowners see the milestones and the accepted firm's contact details.
+Milestone notices use the existing email queue and site-mode rules.
+
+Airtable sharing is optional for every referring company. Direct homeowner claims need no connection.
+An Owner connects Airtable from the company page and selects an existing base, table, and reserved CMG columns.
+The Owner or assigned adjuster confirms an exact existing record from the claim's Sharing tab.
+The first update requires review. CMG does not create an Airtable record or change its schema.
+Choose automatic selected updates, review every update, or automatic stages with review for other information.
+Internal notes, internal fees, files, photos, credentials, and file-access links are excluded.
+Shared messages keep their dated history. There is no Airtable-to-CMG import.
+
+Set these values only under a separate hosted configuration approval:
+
+- `AIRTABLE_ENABLED=true`, with `SITE_MODE=platform`, permits delivery.
+- `AIRTABLE_CLIENT_ID` and `AIRTABLE_CLIENT_SECRET` identify the registered OAuth integration.
+- `AIRTABLE_REDIRECT_URI` must match its HTTPS callback, ending in `/api/integrations/airtable/callback`.
+- `AIRTABLE_TOKEN_ENCRYPTION_KEY` is a stable base64-encoded 32-byte secret. Keep it server-side.
+
+The OAuth scopes are `data.records:read`, `data.records:write`, and `schema.bases:read`.
+Register the approved support contact, Privacy URL, and Terms URL before public integration use.
+The policy pages return 404 until publication approval is configured.
+`CMG_POLICY_DRAFTS=true` displays drafts only in local development, outside Vercel.
+`CMG_PUBLIC_POLICIES_APPROVED=2026-11-15` publishes this reviewed policy version. Setting it requires separate approval.
+
+Source changes create durable update requests in the same database transaction.
+Successful application saves attempt immediate delivery. The daily Airtable job recovers eligible requests.
+Daily recovery can delay a failed update until a later day. A large queue can need more than one daily run.
+Review uncertain outcomes, changed access, changed columns, and unexpected record edits before retrying.
+Do not release old held updates merely because the company mode changed.
+The [Vercel cron limits](https://vercel.com/docs/schedules/cron-jobs/usage-and-pricing) allow daily schedules on Hobby; function usage and commercial-use requirements still apply.
+The [Airtable OAuth reference](https://airtable.com/developers/web/api/oauth-reference) defines the required scopes, callback registration, and public policy links.
+
+Apply additive schema changes before the compatible application release, under exact approval.
+Keep Airtable disabled until configuration and a synthetic acceptance check pass.
+The main risks are incorrect external sharing, lost encryption access, stale updates, and incomplete legal milestone records.
+Recovery uses approved pause controls, retained queue/history records, external-result reconciliation, and reviewed forward repairs.
+Keep the encryption key available for retained tokens. Do not replace it without a reviewed rotation procedure.
+After a claim uses `with_law_firm`, do not roll back to code that cannot read that status.
+Keep all new schema and retained evidence during application recovery.
+No hosted reset, cleanup, backup, real-company connection, or production acceptance test is authorized by this runbook.
+
+The existing local databases contain retained acceptance records.
+Use only the separately approved [isolated database scope](docs/temp/CMG_LEGAL_AIRTABLE_DISPOSABLE_DB_APPROVAL_2026-11-15.md) for new reset-based checks.
+Do not run the default reset or type-generation command against a retained database.

@@ -74,7 +74,8 @@ select is_empty(
                               'storage_cleanup_queue', 'esign_dispatch_attempts',
                               'esign_recipient_completions', 'intake_upload_sessions',
                               'intake_upload_files', 'private_upload_sessions',
-                              'private_upload_files', 'email_recipient_policy')) $$,
+                              'private_upload_files', 'email_recipient_policy',
+                              'airtable_credentials','airtable_oauth_states','airtable_rate_slots')) $$,
   'only service-role ledgers carry zero policies, so RLS-on-with-no-policy is a deliberate lockout and every client-facing table has an explicit policy'
 );
 
@@ -172,7 +173,7 @@ select enum_has_labels('public'::name, 'app_role'::name,
 
 select enum_has_labels('public'::name, 'claim_status'::name,
   array['new_intake','under_review','lor_sent','lor_signed','documenting','filed','negotiating',
-        'settlement_offered','settled','closed','denied','reopened','rejected']::name[],
+        'settlement_offered','settled','closed','denied','reopened','rejected','with_law_firm']::name[],
   'the claim lifecycle vocabulary is fixed at the type level, so an unknown status cannot be written at all');
 
 select enum_has_labels('public'::name, 'document_visibility'::name,

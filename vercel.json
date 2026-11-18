@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/storage-cleanup",
       "schedule": "17 14 * * *"
+    },
+    {
+      "path": "/api/cron/airtable",
+      "schedule": "15 15 * * *"
     }
   ]
 }

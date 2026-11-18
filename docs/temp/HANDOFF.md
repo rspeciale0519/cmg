@@ -1,5 +1,60 @@
 # CMG release handoff — engineering evidence
 
+## November 15: local legal and Airtable candidate
+
+Work is in the separate `cmg-law-firm-airtable` scratch checkout on branch `codex/cmg-law-firm-airtable`.
+Its base is `d685032736260b1eaca57045def9edbd677da93e`.
+The user approved the branch setup and exact `fflate` 0.8.3 installation. Both are complete.
+Use the explicit portable Node 22.22.2 executable recorded in the implementation contract.
+
+Feature source is prepared for optional legal handoffs and Airtable updates for any referring company.
+Final review found that a changed company configuration can outlive an earlier record confirmation during a provider read.
+The Airtable action and forward migration now check the expected connection and configuration atomically.
+Three action tests, 105 affected SQL assertions, and all ten concurrent checks passed after repair.
+The incremental migration retained the browser fixtures. TypeScript, full lint, final unit tests, and the rebuilt application passed.
+Direct homeowner claims remain independent of both referral and Airtable setup.
+Three subagents implemented and independently reviewed bounded parts of the work.
+
+Final focused checks passed 34 tests across the five files that covered mapping, delivery, pause, new forms, and existing intake behavior.
+The earlier full run had 2,008 passes, five failures, and 67 skips. It remains recorded as a failed full run.
+Later startup timeouts were isolated from assertions. No timeout or runner setting was changed.
+Raw database types generated successfully. The full type check passed after reviewed nullable adapter updates.
+Initial full lint, final scoped lint, and combined lint passed. Session `79330` returned exit zero.
+The static synthetic browser server remains in session `73881` on port `4198`. Keep its preserved native tab open.
+
+Native Browser developer access checked synthetic components at desktop and 390px.
+The review found and corrected form-reset and column-compatibility defects.
+Final browser observations include package preparation, retained error inputs, loading states, and generated Unicode PDF pages.
+No new console warning or error occurred in the final static review. The network buffer was incomplete.
+This was not authenticated application, database, or hosted acceptance.
+
+The user approved the isolated local database. All three permitted resets passed. Neither existing local database was touched.
+All 1,554 pgTAP assertions passed across 48 files. The database-backed CI selection passed 279 tests and skipped only the live PandaDoc test.
+All 11 required database-backed files passed. The first preflight failure was blocked sandbox Docker access; no test ran during that failure.
+Final review identified three legal lock-wait authority gaps. Regressions reproduced them before the forward repair.
+The final seven-case concurrent selection passed without skips. The final pgTAP and application build passed.
+The final integrated unit run passed 2,033 tests and skipped 77 opt-in tests, with exit zero and all 179 discovered files accounted for.
+It took 1,640.74 seconds. No test assertion, timeout, or worker setting changed. Full lint passed.
+The earlier post-repair JSON-only run exited 1 and omitted one unchanged file. Its 34 tests passed separately and in the final full run.
+The JSON reporter hid the original runtime error details. That original cause remains unknown; the complete pass supersedes the failed run.
+Actual native-browser checks passed for five roles, all three site modes, desktop and 390px layouts, and the legal package/milestone workflows.
+The downloaded package retained the original 905-byte PDF and its exact SHA-256. No external law-firm send occurred.
+The final customer-page network capture contained 28 HTTP 200 responses and no failed requests; it was not truncated.
+The app is restored to `platform` on port `4199`. Keep all synthetic and existing user sessions open.
+The final repaired build uses process `45308` in session `71893`.
+Owner and customer reloads confirmed the preserved sessions and history, with no new console warning or error.
+The session-transfer helper on port `4200` is stopped. The static review server on `4198` remains preserved.
+Hosted and real Airtable acceptance remain unverified. Do not edit generated types by hand.
+No reset allowance remains. The current new DB container ID is `2667e0b4c1ccc6d782eb4d4ec2cc54bf628d8623efaf4a29e8a2ffe39720328d`.
+
+No feature commit, push, hosted action, deployment, email, DNS change, backup, hosting transfer, or cleanup occurred.
+All existing logins and retained data remain protected. Cleanup stays blocked. Computer Use remains excluded.
+
+See `CMG_LAW_FIRM_AIRTABLE_IMPLEMENTATION_2026-11-15.md`, `CMG_LAW_FIRM_AIRTABLE_CONTRACT_2026-11-15.md`,
+`CMG_LEGAL_AIRTABLE_ACTUAL_BROWSER_2026-11-15.md`, and `CMG_LEGAL_AIRTABLE_DISPOSABLE_DB_APPROVAL_2026-11-15.md`.
+
+## Retained release history
+
 Source `76cdc5a` passed exact-head CI `40735491808`. Verify job `122982775518` passed 1,796 tests and skipped 65 in 105.75 seconds; 133 files passed and 17 skipped. Audit, type check, lint, and build passed; audit retained four low findings. The Windows suite passed 1,796 tests and skipped 65 in 514.89 seconds, with exit 0. It used Node 22.22.2 and unchanged default one-worker settings; 133 files passed and 17 skipped.
 
 Earlier head `8b1aecb` failed CI `40734242301`, verify job `122978378239`: 1,792 tests passed, three failed, and 65 skipped in 97.17 seconds. Of 150 files, 132 passed, one failed, and 17 skipped. Audit, type check, and lint passed; the build step skipped. The new exact-head Linux pass supersedes that failure for the repaired source.

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeAudit } from "@/lib/audit";
+import { scheduleAirtableDelivery } from "@/lib/airtable/store";
 import { recordTransition } from "@/lib/claims/record-transition";
 import { isClaimStatus, STATUS_LABEL, type ClaimStatus } from "@/lib/claims/status";
 import {
@@ -91,6 +92,7 @@ async function loadClaimForWrite(
 }
 
 function revalidateClaim(claimId: string) {
+  scheduleAirtableDelivery(claimId);
   revalidatePath(`/admin/claims/${claimId}`, "layout");
   revalidatePath("/admin/claims");
   revalidatePath("/admin");
@@ -113,6 +115,11 @@ export async function advanceClaimStatus(
   const loaded = await loadClaimForWrite(claimId);
   if ("error" in loaded) return { ...loaded.error, values: typed };
   const { claim } = loaded;
+
+  if (requested === "with_law_firm" ||
+      (claim.status === "with_law_firm" && requested !== "settlement_offered" && requested !== "settled")) {
+    return { status: "error", message: "Use Legal handoff to record the firm's milestone and the next claim stage.", values: typed };
+  }
 
   if (!isClaimStatus(requested)) {
     return { status: "error", message: "That is not a claim status.", values: typed };

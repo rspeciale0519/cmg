@@ -33,6 +33,7 @@ const DB_STATUSES = [
   "closed",
   "denied",
   "reopened",
+  "with_law_firm",
   "rejected",
 ] as const;
 
@@ -117,6 +118,7 @@ describe("customer phase mapping (spec §5)", () => {
     ["settled", "Resolved"],
     ["closed", "Resolved"],
     ["rejected", null],
+    ["with_law_firm", null],
   ];
 
   it.each(cases)("maps %s to %s", (status, phase) => {

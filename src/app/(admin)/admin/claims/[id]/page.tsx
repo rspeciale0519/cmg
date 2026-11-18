@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/server";
 import { esignCapabilities } from "@/lib/esign";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function ClaimOverviewPage({
   params,
@@ -42,7 +43,8 @@ export default async function ClaimOverviewPage({
             <StatusAdvance
               claimId={id}
               current={claim.status}
-              allowed={allowed.filter((status) => status !== "lor_sent")}
+              allowed={allowed.filter((status) => status !== "lor_sent" && status !== "with_law_firm" &&
+                (claim.status !== "with_law_firm" || status === "settlement_offered" || status === "settled"))}
               blocked={blocked}
               canManage={can.canManage}
             />

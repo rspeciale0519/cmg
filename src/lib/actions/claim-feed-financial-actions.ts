@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/authz";
+import { scheduleAirtableDelivery } from "@/lib/airtable/store";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { notifyCustomerOfReply } from "@/lib/claims/notify";
 import { isClaimStatus, type ClaimStatus } from "@/lib/claims/status";
@@ -47,6 +48,7 @@ async function loadClaimForWrite(
 }
 
 function revalidateClaim(claimId: string) {
+  scheduleAirtableDelivery(claimId);
   revalidatePath(`/admin/claims/${claimId}`, "layout");
   revalidatePath("/admin/claims");
   revalidatePath("/admin");

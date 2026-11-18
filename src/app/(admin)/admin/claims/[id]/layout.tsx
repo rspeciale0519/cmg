@@ -89,6 +89,10 @@ export default async function ClaimLayout({
       ? [{ href: `${root}/financials`, label: "Financials" }]
       : []),
     { href: `${root}/history`, label: "History" },
+    ...(can.canManage ? [
+      { href: `${root}/legal`, label: "Legal handoff" },
+      { href: `${root}/sharing`, label: "Sharing" },
+    ] : []),
   ];
 
   return (

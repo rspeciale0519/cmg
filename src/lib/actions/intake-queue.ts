@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { writeAudit } from "@/lib/audit";
+import { scheduleAirtableDelivery } from "@/lib/airtable/store";
 import { requireStaff } from "@/lib/authz";
 import { claimCapabilities } from "@/lib/claims/capabilities";
 import { portalUrl } from "@/lib/claims/notify";
@@ -306,6 +307,7 @@ export async function acceptIntake(
     );
   }
 
+  scheduleAirtableDelivery(claimId);
   revalidatePath("/admin/intake");
   revalidatePath("/admin/claims");
   revalidatePath(`/admin/claims/${claimId}`, "layout");
@@ -401,6 +403,7 @@ export async function rejectIntake(
   revalidatePath("/admin/claims");
   revalidatePath("/admin");
 
+  scheduleAirtableDelivery(claimId);
   const sentence = `${claim.claim_ref} declined and archived. No invitation was sent.`;
   return {
     status: "success",

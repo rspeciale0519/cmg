@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { LegalProgress } from "@/components/portal/legal-progress";
+import { loadLegalProgress } from "@/lib/legal/queries";
 import { ProgressLadder } from "@/components/portal/progress-ladder";
 import { FactList, Panel, PanelBody } from "@/components/portal/surfaces";
 import { formatDateOnly, humanizeEnum } from "@/lib/format";
@@ -33,7 +35,7 @@ export default async function ClaimOverviewPage({
 
   const supabase = await createClient();
 
-  const [history, adjuster] = await Promise.all([
+  const [history, adjuster, legal] = await Promise.all([
     /* `claim_status_history_select` admits the claim's customer, so this is the
        real transition log rather than a projection of it — which is what lets
        each rung of the ladder carry the date the claim actually reached it. The
@@ -50,6 +52,7 @@ export default async function ClaimOverviewPage({
         .range(from, to),
     ),
     portalAdjusterName(id),
+    loadLegalProgress(id),
   ]);
 
   const progress = progressFor(
@@ -60,6 +63,7 @@ export default async function ClaimOverviewPage({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
       <div className="grid gap-4">
+        <LegalProgress progress={legal} />
         <Panel title="Where your claim is">
           <PanelBody>
             {progress ? (

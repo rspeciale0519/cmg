@@ -89,8 +89,8 @@ select is(
 
 select is(
   public.allowed_claim_transitions('filed'),
-  array['negotiating', 'denied']::public.claim_status[],
-  'a filed claim can only move to negotiation or denial, so the carrier stage cannot be skipped'
+  array['negotiating', 'denied', 'with_law_firm']::public.claim_status[],
+  'a filed claim can negotiate, record denial, or enter the separately guarded legal workflow'
 );
 
 -- ---------------------------------------------------------------------------

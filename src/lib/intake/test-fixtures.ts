@@ -6,6 +6,9 @@ const LOCAL_STACKS = {
   CMGPA_private_upload_disposable: {
     apiPort: "15521", dbPort: "15522", dbContainer: "supabase_db_CMGPA_private_upload_disposable",
   },
+  CMGPA_legal_airtable_disposable: {
+    apiPort: "15621", dbPort: "15622", dbContainer: "supabase_db_CMGPA_legal_airtable_disposable",
+  },
 } as const;
 
 export function localIntakeFixtureStack() {
